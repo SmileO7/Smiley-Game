@@ -6,6 +6,7 @@ let multiplikator = parseInt(localStorage.getItem('multiplikator')) || 1;
 let auto_klicker_count = parseInt(localStorage.getItem('auto_klicker_count')) || 0;
 let prestige_kosten = parseInt(localStorage.getItem('prestige_kosten')) || 1000; // Dynamische Prestige-Kosten, Startwert 1000
 let volume = parseFloat(localStorage.getItem('volume')) || 1.0; // Lautstärke-Einstellung, Standardwert 1.0 (100%)
+let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0; // Produktion durch den Smiley-Baum
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
 function updateDisplay() {
