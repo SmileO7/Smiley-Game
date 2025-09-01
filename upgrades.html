@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrades</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            width: 100%;
+            background-color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .header nav {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        .header a {
+            font-weight: bold;
+            color: #4a5568;
+            transition: color 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .header a:hover {
+            color: #2b6cb0;
+        }
+        .upgrade-section {
+            background-color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .upgrade-button {
+            background-color: #48bb78;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .upgrade-button:hover {
+            background-color: #38a169;
+        }
+        .upgrade-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .upgrade-group p {
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 20;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .modal-buttons button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-buttons .confirm {
+            background-color: #48bb78;
+            color: #fff;
+        }
+        .modal-buttons .cancel {
+            background-color: #cbd5e0;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav>
+            <a href="index.html">Startseite</a>
+            <a href="upgrades.html">Upgrades</a>
+            <a href="einstellungen.html">Einstellungen</a>
+        </nav>
+    </div>
+
+    <div class="container mt-20">
+        <h1 class="text-3xl font-bold mb-4">Upgrades</h1>
+
+        <div class="stats mb-4">
+            <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades" class="font-bold">0</span></p>
+            <p>Smileyvers-Punkte: <span id="smiley_points_upgrades" class="font-bold">0</span></p>
+            <p>Gekaufte Auto-Klicker: <span id="auto_clicker_count_anzeige" class="font-bold">0</span></p>
+            <p>Smileys pro Sekunde (SPS): <span id="sps_anzeige_upgrades" class="font-bold">0</span></p>
+            <p>Smileys pro Minute (SPM): <span id="smp_anzeige_upgrades" class="font-bold">0</span></p>
+        </div>
+
+        <!-- Multiplikator Upgrade Sektion -->
+        <div class="upgrade-section">
+            <h2 class="text-2xl font-bold">Multiplikator</h2>
+            <p>Verbessert, wie viele Smileys du pro Klick bekommst.</p>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="multiplikator_upgrade_kosten" class="font-bold">10</span> Smileyvers-Punkte</p>
+                <button id="upgrade_multiplikator_10_button" class="upgrade-button">Kaufen</button>
+            </div>
+        </div>
+
+        <!-- Auto Clicker Upgrade Sektion -->
+        <div class="upgrade-section">
+            <h2 class="text-2xl font-bold">Auto-Klicker</h2>
+            <p>Sammelt automatisch Smileys für dich.</p>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="kosten_1x" class="font-bold">50</span> Smileys</p>
+                <button id="auto_clicker_button_1x" class="upgrade-button">1x Kaufen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="kosten_10x" class="font-bold">500</span> Smileys</p>
+                <button id="auto_clicker_button_10x" class="upgrade-button">10x Kaufen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="kosten_50x" class="font-bold">2500</span> Smileys</p>
+                <button id="auto_clicker_button_50x" class="upgrade-button">50x Kaufen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="kosten_max" class="font-bold">5000</span> Smileys</p>
+                <button id="auto_clicker_button_max" class="upgrade-button">Max Kaufen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kaufbestätigungsfenster -->
+    <div id="kauf_bestaetigung_fenster" class="modal">
+        <div class="modal-content">
+            <p id="kauf_nachricht" class="text-xl font-bold"></p>
+            <p id="kauf_details" class="mt-2 text-gray-700"></p>
+            <div class="modal-buttons">
+                <button id="kauf_bestaetigen_button" class="confirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

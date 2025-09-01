@@ -1,0 +1,84 @@
+/* Stil für den Körper der Seite */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    text-align: center;
+}
+
+/* Stil für die Überschriften */
+h1 {
+    color: #333;
+}
+
+/* Stil für die Absätze */
+p {
+    color: #555;
+}
+
+/* Stil für die Buttons und Links */
+button, a.button {
+    background-color: #ffd700;
+    color: #333;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    margin: 10px;
+}
+
+button:hover, a.button:hover {
+    background-color: #ffc400;
+}
+
+/* Stil für das Bestätigungsfenster und das Warnungsfenster */
+#bestaetigungsfenster, #warnung_fenster {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* Stil für den Smileyversum Hintergrund */
+.background-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('image_8fc990.png-6a476678-4071-4b77-957c-7fb3a6268a93');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+/* Stil für das Upgrade-Menü */
+.upgrade-menu {
+    /* Zentralisiert das Menü auf der Seite */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.9); /* Heller, weißer Hintergrund mit Transparenz */
+    color: #333; /* Dunkle Textfarbe für besseren Kontrast */
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+/* Stil für den Upgrade-Container */
+.upgrade-container {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}

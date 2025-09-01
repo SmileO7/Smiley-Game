@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smiley Clicker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            width: 100%;
+            background-color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .header nav {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        .header a {
+            font-weight: bold;
+            color: #4a5568;
+            transition: color 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .header a:hover {
+            color: #2b6cb0;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            text-align: left;
+        }
+        .stat-card {
+            background-color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.75rem;
+        }
+        .stat-card p {
+            font-weight: bold;
+            color: #4a5568;
+        }
+        .smiley-button {
+            width: 150px;
+            height: 150px;
+            font-size: 6rem;
+            cursor: pointer;
+            transition: transform 0.1s ease-in-out;
+            border: none;
+            background: none;
+            outline: none;
+        }
+        .smiley-button:active {
+            transform: scale(0.95);
+        }
+        .prestige-button {
+            background-color: #f6ad55;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .prestige-button:hover {
+            background-color: #ed8936;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 20;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .modal-buttons button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-buttons .confirm {
+            background-color: #48bb78;
+            color: #fff;
+        }
+        .modal-buttons .cancel {
+            background-color: #cbd5e0;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav>
+            <a href="index.html">Startseite</a>
+            <a href="upgrades.html">Upgrades</a>
+            <a href="einstellungen.html">Einstellungen</a>
+        </nav>
+    </div>
+    
+    <div class="container mt-20">
+        <h1 class="text-3xl font-bold mb-4">Smileyvers Clicker</h1>
+
+        <div class="stats-grid mb-6">
+            <div class="stat-card">
+                <p>Aktuelle Smileys:</p>
+                <span id="aktuelle_smileys" class="text-2xl font-bold">0</span>
+            </div>
+            <div class="stat-card">
+                <p>Smileyvers-Punkte:</p>
+                <span id="smiley_points" class="text-2xl font-bold">0</span>
+            </div>
+            <div class="stat-card">
+                <p>Multiplikator:</p>
+                <span id="multiplikator_anzeige" class="text-2xl font-bold">1</span>
+            </div>
+            <div class="stat-card">
+                <p>Gesammelte Smileys:</p>
+                <span id="gesammelte_smileys" class="text-2xl font-bold">0</span>
+            </div>
+            <div class="stat-card">
+                <p>SPS:</p>
+                <span id="sps_anzeige" class="text-2xl font-bold">0</span>
+            </div>
+            <div class="stat-card">
+                <p>SPM:</p>
+                <span id="smp_anzeige" class="text-2xl font-bold">0</span>
+            </div>
+        </div>
+
+        <button id="smiley_button" class="smiley-button">😊</button>
+
+        <p class="text-lg mt-4">Klicke auf den Smiley, um <span class="font-bold" id="multiplikator_per_click">1</span> Smiley zu sammeln!</p>
+        
+        <button id="prestige_button" class="prestige-button mt-6">Prestige (<span id="prestige_kosten_anzeige">1000</span> Smileys)</button>
+    </div>
+
+    <!-- Warnfenster für Prestige-Bestätigung -->
+    <div id="warnung_fenster" class="modal">
+        <div class="modal-content">
+            <p class="text-xl font-bold">Achtung!</p>
+            <p class="mt-2 text-gray-700">Wenn du Prestige nutzt, werden deine aktuellen Smileys und Auto-Klicker zurückgesetzt, aber du behältst deine Smileyvers-Punkte und Multiplikatoren.</p>
+            <div class="modal-buttons">
+                <button id="bestatigen_button" class="confirm">Bestätigen</button>
+                <button id="abbrechen_button" class="cancel">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Kaufbestätigungsfenster (auch für Fehler) -->
+    <div id="kauf_bestaetigung_fenster" class="modal">
+        <div class="modal-content">
+            <p id="kauf_nachricht" class="text-xl font-bold"></p>
+            <p id="kauf_details" class="mt-2 text-gray-700"></p>
+            <div class="modal-buttons">
+                <button id="kauf_bestaetigen_button" class="confirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
