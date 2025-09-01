@@ -10,6 +10,13 @@ let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
 function updateDisplay() {
+
+    if(smileyTreeProduction> 0){
+        const smileyTreeButton = document.getElementById("smileyTreeButton");
+        if (smileyTreeButton) {
+            smileyTreeButton.style.display = "none"; // Verstecke den Button nach dem Kauf
+        }
+    }
     // Aktualisiert die Anzeige auf der Hauptseite (index.html)
     const smileyPointsMain = document.getElementById("smiley_points");
     if (smileyPointsMain) {
@@ -37,9 +44,9 @@ function updateDisplay() {
     }
 
     // Aktualisiert SPS und SPM auf der Hauptseite
-    const spsAnzeigeMain = document.getElementById("sps_anzeige");
-    const smpAnzeigeMain = document.getElementById("smp_anzeige");
-    const sps = auto_klicker_count * multiplikator;
+    const spsAnzeigeMain = document.getElementById("sps_anzeige");    
+    const smpAnzeigeMain = document.getElementById("smp_anzeige");    
+    const sps = (auto_klicker_count * multiplikator) + smileyTreeProduction;
     const smp = sps * 60;
     if (spsAnzeigeMain) {
         spsAnzeigeMain.innerText = sps;
@@ -270,7 +277,40 @@ function speichereSpiel() {
     localStorage.setItem('auto_klicker_count', auto_klicker_count);
     localStorage.setItem('prestige_kosten', prestige_kosten);
     localStorage.setItem('volume', volume);
+    localStorage.setItem('smileyTreeProduction', smileyTreeProduction);
 }
+
+//Funktion für den SmileyTree
+
+const smileyTreeButton = document.getElementById("smileyTreeButton");
+
+smileyTreeButton.addEventListener("click", () => {
+    const upgradeCost =50;
+    if (aktuelle_smileys >= 50) {
+        aktuelle_smileys -= 50;
+        smileyTreeProduction += 1;
+        speichereSpiel();
+        updateDisplay();
+       smileyTreeButton.style.display = "none"; // Verstecke den Button nach dem Kauf  
+    } else {
+        const modal = document.getElementById("kauf_bestaetigung_fenster");
+        const nachricht = document.getElementById("kauf_nachricht");
+        const details = document.getElementById("kauf_details");
+        if (nachricht) {
+            nachricht.innerText = "Nicht genug Smileys!";
+        }
+        if (details) {
+            details.innerText = `Du hast zu wenige Smileys für dieses Upgrade! Benötigt: 50`;
+        }
+        if (modal) {
+            modal.style.display = "flex";
+        }
+    }
+});
+setInterval(() => {
+    aktuelle_smileys += smileyTreeProduction;
+    updateSmileyDisplay();
+    }, 1000);//Führe die Funktion Jede Sekunde (1000ms)aus
 
 // Funktion, um den gesamten Spielstand zurückzusetzen
 function resetGame() {
