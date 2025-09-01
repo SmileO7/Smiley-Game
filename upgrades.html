@@ -135,16 +135,17 @@
 
     <div class="container mt-20">
         <h1 class="text-3xl font-bold mb-4">Upgrades</h1>
-
+        
         <div class="stats mb-4">
             <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades" class="font-bold">0</span></p>
             <p>Smileyvers-Punkte: <span id="smiley_points_upgrades" class="font-bold">0</span></p>
             <p>Gekaufte Auto-Klicker: <span id="auto_clicker_count_anzeige" class="font-bold">0</span></p>
+            <p>Gekaufte Smiley-Bäume: <span id="smileyTreeCountAnzeige" class="font-bold">0</span></p>
+            <p>Gekaufte Smiley-Fabriken: <span id="smileyFactoryCountAnzeige" class="font-bold">0</span></p>
             <p>Smileys pro Sekunde (SPS): <span id="sps_anzeige_upgrades" class="font-bold">0</span></p>
             <p>Smileys pro Minute (SPM): <span id="smp_anzeige_upgrades" class="font-bold">0</span></p>
         </div>
 
-        <!-- Multiplikator Upgrade Sektion -->
         <div class="upgrade-section">
             <h2 class="text-2xl font-bold">Multiplikator</h2>
             <p>Verbessert, wie viele Smileys du pro Klick bekommst.</p>
@@ -154,44 +155,86 @@
             </div>
         </div>
 
-        <!-- Auto Clicker Upgrade Sektion -->
         <div class="upgrade-section">
             <h2 class="text-2xl font-bold">Auto-Klicker</h2>
             <p>Sammelt automatisch Smileys für dich.</p>
             <div class="upgrade-group">
-                <p>Kosten: <span id="kosten_1x" class="font-bold">50</span> Smileys</p>
+                <p>Kosten: <span id="kosten_1x" class="font-bold">0</span> Smileys</p>
                 <button id="auto_clicker_button_1x" class="upgrade-button">1x Kaufen</button>
             </div>
             <div class="upgrade-group">
-                <p>Kosten: <span id="kosten_10x" class="font-bold">500</span> Smileys</p>
+                <p>Kosten: <span id="kosten_10x" class="font-bold">0</span> Smileys</p>
                 <button id="auto_clicker_button_10x" class="upgrade-button">10x Kaufen</button>
             </div>
             <div class="upgrade-group">
-                <p>Kosten: <span id="kosten_50x" class="font-bold">2500</span> Smileys</p>
+                <p>Kosten: <span id="kosten_50x" class="font-bold">0</span> Smileys</p>
                 <button id="auto_clicker_button_50x" class="upgrade-button">50x Kaufen</button>
             </div>
             <div class="upgrade-group">
-                <p>Kosten: <span id="kosten_max" class="font-bold">5000</span> Smileys</p>
+                <p>Kosten: <span id="kosten_max" class="font-bold">0</span> Smileys</p>
                 <button id="auto_clicker_button_max" class="upgrade-button">Max Kaufen</button>
             </div>
         </div>
-    </div>
-    <!--SmileyTree-->
 
-    <button id="smileyTreeButton">Smiley-Baum pflanzen (Preis: 50 Smileys)</button>
-
-
-
-
-    <!-- Kaufbestätigungsfenster -->
-    <div id="kauf_bestaetigung_fenster" class="modal">
-        <div class="modal-content">
-            <p id="kauf_nachricht" class="text-xl font-bold"></p>
-            <p id="kauf_details" class="mt-2 text-gray-700"></p>
-            <div class="modal-buttons">
-                <button id="kauf_bestaetigen_button" class="confirm">OK</button>
+        <div class="upgrade-section">
+            <h2 class="text-2xl font-bold">Smiley-Baum</h2>
+            <p>Pflanze einen Baum, der automatisch Smileys für dich produziert.</p>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyTreeCost1x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyTreeButton1x" class="upgrade-button">1x Pflanzen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyTreeCost10x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyTreeButton10x" class="upgrade-button">10x Pflanzen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyTreeCost50x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyTreeButton50x" class="upgrade-button">50x Pflanzen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyTreeCostMax" class="font-bold">0</span> Smileys</p>
+                <button id="smileyTreeButtonMax" class="upgrade-button">Max Pflanzen</button>
             </div>
         </div>
+
+        <div class="upgrade-section">
+            <h2 class="text-2xl font-bold">Smiley-Fabrik</h2>
+            <p>Eine große Fabrik, die massenhaft Smileys produziert.</p>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyFactoryCost1x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyFactoryButton1x" class="upgrade-button">1x Bauen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyFactoryCost10x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyFactoryButton10x" class="upgrade-button">10x Bauen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyFactoryCost50x" class="font-bold">0</span> Smileys</p>
+                <button id="smileyFactoryButton50x" class="upgrade-button">50x Bauen</button>
+            </div>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="smileyFactoryCostMax" class="font-bold">0</span> Smileys</p>
+                <button id="smileyFactoryButtonMax" class="upgrade-button">Max Bauen</button>
+            </div>
+        </div>
+        
+        <div class="upgrade-section">
+            <h2 class="text-2xl font-bold">Global Upgrades</h2>
+            <p>Erhöht deine gesamte Produktion um 10%.</p>
+            <div class="upgrade-group">
+                <p>Kosten: <span id="booster_kosten_anzeige" class="font-bold">5000</span> Smileys</p>
+                <button id="booster_button" class="upgrade-button">Kaufen</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="kauf_bestaetigung_fenster" class="modal">
+    <div class="modal-content">
+        <h2 id="kauf_nachricht"></h2>
+        <p id="kauf_details"></p>
+        <button id="kauf_bestaetigung_button" class="btn">OK</button>
+    </div>
+</div>
     </div>
 
     <script src="script.js"></script>
