@@ -41,6 +41,14 @@ function speichereSpiel() {
 }
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
+function updateDisplay() {
+
+    if(smileyTreeProduction> 0){
+        const smileyTreeButton = document.getElementById("smileyTreeButton");
+        if (smileyTreeButton) {
+            smileyTreeButton.style.display = "none"; // Verstecke den Button nach dem Kauf
+        }
+    }
   function updateDisplay() {
     // Aktualisiert die Anzeige auf der Hauptseite (index.html)
     const smileyPointsMain = document.getElementById("smiley_points");
@@ -156,7 +164,7 @@ function autoClick() {
     updateDisplay();
 }
 
-// Funktion zum Zurücksetzen des Spiels
+// Funktion, um den gesamten Spielstand zurückzusetzen
 function resetGame() {
     localStorage.clear();
     location.reload();
