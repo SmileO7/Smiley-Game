@@ -42,14 +42,6 @@ function speichereSpiel() {
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
 function updateDisplay() {
-
-    if(smileyTreeProduction> 0){
-        const smileyTreeButton = document.getElementById("smileyTreeButton");
-        if (smileyTreeButton) {
-            smileyTreeButton.style.display = "none"; // Verstecke den Button nach dem Kauf
-        }
-    }}
-  function updateDisplay() {
     // Aktualisiert die Anzeige auf der Hauptseite (index.html)
     const smileyPointsMain = document.getElementById("smiley_points");
     if (smileyPointsMain) smileyPointsMain.innerText = smiley_points;
@@ -64,7 +56,7 @@ function updateDisplay() {
     const multiplikatorPerClick = document.getElementById("multiplikator_per_click");
     if (multiplikatorPerClick) multiplikatorPerClick.innerText = multiplikator;
 
-    const sps = (auto_klicker_count * 1 + smileyTreeProduction * 5 + smileyFactoryProduction * 25) * globalerMultiplikator;
+    const sps = (auto_klicker_count * 1 + smileyTreeProduction * 20 + smileyFactoryProduction * 150) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
@@ -158,7 +150,7 @@ function klickeSmiley() {
 
 // Funktion für den Auto-Klicker
 function autoClick() {
-    const sps = (auto_klicker_count * 1 + smileyTreeProduction * 5 + smileyFactoryProduction * 25);
+    const sps = (auto_klicker_count * 1 + smileyTreeProduction * 20 + smileyFactoryProduction * 150);
     aktuelle_smileys += sps * globalerMultiplikator;
     gesammelte_smileys += sps * globalerMultiplikator;
     updateDisplay();
@@ -180,14 +172,17 @@ function klickprestige() {
 
 function bestatigePrestige() {
     if (gesammelte_smileys >= prestige_kosten) {
+        // HINWEIS: Neue, balancierte Formel für die Smileyvers-Punkte
         smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));
+        
         multiplikator = 1 + smiley_points;
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
         auto_klicker_count = 0;
         smileyTreeProduction = 0;
         smileyFactoryProduction = 0;
-        prestige_kosten = 1000 + (smiley_points * 1000); // Erhöht die Kosten für das nächste Prestige
+        // HINWEIS: Neue, einfachere Berechnung der Prestige-Kosten
+        prestige_kosten = 1000 + (smiley_points * 100); 
         speichereSpiel();
         updateDisplay();
         schliesseWarnung();
@@ -211,9 +206,8 @@ function kaufeMultiplikatorUpgrade() {
         multiplikator += 1;
         speichereSpiel();
         updateDisplay();
-        zeigeKaufBestaetigung("Multiplikator-Upgrade", `Du hast deinen Multiplikator auf x${multiplikator} erhöht!`);
     } else {
-        zeigeKaufBestaetigung("Kauf fehlgeschlagen", `Nicht genügend Smileyvers-Punkte! Benötigt: ${upgradeCost}`);
+        alert(`Nicht genügend Smileyvers-Punkte! Benötigt: ${upgradeCost}`);
     }
 }
 
@@ -239,7 +233,7 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
             }
         }
         if (totalCost === 0) {
-            zeigeKaufBestaetigung("Kauf fehlgeschlagen", "Nicht genügend Smileys, um etwas zu kaufen!");
+            alert("Nicht genügend Smileys, um etwas zu kaufen!");
             return;
         }
         anzahl = temp_count - currentCount;
@@ -257,9 +251,8 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
         
         speichereSpiel();
         updateDisplay();
-        zeigeKaufBestaetigung("Kauf erfolgreich!", `Du hast ${anzahl}x ${type} gekauft!`);
     } else {
-        zeigeKaufBestaetigung("Kauf fehlgeschlagen", `Nicht genügend Smileys! Benötigt: ${totalCost}`);
+        alert(`Nicht genügend Smileys! Benötigt: ${totalCost}`);
     }
 }
 
@@ -272,21 +265,6 @@ function updateVolume() {
     }
 }
 
-// Funktion zum Anzeigen des Kaufbestätigungsfensters
-function zeigeKaufBestaetigung(titel, nachricht) {
-    const modal = document.getElementById("kauf_bestaetigung_fenster");
-    const nachrichtElement = document.getElementById("kauf_nachricht");
-    const detailsElement = document.getElementById("kauf_details");
-    if (nachrichtElement) {
-        nachrichtElement.innerText = titel;
-    }
-    if (detailsElement) {
-        detailsElement.innerText = nachricht;
-    }
-    if (modal) {
-        modal.style.display = "flex";
-    }
-}
 //================================================================================================================
 // ----- EVENT-LISTENER -----
 //================================================================================================================
@@ -299,12 +277,6 @@ const bestatigenButton = document.getElementById("bestatigen_button");
 if (bestatigenButton) bestatigenButton.addEventListener("click", bestatigePrestige);
 const abbrechenButton = document.getElementById("abbrechen_button");
 if (abbrechenButton) abbrechenButton.addEventListener("click", schliesseWarnung);
-
-const kaufBestatigenButton = document.getElementById("kauf_bestaetigung_button");
-if (kaufBestatigenButton) kaufBestatigenButton.addEventListener("click", () => {
-    const modal = document.getElementById("kauf_bestaetigung_fenster");
-    if (modal) modal.style.display = "none";
-});
 
 const upgradeMultiplikatorButton = document.getElementById("upgrade_multiplikator_10_button");
 if (upgradeMultiplikatorButton) upgradeMultiplikatorButton.addEventListener("click", kaufeMultiplikatorUpgrade);
@@ -349,7 +321,7 @@ if (boosterButton) {
             speichereSpiel();
             updateDisplay();
         } else {
-            zeigeKaufBestaetigung("Kauf fehlgeschlagen", `Nicht genügend Smileys! Benötigt: ${upgradeCost}`);
+            alert(`Nicht genügend Smileys! Benötigt: ${upgradeCost}`);
         }
     });
 }
@@ -368,16 +340,7 @@ if (resetCancelButton) resetCancelButton.addEventListener("click", () => {
 });
 const volumeSlider = document.getElementById("volume_slider");
 if (volumeSlider) volumeSlider.addEventListener("input", updateVolume);
-const googleConnectButton = document.getElementById("google_connect_button");
-if (googleConnectButton) googleConnectButton.addEventListener("click", () => {
-    const modal = document.getElementById("google_info_fenster");
-    if (modal) modal.style.display = "flex";
-});
-const googleInfoCloseButton = document.getElementById("google_info_schliessen");
-if (googleInfoCloseButton) googleInfoCloseButton.addEventListener("click", () => {
-    const modal = document.getElementById("google_info_fenster");
-    if (modal) modal.style.display = "none";
-});
+
 //================================================================================================================
 // ----- SPIELSTART & AUTOMATISCHE PROZESSE -----
 //================================================================================================================

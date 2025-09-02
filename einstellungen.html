@@ -5,28 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Einstellungen</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f0f4f8;
             color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-        .container {
-            background-color: #fff;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            width: 700px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
         }
         .header {
             width: 100%;
@@ -52,21 +38,35 @@
         .header a:hover {
             color: #2b6cb0;
         }
-        .settings-section {
-            background-color: #e2e8f0;
-            padding: 1.5rem;
-            border-radius: 1rem;
+        .main-container {
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            justify-content: center;
+            align-items: center;
+            padding-top: 5rem;
+            padding-bottom: 2rem;
         }
-        .setting-group {
+        .settings-container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+        }
+        .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
-        .setting-button {
+        .setting-item label {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .setting-item button {
             background-color: #f56565;
             color: #fff;
             padding: 0.75rem 1.5rem;
@@ -75,61 +75,8 @@
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
         }
-        .setting-button:hover {
+        .setting-item button:hover {
             background-color: #e53e3e;
-        }
-        .connect-button {
-            background-color: #4299e1;
-            color: #fff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .connect-button:hover {
-            background-color: #3182ce;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 20;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 1rem;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .modal-buttons button {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .modal-buttons .confirm {
-            background-color: #48bb78;
-            color: #fff;
-        }
-        .modal-buttons .cancel {
-            background-color: #cbd5e0;
-            color: #4a5568;
         }
     </style>
 </head>
@@ -142,50 +89,33 @@
         </nav>
     </div>
 
-    <div class="container mt-20">
-        <h1 class="text-3xl font-bold mb-4">Einstellungen</h1>
-
-        <!-- Fortschritt zurücksetzen Sektion -->
-        <div class="settings-section">
-            <h2 class="text-2xl font-bold">Fortschritt</h2>
-            <p>Setze dein Spiel komplett auf den Anfang zurück.</p>
-            <div class="setting-group">
-                <button id="reset_button" class="setting-button">Fortschritt zurücksetzen</button>
+    <div class="main-container">
+        <div class="settings-container">
+            <h1 class="text-3xl font-bold mb-6">Einstellungen</h1>
+            
+            <div class="setting-item">
+                <label for="volume_slider" class="text-lg">Lautstärke:</label>
+                <input type="range" id="volume_slider" min="0" max="100" value="100">
+            </div>
+            
+            <div class="setting-item">
+                <label class="text-lg">Spielstand zurücksetzen:</label>
+                <button id="reset_button">Zurücksetzen</button>
             </div>
         </div>
+    </div>
 
-        <!-- Google-Verbindung Sektion -->
-        <div class="settings-section">
-            <h2 class="text-2xl font-bold">Konto</h2>
-            <p>Verbinde dein Spiel mit deinem Google-Konto.</p>
-            <div class="setting-group">
-                <button id="google_connect_button" class="connect-button">Mit Google verbinden</button>
-            </div>
-        </div>
-        
-        <!-- Lautstärkeregelung Sektion (Platzhalter) -->
-        <div class="settings-section">
-            <h2 class="text-2xl font-bold">Lautstärke</h2>
-            <p>Passe die Lautstärke der Spiel-Sounds an.</p>
-            <div class="setting-group">
-                <p>Lautstärke:</p>
-                <input type="range" id="volume_slider" name="volume" min="0" max="100" value="100">
+    <div id="reset_warnung_fenster" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg text-center shadow-2xl w-96">
+            <h2 class="text-2xl font-bold mb-4">Warnung!</h2>
+            <p>Möchtest du das Spiel wirklich zurücksetzen? Dein gesamter Fortschritt geht verloren.</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="reset_bestatigen_button" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600">Bestätigen</button>
+                <button id="reset_abbrechen_button" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400">Abbrechen</button>
             </div>
         </div>
     </div>
     
-    <!-- Warnfenster für das Zurücksetzen -->
-    <div id="reset_warnung_fenster" class="modal">
-        <div class="modal-content">
-            <p class="text-xl font-bold">Achtung!</p>
-            <p class="mt-2 text-gray-700">Möchtest du wirklich deinen gesamten Fortschritt zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden!</p>
-            <div class="modal-buttons">
-                <button id="reset_bestatigen_button" class="confirm">Bestätigen</button>
-                <button id="reset_abbrechen_button" class="cancel">Abbrechen</button>
-            </div>
-        </div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 </html>
