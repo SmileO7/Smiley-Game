@@ -29,7 +29,7 @@ let autoClickerCostReduction = parseFloat(localStorage.getItem('autoClickerCostR
 
 // Konstanten für die Basis-Kosten und den Steigerungsfaktor
 const autoClickerBaseCost = 20;
-let autoClickerGrowthRate = 1.1;
+let autoClickerGrowthRate = parseFloat(localStorage.getItem('autoClickerGrowthRate')) || 1.1;
 const smileyTreeBaseCost = 150;
 const smileyTreeGrowthRate = 1.2;
 const smileyFactoryBaseCost = 2500;
@@ -64,6 +64,8 @@ function speichereSpiel() {
     localStorage.setItem('autoClickerEfficiencyBonus', autoClickerEfficiencyBonus);
     localStorage.setItem('autoClickerProductionBonus', autoClickerProductionBonus);
     localStorage.setItem('autoClickerCostReduction', autoClickerCostReduction);
+    localStorage.setItem('autoClickerUpgradeIndex', autoClickerUpgradeIndex); // BUG FIX: Speichert den Upgrade-Index
+    localStorage.setItem('autoClickerGrowthRate', autoClickerGrowthRate);
 }
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
@@ -83,7 +85,7 @@ function updateDisplay() {
     if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2);
 
     // ----- SPS-BERECHNUNG MIT NEUEN BONI -----
-    const sps = ((auto_klicker_count * (1 + autoClickerResearchBonus) * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus) + (smileyTreeProduction * (20 + smileyTreeResearchBonus)) + (smileyFactoryProduction * (150 + smileyFactoryResearchBonus))) * globalerMultiplikator * (1 + autoClickerEfficiencyBonus);
+    const sps = ((auto_klicker_count * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus) * (1 + autoClickerResearchBonus) * (1 + autoClickerEfficiencyBonus) + (smileyTreeProduction * (20 + smileyTreeResearchBonus)) + (smileyFactoryProduction * (150 + smileyFactoryResearchBonus))) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
