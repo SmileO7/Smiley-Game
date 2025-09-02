@@ -180,7 +180,7 @@ function klickprestige() {
 
 function bestatigePrestige() {
     if (gesammelte_smileys >= prestige_kosten) {
-        smiley_points += Math.floor(gesammelte_smileys / 1000);
+        smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));
         multiplikator = 1 + smiley_points;
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
