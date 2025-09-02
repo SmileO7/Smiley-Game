@@ -4,301 +4,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upgrades</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
-        }
-        .header {
-            width: 100%;
-            background-color: #fff;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-        .header nav {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-        .header a {
-            font-weight: bold;
-            color: #4a5568;
-            transition: color 0.2s ease-in-out;
-            text-decoration: none;
-        }
-        .header a:hover {
-            color: #2b6cb0;
-        }
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding-top: 5rem;
-            padding-bottom: 2rem;
-        }
-        .upgrades-container {
-            background-color: #fff;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            width: 700px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        .upgrade-section {
-            background-color: #e2e8f0;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .upgrade-button {
-            background-color: #48bb78;
-            color: #fff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .upgrade-button:hover {
-            background-color: #38a169;
-        }
-        .upgrade-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .upgrade-group p {
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <nav>
-            <a href="index.html">Startseite</a>
-            <a href="upgrades.html">Upgrades</a>
-            <a href="einstellungen.html">Einstellungen</a>
-            <a href="info.html">Info</a>
+    <header>
+        <nav class="navbar">
+            <a href="index.html">Start</a>
+            <a href="upgrades.html" class="active">Upgrades</a>
+            <a href="stats.html">Statistiken</a>
+            <a href="prestige.html">Prestige</a>
         </nav>
-    </div>
-
-    <div class="main-container">
-        <div class="upgrades-container">
-            <h1 class="text-3xl font-bold mb-4 text-center">Upgrades</h1>
-            
-            <div class="stats mb-4 text-center">
-                <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades" class="font-bold">0</span></p>
-                <p>Smileyvers-Punkte: <span id="smiley_points_upgrades" class="font-bold">0</span></p>
-                <p>Forschungspunkte: <span id="forschung_punkte_anzeige" class="font-bold">0</span></p>
-                <p>Gekaufte Auto-Klicker: <span id="auto_clicker_count_anzeige" class="font-bold">0</span></p>
-                <p>Gekaufte Smiley-Bäume: <span id="smileyTreeCountAnzeige" class="font-bold">0</span></p>
-                <p>Gekaufte Smiley-Fabriken: <span id="smileyFactoryCountAnzeige" class="font-bold">0</span></p>
-                <p>Gekaufte Forschungslabore: <span id="forschungslabor_count_anzeige" class="font-bold">0</span></p>
-                <p>Smileys pro Sekunde (SPS): <span id="sps_anzeige_upgrades" class="font-bold">0</span></p>
-                <p>Smileys pro Minute (SPM): <span id="smp_anzeige_upgrades" class="font-bold">0</span></p>
+    </header>
+    <main>
+        <h1>Upgrades</h1>
+        <div class="stats-and-lab-container">
+            <div class="stats-container">
+                <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades">0</span></p>
+                <p>Smileyverse-Punkte: <span id="smiley_points_upgrades">0</span></p>
+                <p>SPS: <span id="sps_anzeige_upgrades">0</span></p>
+                <p>SPM: <span id="smp_anzeige_upgrades">0</span></p>
             </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Multiplikator</h2>
-                <p class="text-sm">Verbessert, wie viele Smileys du pro Klick bekommst.</p>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="multiplikator_upgrade_kosten" class="font-bold">10</span> Smileyvers-Punkte</p>
-                    <button id="upgrade_multiplikator_10_button" class="upgrade-button">Kaufen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Klick-Upgrades</h2>
-                <p class="text-sm">Verbessert die Effizienz deines Mausklicks.</p>
-                <div class="upgrade-group" id="klick-upgrade-1-group">
-                    <p>Maus-Upgrade: +10% Klick-Effizienz</p>
-                    <p>Kosten: <span id="klick_upgrade_1_kosten" class="font-bold">1000</span> Smileys</p>
-                    <button id="klick_upgrade_1_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="klick-upgrade-2-group">
-                    <p>Doppelklick-Mechanik: +20% Klick-Effizienz</p>
-                    <p>Kosten: <span id="klick_upgrade_2_kosten" class="font-bold">5000</span> Smileys</p>
-                    <button id="klick_upgrade_2_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="klick-upgrade-3-group">
-                    <p>Super-Maus: +50% Klick-Effizienz</p>
-                    <p>Kosten: <span id="klick_upgrade_3_kosten" class="font-bold">25000</span> Smileys</p>
-                    <button id="klick_upgrade_3_button" class="upgrade-button">Kaufen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Auto-Klicker</h2>
-                <p class="text-sm">Sammelt automatisch Smileys für dich.</p>
-                <div class="upgrade-group" id="auto_klicker_upgrade_1_group">
-                    <p>Upgrade 1: Turbo-Modul</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_1_kosten">2000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_1_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_2_group">
-                    <p>Upgrade 2: Verstärkte Klicks</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_2_kosten">8000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_2_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_3_group">
-                    <p>Upgrade 3: Energiesparmodus</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_3_kosten">25000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_3_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_4_group">
-                    <p>Upgrade 4: Präzisions-Mikrochips</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_4_kosten">100000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_4_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_5_group">
-                    <p>Upgrade 5: Multitasking-Software</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_5_kosten">500000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_5_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_6_group">
-                    <p>Upgrade 6: Fließband-Optimierung</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_6_kosten">2000000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_6_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_7_group">
-                    <p>Upgrade 7: Quanten-Beschleuniger</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_7_kosten">8000000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_7_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="auto_klicker_upgrade_8_group">
-                    <p>Upgrade 8: Ewige Batterie</p>
-                    <p>Kosten: <span id="auto_klicker_upgrade_8_kosten">25000000</span> Smileys</p>
-                    <button id="auto_klicker_upgrade_8_button" class="upgrade-button">Kaufen</button>
-                </div>
-
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="kosten_1x" class="font-bold">0</span> Smileys</p>
-                    <button id="auto_clicker_button_1x" class="upgrade-button">1x Kaufen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="kosten_10x" class="font-bold">0</span> Smileys</p>
-                    <button id="auto_clicker_button_10x" class="upgrade-button">10x Kaufen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="kosten_50x" class="font-bold">0</span> Smileys</p>
-                    <button id="auto_clicker_button_50x" class="upgrade-button">50x Kaufen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="kosten_max" class="font-bold">0</span> Smileys</p>
-                    <button id="auto_clicker_button_max" class="upgrade-button">Max Kaufen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Smiley-Baum</h2>
-                <p class="text-sm">Pflanze einen Baum, der automatisch Smileys für dich produziert.</p>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyTreeCost1x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyTreeButton1x" class="upgrade-button">1x Pflanzen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyTreeCost10x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyTreeButton10x" class="upgrade-button">10x Pflanzen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyTreeCost50x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyTreeButton50x" class="upgrade-button">50x Pflanzen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyTreeCostMax" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyTreeButtonMax" class="upgrade-button">Max Pflanzen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Smiley-Fabrik</h2>
-                <p class="text-sm">Eine große Fabrik, die massenhaft Smileys produziert.</p>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyFactoryCost1x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyFactoryButton1x" class="upgrade-button">1x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyFactoryCost10x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyFactoryButton10x" class="upgrade-button">10x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyFactoryCost50x" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyFactoryButton50x" class="upgrade-button">50x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="smileyFactoryCostMax" class="font-bold">0</span> Smileys</p>
-                    <button id="smileyFactoryButtonMax" class="upgrade-button">Max Bauen</button>
-                </div>
-            </div>
-            
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Forschungslabor</h2>
-                <p class="text-sm">Produziert Forschungspunkte, um deine Gebäude zu verbessern.</p>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="forschungslaborCost1x" class="font-bold">0</span> Smileys</p>
-                    <button id="forschungslaborButton1x" class="upgrade-button">1x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="forschungslaborCost10x" class="font-bold">0</span> Smileys</p>
-                    <button id="forschungslaborButton10x" class="upgrade-button">10x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="forschungslaborCost50x" class="font-bold">0</span> Smileys</p>
-                    <button id="forschungslaborButton50x" class="upgrade-button">50x Bauen</button>
-                </div>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="forschungslaborCostMax" class="font-bold">0</span> Smileys</p>
-                    <button id="forschungslaborButtonMax" class="upgrade-button">Max Bauen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Forschung</h2>
-                <p class="text-sm">Gib Forschungspunkte aus, um deine Gebäude zu verstärken.</p>
-                <div class="upgrade-group" id="forschung-upgrade-1-group">
-                    <p>Verbesserte Autoklicker-Mechanik: +10% Auto-Klicker-Effizienz</p>
-                    <p>Kosten: 10 Forschungspunkte</p>
-                    <button id="forschung_upgrade_1_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="forschung-upgrade-2-group">
-                    <p>Genetisch optimierte Bäume: +10% Smiley-Baum-Effizienz</p>
-                    <p>Kosten: 25 Forschungspunkte</p>
-                    <button id="forschung_upgrade_2_button" class="upgrade-button">Kaufen</button>
-                </div>
-                <div class="upgrade-group" id="forschung-upgrade-3-group">
-                    <p>Optimierung der Fabrikprozesse: +10% Smiley-Fabrik-Effizienz</p>
-                    <p>Kosten: 50 Forschungspunkte</p>
-                    <button id="forschung_upgrade_3_button" class="upgrade-button">Kaufen</button>
-                </div>
-            </div>
-
-            <div class="upgrade-section">
-                <h2 class="text-xl font-bold">Global Upgrades</h2>
-                <p class="text-sm">Erhöht deine gesamte Produktion um 10%.</p>
-                <div class="upgrade-group">
-                    <p>Kosten: <span id="booster_kosten_anzeige" class="font-bold">5000</span> Smileys</p>
-                    <button id="booster_button" class="upgrade-button">Kaufen</button>
+            <div class="forschungslabor-container">
+                <div class="upgrade-container">
+                    <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
+                    <p>Generiert Forschungspunkte, die für mächtige Upgrades auf der Prestige-Ebene verwendet werden.</p>
+                    <div class="kosten-container">
+                        <button id="forschungslaborButton">Kaufen (5000 Smileys)</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="research-upgrades-container">
+            <h2>Forschungs-Upgrades</h2>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="research_progress_bar"></div>
+                <div class="upgrade-buttons-wrapper">
+                    </div>
+            </div>
+            <p>Forschungspunkte: <span id="forschung_punkte_anzeige">0</span></p>
+        </div>
+        
+        <div class="upgrade-section">
+            <div class="upgrade-category">
+                <h2>Klick-Upgrades</h2>
+                <div class="upgrade-grid">
+                    <div class="upgrade-container" id="klick-upgrade-1-group">
+                        <h3>Verbesserter Klick</h3>
+                        <p>Erhöht die Effizienz jedes Klicks um 10%.</p>
+                        <div class="kosten-container">
+                            <button id="klick_upgrade_1_button" class="upgrade-button">Kaufen (1,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="klick-upgrade-2-group">
+                        <h3>Super-Klick</h3>
+                        <p>Erhöht die Effizienz jedes Klicks um weitere 20%.</p>
+                        <div class="kosten-container">
+                            <button id="klick_upgrade_2_button" class="upgrade-button">Kaufen (5,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="klick-upgrade-3-group">
+                        <h3>Hyper-Klick</h3>
+                        <p>Erhöht die Effizienz jedes Klicks um weitere 50%.</p>
+                        <div class="kosten-container">
+                            <button id="klick_upgrade_3_button" class="upgrade-button">Kaufen (25,000 Smileys)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="upgrade-section">
+            <div class="upgrade-category">
+                <h2>Auto-Klicker-Upgrades</h2>
+                <div class="upgrade-grid">
+                    <div class="upgrade-container" id="auto_klicker_upgrade_1_group">
+                        <h3>Turbo-Antrieb</h3>
+                        <p>Verdoppelt die Klickgeschwindigkeit deiner Auto-Klicker.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_1_button" class="upgrade-button">Kaufen (2,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_2_group">
+                        <h3>Auto-Produktion</h3>
+                        <p>Deine Auto-Klicker produzieren nun pro Sekunde 2 Smileys zusätzlich.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_2_button" class="upgrade-button">Kaufen (8,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_3_group">
+                        <h3>Ressourcensparend</h3>
+                        <p>Auto-Klicker kosten 10% weniger.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_3_button" class="upgrade-button">Kaufen (25,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_4_group">
+                        <h3>Fließband</h3>
+                        <p>Auto-Klicker sind nun 15% effizienter.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_4_button" class="upgrade-button">Kaufen (100,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_5_group">
+                        <h3>Fließband 2.0</h3>
+                        <p>Auto-Klicker produzieren nun pro Sekunde 5 Smileys zusätzlich.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_5_button" class="upgrade-button">Kaufen (500,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_6_group">
+                        <h3>Fließband 3.0</h3>
+                        <p>Auto-Klicker sind nun 20% effizienter.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_6_button" class="upgrade-button">Kaufen (2,000,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_7_group">
+                        <h3>Über-Antrieb</h3>
+                        <p>Auto-Klicker sind 5x schneller.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_7_button" class="upgrade-button">Kaufen (8,000,000 Smileys)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container" id="auto_klicker_upgrade_8_group">
+                        <h3>Mega-Fließband</h3>
+                        <p>Deine Auto-Klicker sind 2x effizienter.</p>
+                        <div class="kosten-container">
+                            <button id="auto_klicker_upgrade_8_button" class="upgrade-button">Kaufen (25,000,000 Smileys)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="upgrade-section">
+            <div class="upgrade-category">
+                <h2>Gebäude</h2>
+                <div class="upgrade-grid">
+                    <div class="upgrade-container">
+                        <h3>Auto-Klicker (<span id="auto_klicker_count_anzeige">0</span>)</h3>
+                        <p>Klickt automatisch 1-mal pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="auto_clicker_button_1x">Kaufen (<span id="kosten_1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="auto_clicker_button_10x">Kaufen (<span id="kosten_10x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="auto_clicker_button_50x">Kaufen (<span id="kosten_50x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="auto_klicker_button_max">Kaufen (<span id="kosten_max">0</span>)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container">
+                        <h3>Smiley-Baum (<span id="smileyTreeCountAnzeige">0</span>)</h3>
+                        <p>Produziert 20 Smileys pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="smileyTreeButton1x">Kaufen (<span id="smileyTreeCost1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyTreeButton10x">Kaufen (<span id="smileyTreeCost10x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyTreeButton50x">Kaufen (<span id="smileyTreeCost50x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyTreeButtonMax">Kaufen (<span id="smileyTreeCostMax">0</span>)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container">
+                        <h3>Smiley-Fabrik (<span id="smileyFactoryCountAnzeige">0</span>)</h3>
+                        <p>Produziert 150 Smileys pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="smileyFactoryButton1x">Kaufen (<span id="smileyFactoryCost1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyFactoryButton10x">Kaufen (<span id="smileyFactoryCost10x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyFactoryButton50x">Kaufen (<span id="smileyFactoryCost50x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyFactoryButtonMax">Kaufen (<span id="smileyFactoryCostMax">0</span>)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
     <script src="script.js"></script>
 </body>
 </html>
