@@ -64,7 +64,7 @@ function speichereSpiel() {
     localStorage.setItem('autoClickerEfficiencyBonus', autoClickerEfficiencyBonus);
     localStorage.setItem('autoClickerProductionBonus', autoClickerProductionBonus);
     localStorage.setItem('autoClickerCostReduction', autoClickerCostReduction);
-    localStorage.setItem('autoClickerUpgradeIndex', autoClickerUpgradeIndex); // BUG FIX: Speichert den Upgrade-Index
+    localStorage.setItem('autoClickerUpgradeIndex', autoClickerUpgradeIndex);
     localStorage.setItem('autoClickerGrowthRate', autoClickerGrowthRate);
 }
 
@@ -84,14 +84,19 @@ function updateDisplay() {
     const multiplikatorPerClick = document.getElementById("multiplikator_per_click");
     if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2);
 
-    // ----- SPS-BERECHNUNG MIT NEUEN BONI -----
-    const sps = ((auto_klicker_count * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus) * (1 + autoClickerResearchBonus) * (1 + autoClickerEfficiencyBonus) + (smileyTreeProduction * (20 + smileyTreeResearchBonus)) + (smileyFactoryProduction * (150 + smileyFactoryResearchBonus))) * globalerMultiplikator;
+    // NEUE SPS-BERECHNUNG
+    // Basis-Produktion pro Sekunde für jedes Gebäude
+    const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
+    const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
+    const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
+    
+    const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
     const smpAnzeigeMain = document.getElementById("smp_anzeige");
     if (smpAnzeigeMain) smpAnzeigeMain.innerText = Math.round(smp);
-
+    
     // Aktualisiert die Anzeige auf der Upgrades-Seite (upgrades.html)
     const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
     if (smileyPointsUpgrades) smileyPointsUpgrades.innerText = smiley_points;
@@ -226,13 +231,18 @@ function klickeSmiley() {
     updateDisplay();
 }
 
-// Funktion für den Auto-Klicker
+// NEUE Funktion für den Auto-Klicker
 function autoClick() {
-    // Berücksichtigt alle neuen Auto-Klicker-Boni
-    const sps = (auto_klicker_count * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus);
-    const spsCombined = (sps * (1 + autoClickerResearchBonus)) * (1 + autoClickerEfficiencyBonus);
-    aktuelle_smileys += spsCombined * globalerMultiplikator;
-    gesammelte_smileys += spsCombined * globalerMultiplikator;
+    // Basis-Produktion pro Sekunde für jedes Gebäude
+    const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
+    const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
+    const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
+
+    // Gesamte SPS, inklusive Effizienz- und globalem Multiplikator
+    const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus) * globalerMultiplikator;
+    
+    aktuelle_smileys += sps;
+    gesammelte_smileys += sps;
     updateDisplay();
 }
 
