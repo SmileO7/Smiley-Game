@@ -8,24 +8,28 @@ let gesammelte_smileys = parseInt(localStorage.getItem('gesammelte_smileys')) ||
 let smiley_points = parseInt(localStorage.getItem('smiley_points')) || 0;
 let multiplikator = parseInt(localStorage.getItem('multiplikator')) || 1;
 let auto_klicker_count = parseInt(localStorage.getItem('auto_klicker_count')) || 0;
-let prestige_kosten = parseInt(localStorage.getItem('prestige_kosten')) || 1000; // Dynamische Prestige-Kosten, Startwert 1000
-let volume = parseFloat(localStorage.getItem('volume')) || 1.0; // Lautstärke-Einstellung, Standardwert 1.0 (100%)
-let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0; // Produktion durch den Smiley-Baum
+let prestige_kosten = parseInt(localStorage.getItem('prestige_kosten')) || 1000;
+let volume = parseFloat(localStorage.getItem('volume')) || 1.0;
+let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0;
 let globalerMultiplikator = parseFloat(localStorage.getItem('globalerMultiplikator')) || 1.0;
 let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
-let autoClickerSpeedBonus = parseFloat(localStorage.getItem('autoClickerSpeedBonus')) || 1;
 
-// ----- NEUE VARIABLEN FÜR FORSCHUNGSSYSTEM & KLICK-UPGRADES -----
+// ----- NEUE VARIABLEN FÜR FORSCHUNGSSYSTEM & UPGRADES -----
 let forschungspunkte = parseInt(localStorage.getItem('forschungspunkte')) || 0;
 let forschungslabor_count = parseInt(localStorage.getItem('forschungslabor_count')) || 0;
 let autoClickerResearchBonus = parseFloat(localStorage.getItem('autoClickerResearchBonus')) || 0;
 let smileyTreeResearchBonus = parseFloat(localStorage.getItem('smileyTreeResearchBonus')) || 0;
 let smileyFactoryResearchBonus = parseFloat(localStorage.getItem('smileyFactoryResearchBonus')) || 0;
-let klickUpgradeBonus = parseFloat(localStorage.getItem('klickUpgradeBonus')) || 0; // NEU: Klick-Upgrade-Bonus
+let klickUpgradeBonus = parseFloat(localStorage.getItem('klickUpgradeBonus')) || 0;
+let autoClickerSpeedBonus = parseFloat(localStorage.getItem('autoClickerSpeedBonus')) || 1;
+let autoClickerClickBonus = parseFloat(localStorage.getItem('autoClickerClickBonus')) || 0;
+let autoClickerEfficiencyBonus = parseFloat(localStorage.getItem('autoClickerEfficiencyBonus')) || 0;
+let autoClickerProductionBonus = parseFloat(localStorage.getItem('autoClickerProductionBonus')) || 0;
+let autoClickerCostReduction = parseFloat(localStorage.getItem('autoClickerCostReduction')) || 1;
 
 // Konstanten für die Basis-Kosten und den Steigerungsfaktor
 const autoClickerBaseCost = 20;
-const autoClickerGrowthRate = 1.1;
+let autoClickerGrowthRate = 1.1;
 const smileyTreeBaseCost = 150;
 const smileyTreeGrowthRate = 1.2;
 const smileyFactoryBaseCost = 2500;
@@ -49,18 +53,17 @@ function speichereSpiel() {
     localStorage.setItem('smileyTreeProduction', smileyTreeProduction);
     localStorage.setItem('globalerMultiplikator', globalerMultiplikator);
     localStorage.setItem('smileyFactoryProduction', smileyFactoryProduction);
-    // ----- NEUE VARIABLEN SPEICHERN -----
     localStorage.setItem('forschungspunkte', forschungspunkte);
     localStorage.setItem('forschungslabor_count', forschungslabor_count);
     localStorage.setItem('autoClickerResearchBonus', autoClickerResearchBonus);
     localStorage.setItem('smileyTreeResearchBonus', smileyTreeResearchBonus);
     localStorage.setItem('smileyFactoryResearchBonus', smileyFactoryResearchBonus);
-    localStorage.setItem('klickUpgradeBonus', klickUpgradeBonus); // NEU
- function speichereSpiel() {
-    // ... (deine bestehenden Variablen) ...
-    localStorage.setItem('klickUpgradeBonus', klickUpgradeBonus); 
-    localStorage.setItem('autoClickerSpeedBonus', autoClickerSpeedBonus); // NEU
-}
+    localStorage.setItem('klickUpgradeBonus', klickUpgradeBonus);
+    localStorage.setItem('autoClickerSpeedBonus', autoClickerSpeedBonus);
+    localStorage.setItem('autoClickerClickBonus', autoClickerClickBonus);
+    localStorage.setItem('autoClickerEfficiencyBonus', autoClickerEfficiencyBonus);
+    localStorage.setItem('autoClickerProductionBonus', autoClickerProductionBonus);
+    localStorage.setItem('autoClickerCostReduction', autoClickerCostReduction);
 }
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
@@ -77,10 +80,10 @@ function updateDisplay() {
     const prestigeKostenMain = document.getElementById("prestige_kosten_anzeige");
     if (prestigeKostenMain) prestigeKostenMain.innerText = prestige_kosten;
     const multiplikatorPerClick = document.getElementById("multiplikator_per_click");
-    if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2); // NEU: Zeigt den Klick-Bonus an
+    if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2);
 
     // ----- SPS-BERECHNUNG MIT NEUEN BONI -----
-    const sps = ((auto_klicker_count * (1 + autoClickerResearchBonus)) + (smileyTreeProduction * (20 + smileyTreeResearchBonus)) + (smileyFactoryProduction * (150 + smileyFactoryResearchBonus))) * globalerMultiplikator;
+    const sps = ((auto_klicker_count * (1 + autoClickerResearchBonus) * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus) + (smileyTreeProduction * (20 + smileyTreeResearchBonus)) + (smileyFactoryProduction * (150 + smileyFactoryResearchBonus))) * globalerMultiplikator * (1 + autoClickerEfficiencyBonus);
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
@@ -116,10 +119,10 @@ function updateDisplay() {
     if (boosterKostenAnzeige) boosterKostenAnzeige.innerText = 5000;
 
     // Auto-Klicker Kosten
-    updateCosts("kosten_1x", autoClickerBaseCost, autoClickerGrowthRate, auto_klicker_count, 1);
-    updateCosts("kosten_10x", autoClickerBaseCost, autoClickerGrowthRate, auto_klicker_count, 10);
-    updateCosts("kosten_50x", autoClickerBaseCost, autoClickerGrowthRate, auto_klicker_count, 50);
-    updateMaxCost("kosten_max", autoClickerBaseCost, autoClickerGrowthRate, auto_klicker_count);
+    updateCosts("kosten_1x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 1);
+    updateCosts("kosten_10x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 10);
+    updateCosts("kosten_50x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 50);
+    updateMaxCost("kosten_max", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count);
 
     // Smiley-Baum Kosten
     updateCosts("smileyTreeCost1x", smileyTreeBaseCost, smileyTreeGrowthRate, smileyTreeProduction, 1);
@@ -138,13 +141,6 @@ function updateDisplay() {
     updateCosts("forschungslaborCost10x", forschungslaborBaseCost, forschungslaborGrowthRate, forschungslabor_count, 10);
     updateCosts("forschungslaborCost50x", forschungslaborBaseCost, forschungslaborGrowthRate, forschungslabor_count, 50);
     updateMaxCost("forschungslaborCostMax", forschungslaborBaseCost, forschungslaborGrowthRate, forschungslabor_count);
-
-    // Versteckt den Auto-Klicker Geschwindigkeits-Upgrade-Button nach dem Kauf
-    const autoClickerSpeedGroup = document.getElementById("auto_clicker_speed_upgrade_group");
-    if (autoClickerSpeedGroup && autoClickerSpeedBonus > 1) {
-        autoClickerSpeedGroup.style.display = 'none';
-    }
-
 
     // Versteckt Buttons, die bereits gekauft wurden
     const boosterButton = document.getElementById("booster_button");
@@ -174,6 +170,24 @@ function updateDisplay() {
     if (klick2Group && klickUpgradeBonus >= 0.2) klick2Group.style.display = 'none';
     const klick3Group = document.getElementById("klick-upgrade-3-group");
     if (klick3Group && klickUpgradeBonus >= 0.5) klick3Group.style.display = 'none';
+
+    // ----- VERSTECKT DIE AUTO-KLICKER UPGRADES NACH KAUF -----
+    const autoKlickerUpgradeGroups = [
+        document.getElementById("auto_klicker_upgrade_1_group"),
+        document.getElementById("auto_klicker_upgrade_2_group"),
+        document.getElementById("auto_klicker_upgrade_3_group"),
+        document.getElementById("auto_klicker_upgrade_4_group"),
+        document.getElementById("auto_klicker_upgrade_5_group"),
+        document.getElementById("auto_klicker_upgrade_6_group"),
+        document.getElementById("auto_klicker_upgrade_7_group"),
+        document.getElementById("auto_klicker_upgrade_8_group")
+    ];
+
+    if (autoClickerUpgradeIndex > 0) {
+        for (let i = 0; i < autoClickerUpgradeIndex; i++) {
+            if (autoKlickerUpgradeGroups[i]) autoKlickerUpgradeGroups[i].style.display = 'none';
+        }
+    }
 }
 function updateCosts(elementId, baseCost, growthRate, currentCount, amount) {
     const element = document.getElementById(elementId);
@@ -205,40 +219,24 @@ function updateMaxCost(elementId, baseCost, growthRate, currentCount) {
 }
 // Funktion zum Klicken auf den Smiley
 function klickeSmiley() {
-    aktuelle_smileys += (multiplikator * globalerMultiplikator * (1 + klickUpgradeBonus)); // HIER WURDE KLICK-BONUS HINZUGEFÜGT
+    aktuelle_smileys += (multiplikator * globalerMultiplikator * (1 + klickUpgradeBonus));
     gesammelte_smileys += (multiplikator * globalerMultiplikator * (1 + klickUpgradeBonus));
     updateDisplay();
 }
 
 // Funktion für den Auto-Klicker
 function autoClick() {
-    // ... deine bestehende Zeile
-    const sps = (auto_klicker_count * (1 + autoClickerResearchBonus) * autoClickerSpeedBonus + smileyTreeProduction * (20 + smileyTreeResearchBonus) + smileyFactoryProduction * (150 + smileyFactoryResearchBonus));
-    aktuelle_smileys += sps * globalerMultiplikator;
-    gesammelte_smileys += sps * globalerMultiplikator;
+    // Berücksichtigt alle neuen Auto-Klicker-Boni
+    const sps = (auto_klicker_count * autoClickerSpeedBonus + autoClickerClickBonus + autoClickerProductionBonus);
+    const spsCombined = (sps * (1 + autoClickerResearchBonus)) * (1 + autoClickerEfficiencyBonus);
+    aktuelle_smileys += spsCombined * globalerMultiplikator;
+    gesammelte_smileys += spsCombined * globalerMultiplikator;
     updateDisplay();
 }
-// Funktion für den Kauf des Auto-Klicker Geschwindigkeits-Upgrades
-function kaufeAutoClickerSpeedUpgrade() {
-    const kosten = 2000;
-    if (aktuelle_smileys >= kosten && autoClickerSpeedBonus < 2) {
-        aktuelle_smileys -= kosten;
-        autoClickerSpeedBonus = 2; // Verdoppelt die Geschwindigkeit
-        speichereSpiel();
-        updateDisplay();
-        const button = document.getElementById("auto_clicker_speed_button");
-        if (button) button.style.display = 'none';
-        const group = document.getElementById("auto_clicker_speed_upgrade_group");
-        if (group) group.style.display = 'none';
-    } else {
-        alert(`Nicht genügend Smileys! Benötigt: ${kosten}`);
-    }
-}
 
-
-// ----- NEUE FUNKTION FÜR AUTOMATISCHE FORSCHUNGSPUNKTE -----
+// Funktion für automatische Forschungspunkte
 function autoForschung() {
-    const fps = forschungslabor_count * 1; // 1 Forschungspunkt pro Sekunde pro Labor
+    const fps = forschungslabor_count * 1;
     forschungspunkte += fps;
 }
 
@@ -258,16 +256,13 @@ function klickprestige() {
 
 function bestatigePrestige() {
     if (gesammelte_smileys >= prestige_kosten) {
-        // HINWEIS: Neue, balancierte Formel für die Smileyvers-Punkte
         smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));
-        
         multiplikator = 1 + smiley_points;
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
         auto_klicker_count = 0;
         smileyTreeProduction = 0;
         smileyFactoryProduction = 0;
-        // HINWEIS: Neue, einfachere Berechnung der Prestige-Kosten
         prestige_kosten = 1000 + (smiley_points * 100); 
         speichereSpiel();
         updateDisplay();
@@ -344,7 +339,7 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
     }
 }
 
-// ----- FUNKTION FÜR DEN KAUF VON FORSCHUNGS-UPGRADES -----
+// Funktion für den Kauf von Forschungs-Upgrades
 function kaufeForschungsUpgrade(upgradeId) {
     let kosten;
     let bonusType;
@@ -358,7 +353,7 @@ function kaufeForschungsUpgrade(upgradeId) {
         kosten = 50;
         bonusType = 'smiley_factory';
     } else {
-        return; // Upgrade bereits gekauft
+        return;
     }
 
     if (forschungspunkte >= kosten) {
@@ -374,7 +369,7 @@ function kaufeForschungsUpgrade(upgradeId) {
     }
 }
 
-// ----- NEUE FUNKTION FÜR DEN KAUF VON KLICK-UPGRADES -----
+// Funktion für den Kauf von Klick-Upgrades
 function kaufeKlickUpgrade(upgradeId) {
     let kosten;
     let bonus;
@@ -388,7 +383,7 @@ function kaufeKlickUpgrade(upgradeId) {
         kosten = 25000;
         bonus = 0.5;
     } else {
-        return; // Upgrade bereits gekauft oder nicht in der richtigen Reihenfolge
+        return;
     }
 
     if (aktuelle_smileys >= kosten) {
@@ -401,6 +396,47 @@ function kaufeKlickUpgrade(upgradeId) {
     }
 }
 
+//----- NEUE LOGIK FÜR DIE 8 AUTO-KLICKER UPGRADES -----
+let autoClickerUpgradeIndex = parseInt(localStorage.getItem('autoClickerUpgradeIndex')) || 0;
+const autoClickerUpgrades = [
+    { cost: 2000, type: 'speed', value: 2, variable: 'autoClickerSpeedBonus' },
+    { cost: 8000, type: 'click', value: 2, variable: 'autoClickerClickBonus' },
+    { cost: 25000, type: 'cost', value: 0.9, variable: 'autoClickerCostReduction' },
+    { cost: 100000, type: 'efficiency', value: 0.15, variable: 'autoClickerEfficiencyBonus' },
+    { cost: 500000, type: 'click', value: 5, variable: 'autoClickerClickBonus' },
+    { cost: 2000000, type: 'efficiency', value: 0.2, variable: 'autoClickerEfficiencyBonus' },
+    { cost: 8000000, type: 'speed', value: 5, variable: 'autoClickerSpeedBonus' },
+    { cost: 25000000, type: 'efficiency', value: 2, variable: 'autoClickerEfficiencyBonus' }
+];
+
+function kaufeAutoClickerUpgrade(index) {
+    const upgrade = autoClickerUpgrades[index];
+    if (aktuelle_smileys >= upgrade.cost) {
+        aktuelle_smileys -= upgrade.cost;
+        if (upgrade.type === 'speed') {
+            autoClickerSpeedBonus = upgrade.value;
+        } else if (upgrade.type === 'click') {
+            autoClickerClickBonus += upgrade.value;
+        } else if (upgrade.type === 'cost') {
+            autoClickerCostReduction = upgrade.value;
+            autoClickerGrowthRate = 1.05; // Setzt die Wachstumsrate herab
+        } else if (upgrade.type === 'efficiency') {
+            if (index === 5) {
+                autoClickerEfficiencyBonus = 0.15 + 0.2; // Addiert den Fließband-Bonus
+            } else if (index === 7) {
+                 autoClickerEfficiencyBonus = autoClickerEfficiencyBonus * 2; // Verdoppelt den Gesamtbonus
+            } else {
+                 autoClickerEfficiencyBonus += upgrade.value;
+            }
+        }
+        autoClickerUpgradeIndex = index + 1;
+        speichereSpiel();
+        updateDisplay();
+    } else {
+        alert(`Nicht genügend Smileys! Benötigt: ${upgrade.cost}`);
+    }
+}
+//----------------------------------------------------------------------------------
 
 // Funktion zum Aktualisieren der Lautstärke
 function updateVolume() {
@@ -429,15 +465,21 @@ if (upgradeMultiplikatorButton) upgradeMultiplikatorButton.addEventListener("cli
 
 // Event-Listener für Auto-Klicker
 const autoClickerButton1 = document.getElementById("auto_clicker_button_1x");
-if (autoClickerButton1) autoClickerButton1.addEventListener("click", () => kaufeUpgrade(1, autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
+if (autoClickerButton1) autoClickerButton1.addEventListener("click", () => kaufeUpgrade(1, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButton10 = document.getElementById("auto_clicker_button_10x");
-if (autoClickerButton10) autoClickerButton10.addEventListener("click", () => kaufeUpgrade(10, autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
+if (autoClickerButton10) autoClickerButton10.addEventListener("click", () => kaufeUpgrade(10, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButton50 = document.getElementById("auto_clicker_button_50x");
-if (autoClickerButton50) autoClickerButton50.addEventListener("click", () => kaufeUpgrade(50, autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
+if (autoClickerButton50) autoClickerButton50.addEventListener("click", () => kaufeUpgrade(50, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButtonMax = document.getElementById("auto_clicker_button_max");
-if (autoClickerButtonMax) autoClickerButtonMax.addEventListener("click", () => kaufeUpgrade('max', autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
-const autoClickerSpeedButton = document.getElementById("auto_clicker_speed_button");
-if (autoClickerSpeedButton) autoClickerSpeedButton.addEventListener("click", kaufeAutoClickerSpeedUpgrade);
+if (autoClickerButtonMax) autoClickerButtonMax.addEventListener("click", () => kaufeUpgrade('max', autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
+
+// ----- NEUE AUTO-KLICKER UPGRADE-LISTENER -----
+for (let i = 1; i <= 8; i++) {
+    const button = document.getElementById(`auto_klicker_upgrade_${i}_button`);
+    if (button) {
+        button.addEventListener("click", () => kaufeAutoClickerUpgrade(i - 1));
+    }
+}
 
 // Event-Listener für Smiley-Baum
 const smileyTreeButton1 = document.getElementById("smileyTreeButton1x");
@@ -473,8 +515,6 @@ if (boosterButton) {
         }
     });
 }
-
-
 // ----- NEUE EVENT-LISTENER FÜR FORSCHUNGSSYSTEM -----
 const forschungslaborButton1 = document.getElementById("forschungslaborButton1x");
 if (forschungslaborButton1) forschungslaborButton1.addEventListener("click", () => kaufeUpgrade(1, forschungslaborBaseCost, forschungslaborGrowthRate, 'forschungslabor'));
