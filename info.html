@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info & Tipps</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        .header {
+            width: 100%;
+            background-color: #fff;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .header nav {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        .header a {
+            font-weight: bold;
+            color: #4a5568;
+            transition: color 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .header a:hover {
+            color: #2b6cb0;
+        }
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding-top: 5rem;
+            padding-bottom: 2rem;
+        }
+        .info-container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .upgrade-list-item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            background-color: #e2e8f0;
+        }
+        .upgrade-list-item h3 {
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav>
+            <a href="index.html">Startseite</a>
+            <a href="upgrades.html">Upgrades</a>
+            <a href="einstellungen.html">Einstellungen</a>
+            <a href="info.html">Info & Tipps</a>
+        </nav>
+    </div>
+
+    <div class="main-container">
+        <div class="info-container">
+            <h1 class="text-3xl font-bold mb-4 text-center">Info & Tipps</h1>
+
+            <div class="info-section">
+                <h2 class="text-xl font-bold">Das Spiel</h2>
+                <p>Willkommen bei Smiley Clicker! Das Ziel ist einfach: Sammle so viele Smileys wie möglich, indem du klickst und Gebäude baust, die automatisch für dich produzieren.</p>
+            </div>
+
+            <div class="info-section">
+                <h2 class="text-xl font-bold">Wichtige Konzepte</h2>
+                <ul>
+                    <li><strong>Aktuelle Smileys:</strong> Die Smileys, die du aktuell ausgeben kannst.</li>
+                    <li><strong>Smileys pro Sekunde (SPS):</strong> Die Anzahl der Smileys, die du automatisch pro Sekunde erhältst. Baue Gebäude, um diesen Wert zu erhöhen.</li>
+                    <li><strong>Forschungspunkte:</strong> Werden von Forschungslaboren produziert und sind für spezielle Gebäude-Upgrades in der Forschungsektion nötig.</li>
+                    <li><strong>Smileyvers-Punkte:</strong> Erhältst du durch Prestige. Sie multiplizieren deine Klick-Produktion dauerhaft und helfen dir, in den nächsten Runden schneller voranzukommen.</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h2 class="text-xl font-bold">Die verschiedenen Upgrades</h2>
+                <p>Es gibt verschiedene Arten von Upgrades, die sich gegenseitig verstärken:</p>
+                <ul>
+                    <li><strong>Klick-Upgrades:</strong> Erhöhen die Anzahl der Smileys, die du pro Mausklick erhältst.</li>
+                    <li><strong>Gebäude-Upgrades:</strong> Das sind spezifische Upgrades für jedes Gebäude, die dessen Produktion oder Geschwindigkeit massiv steigern.</li>
+                    <li><strong>Forschung:</strong> Verwendet Forschungspunkte, um einen prozentualen Bonus auf die Produktion bestimmter Gebäude zu geben.</li>
+                    <li><strong>Globales Upgrade:</strong> Ein einmaliges Upgrade, das deine gesamte Produktion um einen bestimmten Prozentsatz erhöht.</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h2 class="text-xl font-bold">Tipps</h2>
+                <p>So maximierst du deine Smiley-Produktion:</p>
+                <ul>
+                    <li>Fokussiere dich am Anfang auf den **Auto-Klicker**. Er ist kostengünstig und eine solide Basis.</li>
+                    <li>Sobald deine Produktion ansteigt, beginne damit, **Smiley-Bäume** und später **Smiley-Fabriken** zu bauen, um deine SPS zu erhöhen.</li>
+                    <li>Vergiss die **Forschungslabor**-Gebäude nicht! Sie sind essenziell, um die Effizienz deiner anderen Gebäude durch Forschung zu steigern.</li>
+                    <li>Zögere nicht, das **Prestige**-System zu nutzen. Auch wenn du von vorne beginnst, helfen dir die Smileyvers-Punkte, die nächste Runde viel schneller zu absolvieren.</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h2 class="text-xl font-bold">Auto-Klicker Upgrades</h2>
+                <p>Hier ist eine detaillierte Liste aller 8 Upgrades für den Auto-Klicker:</p>
+                <div class="upgrade-list-item">
+                    <h3>1. Turbo-Modul</h3>
+                    <p><strong>Effekt:</strong> Verdoppelt die Geschwindigkeit jedes Auto-Klickers. Deine SPS wird massiv gesteigert.</p>
+                    <p><strong>Kosten:</strong> 2,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>2. Verstärkte Klicks</h3>
+                    <p><strong>Effekt:</strong> Jeder Auto-Klicker produziert zusätzlich 2 Smileys pro Klick.</p>
+                    <p><strong>Kosten:</strong> 8,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>3. Energiesparmodus</h3>
+                    <p><strong>Effekt:</strong> Reduziert die Kosten für alle zukünftigen Auto-Klicker um 10% und senkt die Steigerungsrate der Kosten.</p>
+                    <p><strong>Kosten:</strong> 25,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>4. Präzisions-Mikrochips</h3>
+                    <p><strong>Effekt:</strong> Erhöht die Effizienz aller Auto-Klicker um 15%.</p>
+                    <p><strong>Kosten:</strong> 100,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>5. Multitasking-Software</h3>
+                    <p><strong>Effekt:</strong> Erhöht die Produktion pro Sekunde pro Auto-Klicker um 5 Smileys.</p>
+                    <p><strong>Kosten:</strong> 500,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>6. Fließband-Optimierung</h3>
+                    <p><strong>Effekt:</strong> Erhöht die Gesamtproduktion aller Auto-Klicker um weitere 20%.</p>
+                    <p><strong>Kosten:</strong> 2,000,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>7. Quanten-Beschleuniger</h3>
+                    <p><strong>Effekt:</strong> Erhöht die Geschwindigkeit der Auto-Klicker auf das 5-fache ihres Basiswerts.</p>
+                    <p><strong>Kosten:</strong> 8,000,000 Smileys</p>
+                </div>
+                <div class="upgrade-list-item">
+                    <h3>8. Ewige Batterie</h3>
+                    <p><strong>Effekt:</strong> Verdoppelt die gesamte Effizienz aller Auto-Klicker. Das finale Upgrade für maximale Produktion.</p>
+                    <p><strong>Kosten:</strong> 25,000,000 Smileys</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
