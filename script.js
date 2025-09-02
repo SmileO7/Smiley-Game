@@ -48,7 +48,7 @@ function updateDisplay() {
         if (smileyTreeButton) {
             smileyTreeButton.style.display = "none"; // Verstecke den Button nach dem Kauf
         }
-    }
+    }}
   function updateDisplay() {
     // Aktualisiert die Anzeige auf der Hauptseite (index.html)
     const smileyPointsMain = document.getElementById("smiley_points");
