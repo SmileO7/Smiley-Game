@@ -34,8 +34,7 @@ header {
 }
 
 .navbar a:hover,
-.navbar a.active {
-    background-color: #4CAF50;
+.navbar a.active { background-color: #4CAF50;
 }
 
 main {
@@ -201,6 +200,15 @@ main {
     max-width: 900px;
 }
 
+.research-upgrades-container {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    margin: 20px auto;
+    max-width: 900px;
+}
+
 .progress-bar-container {
     position: relative;
     height: 30px;
@@ -238,6 +246,7 @@ main {
     cursor: pointer;
     position: relative;
     transition: background-color 0.3s, transform 0.2s;
+    font-family: sans-serif; /* Füge diese Zeile hinzu */
 }
 
 .research-upgrade-button.bought {

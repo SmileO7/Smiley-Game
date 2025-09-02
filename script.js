@@ -85,6 +85,22 @@ function speichereSpiel() {
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
 function updateDisplay() {
     // Aktualisiert die Anzeige auf der Hauptseite (index.html)
+ 
+    // Neue Funktion zur Formatierung großer Zahlen
+function formatLargeNumber(number) {
+    if (number > 1e12) {
+        return Intl.NumberFormat('de-DE', {notation: 'compact', maximumFractionDigits: 2}).format(number);
+    }
+    return Math.round(number).toLocaleString('de-DE');
+}
+
+// Finde die Funktion updateDisplay()
+function updateDisplay() {
+    // ... anderer Code
+    const multiplikatorKostenAnzeige = document.getElementById("multiplikator_upgrade_kosten");
+    if (multiplikatorKostenAnzeige) multiplikatorKostenAnzeige.innerText = formatLargeNumber(10 * Math.pow(1.5, multiplikator - 1)); // Hier wurde es geändert
+    // ... anderer Code
+}
     const smileyPointsMain = document.getElementById("smiley_points");
     if (smileyPointsMain) smileyPointsMain.innerText = smiley_points;
     const multiplikatorMain = document.getElementById("multiplikator_anzeige");
@@ -126,10 +142,8 @@ function updateDisplay() {
     if (smpAnzeigeUpgrades) smpAnzeigeUpgrades.innerText = Math.round(smp);
 
     // ----- NEUE ANZEIGEN FÜR FORSCHUNGSSYSTEM -----
-    const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
-    if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = Math.floor(forschungspunkte);
-    const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
-    if (forschungslaborCountAnzeige) forschungslaborCountAnzeige.innerText = forschungslabor_count;
+  const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
+if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = Math.floor(forschungspunkte); // Hier wurde es geändert
 
     // Aktualisiert die dynamischen Kosten-Anzeigen
     const multiplikatorKostenAnzeige = document.getElementById("multiplikator_upgrade_kosten");
