@@ -275,6 +275,20 @@ function bestatigePrestige() {
         auto_klicker_count = 0;
         smileyTreeProduction = 0;
         smileyFactoryProduction = 0;
+        forschungslabor_count = 0; // BUG FIX: Forschungslabor wird zurückgesetzt
+        globalerMultiplikator = 1.0; // BUG FIX: Globaler Multiplikator wird zurückgesetzt
+        klickUpgradeBonus = 0; // BUG FIX: Klick-Upgrades werden zurückgesetzt
+        autoClickerUpgradeIndex = 0; // BUG FIX: Auto-Klicker Upgrades werden zurückgesetzt
+        autoClickerSpeedBonus = 1; // BUG FIX: Bonus wird zurückgesetzt
+        autoClickerClickBonus = 0; // BUG FIX: Bonus wird zurückgesetzt
+        autoClickerEfficiencyBonus = 0; // BUG FIX: Bonus wird zurückgesetzt
+        autoClickerProductionBonus = 0; // BUG FIX: Bonus wird zurückgesetzt
+        autoClickerCostReduction = 1; // BUG FIX: Bonus wird zurückgesetzt
+        autoClickerGrowthRate = 1.1; // BUG FIX: Wachstumsrate wird zurückgesetzt
+        autoClickerResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
+        smileyTreeResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
+        smileyFactoryResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
+
         prestige_kosten = 1000 + (smiley_points * 100); 
         speichereSpiel();
         updateDisplay();
