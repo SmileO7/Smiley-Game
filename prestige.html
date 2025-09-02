@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prestige</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="index.html">Start</a>
+            <a href="upgrades.html">Upgrades</a>
+            <a href="stats.html">Statistiken</a>
+            <a href="prestige.html" class="active">Prestige</a>
+        </nav>
+    </header>
+    <main class="container">
+        <h1>Prestige</h1>
+        <div class="info-box">
+            <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades">0</span></p>
+            <p>Gesammelte Smileys: <span id="gesammelte_smileys_upgrades">0</span></p>
+            <p>Benötigte Smileys für Prestige: <span id="prestige_kosten_anzeige">1000</span></p>
+            <p>Smileyverse-Punkte nach Prestige: <span id="smiley_points">0</span></p>
+        </div>
+        <div class="upgrade-section">
+            <button id="prestige_button" class="upgrade-button">Prestige aktivieren</button>
+            <button id="reset_button" class="upgrade-button no-button">Spiel zurücksetzen</button>
+        </div>
+        <div id="warnung_fenster" class="modal">
+            <div class="modal-content">
+                <span id="schliessen" class="close-button">&times;</span>
+                <h3>Warnung</h3>
+                <p>Möchtest du wirklich Prestige aktivieren?</p>
+                <p>Dein Spiel wird zurückgesetzt, aber du erhältst Smileyverse-Punkte!</p>
+                <div class="button-group">
+                    <button id="bestatigen_button" class="yes-button">Bestätigen</button>
+                    <button id="abbrechen_button" class="no-button">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+        <div id="reset_warnung_fenster" class="modal">
+            <div class="modal-content">
+                <h3>Achtung</h3>
+                <p>Möchtest du das Spiel wirklich komplett zurücksetzen?</p>
+                <p>Alle deine Daten werden unwiderruflich gelöscht!</p>
+                <div class="button-group">
+                    <button id="reset_bestatigen_button" class="yes-button">Ja</button>
+                    <button id="reset_abbrechen_button" class="no-button">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

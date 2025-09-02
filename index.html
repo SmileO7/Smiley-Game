@@ -3,160 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smileyvers Clicker</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
-        }
-        .header {
-            width: 100%;
-            background-color: #fff;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-        .header nav {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-        .header a {
-            font-weight: bold;
-            color: #4a5568;
-            transition: color 0.2s ease-in-out;
-            text-decoration: none;
-        }
-        .header a:hover {
-            color: #2b6cb0;
-        }
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 5rem;
-            padding-bottom: 2rem;
-        }
-        .game-container {
-            background-color: #fff;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            width: 600px;
-            text-align: center;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .stat-card {
-            background-color: #e2e8f0;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-            text-align: center;
-        }
-        .stat-card p {
-            font-size: 1rem;
-            color: #4a5568;
-        }
-        .stat-card .value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #2d3748;
-        }
-        .smiley-button {
-            width: 150px;
-            height: 150px;
-            background-image: url('https://em-content.zobj.net/source/microsoft-teams/337/smiling-face-with-smiling-eyes_1f60a.png');
-            background-size: cover;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.1s ease-in-out;
-            margin: 0 auto; /* Zentriert den Smiley-Button */
-        }
-        .smiley-button:active {
-            transform: scale(0.95);
-        }
-    </style>
+    <title>Smiley-Klicker</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <nav>
-            <a href="index.html">Startseite</a>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="active">Start</a>
             <a href="upgrades.html">Upgrades</a>
-            <a href="einstellungen.html">Einstellungen</a>
-            <a href="info.html">Info</a>
+            <a href="stats.html">Statistiken</a>
+            <a href="prestige.html">Prestige</a>
         </nav>
-    </div>
-
-    <div class="main-container">
-        <div class="game-container">
-            <h1 class="text-3xl font-bold mb-6">Smileyvers Clicker</h1>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <p>Aktuelle Smileys:</p>
-                    <div id="aktuelle_smileys" class="value">0</div>
-                </div>
-                <div class="stat-card">
-                    <p>Smileyvers-Punkte:</p>
-                    <div id="smiley_points" class="value">0</div>
-                </div>
-                <div class="stat-card">
-                    <p>Multiplikator:</p>
-                    <div id="multiplikator_anzeige" class="value">1</div>
-                </div>
-                <div class="stat-card">
-                    <p>Gesammelte Smileys:</p>
-                    <div id="gesammelte_smileys" class="value">0</div>
-                </div>
-                <div class="stat-card">
-                    <p>SPS:</p>
-                    <div id="sps_anzeige" class="value">0</div>
-                </div>
-                <div class="stat-card">
-                    <p>SPM:</p>
-                    <div id="smp_anzeige" class="value">0</div>
-                </div>
-            </div>
-
-            <p class="text-lg mb-4">Klicke auf den Smiley, um <span id="multiplikator_per_click" class="font-bold">1</span> Smiley zu sammeln!</p>
-
-            <button id="smiley_button" class="smiley-button mb-6"></button>
-
-            <div class="mt-4">
-                <button id="prestige_button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors">
-                    Prestige (<span id="prestige_kosten_anzeige">1000</span> Smileys)
-                </button>
-            </div>
+    </header>
+    <main class="container">
+        <h1>Dein Smiley-Klicker</h1>
+        <div class="info-box">
+            <p>Aktuelle Smileys: <span id="aktuelle_smileys">0</span></p>
+            <p>Gesammelte Smileys: <span id="gesammelte_smileys">0</span></p>
+            <p>Smileyverse-Punkte: <span id="smiley_points">0</span></p>
+            <p>Multiplikator pro Klick: <span id="multiplikator_per_click">1</span></p>
         </div>
-    </div>
-    
-    <div id="warnung_fenster" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 hidden">
-        <div class="bg-white p-8 rounded-lg text-center shadow-2xl w-96">
-            <h2 class="text-2xl font-bold mb-4">Warnung!</h2>
-            <p>Wenn du Prestige aktivierst, verlierst du deine aktuellen Smileys, Auto-Klicker, Smiley-Bäume und Smiley-Fabriken.</p>
-            <p class="font-bold mt-2">Möchtest du fortfahren?</p>
-            <div class="mt-6 flex justify-center gap-4">
-                <button id="bestatigen_button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600">Bestätigen</button>
-                <button id="abbrechen_button" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400">Abbrechen</button>
-            </div>
+        <button id="smiley_button" class="smiley-button">😊</button>
+        <div class="info-box">
+            <p>SPS: <span id="sps_anzeige">0</span></p>
+            <p>SPM: <span id="smp_anzeige">0</span></p>
         </div>
-    </div>
-
+        <div class="info-box">
+            <p>Lautstärke: <input type="range" id="volume_slider" min="0" max="100" value="100"></p>
+        </div>
+    </main>
     <script src="script.js"></script>
 </body>
 </html>

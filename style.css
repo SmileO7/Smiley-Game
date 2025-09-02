@@ -27,7 +27,7 @@ header {
 .navbar a {
     color: #f0f0f0;
     text-decoration: none;
-    padding: 10px 20px;
+    padding: 5px 20px;
     margin: 0 10px;
     border-radius: 5px;
     transition: background-color 0.3s;
