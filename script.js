@@ -13,6 +13,7 @@ let volume = parseFloat(localStorage.getItem('volume')) || 1.0; // Lautstärke-E
 let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0; // Produktion durch den Smiley-Baum
 let globalerMultiplikator = parseFloat(localStorage.getItem('globalerMultiplikator')) || 1.0;
 let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
+let autoClickerSpeedBonus = parseFloat(localStorage.getItem('autoClickerSpeedBonus')) || 1;
 
 // ----- NEUE VARIABLEN FÜR FORSCHUNGSSYSTEM & KLICK-UPGRADES -----
 let forschungspunkte = parseInt(localStorage.getItem('forschungspunkte')) || 0;
@@ -55,6 +56,11 @@ function speichereSpiel() {
     localStorage.setItem('smileyTreeResearchBonus', smileyTreeResearchBonus);
     localStorage.setItem('smileyFactoryResearchBonus', smileyFactoryResearchBonus);
     localStorage.setItem('klickUpgradeBonus', klickUpgradeBonus); // NEU
+ function speichereSpiel() {
+    // ... (deine bestehenden Variablen) ...
+    localStorage.setItem('klickUpgradeBonus', klickUpgradeBonus); 
+    localStorage.setItem('autoClickerSpeedBonus', autoClickerSpeedBonus); // NEU
+}
 }
 
 // Funktion zum Aktualisieren der Anzeige auf allen Seiten
@@ -133,6 +139,12 @@ function updateDisplay() {
     updateCosts("forschungslaborCost50x", forschungslaborBaseCost, forschungslaborGrowthRate, forschungslabor_count, 50);
     updateMaxCost("forschungslaborCostMax", forschungslaborBaseCost, forschungslaborGrowthRate, forschungslabor_count);
 
+    // Versteckt den Auto-Klicker Geschwindigkeits-Upgrade-Button nach dem Kauf
+    const autoClickerSpeedGroup = document.getElementById("auto_clicker_speed_upgrade_group");
+    if (autoClickerSpeedGroup && autoClickerSpeedBonus > 1) {
+        autoClickerSpeedGroup.style.display = 'none';
+    }
+
 
     // Versteckt Buttons, die bereits gekauft wurden
     const boosterButton = document.getElementById("booster_button");
@@ -200,11 +212,29 @@ function klickeSmiley() {
 
 // Funktion für den Auto-Klicker
 function autoClick() {
-    const sps = (auto_klicker_count * (1 + autoClickerResearchBonus) + smileyTreeProduction * (20 + smileyTreeResearchBonus) + smileyFactoryProduction * (150 + smileyFactoryResearchBonus));
+    // ... deine bestehende Zeile
+    const sps = (auto_klicker_count * (1 + autoClickerResearchBonus) * autoClickerSpeedBonus + smileyTreeProduction * (20 + smileyTreeResearchBonus) + smileyFactoryProduction * (150 + smileyFactoryResearchBonus));
     aktuelle_smileys += sps * globalerMultiplikator;
     gesammelte_smileys += sps * globalerMultiplikator;
     updateDisplay();
 }
+// Funktion für den Kauf des Auto-Klicker Geschwindigkeits-Upgrades
+function kaufeAutoClickerSpeedUpgrade() {
+    const kosten = 2000;
+    if (aktuelle_smileys >= kosten && autoClickerSpeedBonus < 2) {
+        aktuelle_smileys -= kosten;
+        autoClickerSpeedBonus = 2; // Verdoppelt die Geschwindigkeit
+        speichereSpiel();
+        updateDisplay();
+        const button = document.getElementById("auto_clicker_speed_button");
+        if (button) button.style.display = 'none';
+        const group = document.getElementById("auto_clicker_speed_upgrade_group");
+        if (group) group.style.display = 'none';
+    } else {
+        alert(`Nicht genügend Smileys! Benötigt: ${kosten}`);
+    }
+}
+
 
 // ----- NEUE FUNKTION FÜR AUTOMATISCHE FORSCHUNGSPUNKTE -----
 function autoForschung() {
@@ -406,6 +436,8 @@ const autoClickerButton50 = document.getElementById("auto_clicker_button_50x");
 if (autoClickerButton50) autoClickerButton50.addEventListener("click", () => kaufeUpgrade(50, autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButtonMax = document.getElementById("auto_clicker_button_max");
 if (autoClickerButtonMax) autoClickerButtonMax.addEventListener("click", () => kaufeUpgrade('max', autoClickerBaseCost, autoClickerGrowthRate, 'auto_clicker'));
+const autoClickerSpeedButton = document.getElementById("auto_clicker_speed_button");
+if (autoClickerSpeedButton) autoClickerSpeedButton.addEventListener("click", kaufeAutoClickerSpeedUpgrade);
 
 // Event-Listener für Smiley-Baum
 const smileyTreeButton1 = document.getElementById("smileyTreeButton1x");
@@ -441,6 +473,8 @@ if (boosterButton) {
         }
     });
 }
+
+
 // ----- NEUE EVENT-LISTENER FÜR FORSCHUNGSSYSTEM -----
 const forschungslaborButton1 = document.getElementById("forschungslaborButton1x");
 if (forschungslaborButton1) forschungslaborButton1.addEventListener("click", () => kaufeUpgrade(1, forschungslaborBaseCost, forschungslaborGrowthRate, 'forschungslabor'));
