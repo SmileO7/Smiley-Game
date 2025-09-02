@@ -105,9 +105,11 @@
             <div class="stats mb-4 text-center">
                 <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades" class="font-bold">0</span></p>
                 <p>Smileyvers-Punkte: <span id="smiley_points_upgrades" class="font-bold">0</span></p>
+                <p>Forschungspunkte: <span id="forschung_punkte_anzeige" class="font-bold">0</span></p>
                 <p>Gekaufte Auto-Klicker: <span id="auto_clicker_count_anzeige" class="font-bold">0</span></p>
                 <p>Gekaufte Smiley-Bäume: <span id="smileyTreeCountAnzeige" class="font-bold">0</span></p>
                 <p>Gekaufte Smiley-Fabriken: <span id="smileyFactoryCountAnzeige" class="font-bold">0</span></p>
+                <p>Gekaufte Forschungslabore: <span id="forschungslabor_count_anzeige" class="font-bold">0</span></p>
                 <p>Smileys pro Sekunde (SPS): <span id="sps_anzeige_upgrades" class="font-bold">0</span></p>
                 <p>Smileys pro Minute (SPM): <span id="smp_anzeige_upgrades" class="font-bold">0</span></p>
             </div>
@@ -181,6 +183,47 @@
                 <div class="upgrade-group">
                     <p>Kosten: <span id="smileyFactoryCostMax" class="font-bold">0</span> Smileys</p>
                     <button id="smileyFactoryButtonMax" class="upgrade-button">Max Bauen</button>
+                </div>
+            </div>
+            
+            <div class="upgrade-section">
+                <h2 class="text-xl font-bold">Forschungslabor</h2>
+                <p class="text-sm">Produziert Forschungspunkte, um deine Gebäude zu verbessern.</p>
+                <div class="upgrade-group">
+                    <p>Kosten: <span id="forschungslaborCost1x" class="font-bold">0</span> Smileys</p>
+                    <button id="forschungslaborButton1x" class="upgrade-button">1x Bauen</button>
+                </div>
+                <div class="upgrade-group">
+                    <p>Kosten: <span id="forschungslaborCost10x" class="font-bold">0</span> Smileys</p>
+                    <button id="forschungslaborButton10x" class="upgrade-button">10x Bauen</button>
+                </div>
+                <div class="upgrade-group">
+                    <p>Kosten: <span id="forschungslaborCost50x" class="font-bold">0</span> Smileys</p>
+                    <button id="forschungslaborButton50x" class="upgrade-button">50x Bauen</button>
+                </div>
+                <div class="upgrade-group">
+                    <p>Kosten: <span id="forschungslaborCostMax" class="font-bold">0</span> Smileys</p>
+                    <button id="forschungslaborButtonMax" class="upgrade-button">Max Bauen</button>
+                </div>
+            </div>
+
+            <div class="upgrade-section">
+                <h2 class="text-xl font-bold">Forschung</h2>
+                <p class="text-sm">Gib Forschungspunkte aus, um deine Gebäude zu verstärken.</p>
+                <div class="upgrade-group" id="forschung-upgrade-1-group">
+                    <p>Verbesserte Autoklicker-Mechanik: +10% Auto-Klicker-Effizienz</p>
+                    <p>Kosten: 10 Forschungspunkte</p>
+                    <button id="forschung_upgrade_1_button" class="upgrade-button">Kaufen</button>
+                </div>
+                <div class="upgrade-group" id="forschung-upgrade-2-group">
+                    <p>Genetisch optimierte Bäume: +10% Smiley-Baum-Effizienz</p>
+                    <p>Kosten: 25 Forschungspunkte</p>
+                    <button id="forschung_upgrade_2_button" class="upgrade-button">Kaufen</button>
+                </div>
+                <div class="upgrade-group" id="forschung-upgrade-3-group">
+                    <p>Optimierung der Fabrikprozesse: +10% Smiley-Fabrik-Effizienz</p>
+                    <p>Kosten: 50 Forschungspunkte</p>
+                    <button id="forschung_upgrade_3_button" class="upgrade-button">Kaufen</button>
                 </div>
             </div>
 
