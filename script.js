@@ -115,7 +115,7 @@ function updateDisplay() {
 
     // ----- NEUE ANZEIGEN FÜR FORSCHUNGSSYSTEM -----
     const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
-    if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = forschungspunkte;
+if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = Math.floor(forschungspunkte);
     const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
     if (forschungslaborCountAnzeige) forschungslaborCountAnzeige.innerText = forschungslabor_count;
 
@@ -248,7 +248,8 @@ function autoClick() {
 
 // Funktion für automatische Forschungspunkte
 function autoForschung() {
-    const fps = forschungslabor_count * 1;
+    // Geändert: nur 0.1 Punkte pro Sekunde pro Labor, um das Balancing zu verlangsamen
+    const fps = forschungslabor_count * 0.1;
     forschungspunkte += fps;
 }
 
@@ -285,9 +286,12 @@ function bestatigePrestige() {
         autoClickerProductionBonus = 0; // BUG FIX: Bonus wird zurückgesetzt
         autoClickerCostReduction = 1; // BUG FIX: Bonus wird zurückgesetzt
         autoClickerGrowthRate = 1.1; // BUG FIX: Wachstumsrate wird zurückgesetzt
-        autoClickerResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
-        smileyTreeResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
-        smileyFactoryResearchBonus = 0; // BUG FIX: Forschungsbonus wird zurückgesetzt
+        
+        // BUG FIX: Forschungs-Variablen werden zurückgesetzt
+        forschungspunkte = 0; 
+        autoClickerResearchBonus = 0; 
+        smileyTreeResearchBonus = 0; 
+        smileyFactoryResearchBonus = 0; 
 
         prestige_kosten = 1000 + (smiley_points * 100); 
         speichereSpiel();
