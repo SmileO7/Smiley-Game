@@ -119,7 +119,7 @@ function updateDisplay() {
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
     const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
     const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
-     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
+    const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
@@ -267,15 +267,10 @@ function klickeSmiley() {
 }
 
 function autoClick() {
-    // Berechnet die SPS der Auto-Klicker, Smiley-Bäume und Smiley-Fabriken
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
     const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
     const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
-
-    // Summiert alle Produktionen und wendet globale Multiplikatoren an
     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
-    
-    // Addiert die SPS zu den aktuellen und gesammelten Smileys
     aktuelle_smileys += sps;
     gesammelte_smileys += sps;
 }
@@ -292,7 +287,7 @@ function resetGame() {
     localStorage.clear();
     location.reload();
 }
-function klickprestige() {
+function klickePrestige () {
     const warnungFenster = document.getElementById("warnung_fenster");
     if (warnungFenster) {
         warnungFenster.style.display = "flex";
@@ -308,7 +303,7 @@ function bestatigePrestige() {
         smileyTreeProduction = 0;
         smileyFactoryProduction = 0;
         forschungslabor_count = 0;
-        globalerMultiplikator = 1.0;
+        globalerMultiplikator = multiplikator;
         klickUpgradeBonus = 0;
         autoClickerUpgradeIndex = 0;
         autoClickerSpeedBonus = 1;
@@ -330,22 +325,22 @@ function bestatigePrestige() {
         alert("Du hast nicht genügend Smileys, um Prestige zu aktivieren.");
     }
 }
+
 function schliesseWarnung() {
     const warnungFenster = document.getElementById("warnung_fenster");
     if (warnungFenster) {
         warnungFenster.style.display = "none";
     }
 }
-function kaufeMultiplikatorUpgrade() {
-    const upgradeCost = Math.round(10 * Math.pow(1.5, multiplikator - 1));
-    if (smiley_points >= upgradeCost) {
-        smiley_points -= upgradeCost;
-        multiplikator += 1;
-        updateGame();
-    } else {
-        alert(`Nicht genügend Smileyvers-Punkte! Benötigt: ${upgradeCost}`);
+
+
+function abbrechenPrestige() {
+    const warnungFenster = document.getElementById("warnung_fenster");
+    if (warnungFenster) {
+        warnungFenster.style.display = "none";
     }
-}
+}   
+
 function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
     let currentCount;
     let name;
@@ -494,11 +489,13 @@ function kaufeForschungsUpgrade() {
 const smileyButton = document.getElementById("smiley_button");
 if (smileyButton) smileyButton.addEventListener("click", klickeSmiley);
 const prestigeButton = document.getElementById("prestige_button");
-if (prestigeButton) prestigeButton.addEventListener("click", klickprestige);
+if (prestigeButton) prestigeButton.addEventListener("click", klickePrestige);
 const bestatigenButton = document.getElementById("bestatigen_button");
 if (bestatigenButton) bestatigenButton.addEventListener("click", bestatigePrestige);
 const abbrechenButton = document.getElementById("abbrechen_button");
 if (abbrechenButton) abbrechenButton.addEventListener("click", schliesseWarnung);
+const schliessenButton = document.getElementById("schliessen");
+if (schliessenButton) {schliessenButton.addEventListener("click", abbrechenPrestige);}
 const upgradeMultiplikatorButton = document.getElementById("upgrade_multiplikator_10_button");
 if (upgradeMultiplikatorButton) upgradeMultiplikatorButton.addEventListener("click", kaufeMultiplikatorUpgrade);
 const autoClickerButton1 = document.getElementById("auto_clicker_button_1x");
