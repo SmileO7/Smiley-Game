@@ -109,7 +109,7 @@ function updateDisplay() {
     if (smileyPointsMain) smileyPointsMain.innerText = smiley_points;
     const multiplikatorMain = document.getElementById("multiplikator_anzeige");
     if (multiplikatorMain) multiplikatorMain.innerText = multiplikator;
-    const aktuelleSmileysMain = document.getElementById("aktuelle_smileys");
+   const aktuelleSmileysMain = document.getElementById("aktuelle_smileys");
     if (aktuelleSmileysMain) aktuelleSmileysMain.innerText = Math.round(aktuelle_smileys);
     const gesammelteSmileysMain = document.getElementById("gesammelte_smileys");
     if (gesammelteSmileysMain) gesammelteSmileysMain.innerText = Math.round(gesammelte_smileys);
@@ -120,7 +120,7 @@ function updateDisplay() {
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
     const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
     const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
-    const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
+     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
     if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
@@ -140,7 +140,7 @@ function updateDisplay() {
     if (spsAnzeigeUpgrades) spsAnzeigeUpgrades.innerText = Math.round(sps);
     const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
     if (smpAnzeigeUpgrades) smpAnzeigeUpgrades.innerText = Math.round(smp);
-    const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
+   const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
     if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = Math.floor(forschungspunkte);
     const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
     if (forschungslaborCountAnzeige) forschungslaborCountAnzeige.innerText = forschungslabor_count;
@@ -257,7 +257,7 @@ function updateMaxCost(elementId, baseCost, growthRate, currentCount) {
             break;
         }
     }
-    element.innerText = totalCost;
+    element.innerText = formatLargeNumber(totalCost);
 }
 
 // UPDATE: FÜGT updateDisplay() HINZU
@@ -381,7 +381,7 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
         }
     }
 
-    if (aktuelle_smileys >= totalCost) {
+    if (aktuelle_smileys >= Math.round(totalCost)) { // Hier ist die Korrektur!
         aktuelle_smileys -= totalCost;
         if (type === 'auto_clicker') auto_klicker_count += kaufeAnzahl;
         else if (type === 'smiley_tree') smileyTreeProduction += kaufeAnzahl;
@@ -392,7 +392,6 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
         alert(`Nicht genügend Smileys! Benötigt: ${totalCost}`);
     }
 }
-
 function kaufeKlickUpgrade(upgradeId) {
     let kosten;
     let bonus;
