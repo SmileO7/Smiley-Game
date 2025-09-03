@@ -7,7 +7,6 @@ let smiley_points = parseInt(localStorage.getItem('smiley_points')) || 0;
 let multiplikator = parseInt(localStorage.getItem('multiplikator')) || 1;
 let auto_klicker_count = parseInt(localStorage.getItem('auto_klicker_count')) || 0;
 let prestige_kosten = parseInt(localStorage.getItem('prestige_kosten')) || 1000;
-let volume = parseFloat(localStorage.getItem('volume')) || 1.0;
 let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0;
 let globalerMultiplikator = parseFloat(localStorage.getItem('globalerMultiplikator')) || 1.0;
 let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
@@ -486,14 +485,6 @@ function kaufeForschungsUpgrade() {
         alert(`Nicht genügend Forschungspunkte! Benötigt: ${upgrade.cost}`);
     }
 }
-function updateVolume() {
-    const volumeSlider = document.getElementById("volume_slider");
-    if (volumeSlider) {
-        volume = volumeSlider.value / 100;
-        speichereSpiel();
-    }
-}
-
 //================================================================================================================
 // ----- EVENT-LISTENER -----
 //================================================================================================================
@@ -570,9 +561,6 @@ if (resetCancelButton) resetCancelButton.addEventListener("click", () => {
     const modal = document.getElementById("reset_warnung_fenster");
     if (modal) modal.style.display = "none";
 });
-const volumeSlider = document.getElementById("volume_slider");
-if (volumeSlider) volumeSlider.addEventListener("input", updateVolume);
-
 // Event-Listener für das neue Kaufbestätigungsfenster
 const kaufBestatigenButton = document.getElementById("kauf_bestaetigen_button");
 if (kaufBestatigenButton) {
