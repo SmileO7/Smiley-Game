@@ -93,6 +93,7 @@ function speichereSpiel() {
 function updateGame() {
     speichereSpiel();
     updateDisplay();
+    document.getElementById("smiley_points").textContent = smiley_points;
 }
 
 // Funktion zur Formatierung großer Zahlen
@@ -261,8 +262,9 @@ function updateMaxCost(elementId, baseCost, growthRate, currentCount) {
 
 // UPDATE: FÜGT updateDisplay() HINZU
 function klickeSmiley() {
-    aktuelle_smileys += (multiplikator * globalerMultiplikator * (1 + klickUpgradeBonus));
-    gesammelte_smileys += (multiplikator * globalerMultiplikator * (1 + klickUpgradeBonus));
+    let clickValue = 1 + klickUpgradeBonus;
+    aktuelle_smileys += clickValue * globalerMultiplikator;
+    gesammelte_smileys += clickValue * globalerMultiplikator;
     updateDisplay();
 }
 
@@ -295,7 +297,7 @@ function klickePrestige () {
 }
 function bestatigePrestige() {
     if (gesammelte_smileys >= prestige_kosten) {
-        smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));
+        smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));        
         multiplikator = 1 + smiley_points;
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
