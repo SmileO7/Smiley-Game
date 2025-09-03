@@ -69,7 +69,6 @@ function speichereSpiel() {
     localStorage.setItem('multiplikator', multiplikator);
     localStorage.setItem('auto_klicker_count', auto_klicker_count);
     localStorage.setItem('prestige_kosten', prestige_kosten);
-    localStorage.setItem('volume', volume);
     localStorage.setItem('smileyTreeProduction', smileyTreeProduction);
     localStorage.setItem('globalerMultiplikator', globalerMultiplikator);
     localStorage.setItem('smileyFactoryProduction', smileyFactoryProduction);
@@ -204,7 +203,7 @@ function updateDisplay() {
         const progress = (researchUpgradeIndex / researchUpgrades.length) * 100;
         researchProgressBar.style.width = `${progress}%`;
     }
-    const researchUpgradeButtonsWrapper = document.querySelector('.upgrade-buttons-wrapper');
+  const researchUpgradeButtonsWrapper = document.querySelector('.upgrade-buttons-wrapper');
     if (researchUpgradeButtonsWrapper) {
         researchUpgradeButtonsWrapper.innerHTML = '';
         researchUpgrades.forEach((upgrade, index) => {
@@ -267,12 +266,16 @@ function klickeSmiley() {
     updateDisplay();
 }
 
-// UPDATE: ENTFERNT updateDisplay()
 function autoClick() {
+    // Berechnet die SPS der Auto-Klicker, Smiley-Bäume und Smiley-Fabriken
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
     const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
     const smileyFactorySPS = smileyFactoryProduction * (150 + smileyFactoryResearchBonus);
+
+    // Summiert alle Produktionen und wendet globale Multiplikatoren an
     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
+    
+    // Addiert die SPS zu den aktuellen und gesammelten Smileys
     aktuelle_smileys += sps;
     gesammelte_smileys += sps;
 }
@@ -282,6 +285,9 @@ function autoForschung() {
     const fps = forschungslabor_count * 0.2;
     forschungspunkte += fps;
 }
+    setInterval(autoForschung, 1000);
+
+
 function resetGame() {
     localStorage.clear();
     location.reload();
@@ -454,20 +460,18 @@ function kaufeAutoClickerUpgrade(index) {
     }
 }
 function kaufeForschungslabor() {
-    const kosten = 5000;
-    if (forschungslabor_count === 0 && aktuelle_smileys >= kosten) {
+    const kosten = 10000;
+    if (aktuelle_smileys >= kosten) {
         aktuelle_smileys -= kosten;
-        forschungslabor_count = 1;
+        forschungslabor_count += 1; // Fügt 1 Labor hinzu
         updateGame();
-    } else if (forschungslabor_count > 0) {
-        alert("Du kannst nur ein Forschungslabor besitzen.");
     } else {
-        alert("Nicht genügend Smileys! Benötigt: " + kosten);
+        alert("Nicht genügend Smileys!");
     }
 }
 function kaufeForschungsUpgrade() {
     const upgrade = researchUpgrades[researchUpgradeIndex];
-    if (forschungspunkte >= upgrade.cost) {
+    if (Math.floor(forschungspunkte) >= upgrade.cost) { // Korrektur: Wir runden vor dem Vergleich ab
         forschungspunkte -= upgrade.cost;
         if (upgrade.type === 'autoClicker') {
             autoClickerResearchBonus = upgrade.value;
