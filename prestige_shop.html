@@ -6,12 +6,11 @@
     <title>Smiley Clicker - Prestige Shop</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Hier kommt der spezifische CSS-Code für den Prestige Shop */
         body {
-            background-image: url('images/universe_background.jpg'); /* Annahme: Du hast ein Hintergrundbild */
+            background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
             background-size: cover;
             background-attachment: fixed;
-            color: #fff; /* Helle Schriftfarbe für dunklen Hintergrund */
+            color: #fff;
             font-family: 'Arial', sans-serif;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
         }
@@ -20,7 +19,7 @@
             max-width: 1200px;
             margin: 50px auto;
             padding: 30px;
-            background-color: rgba(0, 0, 0, 0.7); /* Etwas transparenter Hintergrund */
+            background-color: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
             text-align: center;
@@ -28,7 +27,7 @@
 
         .prestige-shop-container h1 {
             font-size: 3em;
-            color: #ffe066; /* Goldton */
+            color: #ffe066;
             margin-bottom: 20px;
         }
 
@@ -63,7 +62,7 @@
         .prestige-upgrade-item p {
             font-size: 0.9em;
             color: #ccc;
-            min-height: 60px; /* Einheitliche Höhe für Beschreibungen */
+            min-height: 60px;
         }
 
         .prestige-upgrade-item .cost {
@@ -85,14 +84,13 @@
             font-weight: bold;
         }
         
-        /* Zustände der Upgrades */
         .prestige-upgrade-item.locked {
             opacity: 0.5;
             cursor: not-allowed;
             filter: grayscale(80%);
         }
         .prestige-upgrade-item.locked .cost {
-            color: #ff6666; /* Rote Kosten für nicht verfügbar */
+            color: #ff6666;
         }
 
         .prestige-upgrade-item.bought {
@@ -141,7 +139,7 @@
         <section class="prestige-shop-container">
             <p class="current-smiley-points">Deine Smiley-Punkte: <span id="current_prestige_points">0</span></p>
             <div class="prestige-shop-grid" id="prestige_upgrades_grid">
-                </div>
+            </div>
         </section>
     </main>
 
