@@ -2,23 +2,51 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistiken</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <title>Smiley Clicker - Statistiken</title>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
     <header>
         <nav class="navbar">
             <a href="index.html">Start</a>
-            <a href="upgrades.html">Upgrades</a>
-            <a href="stats.html" class="active">Statistiken</a>
+            <a href="upgrades.html" class="active">Upgrades</a>
+            <a href="stats.html">Statistiken</a>
             <a href="prestige.html">Prestige</a>
         </nav>
     </header>
-    <main class="container">
-        <h1>Statistiken</h1>
-        <p>Diese Seite ist noch in Arbeit, aber hier kannst du bald detaillierte Statistiken über dein Spiel sehen!</p>
+
+    <main>
+        <section class="stats-container">
+            <h2>Spiel-Statistiken</h2>
+            <div class="stat-item">
+                <p>Gesamte geklickte Smileys:</p>
+                <span id="gesamte_geklickte_smileys">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gesamte gesammelte Smileys:</p>
+                <span id="gesamte_gesammelte_smileys">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gesamte Prestige-Punkte:</p>
+                <span id="gesamt_prestige_punkte">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gekaufte Upgrades:</p>
+                <span id="gekauft_upgrades">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gekaufte Auto-Klicker:</p>
+                <span id="gekauft_auto_klicker">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gekaufte Smiley-Bäume:</p>
+                <span id="gekauft_smiley_baeume">0</span>
+            </div>
+            <div class="stat-item">
+                <p>Gekaufte Smiley-Fabriken:</p>
+                <span id="gekauft_smiley_fabriken">0</span>
+            </div>
+        </section>
     </main>
-    <script src="script.js"></script>
-</body>
+
+    <script src="script.js"></script> </body>
 </html>

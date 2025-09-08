@@ -41,6 +41,17 @@ const forschungslaborBaseCost = 5000;
 const forschungslaborGrowthRate = 1.3;
 
 //================================================================================================================
+// ----- NEUE VARIABLEN FÜR STATISTIKEN -----
+//================================================================================================================
+let gesamteGeklickteSmileys = parseInt(localStorage.getItem('gesamteGeklickteSmileys')) || 0;
+let gesamteGesammelteSmileys = parseInt(localStorage.getItem('gesamteGesammelteSmileys')) || 0;
+let gesamtPrestigePunkte = parseInt(localStorage.getItem('gesamtPrestigePunkte')) || 0;
+let gekaufteUpgrades = parseInt(localStorage.getItem('gekaufteUpgrades')) || 0;
+let gekaufteAutoKlicker = parseInt(localStorage.getItem('gekauft_auto_klicker')) || 0;
+let gekaufteSmileyBaeume = parseInt(localStorage.getItem('gekauft_smiley_baeume')) || 0;
+let gekaufteSmileyFabriken = parseInt(localStorage.getItem('gekauft_smiley_fabriken')) || 0;
+
+//================================================================================================================
 // ----- FUNKTIONEN -----
 //================================================================================================================
 // NEUE Funktion zur Anzeige des Kauf-Modals
@@ -87,6 +98,14 @@ function speichereSpiel() {
     localStorage.setItem('smileyTreeResearchBonus', smileyTreeResearchBonus);
     localStorage.setItem('smileyFactoryResearchBonus', smileyFactoryResearchBonus);
     localStorage.setItem('efficiencyBonus', efficiencyBonus);
+    localStorage.setItem('gesamteGeklickteSmileys', gesamteGeklickteSmileys);
+    localStorage.setItem('gesamteGesammelteSmileys', gesamteGesammelteSmileys);
+    localStorage.setItem('gesamtPrestigePunkte', gesamtPrestigePunkte);
+    localStorage.setItem('gekaufteUpgrades', gekaufteUpgrades);
+    localStorage.setItem('gekauft_auto_klicker', gekaufteAutoKlicker);
+    localStorage.setItem('gekauft_smiley_baeume', gekaufteSmileyBaeume);
+    localStorage.setItem('gekauft_smiley_fabriken', gekaufteSmileyFabriken);
+
 }
 
 // NEUE Funktion: updateGame(), speichert und aktualisiert die Anzeige
@@ -262,6 +281,8 @@ function klickeSmiley() {
     let clickValue = 1 + klickUpgradeBonus;
     aktuelle_smileys += clickValue * globalerMultiplikator;
     gesammelte_smileys += clickValue * globalerMultiplikator;
+    gesamteGeklickteSmileys += clickValue * globalerMultiplikator; // <-- NEU
+    gesamteGesammelteSmileys += clickValue * globalerMultiplikator; // <-- NEU
     updateDisplay();
 }
 
@@ -272,6 +293,7 @@ function autoClick() {
     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
     aktuelle_smileys += sps;
     gesammelte_smileys += sps;
+    gesamteGesammelteSmileys += sps; // <-- NEU
     updateDisplay();
 }
 
@@ -293,7 +315,8 @@ function klickePrestige () {
 }
 function bestatigePrestige() {
     if (gesammelte_smileys >= prestige_kosten) {
-        smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));        
+        smiley_points += Math.floor(Math.sqrt(gesammelte_smileys / 100000));
+         gesamtPrestigePunkte += Math.floor(Math.sqrt(gesammelte_smileys / 100000)); // <-- NEU        
         multiplikator = 1 + smiley_points;
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
@@ -380,17 +403,25 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
         }
     }
 
-    if (aktuelle_smileys >= Math.round(totalCost)) { // Hier ist die Korrektur!
+    if (aktuelle_smileys >= Math.round(totalCost)) {
         aktuelle_smileys -= totalCost;
-        if (type === 'auto_clicker') auto_klicker_count += kaufeAnzahl;
-        else if (type === 'smiley_tree') smileyTreeProduction += kaufeAnzahl;
-        else if (type === 'smiley_factory') smileyFactoryProduction += kaufeAnzahl;
+        if (type === 'auto_clicker') {
+            auto_klicker_count += kaufeAnzahl;
+            gekaufteAutoKlicker += kaufeAnzahl; // <-- Korrekte Position
+        } else if (type === 'smiley_tree') {
+            smileyTreeProduction += kaufeAnzahl;
+            gekaufteSmileyBaeume += kaufeAnzahl; // <-- Korrekte Position
+        } else if (type === 'smiley_factory') {
+            smileyFactoryProduction += kaufeAnzahl;
+            gekaufteSmileyFabriken += kaufeAnzahl; // <-- Korrekte Position
+        }
         
         updateGame();
     } else {
         alert(`Nicht genügend Smileys! Benötigt: ${totalCost}`);
     }
 }
+
 function kaufeKlickUpgrade(upgradeId) {
     let kosten;
     let bonus;
@@ -410,6 +441,7 @@ function kaufeKlickUpgrade(upgradeId) {
     if (aktuelle_smileys >= kosten) {
         aktuelle_smileys -= kosten;
         klickUpgradeBonus = bonus;
+        gekaufteUpgrades++; // <-- NEU
         updateGame();
     } else {
         alert(`Nicht genügend Smileys! Benötigt: ${kosten}`);
@@ -441,12 +473,13 @@ function kaufeAutoClickerUpgrade(index) {
             if (index === 5) {
                 autoClickerEfficiencyBonus = 0.15 + 0.2;
             } else if (index === 7) {
-                 autoClickerEfficiencyBonus = autoClickerEfficiencyBonus * 2;
+                autoClickerEfficiencyBonus = autoClickerEfficiencyBonus * 2;
             } else {
-                 autoClickerEfficiencyBonus += upgrade.value;
+                autoClickerEfficiencyBonus += upgrade.value;
             }
         }
         autoClickerUpgradeIndex = index + 1;
+        gekaufteUpgrades++; // <-- FÜGE DIESE ZEILE HINZU
         updateGame();
     } else {
         alert(`Nicht genügend Smileys! Benötigt: ${upgrade.cost}`);
@@ -481,6 +514,44 @@ function kaufeForschungsUpgrade() {
         alert(`Nicht genügend Forschungspunkte! Benötigt: ${upgrade.cost}`);
     }
 }
+
+function updateStatistikDisplay() {
+    const gesamteGeklickteSmileysElement = document.getElementById("gesamte_geklickte_smileys");
+    if (gesamteGeklickteSmileysElement) {
+        gesamteGeklickteSmileysElement.innerText = formatLargeNumber(gesamteGeklickteSmileys);
+    }
+    // Wiederhole das für alle anderen Statistiken
+    const gesamteGesammelteSmileysElement = document.getElementById("gesamte_gesammelte_smileys");
+    if (gesamteGesammelteSmileysElement) {
+        gesamteGesammelteSmileysElement.innerText = formatLargeNumber(gesamteGesammelteSmileys);
+    }
+    const gesamtPrestigePunkteElement = document.getElementById("gesamt_prestige_punkte");
+    if (gesamtPrestigePunkteElement) {
+        gesamtPrestigePunkteElement.innerText = gesamtPrestigePunkte;
+    }
+    const gekaufteUpgradesElement = document.getElementById("gekauft_upgrades");
+    if (gekaufteUpgradesElement) {
+        gekaufteUpgradesElement.innerText = gekaufteUpgrades;
+    }
+    const gekaufteAutoKlickerElement = document.getElementById("gekauft_auto_klicker");
+    if (gekaufteAutoKlickerElement) {
+        gekaufteAutoKlickerElement.innerText = gekaufteAutoKlicker;
+    }
+    const gekaufteSmileyBaeumeElement = document.getElementById("gekauft_smiley_baeume");
+    if (gekaufteSmileyBaeumeElement) {
+        gekaufteSmileyBaeumeElement.innerText = gekaufteSmileyBaeume;
+    }
+    const gekaufteSmileyFabrikenElement = document.getElementById("gekauft_smiley_fabriken");
+    if (gekaufteSmileyFabrikenElement) {
+        gekaufteSmileyFabrikenElement.innerText = gekaufteSmileyFabriken;
+    }
+}
+// Rufe die Funktion auf, wenn die Seite geladen wird
+window.onload = function() {
+    updateDisplay(); // Bestehende Funktion für die Hauptseite
+    updateStatistikDisplay(); // Neue Funktion für die Statistikseite
+};
+
 //================================================================================================================
 // ----- EVENT-LISTENER -----
 //================================================================================================================
@@ -562,4 +633,6 @@ if (kaufBestatigenButton) {
 setInterval(autoClick, 1000);
 setInterval(autoForschung, 1000);
 setInterval(updateGame, 5000);
-window.onload = updateDisplay;
+window.onload = function() {
+    updateDisplay();
+    updateStatistikDisplay();}
