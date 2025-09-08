@@ -16,6 +16,7 @@
         </nav>
     </header>
     <main>
+        
         <div class="stats-and-lab-container">
             <div class="stats-container">
                 <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades">0</span></p>
@@ -43,7 +44,37 @@
             </div>
             <p>Forschungspunkte: <span id="forschung_punkte_anzeige">0</span></p>
         </div>
-        
+         <div class="upgrade-section">
+            <div class="upgrade-category">
+                <h2>Gebäude</h2>
+                <div class="upgrade-grid">
+                    <div class="upgrade-container">
+                        <h3>Auto-Klicker (<span id="auto_klicker_count_anzeige">0</span>)</h3>
+                        <p>Klickt automatisch 1-mal pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="auto_clicker_button_1x">Kaufen (<span id="kosten_1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="auto_clicker_button_10x">Kaufen (<span id="kosten_10x">0</span>)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container">
+                        <h3>Smiley-Baum (<span id="smileyTreeCountAnzeige">0</span>)</h3>
+                        <p>Produziert 20 Smileys pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="smileyTreeButton1x">Kaufen (<span id="smileyTreeCost1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyTreeButton10x">Kaufen (<span id="smileyTreeCost10x">0</span>)</button>
+                        </div>
+                    </div>
+                    <div class="upgrade-container">
+                        <h3>Smiley-Fabrik (<span id="smileyFactoryCountAnzeige">0</span>)</h3>
+                        <p>Produziert 150 Smileys pro Sekunde.</p>
+                        <div class="buy-buttons-group">
+                            <button class="upgrade-button buy-button" id="smileyFactoryButton1x">Kaufen (<span id="smileyFactoryCost1x">0</span>)</button>
+                            <button class="upgrade-button buy-button" id="smileyFactoryButton10x">Kaufen (<span id="smileyFactoryCost10x">0</span>)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="upgrade-section">
             <div class="upgrade-category">
                 <h2>Klick-Upgrades</h2>
@@ -137,38 +168,7 @@
             </div>
         </div>
 
-        <div class="upgrade-section">
-            <div class="upgrade-category">
-                <h2>Gebäude</h2>
-                <div class="upgrade-grid">
-                    <div class="upgrade-container">
-                        <h3>Auto-Klicker (<span id="auto_klicker_count_anzeige">0</span>)</h3>
-                        <p>Klickt automatisch 1-mal pro Sekunde.</p>
-                        <div class="buy-buttons-group">
-                            <button class="upgrade-button buy-button" id="auto_clicker_button_1x">Kaufen (<span id="kosten_1x">0</span>)</button>
-                            <button class="upgrade-button buy-button" id="auto_clicker_button_10x">Kaufen (<span id="kosten_10x">0</span>)</button>
-                        </div>
-                    </div>
-                    <div class="upgrade-container">
-                        <h3>Smiley-Baum (<span id="smileyTreeCountAnzeige">0</span>)</h3>
-                        <p>Produziert 20 Smileys pro Sekunde.</p>
-                        <div class="buy-buttons-group">
-                            <button class="upgrade-button buy-button" id="smileyTreeButton1x">Kaufen (<span id="smileyTreeCost1x">0</span>)</button>
-                            <button class="upgrade-button buy-button" id="smileyTreeButton10x">Kaufen (<span id="smileyTreeCost10x">0</span>)</button>
-                        </div>
-                    </div>
-                    <div class="upgrade-container">
-                        <h3>Smiley-Fabrik (<span id="smileyFactoryCountAnzeige">0</span>)</h3>
-                        <p>Produziert 150 Smileys pro Sekunde.</p>
-                        <div class="buy-buttons-group">
-                            <button class="upgrade-button buy-button" id="smileyFactoryButton1x">Kaufen (<span id="smileyFactoryCost1x">0</span>)</button>
-                            <button class="upgrade-button buy-button" id="smileyFactoryButton10x">Kaufen (<span id="smileyFactoryCost10x">0</span>)</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-            
+        
     </main>
     <script src="script.js"></script>
 </body>
