@@ -96,10 +96,12 @@ function updateGame() {
     document.getElementById("smiley_points").textContent = smiley_points;
 }
 
-// Funktion zur Formatierung großer Zahlen
 function formatLargeNumber(number) {
-    if (number > 1e12) {
-        return Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 2 }).format(number);
+    if (number > 999) { // Startet die kompakte Notation bei 1000
+        return Intl.NumberFormat('de-DE', {
+            notation: 'compact',
+            maximumFractionDigits: 2
+        }).format(number);
     }
     return Math.round(number).toLocaleString('de-DE');
 }
@@ -110,11 +112,11 @@ function updateDisplay() {
     const multiplikatorMain = document.getElementById("multiplikator_anzeige");
     if (multiplikatorMain) multiplikatorMain.innerText = multiplikator;
    const aktuelleSmileysMain = document.getElementById("aktuelle_smileys");
-    if (aktuelleSmileysMain) aktuelleSmileysMain.innerText = Math.round(aktuelle_smileys);
+    if (aktuelleSmileysMain)aktuelleSmileysMain.innerText = formatLargeNumber(aktuelle_smileys);
     const gesammelteSmileysMain = document.getElementById("gesammelte_smileys");
-    if (gesammelteSmileysMain) gesammelteSmileysMain.innerText = Math.round(gesammelte_smileys);
+    if (gesammelteSmileysMain) gesammelteSmileysMain.innerText = formatLargeNumber(gesammelte_smileys);
     const prestigeKostenMain = document.getElementById("prestige_kosten_anzeige");
-    if (prestigeKostenMain) prestigeKostenMain.innerText = prestige_kosten;
+    if (prestigeKostenMain) prestigeKostenMain.innerText = formatLargeNumber(prestige_kosten);
     const multiplikatorPerClick = document.getElementById("multiplikator_per_click");
     if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2);
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
@@ -123,13 +125,13 @@ function updateDisplay() {
     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
     const smp = sps * 60;
     const spsAnzeigeMain = document.getElementById("sps_anzeige");
-    if (spsAnzeigeMain) spsAnzeigeMain.innerText = Math.round(sps);
+    if (spsAnzeigeMain) spsAnzeigeMain.innerText = formatLargeNumber(sps);
     const smpAnzeigeMain = document.getElementById("smp_anzeige");
-    if (smpAnzeigeMain) smpAnzeigeMain.innerText = Math.round(smp);
+    if (smpAnzeigeMain) smpAnzeigeMain.innerText = formatLargeNumber(smp);
     const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
     if (smileyPointsUpgrades) smileyPointsUpgrades.innerText = smiley_points;
     const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
-    if (aktuelleSmileysUpgrades) aktuelleSmileysUpgrades.innerText = Math.round(aktuelle_smileys);
+    if (aktuelleSmileysUpgrades) aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
     const autoClickerCountAnzeige = document.getElementById("auto_klicker_count_anzeige");
     if (autoClickerCountAnzeige) autoClickerCountAnzeige.innerText = auto_klicker_count;
     const smileyTreeCountAnzeige = document.getElementById("smileyTreeCountAnzeige");
@@ -137,9 +139,9 @@ function updateDisplay() {
     const smileyFactoryCountAnzeige = document.getElementById("smileyFactoryCountAnzeige");
     if (smileyFactoryCountAnzeige) smileyFactoryCountAnzeige.innerText = smileyFactoryProduction;
     const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
-    if (spsAnzeigeUpgrades) spsAnzeigeUpgrades.innerText = Math.round(sps);
+    if (spsAnzeigeUpgrades) spsAnzeigeUpgrades.innerText = formatLargeNumber(sps);
     const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
-    if (smpAnzeigeUpgrades) smpAnzeigeUpgrades.innerText = Math.round(smp);
+    if (smpAnzeigeUpgrades) smpAnzeigeUpgrades.innerText = formatLargeNumber(smp);
    const forschungspunkteAnzeige = document.getElementById("forschung_punkte_anzeige");
     if (forschungspunkteAnzeige) forschungspunkteAnzeige.innerText = Math.floor(forschungspunkte);
     const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
@@ -233,7 +235,8 @@ function updateCosts(elementId, baseCost, growthRate, currentCount, amount) {
     for (let i = 0; i < amount; i++) {
         totalCost += Math.round(baseCost * Math.pow(growthRate, currentCount + i));
     }
-    element.innerText = totalCost;
+    // Ändere diese Zeile:
+    element.innerText = formatLargeNumber(totalCost); 
 }
 function updateMaxCost(elementId, baseCost, growthRate, currentCount) {
     const element = document.getElementById(elementId);
