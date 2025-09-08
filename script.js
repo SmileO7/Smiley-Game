@@ -150,16 +150,10 @@ function updateDisplay() {
     if (boosterKostenAnzeige) boosterKostenAnzeige.innerText = 5000;
     updateCosts("kosten_1x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 1);
     updateCosts("kosten_10x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 10);
-    updateCosts("kosten_50x", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count, 50);
-    updateMaxCost("kosten_max", autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, auto_klicker_count);
     updateCosts("smileyTreeCost1x", smileyTreeBaseCost, smileyTreeGrowthRate, smileyTreeProduction, 1);
     updateCosts("smileyTreeCost10x", smileyTreeBaseCost, smileyTreeGrowthRate, smileyTreeProduction, 10);
-    updateCosts("smileyTreeCost50x", smileyTreeBaseCost, smileyTreeGrowthRate, smileyTreeProduction, 50);
-    updateMaxCost("smileyTreeCostMax", smileyTreeBaseCost, smileyTreeGrowthRate, smileyTreeProduction);
     updateCosts("smileyFactoryCost1x", smileyFactoryBaseCost, smileyFactoryGrowthRate, smileyFactoryProduction, 1);
     updateCosts("smileyFactoryCost10x", smileyFactoryBaseCost, smileyFactoryGrowthRate, smileyFactoryProduction, 10);
-    updateCosts("smileyFactoryCost50x", smileyFactoryBaseCost, smileyFactoryGrowthRate, smileyFactoryProduction, 50);
-    updateMaxCost("smileyFactoryCostMax", smileyFactoryBaseCost, smileyFactoryGrowthRate, smileyFactoryProduction);
     const forschungslaborButton = document.getElementById("forschungslaborButton");
     if (forschungslaborButton) {
         if (forschungslabor_count > 0) {
@@ -504,10 +498,7 @@ const autoClickerButton1 = document.getElementById("auto_clicker_button_1x");
 if (autoClickerButton1) autoClickerButton1.addEventListener("click", () => kaufeUpgrade(1, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButton10 = document.getElementById("auto_clicker_button_10x");
 if (autoClickerButton10) autoClickerButton10.addEventListener("click", () => kaufeUpgrade(10, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
-const autoClickerButton50 = document.getElementById("auto_klicker_button_50x");
-if (autoClickerButton50) autoClickerButton50.addEventListener("click", () => kaufeUpgrade(50, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
-const autoClickerButtonMax = document.getElementById("auto_klicker_button_max");
-if (autoClickerButtonMax) autoClickerButtonMax.addEventListener("click", () => kaufeUpgrade('max', autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
+
 for (let i = 1; i <= 8; i++) {
     const button = document.getElementById(`auto_klicker_upgrade_${i}_button`);
     if (button) {
@@ -518,18 +509,11 @@ const smileyTreeButton1 = document.getElementById("smileyTreeButton1x");
 if (smileyTreeButton1) smileyTreeButton1.addEventListener("click", () => kaufeUpgrade(1, smileyTreeBaseCost, smileyTreeGrowthRate, 'smiley_tree'));
 const smileyTreeButton10 = document.getElementById("smileyTreeButton10x");
 if (smileyTreeButton10) smileyTreeButton10.addEventListener("click", () => kaufeUpgrade(10, smileyTreeBaseCost, smileyTreeGrowthRate, 'smiley_tree'));
-const smileyTreeButton50 = document.getElementById("smileyTreeButton50x");
-if (smileyTreeButton50) smileyTreeButton50.addEventListener("click", () => kaufeUpgrade(50, smileyTreeBaseCost, smileyTreeGrowthRate, 'smiley_tree'));
-const smileyTreeButtonMax = document.getElementById("smileyTreeButtonMax");
-if (smileyTreeButtonMax) smileyTreeButtonMax.addEventListener("click", () => kaufeUpgrade('max', smileyTreeBaseCost, smileyTreeGrowthRate, 'smiley_tree'));
+
 const smileyFactoryButton1 = document.getElementById("smileyFactoryButton1x");
 if (smileyFactoryButton1) smileyFactoryButton1.addEventListener("click", () => kaufeUpgrade(1, smileyFactoryBaseCost, smileyFactoryGrowthRate, 'smiley_factory'));
 const smileyFactoryButton10 = document.getElementById("smileyFactoryButton10x");
 if (smileyFactoryButton10) smileyFactoryButton10.addEventListener("click", () => kaufeUpgrade(10, smileyFactoryBaseCost, smileyFactoryGrowthRate, 'smiley_factory'));
-const smileyFactoryButton50 = document.getElementById("smileyFactoryButton50x");
-if (smileyFactoryButton50) smileyFactoryButton50.addEventListener("click", () => kaufeUpgrade(50, smileyFactoryBaseCost, smileyFactoryGrowthRate, 'smiley_factory'));
-const smileyFactoryButtonMax = document.getElementById("smileyFactoryButtonMax");
-if (smileyFactoryButtonMax) smileyFactoryButtonMax.addEventListener("click", () => kaufeUpgrade('max', smileyFactoryBaseCost, smileyFactoryGrowthRate, 'smiley_factory'));
 const boosterButton = document.getElementById("booster_button");
 if (boosterButton) {
     boosterButton.addEventListener("click", () => {
@@ -543,8 +527,7 @@ if (boosterButton) {
         }
     });
 }
-const forschungslaborButton = document.getElementById("forschungslaborButton");
-if (forschungslaborButton) forschungslaborButton.addEventListener("click", kaufeForschungslabor);
+
 const klickUpgrade1Button = document.getElementById("klick_upgrade_1_button");
 if (klickUpgrade1Button) klickUpgrade1Button.addEventListener("click", () => kaufeKlickUpgrade(1));
 const klickUpgrade2Button = document.getElementById("klick_upgrade_2_button");
