@@ -19,6 +19,7 @@ let autoClickerEfficiencyBonus = parseFloat(localStorage.getItem('autoClickerEff
 let autoClickerProductionBonus = parseFloat(localStorage.getItem('autoClickerProductionBonus')) || 0;
 let autoClickerCostReduction = parseFloat(localStorage.getItem('autoClickerCostReduction')) || 1;
 let researchUpgradeIndex = parseInt(localStorage.getItem('researchUpgradeIndex')) || 0;
+
 const researchUpgrades = [
     { cost: 10, description: 'Erhöht die Produktion der Auto-Klicker um 10%', type: 'autoClicker', bonusVariable: 'autoClickerResearchBonus', value: 0.1 },
     { cost: 25, description: 'Erhöht die Produktion der Smiley-Bäume um 10%', type: 'smileyTree', bonusVariable: 'smileyTreeResearchBonus', value: 0.1 },
@@ -105,6 +106,8 @@ function speichereSpiel() {
     localStorage.setItem('gekauft_auto_klicker', gekaufteAutoKlicker);
     localStorage.setItem('gekauft_smiley_baeume', gekaufteSmileyBaeume);
     localStorage.setItem('gekauft_smiley_fabriken', gekaufteSmileyFabriken);
+    localStorage.setItem('prestigeUpgradeStates', JSON.stringify(prestigeUpgradeStates));
+    localStorage.setItem('forschungslabor_fps_multiplier', forschungslabor_fps_multiplier);
 
 }
 
@@ -275,6 +278,58 @@ function updateMaxCost(elementId, baseCost, growthRate, currentCount) {
     }
     element.innerText = formatLargeNumber(totalCost);
 }
+const prestigeUpgrades = [
+    {
+        id: 'auto_clicker_speed',
+        name: 'Auto-Klicker Beschleunigung',
+        description: 'Erhöht die Geschwindigkeit aller Auto-Klicker dauerhaft um 25%.',
+        cost: 10,
+        effect: () => { autoClickerSpeedBonus *= 1.25; },
+        bought: false,
+    },
+    {
+        id: 'global_production_boost',
+        name: 'Globale Produktionssteigerung',
+        description: 'Erhöht die Produktion aller Gebäude (Klicker, Bäume, Fabriken) dauerhaft um 10%.',
+        cost: 25,
+        effect: () => { globalerMultiplikator *= 1.1; },
+        bought: false,
+    },
+    {
+        id: 'research_point_gain',
+        name: 'Forschungspunkte Bonus',
+        description: 'Erhöht die Rate, mit der Forschungspunkte generiert werden, dauerhaft um 50%.',
+        cost: 50,
+        effect: () => { forschungslabor_fps_multiplier *= 1.5; },
+        bought: false,
+    },
+    {
+        id: 'click_power_boost',
+        name: 'Klickkraft Multiplikator',
+        description: 'Verdoppelt deine Klickkraft dauerhaft.',
+        cost: 75,
+        effect: () => { multiplikator *= 2; },
+        bought: false,
+    }
+];
+
+function kaufePrestigeUpgrade(upgradeId) {
+    const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
+    if (!upgrade || prestigeUpgradeStates[upgradeId]) {
+        return;
+    }
+    if (smiley_points >= upgrade.cost) {
+        smiley_points -= upgrade.cost;
+        upgrade.effect();
+        prestigeUpgradeStates[upgradeId] = true;
+        speichereSpiel();
+        updatePrestigeShopDisplay();
+        updateGame();
+        alert(`Prestige-Upgrade "${upgrade.name}" erfolgreich gekauft!`);
+    } else {
+        alert(`Nicht genügend Smiley-Punkte! Benötigt: ${upgrade.cost}`);
+    }
+}
 
 // UPDATE: FÜGT updateDisplay() HINZU
 function klickeSmiley() {
@@ -299,7 +354,7 @@ function autoClick() {
 
 // UPDATE: ENTFERNT updateDisplay()
 function autoForschung() {
-    const fps = forschungslabor_count * 0.2;
+    const fps = forschungslabor_count * 0.2 * forschungslabor_fps_multiplier;
     forschungspunkte += fps;
 }
 
@@ -634,5 +689,22 @@ setInterval(autoClick, 1000);
 setInterval(autoForschung, 1000);
 setInterval(updateGame, 5000);
 window.onload = function() {
+    // 1. Lade alle Spiel-Variablen aus localStorage
+    ladeSpiel();
+
+    // 2. Wende die Effekte der gekauften Prestige-Upgrades an
+    prestigeUpgrades.forEach(upgrade => {
+        if (prestigeUpgradeStates[upgrade.id]) {
+            upgrade.effect();
+        }
+    });
+
+    // 3. Aktualisiere die Anzeige der Hauptseite und der Statistiken
     updateDisplay();
-    updateStatistikDisplay();}
+    updateStats();
+
+    // 4. Aktualisiere die Anzeige des Prestige-Shops (nur wenn die Seite geladen ist)
+    if (document.getElementById("prestige_upgrades_grid")) {
+        updatePrestigeShopDisplay();
+    }
+};
