@@ -269,6 +269,7 @@ function autoClick() {
     const sps = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + autoClickerEfficiencyBonus + efficiencyBonus) * globalerMultiplikator;
     aktuelle_smileys += sps;
     gesammelte_smileys += sps;
+    updateDisplay();
 }
 
 // UPDATE: ENTFERNT updateDisplay()
@@ -276,8 +277,6 @@ function autoForschung() {
     const fps = forschungslabor_count * 0.2;
     forschungspunkte += fps;
 }
-    setInterval(autoForschung, 1000);
-
 
 function resetGame() {
     localStorage.clear();
@@ -492,8 +491,6 @@ const abbrechenButton = document.getElementById("abbrechen_button");
 if (abbrechenButton) abbrechenButton.addEventListener("click", schliesseWarnung);
 const schliessenButton = document.getElementById("schliessen");
 if (schliessenButton) {schliessenButton.addEventListener("click", abbrechenPrestige);}
-const upgradeMultiplikatorButton = document.getElementById("upgrade_multiplikator_10_button");
-if (upgradeMultiplikatorButton) upgradeMultiplikatorButton.addEventListener("click", kaufeMultiplikatorUpgrade);
 const autoClickerButton1 = document.getElementById("auto_clicker_button_1x");
 if (autoClickerButton1) autoClickerButton1.addEventListener("click", () => kaufeUpgrade(1, autoClickerBaseCost * autoClickerCostReduction, autoClickerGrowthRate, 'auto_clicker'));
 const autoClickerButton10 = document.getElementById("auto_clicker_button_10x");
@@ -527,7 +524,9 @@ if (boosterButton) {
         }
     });
 }
-
+const forschungslaborButton = document.getElementById("forschungslaborButton");
+if (forschungslaborButton) {
+    forschungslaborButton.addEventListener("click", () => kaufeForschungslabor());}
 const klickUpgrade1Button = document.getElementById("klick_upgrade_1_button");
 if (klickUpgrade1Button) klickUpgrade1Button.addEventListener("click", () => kaufeKlickUpgrade(1));
 const klickUpgrade2Button = document.getElementById("klick_upgrade_2_button");
