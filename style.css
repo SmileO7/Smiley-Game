@@ -317,3 +317,63 @@ main {
     margin-left: 10px;
     text-align: center;
 }
+
+/* Stil für den zentralen Bereich, der das Bild und die Upgrades enthält */
+.prestige-center-area {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    margin: 50px auto;
+}
+
+/* Stil für den "Nebel" in der Mitte */
+.prestige-nebula {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    background-image: url('images/smiley_nebula.png'); /* Passe den Dateinamen an dein Bild an */
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 1;
+}
+
+/* Stil für das Grid, das die Upgrades anzeigt */
+.prestige-shop-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex; /* Verwende Flexbox für eine einfachere Anordnung */
+    justify-content: center; /* Zentriert die Upgrades horizontal */
+    align-items: center; /* Zentriert die Upgrades vertikal */
+    flex-wrap: wrap; /* Erlaubt das Umbrechen der Zeilen */
+    gap: 50px; /* Abstand zwischen den Kacheln */
+    z-index: 2;
+}
+
+/* Stil der Upgrade-Kacheln */
+.prestige-upgrade-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%; /* Macht die Kacheln rund */
+    padding: 20px;
+    text-align: center;
+    border: 2px solid #ffe066;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    width: 150px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.prestige-upgrade-item p {
+    font-size: 0.8em;
+    min-height: auto;
+}
