@@ -4,69 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Info & Tipps</title>
+    
+    <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            color: #333;
-        }
-        .header {
-            width: 100%;
-            background-color: #fff;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-        .header nav {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-        }
-        .header a {
-            font-weight: bold;
-            color: #4a5568;
-            transition: color 0.2s ease-in-out;
-            text-decoration: none;
-        }
-        .header a:hover {
-            color: #2b6cb0;
-        }
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding-top: 5rem;
-            padding-bottom: 2rem;
-        }
-        .info-container {
-            background-color: #fff;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            width: 700px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        .upgrade-list-item {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            background-color: #e2e8f0;
-        }
-        .upgrade-list-item h3 {
-            font-weight: bold;
-            font-size: 1.125rem;
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -75,30 +18,29 @@
             <a href="upgrades.html">Upgrades</a>
             <a href="stats.html">Statistiken</a>
             <a href="info.html">Info & Tipps</a>
-            
         </nav>
     </div>
 
     <div class="main-container">
-        <div class="info-container">
+        <div class="content-box"> 
             <h1 class="text-3xl font-bold mb-4 text-center">Info & Tipps</h1>
 
-            <div class="info-section">
+            <div class="content-box"> 
                 <h2 class="text-xl font-bold">Das Spiel</h2>
                 <p>Willkommen bei Smiley Clicker! Das Ziel ist einfach: Sammle so viele Smileys wie möglich, indem du klickst und Gebäude baust, die automatisch für dich produzieren.</p>
             </div>
 
-            <div class="info-section">
+            <div class="content-box">
                 <h2 class="text-xl font-bold">Wichtige Konzepte</h2>
                 <ul>
                     <li><strong>Aktuelle Smileys:</strong> Die Smileys, die du aktuell ausgeben kannst.</li>
                     <li><strong>Smileys pro Sekunde (SPS):</strong> Die Anzahl der Smileys, die du automatisch pro Sekunde erhältst. Baue Gebäude, um diesen Wert zu erhöhen.</li>
                     <li><strong>Forschungspunkte:</strong> Werden von Forschungslaboren produziert und sind für spezielle Gebäude-Upgrades in der Forschungsektion nötig.</li>
-                    <li><strong>Smileyvers-Punkte:</strong> Erhältst du durch Prestige. Sie multiplizieren deine Klick-Produktion dauerhaft und helfen dir, in den nächsten Runden schneller voranzukommen.</li>
+                    <li><strong>Smileyvers-Punkte:</strong> Erhältst du durch Prestige. Sie multiplizieren deine Klick-Produktion dauerhaft und helfen dir, in den nächsten Runden viel schneller voranzukommen.</li>
                 </ul>
             </div>
-
-            <div class="info-section">
+            
+            <div class="content-box">
                 <h2 class="text-xl font-bold">Die verschiedenen Upgrades</h2>
                 <p>Es gibt verschiedene Arten von Upgrades, die sich gegenseitig verstärken:</p>
                 <ul>
@@ -109,7 +51,7 @@
                 </ul>
             </div>
 
-            <div class="info-section">
+            <div class="content-box">
                 <h2 class="text-xl font-bold">Tipps</h2>
                 <p>So maximierst du deine Smiley-Produktion:</p>
                 <ul>
@@ -119,8 +61,8 @@
                     <li>Zögere nicht, das **Prestige**-System zu nutzen. Auch wenn du von vorne beginnst, helfen dir die Smileyvers-Punkte, die nächste Runde viel schneller zu absolvieren.</li>
                 </ul>
             </div>
-
-            <div class="info-section">
+            
+            <div class="content-box">
                 <h2 class="text-xl font-bold">Auto-Klicker Upgrades</h2>
                 <p>Hier ist eine detaillierte Liste aller 8 Upgrades für den Auto-Klicker:</p>
                 <div class="upgrade-list-item">
