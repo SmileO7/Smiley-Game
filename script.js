@@ -447,12 +447,12 @@ function bestatigePrestige() {
     console.log("Prestige Kosten: ", prestige_kosten);
     
     if (gesammelte_smileys >= prestige_kosten) {
-        // Neue, einfachere Formel: 1 Prestige-Punkt pro 10.000 gesammelten Smileys
-        const neuePrestigePunkte = Math.floor(gesammelte_smileys / 10000);
+        // Berechne die neuen Prestige-Punkte
+        const neuePrestigePunkte = Math.floor(gesammelte_smileys / 100);
         
         prestige_punkte += neuePrestigePunkte;
         
-        // Spielvariablen zurücksetzen
+        // Setze die Spielvariablen zurück
         aktuelle_smileys = 0;
         gesammelte_smileys = 0;
         multiplikator = 1;
@@ -475,9 +475,9 @@ function bestatigePrestige() {
         smileyFactoryResearchBonus = 0;
         efficiencyBonus = 0;
         
+        // Erhöhe die Kosten für das nächste Prestige
         prestige_kosten = 1000 + (prestige_punkte * 100);
 
-        // Korrekte Nachricht an den Spieler
         alert(`Smileyversum erfolgreich! Du hast ${neuePrestigePunkte} Prestige-Punkte erhalten.`);
         schliesseWarnung();
         speichereSpiel();
