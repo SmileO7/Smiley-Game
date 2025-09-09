@@ -5,127 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smiley Clicker - Prestige Shop</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body {
-            background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
-            background-size: cover;
-            background-attachment: fixed;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-        }
-
-        .prestige-shop-container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 30px;
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-            text-align: center;
-        }
-
-        .prestige-shop-container h1 {
-            font-size: 3em;
-            color: #ffe066;
-            margin-bottom: 20px;
-        }
-
-        .prestige-shop-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 40px;
-        }
-
-        .prestige-upgrade-item {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 2px solid #ffe066;
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .prestige-upgrade-item:hover:not(.locked):not(.bought) {
-            transform: translateY(-5px);
-            box-shadow: 0 0 15px rgba(255, 224, 102, 0.7);
-        }
-
-        .prestige-upgrade-item h4 {
-            color: #fff;
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-
-        .prestige-upgrade-item p {
-            font-size: 0.9em;
-            color: #ccc;
-            min-height: 60px;
-        }
-
-        .prestige-upgrade-item .cost {
-            font-size: 1.2em;
-            color: #ffe066;
-            margin-top: 15px;
-            display: block;
-        }
-
-        .prestige-upgrade-item .bought-label {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        
-        .prestige-upgrade-item.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-            filter: grayscale(80%);
-        }
-        .prestige-upgrade-item.locked .cost {
-            color: #ff6666;
-        }
-
-        .prestige-upgrade-item.bought {
-            opacity: 0.7;
-            border-color: #4CAF50;
-            cursor: not-allowed;
-            background-color: rgba(76, 175, 80, 0.2);
-        }
-
-        .prestige-upgrade-item.available {
-            border-color: #66ff66;
-            box-shadow: 0 0 10px rgba(102, 255, 102, 0.5);
-        }
-
-        .current-smiley-points {
-            font-size: 1.8em;
-            color: #66ccff;
-            margin-top: 20px;
-        }
-        .current-smiley-points span {
-            font-weight: bold;
-            color: #ffe066;
-        }
-
-        nav a {
-            color: #66ccff;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 1.2em;
-            transition: color 0.2s;
-        }
-        nav a:hover {
-            color: #ffe066;
-        }
-    </style>
 </head>
 <body>
     <header>
@@ -134,21 +13,20 @@
             <a href="index.html">Zurück zum Spiel</a>
         </nav>
     </header>
-
     <main>
         <section class="prestige-shop-container">
-        <p class="current-smiley-points">Deine Smiley-Punkte: <span id="current_prestige_points">0</span></p>
-        <div class="prestige-center-area">
-            <div class="prestige-nebula" id="prestige-nebula">
-                <img src="images/gold_smiley.png" alt="Zentraler Smiley" style="width:100%; height:100%;">
+            <p class="current-smiley-points">Deine Smiley-Punkte: <span id="current_prestige_points">0</span></p>
+
+            <div id="prestige_upgrades_grid">
+                <div id="central_smiley">
+                    <img src="https://i.ibb.co/C0L6X3y/smiley.png" alt="Zentraler Smiley">
+                </div>
             </div>
             
-            <div class="prestige-shop-grid" id="prestige_upgrades_grid">
-            </div>
-        </div>
+            <svg id="prestige-lines-svg"></svg>
+        </section>
     </main>
     
-
     <script src="script.js"></script>
 </body>
 </html>
