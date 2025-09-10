@@ -282,9 +282,6 @@ function updateDisplay() {
     if (gesammelteSmileysMain) gesammelteSmileysMain.innerText = formatLargeNumber(gesammelte_smileys);
     const prestigeKostenMain = document.getElementById("prestige_kosten_anzeige");
     if (prestigeKostenMain) prestigeKostenMain.innerText = formatLargeNumber(prestige_kosten);
-    const multiplikatorPerClick = document.getElementById("multiplikator_per_click");
-    if (multiplikatorPerClick) multiplikatorPerClick.innerText = (multiplikator * (1 + klickUpgradeBonus)).toFixed(2);
-    
     // SPS- und SPM-Berechnungen
     const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
     const smileyTreeSPS = smileyTreeProduction * (20 + smileyTreeResearchBonus);
@@ -674,37 +671,6 @@ function updateMultiplikatorAnzeige() {
 
     // 2. Aktualisiere den Textinhalt
     multiplikatorAnzeige.textContent = globalerMultiplikator.toFixed(2);
-}
-
-function updateStatistikDisplay() {
-    const gesamteGeklickteSmileysElement = document.getElementById("gesamte_geklickte_smileys");
-    if (gesamteGeklickteSmileysElement) {
-        gesamteGeklickteSmileysElement.innerText = formatLargeNumber(gesamteGeklickteSmileys);
-    }
-    const gesamteGesammelteSmileysElement = document.getElementById("gesamte_gesammelte_smileys");
-    if (gesamteGesammelteSmileysElement) {
-        gesamteGesammelteSmileysElement.innerText = formatLargeNumber(gesamteGesammelteSmileys);
-    }
-    const gesamtPrestigePunkteElement = document.getElementById("gesamt_prestige_punkte");
-    if (gesamtPrestigePunkteElement) {
-        gesamtPrestigePunkteElement.innerText = gesamtPrestigePunkte;
-    }
-    const gekaufteUpgradesElement = document.getElementById("gekaufte_upgrades");
-    if (gekaufteUpgradesElement) {
-        gekaufteUpgradesElement.innerText = gekaufteUpgrades;
-    }
-    const gekaufteAutoKlickerElement = document.getElementById("gekauft_auto_klicker");
-    if (gekaufteAutoKlickerElement) {
-        gekaufteAutoKlickerElement.innerText = gekaufteAutoKlicker;
-    }
-    const gekaufteSmileyBaeumeElement = document.getElementById("gekauft_smiley_baeume");
-    if (gekaufteSmileyBaeumeElement) {
-        gekaufteSmileyBaeumeElement.innerText = gekaufteSmileyBaeume;
-    }
-    const gekaufteSmileyFabrikenElement = document.getElementById("gekauft_smiley_fabriken");
-    if (gekaufteSmileyFabrikenElement) {
-        gekaufteSmileyFabrikenElement.innerText = gekaufteSmileyFabriken;
-    }
 }
 
 function ladeSpiel() {
