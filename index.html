@@ -21,16 +21,17 @@
             <p>Aktuelle Smileys: <span id="aktuelle_smileys">0</span></p>
             <p>Gesammelte Smileys: <span id="gesammelte_smileys">0</span></p>
             <p>Smileyverse-Punkte: <span id="smiley_points">0</span></p>
-            <p>Multiplikator:<span id="allgemeiner_multiplikator">0</span></p>
+            <p>Smileys pro Klick: <span id="multiplikator_per_click">1</span></p>
         </div>
         <button id="smiley_button" class="smiley-button">😊</button>
         <div class="info-box">
             <p>SPS: <span id="sps_anzeige">0</span></p>
             <p>SPM: <span id="smp_anzeige">0</span></p>
+            <p>Multiplikator:<span id="allgemeiner_multiplikator">0</span></p>
         </div>
 
         <div style="text-align: center; margin-top: 50px;">
-            <button id="prestige_button" onclick="klickePrestige()" class="btn-buy">Prestige!</button>
+            <button id="prestige_button" class="btn-buy">Prestige!</button>
         </div>
 
         <div id="warnung_fenster" class="modal" style="display: none;">
@@ -40,12 +41,33 @@
                 Wenn du das Smileyversum aktivierst, verlierst du alle deine aktuellen Smileys, Auto-Klicker und Upgrades. Im Gegenzug erhältst du Prestige-Punkte. Du benötigst <span id="prestige_kosten_anzeige"></span> Smileys, um fortzufahren.
                 </p>
                 <div class="modal-buttons">
-                    <button onclick="bestatigePrestige()" class="btn-buy">Bestätigen</button>
-                    <button onclick="schliesseWarnung()" class="btn-buy">Abbrechen</button>
+                    <button id="bestatige_prestige_button" class="btn-confirm">Bestätigen</button>
+                    <button id="prestige_abbrechen_button" class="btn-cancel">Abbrechen</button>
                 </div>
             </div>
         </div>
+        
+        <div id="kauf_bestaetigung_fenster" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3>Titel</h3>
+                <p>Nachricht</p>
+            </div>
+        </div>
+
+        <div id="reset_warnung_fenster" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h3>Spiel zurücksetzen?</h3>
+                <p>Bist du dir sicher? Alle deine Spielstände werden dauerhaft gelöscht.</p>
+                <div class="modal-buttons">
+                    <button id="reset_bestatigen_button" class="btn-confirm">Ja, löschen</button>
+                    <button id="reset_abbrechen_button" class="btn-cancel">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+        
     </main>
+
     <script src="script.js"></script>
 </body>
 </html>
