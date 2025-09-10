@@ -28,24 +28,25 @@
         <div class="info-box">
             <p>SPS: <span id="sps_anzeige">0</span></p>
             <p>SPM: <span id="smp_anzeige">0</span></p>
+            <p>Multiplikator:<span id="allgemeiner_multiplikator">0</span></p>
         </div>
 
+        <div style="text-align: center; margin-top: 50px;">
+            <button id="prestige_button" onclick="klickePrestige()" class="btn-buy">Prestige!</button>
+        </div>
 
-        <div style="text-align: center; margin-top: 10px;">
-    <button id="prestige_button" onclick="klickePrestige()">Smileyversum</button>
-</div>
-    <div id="warnung_fenster" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Prestige aktivieren?</h3>
-        <p id="prestige_text">
-        Wenn du das Smileyversum aktivierst, verlierst du alle deine aktuellen Smileys, Auto-Klicker und Upgrades. Im Gegenzug erhältst du Prestige-Punkte. Du benötigst <span id="prestige_kosten_anzeige"></span> Smileys, um fortzufahren.
-        </p>
-    <div class="modal-buttons">
-        <button onclick="bestatigePrestige()">Bestätigen</button>
-        <button onclick="schliesseWarnung()">Abbrechen</button>
-    </div>
-    </div>
-    </div>
+        <div id="warnung_fenster" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Prestige aktivieren?</h3>
+                <p id="prestige_text">
+                Wenn du das Smileyversum aktivierst, verlierst du alle deine aktuellen Smileys, Auto-Klicker und Upgrades. Im Gegenzug erhältst du Prestige-Punkte. Du benötigst <span id="prestige_kosten_anzeige"></span> Smileys, um fortzufahren.
+                </p>
+                <div class="modal-buttons">
+                    <button onclick="bestatigePrestige()" class="btn-buy">Bestätigen</button>
+                    <button onclick="schliesseWarnung()" class="btn-buy">Abbrechen</button>
+                </div>
+            </div>
+        </div>
     </main>
     <script src="script.js"></script>
 </body>

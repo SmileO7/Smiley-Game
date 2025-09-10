@@ -560,7 +560,13 @@ function kaufeUpgrade(anzahl, baseCost, growthRate, type) {
     } else {
         alert(`Nicht genügend Smileys! Benötigt: ${totalCost}`);
     }
+    function kaufUpgrade() {
+    // ... (dein Kauf-Code)
+    globalerMultiplikator += 0.10; // Erhöhe den Multiplikator
+    updateMultiplikatorAnzeige(); // Aktualisiere die Anzeige
 }
+}
+
 
 function kaufeKlickUpgrade(upgradeId) {
     let kosten;
@@ -643,6 +649,13 @@ function kaufeForschungsUpgrade() {
     } else {
         alert(`Nicht genügend Forschungspunkte! Benötigt: ${upgrade.cost}`);
     }
+}
+function updateMultiplikatorAnzeige() {
+    // 1. Hole das HTML-Element mit seiner ID
+    const multiplikatorAnzeige = document.getElementById('allgemeiner_multiplikator');
+
+    // 2. Aktualisiere den Textinhalt
+    multiplikatorAnzeige.textContent = globalerMultiplikator.toFixed(2);
 }
 
 function updateStatistikDisplay() {
@@ -735,6 +748,7 @@ window.onload = function() {
 setInterval(autoClick, 1000);
 setInterval(autoForschung, 1000);
 setInterval(updateGame, 5000);
+setInterval(updateStatistikDisplay, 1000);
 
 
 //================================================================================================================
