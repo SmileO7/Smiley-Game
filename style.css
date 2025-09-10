@@ -12,8 +12,21 @@ body, html {
 
 /* Spezifische Hintergründe für die Seiten */
 body.home-page {
-    background-color: #000033;
-    background-image: radial-gradient(circle, #00004d, #000033);
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Ein tiefer, dynamischer Farbverlauf */
+    background-size: 400% 400%; /* Ermöglicht eine größere Animationsfläche */
+    animation: gradientAnimation 15s ease infinite; /* Sanfte, endlose Animation */
+}
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 body.upgrades-page {
@@ -32,9 +45,9 @@ body.info-page {
 
 .navbar {
     background-color: rgba(25, 25, 25, 0.8);
-    padding: 10px 0;
+    padding: 15px 0;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     position: fixed;
     top: 0;
     width: 100%;
@@ -56,7 +69,7 @@ body.info-page {
     border-radius: 5px;
 }
 
-main {
+.main-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -65,43 +78,47 @@ main {
     text-align: center;
     padding-top: 70px;
     padding-bottom: 20px;
-}
-
-.container {
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    width: 90%;
-    max-width: 600px;
-}
-
-h1, h2 {
-    color: #3700ff;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .info-box {
     background: rgba(40, 40, 40, 0.7);
     border: 1px solid #555;
     padding: 15px;
-    margin: 15px 0;
+    margin: 15px auto;
     border-radius: 8px;
+    text-align: left;
+    max-width: 400px;
 }
 
 .smiley-button {
-    font-size: 100px;
     background-color: transparent;
     border: none;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: transform 0.1s, box-shadow 0.5s ease-in-out; /* Füge box-shadow Transition hinzu */
     user-select: none;
     padding: 0;
+    position: relative; /* Wichtig für den Glüheffekt */
+    border-radius: 50%; /* Macht den Button kreisförmig */
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); /* Standard-Glühen (Rot) */
+}
+
+.smiley-button img {
+    width: 200px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 50%; /* Macht das Bild auch kreisförmig, falls es nicht quadratisch ist */
+}
+
+.smiley-button:hover {
+    box-shadow: 0 0 25px rgba(0, 0, 255, 0.8); /* Blaues Glühen beim Hover */
 }
 
 .smiley-button:active {
     transform: scale(0.95);
+    box-shadow: 0 0 35px rgba(255, 255, 0, 0.9); /* Gelbes Glühen beim Klicken */
 }
 
 .btn-buy, .btn-confirm, .btn-cancel {
@@ -235,7 +252,13 @@ h1, h2 {
     padding: 20px;
     margin: 20px 0;
     width: 100%;
+    max-width: 600px;
     backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
 }
 
 .upgrade-list-item {
