@@ -43,12 +43,7 @@ const clickerUpgrades = [
         growthRate: 1.2,
         elementId: "smileyFactoryButton1x"
     },
-    {
-        name: "Forschungslabor",
-        basePrice: 500,
-        growthRate: 1.14,
-        elementId: "forschungslaborButton"
-    }
+   
 ];
 let aktuelle_smileys = parseInt(localStorage.getItem('aktuelle_smileys')) || 0;
 let gesammelte_smileys = parseInt(localStorage.getItem('gesammelte_smileys')) || 0;
@@ -83,6 +78,8 @@ let gekaufteSmileyFabriken = parseInt(localStorage.getItem('gekauft_smiley_fabri
 let prestigeUpgradeStates = JSON.parse(localStorage.getItem('prestigeUpgradeStates')) || {};
 let forschungslabor_fps_multiplier = parseFloat(localStorage.getItem('forschungslabor_fps_multiplier')) || 1.0;
 let autoClickerUpgradeIndex = parseInt(localStorage.getItem('autoClickerUpgradeIndex')) || 0;
+let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0;
+let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
 
 const smileyTreeBaseCost = 150;
 const smileyTreeGrowthRate = 1.2;
@@ -168,10 +165,35 @@ function createUpgradeElements(items, containerClass) {
     items.forEach((item, index) => {
         const itemElement = document.createElement('div');
         itemElement.classList.add('upgrade-container');
+
+        // Hier berechnen wir die Kosten für das data-cost Attribut
+        let cost;
+        if (containerClass === 'upgrade-grid') {
+            cost = item.price;
+        } else if (containerClass === 'building-grid') {
+            switch(item.elementId) {
+                case "auto_clicker_button_1x":
+                    cost = autoClickerBaseCost * Math.pow(autoClickerGrowthRate, auto_klicker_count);
+                    break;
+                case "smileyTreeButton1x":
+                    cost = smileyTreeBaseCost * Math.pow(smileyTreeGrowthRate, smileyTreeProduction);
+                    break;
+                case "smileyFactoryButton1x":
+                    cost = smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, smileyFactoryProduction);
+                    break;
+                case "forschungslaborButton":
+                    cost = forschungslaborBaseCost * Math.pow(forschungslaborGrowthRate, forschungslabor_count);
+                    break;
+                default:
+                    cost = 0;
+            }
+        }
+        
+        // Füge hier das data-cost Attribut hinzu
         itemElement.innerHTML = `
             <h3>${item.name}</h3>
-            <p>Preis: <span class="price-display">${item.price || item.basePrice}</span> Smileys</p>
-            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}">Kaufen</button>
+            <p>Preis: <span class="price-display">${formatLargeNumber(cost)}</span> Smileys</p>
+            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}" data-cost="${cost}">Kaufen</button>
         `;
         container.appendChild(itemElement);
     });
@@ -187,14 +209,13 @@ function kaufeItem(type, index) {
         if (aktuelle_smileys >= cost) {
             aktuelle_smileys -= cost;
             multiplikator += item.effect; 
-            item.bought++; // Zählt, wie oft das Upgrade gekauft wurde
+            item.bought++;
         } else {
             return;
         }
     } else if (type === 'building-grid') {
         item = buildings[index];
 
-        // Bestimme die Kosten und die zu aktualisierende Variable
         switch (item.elementId) {
             case "auto_clicker_button_1x":
                 cost = autoClickerBaseCost * Math.pow(autoClickerGrowthRate, auto_klicker_count);
@@ -202,7 +223,6 @@ function kaufeItem(type, index) {
                     aktuelle_smileys -= cost;
                     auto_klicker_count++;
                 } else {
-                    zeigeKaufBestatigung("Fehler!", `Nicht genügend Smileys! Benötigt: ${formatLargeNumber(cost)}`, false);
                     return;
                 }
                 break;
@@ -212,7 +232,6 @@ function kaufeItem(type, index) {
                     aktuelle_smileys -= cost;
                     smileyTreeProduction++;
                 } else {
-                    zeigeKaufBestatigung("Fehler!", `Nicht genügend Smileys! Benötigt: ${formatLargeNumber(cost)}`, false);
                     return;
                 }
                 break;
@@ -222,29 +241,18 @@ function kaufeItem(type, index) {
                     aktuelle_smileys -= cost;
                     smileyFactoryProduction++;
                 } else {
-                    zeigeKaufBestatigung("Fehler!", `Nicht genügend Smileys! Benötigt: ${formatLargeNumber(cost)}`, false);
-                    return;
-                }
-                break;
-            case "forschungslaborButton":
-                cost = forschungslaborBaseCost * Math.pow(forschungslaborGrowthRate, forschungslabor_count);
-                if (aktuelle_smileys >= cost) {
-                    aktuelle_smileys -= cost;
-                    forschungslabor_count++;
-                } else {
-                    zeigeKaufBestatigung("Fehler!", `Nicht genügend Smileys! Benötigt: ${formatLargeNumber(cost)}`, false);
                     return;
                 }
                 break;
             default:
-                zeigeKaufBestatigung("Fehler!", "Unbekanntes Gebäude.", false);
                 return;
         }
-        zeigeKaufBestatigung("Erfolg!", `${item.name} erfolgreich gekauft.`, true);
     }
-
+    
     speichereSpiel();
     updateDisplay();
+    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
+    createUpgradeElements(buildings, 'building-grid');
 }
 function updateUpgradesDisplay() {
     const researchUpgradeButton = document.getElementById("forschungUpgradeButton");
@@ -516,6 +524,18 @@ function updateDisplay() {
     
     const multiplikatorKostenAnzeige = document.getElementById("multiplikator_kosten_anzeige");
     if (multiplikatorKostenAnzeige) multiplikatorKostenAnzeige.innerText = 10 * Math.pow(1.5, multiplikator - 1);
+
+    const allBuyButtons = document.querySelectorAll('.upgrade-button');
+allBuyButtons.forEach(button => {
+    const cost = parseFloat(button.dataset.cost);
+    if (aktuelle_smileys >= cost) {
+        button.disabled = false;
+        button.classList.remove('disabled');
+    } else {
+        button.disabled = true;
+        button.classList.add('disabled');
+    }
+});
 }
 
 function produziereSmileys() {
@@ -796,6 +816,8 @@ window.onload = function() {
         const modal = document.getElementById("reset_warnung_fenster");
         if (modal) modal.style.display = "none";
     });
+    const forschungslaborButton = document.getElementById("forschungslaborButton");
+    if (forschungslaborButton) forschungslaborButton.addEventListener("click", kaufeForschungslabor);
 
     const navLinks = document.querySelectorAll(".navbar a");
     navLinks.forEach(link => {

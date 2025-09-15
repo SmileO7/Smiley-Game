@@ -96,7 +96,7 @@ body.info-page {
 
 h1, h2, h3 {
     color: #009FFD;
-    text-shadow: 0 0 10px rgba(0, 159, 253, 0.5)
+    text-shadow: 0 0 10px rgba(0, 159, 253, 0.5); 
     margin-bottom: 20px;
 }
 
@@ -323,4 +323,11 @@ h1, h2, h3 {
 
 .prestige-upgrade:hover {
     transform: scale(1.05);
+}
+
+/* CSS für deaktivierte Buttons */
+.upgrade-button.disabled {
+    cursor: not-allowed;
+    background-color: #6b0504; /* Dunkelrot */
+    color: #011638; /* Dunkelblau */
 }
