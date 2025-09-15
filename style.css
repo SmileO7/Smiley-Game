@@ -12,10 +12,12 @@ body, html {
 
 /* Spezifische Hintergründe für die Seiten */
 body.home-page {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Ein tiefer, dynamischer Farbverlauf */
-    background-size: 400% 400%; /* Ermöglicht eine größere Animationsfläche */
-    animation: gradientAnimation 15s ease infinite; /* Sanfte, endlose Animation */
-}
+    background-color: #011638; 
+    background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1)0% transparent 50%),
+                      radial-gradient(circle at bottom right, rgba(107, 5,4,0.1) 0%, transparent 50%),
+                      linear-gradient(135deg, #011638, #24243e);
+    background-size: 100% 100%;
+    background-attachment: fixed;}
 
 @keyframes gradientAnimation {
     0% {
@@ -30,13 +32,13 @@ body.home-page {
 }
 
 body.upgrades-page {
-    background-color: #121212;
-    background-image: linear-gradient(to bottom, #121212, #240000);
+    background-color: #3e5641;
+    background-image: linear-gradient(135deg, #3e5641, #516a53);
 }
 
 body.prestige-page {
-    background-color: #3d0202;
-    background-image: radial-gradient(circle, #5e0c0c, #3d0202);
+    background-color: #6b0504;
+    background-image: radial-gradient(to top, #6b0504, #940a08);
 }
 
 body.info-page {
@@ -64,9 +66,9 @@ body.info-page {
 }
 
 .navbar a:hover, .navbar a.active {
-    color: #fff;
-    background-color: #555;
-    border-radius: 5px;
+    color: #009FFD;
+    background-color: transparent;
+    border-radius: 2px solid #009FFD; 
 }
 
 .main-content {
@@ -83,13 +85,19 @@ body.info-page {
 }
 
 .info-box {
-    background: rgba(40, 40, 40, 0.7);
-    border: 1px solid #555;
+    background: rgba(62, 86, 65, 0.7);
+    border: 1px solid #48624a;
     padding: 15px;
     margin: 15px auto;
     border-radius: 8px;
     text-align: left;
     max-width: 400px;
+}
+
+h1, h2, h3 {
+    color: #009FFD;
+    text-shadow: 0 0 10px rgba(0, 159, 253, 0.5)
+    margin-bottom: 20px;
 }
 
 .smiley-button {
@@ -101,7 +109,7 @@ body.info-page {
     padding: 0;
     position: relative; /* Wichtig für den Glüheffekt */
     border-radius: 50%; /* Macht den Button kreisförmig */
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); /* Standard-Glühen (Rot) */
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6); /* Standard-Glühen (Rot) */
 }
 
 .smiley-button img {
@@ -113,12 +121,12 @@ body.info-page {
 }
 
 .smiley-button:hover {
-    box-shadow: 0 0 25px rgba(0, 0, 255, 0.8); /* Blaues Glühen beim Hover */
+    box-shadow: 0 0 25px rgba(0, 159, 253, 0.8); /* Blaues Glühen beim Hover */
 }
 
 .smiley-button:active {
     transform: scale(0.95);
-    box-shadow: 0 0 35px rgba(255, 255, 0, 0.9); /* Gelbes Glühen beim Klicken */
+    box-shadow: 0 0 35px rgba(0, 159,253, 0.9); /* Gelbes Glühen beim Klicken */
 }
 
 .btn-buy, .btn-confirm, .btn-cancel {
@@ -132,12 +140,19 @@ body.info-page {
 }
 
 .btn-buy {
-    background-color: #4CAF50;
+    background-color: #6b0504;
     color: white;
+    padding: 10px 20px;
+    border: none; 
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin: 5px;
 }
 
 .btn-buy:hover {
-    background-color: #45a049;
+    background-color: #550403;
 }
 
 .btn-confirm {
