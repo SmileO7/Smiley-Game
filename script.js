@@ -166,7 +166,6 @@ function createUpgradeElements(items, containerClass) {
         const itemElement = document.createElement('div');
         itemElement.classList.add('upgrade-container');
 
-        // Hier berechnen wir die Kosten für das data-cost Attribut
         let cost;
         if (containerClass === 'upgrade-grid') {
             cost = item.price;
@@ -181,37 +180,59 @@ function createUpgradeElements(items, containerClass) {
                 case "smileyFactoryButton1x":
                     cost = smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, smileyFactoryProduction);
                     break;
-                case "forschungslaborButton":
-                    cost = forschungslaborBaseCost * Math.pow(forschungslaborGrowthRate, forschungslabor_count);
-                    break;
                 default:
                     cost = 0;
             }
         }
         
-        // Füge hier das data-cost Attribut hinzu
+        let count = 0;
+        if (containerClass === 'upgrade-grid') {
+            count = item.bought || 0;
+        } else if (containerClass === 'building-grid') {
+            switch(item.elementId) {
+                case "auto_clicker_button_1x":
+                    count = auto_klicker_count;
+                    break;
+                case "smileyTreeButton1x":
+                    count = smileyTreeProduction;
+                    break;
+                case "smileyFactoryButton1x":
+                    count = smileyFactoryProduction;
+                    break;
+            }
+        }
+
+        let isOneTimeUpgrade = (containerClass === 'upgrade-grid' && item.bought && item.bought >= 1);
+
         itemElement.innerHTML = `
             <h3>${item.name}</h3>
-            <p>Preis: <span class="price-display">${formatLargeNumber(cost)}</span> Smileys</p>
-            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}" data-cost="${cost}">Kaufen</button>
+            <p>Preis: <span class="price-display">${isOneTimeUpgrade ? "Gekauft!" : formatLargeNumber(cost) + " Smileys"}</span></p>
+            <p>Anzahl: <span class="count-display">${count}</span></p>
+            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}" data-cost="${cost}" ${isOneTimeUpgrade ? 'disabled' : ''}>
+                ${isOneTimeUpgrade ? 'Gekauft!' : 'Kaufen'}
+            </button>
         `;
         container.appendChild(itemElement);
     });
 }
 
+
+// Korrigierte kaufeItem-Funktion
 function kaufeItem(type, index) {
     let item, cost;
 
     if (type === 'upgrade-grid') {
         item = clickerUpgrades[index];
         cost = item.price;
-        
-        if (aktuelle_smileys >= cost) {
-            aktuelle_smileys -= cost;
-            multiplikator += item.effect; 
-            item.bought++;
-        } else {
-            return;
+        // Prüfen, ob das Upgrade bereits gekauft wurde
+        if (!item.bought || item.bought < 1) {
+            if (aktuelle_smileys >= cost) {
+                aktuelle_smileys -= cost;
+                multiplikator += item.effect; 
+                item.bought = 1; // Markiere das Upgrade als gekauft
+            } else {
+                return;
+            }
         }
     } else if (type === 'building-grid') {
         item = buildings[index];
