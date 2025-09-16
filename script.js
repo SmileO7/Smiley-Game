@@ -80,6 +80,8 @@ let forschungslabor_fps_multiplier = parseFloat(localStorage.getItem('forschungs
 let autoClickerUpgradeIndex = parseInt(localStorage.getItem('autoClickerUpgradeIndex')) || 0;
 let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0;
 let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
+let forschungPunkte = 0;
+const forschungUpgradeKosten = 1; // Beispielwert
 
 const smileyTreeBaseCost = 150;
 const smileyTreeGrowthRate = 1.2;
@@ -164,8 +166,14 @@ function createUpgradeElements(items, containerClass) {
 
     items.forEach((item, index) => {
         const itemElement = document.createElement('div');
-        itemElement.classList.add('upgrade-container');
-
+        
+        // Füge die korrekte Klasse basierend auf dem Container hinzu
+        if (containerClass === 'upgrade-grid') {
+            itemElement.classList.add('upgrade-container');
+        } else if (containerClass === 'building-grid') {
+            itemElement.classList.add('building-container');
+        }
+        
         let cost;
         if (containerClass === 'upgrade-grid') {
             cost = item.price;
@@ -203,13 +211,15 @@ function createUpgradeElements(items, containerClass) {
         }
 
         let isOneTimeUpgrade = (containerClass === 'upgrade-grid' && item.bought && item.bought >= 1);
+        let isDisabled = (aktuelle_smileys < cost) || isOneTimeUpgrade;
+        let buttonText = isOneTimeUpgrade ? 'Gekauft!' : 'Kaufen';
 
         itemElement.innerHTML = `
             <h3>${item.name}</h3>
             <p>Preis: <span class="price-display">${isOneTimeUpgrade ? "Gekauft!" : formatLargeNumber(cost) + " Smileys"}</span></p>
             <p>Anzahl: <span class="count-display">${count}</span></p>
-            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}" data-cost="${cost}" ${isOneTimeUpgrade ? 'disabled' : ''}>
-                ${isOneTimeUpgrade ? 'Gekauft!' : 'Kaufen'}
+            <button class="upgrade-button btn-buy" data-index="${index}" data-type="${containerClass}" data-cost="${cost}" ${isDisabled ? 'disabled' : ''}>
+                ${buttonText}
             </button>
         `;
         container.appendChild(itemElement);
@@ -472,7 +482,11 @@ function updateGame() {
     if (smileyPointsElement) {
         smileyPointsElement.textContent = smiley_points;
     }
+      const forschungFortschritt = (forschungPunkte / forschungUpgradeKosten) * 1;
+    forschungFortschrittBalken.style.width = forschungFortschritt + '%';
+    forschungFortschrittText.innerText = Math.floor(forschungFortschritt) + '%';
 }
+
 
 function formatLargeNumber(number) {
     if (number > 999) {
@@ -649,11 +663,7 @@ function kaufeForschungslabor() {
         forschungslabor_count++;
         speichereSpiel();
         updateDisplay();
-        zeigeKaufBestatigung("Erfolg!", "Forschungslabor erfolgreich gekauft.", true);
-    } else {
-        zeigeKaufBestatigung("Fehler!", "Nicht genügend Smileys für ein Forschungslabor!", false);
-    }
-}
+}}
 
 function kaufeForschungsUpgrade() {
     const upgrade = researchUpgrades[researchUpgradeIndex];
@@ -785,8 +795,6 @@ function resetGame() {
     localStorage.clear();
     location.reload();
 }
-
-
 //================================================================================================================
 // --- INITIALISIERUNG & EVENT-LISTENER ---
 //================================================================================================================
@@ -800,10 +808,6 @@ window.onload = function() {
         const index = target.dataset.index;
         const type = target.dataset.type;
         
-        // Ersetze diese Zeile
-        // console.log(`Button geklickt! Typ: ${type}, Index: ${index}`);
-        
-        // durch diese Zeile
         kaufeItem(type, index);
     }
 });
@@ -881,3 +885,33 @@ window.onload = function() {
         }
     }); 
 }
+const forschungFortschrittBalken = document.getElementById('forschung_fortschritt');
+const forschungFortschrittText = document.getElementById('fortschritt-text');
+
+setInterval(updateGame, 1000);
+
+document.getElementById('forschungUpgradeButton').addEventListener('click', () => {
+    // Prüfe, ob genug Forschungspunkte für den Kauf vorhanden sind
+    if (forschungPunkte >= forschungUpgradeKosten) {
+        // Kosten abziehen
+        forschungPunkte -= forschungUpgradeKosten;
+
+        // Erhöhe die Forschungspunkte pro Sekunde (Beispiel)
+        // Du kannst einen festen Wert hinzufügen oder einen Multiplikator verwenden
+        forschungPunkte += forschungPunkteProSekunde / 10;
+
+
+        // Hier kannst du auch die Kosten für das nächste Upgrade erhöhen,
+        // um das Spiel schwieriger zu machen.
+        // forschungUpgradeKosten *= 2; 
+        forschungsUpgradeKosten = Math.floor(forschungUpgradeKosten * 1.5);
+
+        // Aktualisiere die UI, um die neuen Forschungspunkte und SPS anzuzeigen
+        document.getElementById('forschung_punkte_anzeige').innerText = Math.floor(forschungPunkte);
+        // Falls du eine SPS-Anzeige hast, die Forschungspunkte betrifft:
+        // document.getElementById('sps_anzeige_upgrades').innerText = Math.floor(s_p_s); 
+    } else {
+        // Zeige eine Warnung, falls nicht genug Forschungspunkte vorhanden sind
+        alert("Nicht genug Forschungspunkte!");
+    }
+});
