@@ -503,7 +503,10 @@ function updateDisplay() {
     const smileyPointsMain = document.getElementById("smiley_points");
     if (smileyPointsMain) smileyPointsMain.innerText = smiley_points;
     const multiplikatorMain = document.getElementById("multiplikator_anzeige");
-    if (multiplikatorMain) multiplikatorMain.innerText = multiplikator;
+    if (multiplikatorMain) multiplikatorMain.innerText = multiplikator.toFixed(1);
+    const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
+    const smileysPerClickValue = multiplikator * (1 + klickUpgradeBonus);
+    if (smileysPerClickElement) smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
     const aktuelleSmileysMain = document.getElementById("aktuelle_smileys");
     if (aktuelleSmileysMain) aktuelleSmileysMain.innerText = formatLargeNumber(aktuelle_smileys);
     const gesammelteSmileysMain = document.getElementById("gesammelte_smileys");
@@ -808,6 +811,9 @@ function resetGame() {
 window.onload = function() {
     ladeSpiel();
     updateGame();
+
+    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
+    createUpgradeElements(buildings, 'building-grid');
 
     document.addEventListener('click', function(event) {
     const target = event.target;
