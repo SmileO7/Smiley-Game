@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', () => {
+
 //================================================================================================================
 // --- VARIABLEN & DATEN ---
 //================================================================================================================
@@ -81,6 +83,11 @@ let autoClickerUpgradeIndex = parseInt(localStorage.getItem('autoClickerUpgradeI
 let smileyTreeProduction = parseInt(localStorage.getItem('smileyTreeProduction')) || 0;
 let smileyFactoryProduction = parseInt(localStorage.getItem('smileyFactoryProduction')) || 0;
 let forschungPunkte = 0;
+// Elemente für den Fortschrittsbalken abrufen
+const forschungFortschrittBalken = document.getElementById('forschung_fortschritt');
+const forschungFortschrittText = document.getElementById('fortschritt-text');
+
+
 const forschungUpgradeKosten = 1; // Beispielwert
 
 const smileyTreeBaseCost = 150;
@@ -303,13 +310,6 @@ function updateUpgradesDisplay() {
         multiplikatorKostenAnzeige.innerText = 10 * Math.pow(1.5, multiplikator - 1);
     }}
 
-// Initialisiere die Upgrades beim Laden der Seite
-document.addEventListener('DOMContentLoaded', () => {
-    // Rufe die Funktion für beide Gruppen auf
-    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
-    createUpgradeElements(buildings, 'building-grid');
-});
-
 function kaufePrestigeUpgrade(upgradeId) {
     const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
     
@@ -482,9 +482,13 @@ function updateGame() {
     if (smileyPointsElement) {
         smileyPointsElement.textContent = smiley_points;
     }
-      const forschungFortschritt = (forschungPunkte / forschungUpgradeKosten) * 1;
-    forschungFortschrittBalken.style.width = forschungFortschritt + '%';
-    forschungFortschrittText.innerText = Math.floor(forschungFortschritt) + '%';
+    
+    // Stelle sicher, dass die Elemente existieren, bevor du sie verwendest
+    if (forschungFortschrittBalken && forschungFortschrittText) {
+        const forschungFortschritt = (forschungPunkte / forschungUpgradeKosten) * 100;
+        forschungFortschrittBalken.style.width = forschungFortschritt + '%';
+        forschungFortschrittText.innerText = Math.floor(forschungFortschritt) + '%';
+    }
 }
 
 
@@ -667,33 +671,36 @@ function kaufeForschungslabor() {
 
 function kaufeForschungsUpgrade() {
     const upgrade = researchUpgrades[researchUpgradeIndex];
+    
+    // Prüfe, ob es noch Upgrades zu kaufen gibt
     if (!upgrade) {
-        zeigeKaufBestatigung("Hinweis", "Alle Forschungs-Upgrades gekauft!", true);
+        alert("Alle Forschungs-Upgrades wurden bereits gekauft!");
         return;
     }
+    
+    // Prüfe, ob genug Forschungspunkte vorhanden sind
     if (forschungspunkte >= upgrade.cost) {
+        // Kosten abziehen
         forschungspunkte -= upgrade.cost;
         
-        switch(upgrade.type) {
-            case 'autoClicker':
-                autoClickerResearchBonus += upgrade.value;
-                break;
-            case 'smileyTree':
-                smileyTreeResearchBonus += upgrade.value;
-                break;
-            case 'smileyFactory':
-                smileyFactoryResearchBonus += upgrade.value;
-                break;
-            case 'efficiency':
-                efficiencyBonus += upgrade.value;
-                break;
+        // Upgrade-Effekt anwenden
+        // Wir nutzen die dynamischen Variablen aus dem Array
+        if (upgrade.bonusVariable) {
+            window[upgrade.bonusVariable] += upgrade.value;
         }
+
+        // Zum nächsten Upgrade wechseln
         researchUpgradeIndex++;
+        
+        // Spiel speichern und UI aktualisieren
         speichereSpiel();
         updateDisplay();
-        zeigeKaufBestatigung("Erfolg!", `Forschungs-Upgrade "${upgrade.description}" erfolgreich gekauft.`, true);
+        updateUpgradesDisplay();
+        
+        alert(`Forschungs-Upgrade "${upgrade.description}" erfolgreich gekauft!`);
     } else {
-        zeigeKaufBestatigung("Fehler!", `Nicht genügend Forschungspunkte! Benötigt: ${upgrade.cost}`, false);
+        // Meldung, wenn nicht genug Forschungspunkte vorhanden sind
+        alert(`Nicht genug Forschungspunkte! Benötigt: ${upgrade.cost}`);
     }
 }
 
@@ -885,33 +892,53 @@ window.onload = function() {
         }
     }); 
 }
-const forschungFortschrittBalken = document.getElementById('forschung_fortschritt');
-const forschungFortschrittText = document.getElementById('fortschritt-text');
+
 
 setInterval(updateGame, 1000);
 
-document.getElementById('forschungUpgradeButton').addEventListener('click', () => {
-    // Prüfe, ob genug Forschungspunkte für den Kauf vorhanden sind
-    if (forschungPunkte >= forschungUpgradeKosten) {
-        // Kosten abziehen
-        forschungPunkte -= forschungUpgradeKosten;
+const researchUpgradeButton = document.getElementById('forschungUpgradeButton');
 
-        // Erhöhe die Forschungspunkte pro Sekunde (Beispiel)
-        // Du kannst einen festen Wert hinzufügen oder einen Multiplikator verwenden
-        forschungPunkte += forschungPunkteProSekunde / 10;
+if (researchUpgradeButton) {
+    researchUpgradeButton.addEventListener('click', () => {
+        // Prüfe, ob genug Forschungspunkte für den Kauf vorhanden sind
+        if (forschungPunkte >= forschungUpgradeKosten) {
+            // Kosten abziehen
+            forschungPunkte -= forschungUpgradeKosten;
+            
+            // Erhöhe die Forschungspunkte pro Sekunde (Beispiel)
+            // Du kannst einen festen Wert hinzufügen oder einen Multiplikator verwenden
+            forschungPunkte += forschungPunkteProSekunde / 10;
+            
+            // Hier kannst du auch die Kosten für das nächste Upgrade erhöhen,
+            // um das Spiel schwieriger zu machen.
+            // forschungUpgradeKosten *= 2; 
+            forschungUpgradeKosten = Math.floor(forschungUpgradeKosten * 1.5);
+            
+            // Aktualisiere die UI, um die neuen Forschungspunkte und SPS anzuzeigen
+            document.getElementById('forschung_punkte_anzeige').innerText = Math.floor(forschungPunkte);
+            // Falls du eine SPS-Anzeige hast, die Forschungspunkte betrifft:
+            // document.getElementById('sps_anzeige_upgrades').innerText = Math.floor(s_p_s); 
+        } else {
+            // Zeige eine Warnung, falls nicht genug Forschungspunkte vorhanden sind
+            alert("Nicht genug Forschungspunkte!");
+        }
+    });
+}
+}); 
 
 
-        // Hier kannst du auch die Kosten für das nächste Upgrade erhöhen,
-        // um das Spiel schwieriger zu machen.
-        // forschungUpgradeKosten *= 2; 
-        forschungsUpgradeKosten = Math.floor(forschungUpgradeKosten * 1.5);
 
-        // Aktualisiere die UI, um die neuen Forschungspunkte und SPS anzuzeigen
-        document.getElementById('forschung_punkte_anzeige').innerText = Math.floor(forschungPunkte);
-        // Falls du eine SPS-Anzeige hast, die Forschungspunkte betrifft:
-        // document.getElementById('sps_anzeige_upgrades').innerText = Math.floor(s_p_s); 
-    } else {
-        // Zeige eine Warnung, falls nicht genug Forschungspunkte vorhanden sind
-        alert("Nicht genug Forschungspunkte!");
-    }
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
