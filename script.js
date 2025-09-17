@@ -3,48 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     //================================================================================================================
     // --- VARIABLEN & DATEN ---
     //================================================================================================================
-    let clickerUpgrades = [
-        {
-            name: "Stärkerer Klick",
-            price: 250,
-            effect: 0.1,
-            type: "click",
-            bought: 0
-        },
-        {
-            name: "Doppelklick-Upgrade",
-            price: 500,
-            effect: 0.2,
-            type: "click",
-            bought: 0
-        },
-        {
-            name: "Dreifachklick-Upgrade",
-            price: 1000,
-            effect: 0.3,
-            type: "click",
-            bought: 0
-        }
+   let clickerUpgrades = [
+        { name: "Stärkerer Klick", price: 250, effect: 0.1, type: "click", bought: 0 },
+        { name: "Doppelklick-Upgrade", price: 500, effect: 0.2, type: "click", bought: 0 },
+        { name: "Dreifachklick-Upgrade", price: 1000, effect: 0.3, type: "click", bought: 0 }
     ];
     let buildings = [
-        {
-            name: "Auto-Klicker",
-            basePrice: 20,
-            growthRate: 1.1,
-            elementId: "auto_clicker_button_1x"
-        },
-        {
-            name: "Smiley-Baum",
-            basePrice: 100,
-            growthRate: 1.15,
-            elementId: "smileyTreeButton1x"
-        },
-        {
-            name: "Smiley-Fabrik",
-            basePrice: 1000,
-            growthRate: 1.2,
-            elementId: "smileyFactoryButton1x"
-        },
+        { name: "Auto-Klicker", basePrice: 20, growthRate: 1.1, elementId: "auto_clicker_button_1x" },
+        { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x" },
+        { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.2, elementId: "smileyFactoryButton1x" },
     ];
 
     let aktuelle_smileys = 0;
@@ -84,12 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let smileyFactoryProduction = 0;
     let forschungPunkte = 0;
 
-    // Elemente für den Fortschrittsbalken abrufen
     const forschungFortschrittBalken = document.getElementById('forschung_fortschritt');
     const forschungFortschrittText = document.getElementById('fortschritt-text');
 
-    const forschungUpgradeKosten = 1; // Beispielwert
-
+    const forschungUpgradeKosten = 1;
     const smileyTreeBaseCost = 150;
     const smileyTreeGrowthRate = 1.2;
     const smileyFactoryBaseCost = 2500;
@@ -104,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { cost: 50, description: 'Erhöht die Produktion der Smiley-Fabriken um 10%', type: 'smileyFactory', bonusVariable: 'smileyFactoryResearchBonus', value: 0.1 },
         { cost: 100, description: 'Deine Auto-Klicker sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 },
         { cost: 200, description: 'Deine Smiley-Bäume sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 },
-        { cost: 500, description: 'Deine Smiley-Fabriken sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 }];
+        { cost: 500, description: 'Deine Smiley-Fabriken sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 }
+    ];
 
     const autoClickerUpgrades = [
         { cost: 2000, type: 'speed', value: 2, variable: 'autoClickerSpeedBonus' },
@@ -117,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
         { cost: 25000000, type: 'efficiency', value: 2, variable: 'autoClickerEfficiencyBonus' }
     ];
 
-    const center_x = 400; // Horizontale Mitte des Containers
-    const center_y = 300; // Vertikale Mitte des Containers
+    const center_x = 400;
+    const center_y = 300;
 
     const prestigeUpgrades = [
         {
@@ -166,34 +132,31 @@ document.addEventListener('DOMContentLoaded', () => {
     //================================================================================================================
     // --- FUNKTIONEN ---
     //================================================================================================================
-    function createUpgradeElements(items, containerClass) {
+     function createUpgradeElements(items, containerClass) {
         const container = document.querySelector(`.${containerClass}`);
         if (!container) return;
-
         container.innerHTML = '';
-
         items.forEach((item, index) => {
             const upgradeElement = document.createElement('div');
             upgradeElement.classList.add('upgrade-item');
-
+            
             let buttonText = item.name;
             let buttonClass = '';
             let buttonDisabled = false;
-
+            
             if (item.bought) {
                 buttonText = 'Gekauft';
                 buttonClass = 'bought-button';
                 buttonDisabled = true;
             }
 
-            const itemPrice = item.price || item.basePrice;
+            const itemPrice = item.price || item.basePrice || 0; // Stellt sicher, dass der Preis immer eine Zahl ist
 
             upgradeElement.innerHTML = `
                 <h3>${item.name}</h3>
-                <p>Kosten: ${itemPrice?.toLocaleString('de-DE') || 'N/A'}</p>
+                <p>Kosten: ${formatLargeNumber(itemPrice)} Smileys</p>
                 <p>Effekt: +${item.effect || item.production || 0}</p>
                 <button class="upgrade-button ${buttonClass}"
-                        ${item.elementId ? `id="${item.elementId}"` : ''}
                         data-type="${containerClass}"
                         data-index="${index}"
                         data-cost="${itemPrice}"
@@ -205,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateButtons() {
+   function updateButtons() {
         const allBuyButtons = document.querySelectorAll('.upgrade-button');
         allBuyButtons.forEach(button => {
             const cost = parseFloat(button.dataset.cost);
@@ -219,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function kaufeItem(type, index) {
+     function kaufeItem(type, index) {
         let item, cost;
 
         if (type === 'upgrade-grid') {
@@ -242,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (aktuelle_smileys >= cost) {
                         aktuelle_smileys -= cost;
                         auto_klicker_count++;
-                        localStorage.setItem('auto_klicker_count', auto_klicker_count);
                     } else {
                         return;
                     }
@@ -252,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (aktuelle_smileys >= cost) {
                         aktuelle_smileys -= cost;
                         smileyTreeProduction++;
-                        localStorage.setItem('smileyTreeProduction', smileyTreeProduction);
                     } else {
                         return;
                     }
@@ -262,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (aktuelle_smileys >= cost) {
                         aktuelle_smileys -= cost;
                         smileyFactoryProduction++;
-                        localStorage.setItem('smileyFactoryProduction', smileyFactoryProduction);
                     } else {
                         return;
                     }
@@ -289,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function kaufePrestigeUpgrade(upgradeId) {
+   function kaufePrestigeUpgrade(upgradeId) {
         const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
 
         if (!upgrade || prestigeUpgradeStates[upgradeId]) {
@@ -315,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updatePrestigeShopDisplay() {
+     function updatePrestigeShopDisplay() {
         const prestigePointsElement = document.getElementById("current_prestige_points");
         if (prestigePointsElement) {
             prestigePointsElement.innerText = prestige_punkte;
@@ -375,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+   
     function speichereSpiel() {
         try {
             localStorage.setItem('aktuelle_smileys', aktuelle_smileys);
@@ -403,105 +364,61 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('smileyTreeResearchBonus', smileyTreeResearchBonus);
             localStorage.setItem('smileyFactoryResearchBonus', smileyFactoryResearchBonus);
             localStorage.setItem('efficiencyBonus', efficiencyBonus);
+            localStorage.setItem('clickerUpgrades', JSON.stringify(clickerUpgrades));
         } catch (e) {
             console.error("Speichern fehlgeschlagen:", e);
         }
     }
 
   function ladeSpiel() {
-    try {
-        const savedData = {
-            aktuelle_smileys: localStorage.getItem('aktuelle_smileys'),
-            gesammelte_smileys: localStorage.getItem('gesammelte_smileys'),
-            smiley_points: localStorage.getItem('smiley_points'),
-            multiplikator: localStorage.getItem('multiplikator'),
-            auto_klicker_count: localStorage.getItem('auto_klicker_count'),
-            auto_clicker_cost: localStorage.getItem('auto_clicker_cost'),
-            prestige_kosten: localStorage.getItem('prestige_kosten'),
-            prestige_punkte: localStorage.getItem('prestige_punkte'),
-            smileyTreeProduction: localStorage.getItem('smileyTreeProduction'),
-            globalerMultiplikator: localStorage.getItem('globalerMultiplikator'),
-            smileyFactoryProduction: localStorage.getItem('smileyFactoryProduction'),
-            forschungspunkte: localStorage.getItem('forschungspunkte'),
-            forschungslabor_count: localStorage.getItem('forschungslabor_count'),
-            klickUpgradeBonus: localStorage.getItem('klickUpgradeBonus'),
-            autoClickerResearchBonus: localStorage.getItem('autoClickerResearchBonus'),
-            smileyTreeResearchBonus: localStorage.getItem('smileyTreeResearchBonus'),
-            smileyFactoryResearchBonus: localStorage.getItem('smileyFactoryResearchBonus'),
-            efficiencyBonus: localStorage.getItem('efficiencyBonus'),
-            autoClickerSpeedBonus: localStorage.getItem('autoClickerSpeedBonus'),
-            autoClickerClickBonus: localStorage.getItem('autoClickerClickBonus'),
-            autoClickerEfficiencyBonus: localStorage.getItem('autoClickerEfficiencyBonus'),
-            autoClickerProductionBonus: localStorage.getItem('autoClickerProductionBonus'),
-            autoClickerCostReduction: localStorage.getItem('autoClickerCostReduction'),
-            autoClickerGrowthRate: localStorage.getItem('autoClickerGrowthRate'),
-            researchUpgradeIndex: localStorage.getItem('researchUpgradeIndex'),
-            gesamteGeklickteSmileys: localStorage.getItem('gesamteGeklickteSmileys'),
-            gesamteGesammelteSmileys: localStorage.getItem('gesamteGesammelteSmileys'),
-            gesamtPrestigePunkte: localStorage.getItem('gesamtPrestigePunkte'),
-            gekaufteUpgrades: localStorage.getItem('gekaufteUpgrades'),
-            gekauft_auto_klicker: localStorage.getItem('gekauft_auto_klicker'),
-            gekauft_smiley_baeume: localStorage.getItem('gekauft_smiley_baeume'),
-            gekauft_smiley_fabriken: localStorage.getItem('gekauft_smiley_fabriken'),
-            prestigeUpgradeStates: localStorage.getItem('prestigeUpgradeStates'),
-            forschungslabor_fps_multiplier: localStorage.getItem('forschungslabor_fps_multiplier'),
-            autoClickerUpgradeIndex: localStorage.getItem('autoClickerUpgradeIndex'),
-            clickerUpgrades: localStorage.getItem('clickerUpgrades'),
-            buildings: localStorage.getItem('buildings')
-        };
+        try {
+            const savedData = {
+                aktuelle_smileys: localStorage.getItem('aktuelle_smileys'),
+                gesammelte_smileys: localStorage.getItem('gesammelte_smileys'),
+                smiley_points: localStorage.getItem('smiley_points'),
+                multiplikator: localStorage.getItem('multiplikator'),
+                prestige_kosten: localStorage.getItem('prestige_kosten'),
+                prestige_punkte: localStorage.getItem('prestige_punkte'),
+                prestigeUpgradeStates: localStorage.getItem('prestigeUpgradeStates'),
+                auto_klicker_count: localStorage.getItem('auto_klicker_count'),
+                auto_clicker_cost: localStorage.getItem('auto_clicker_cost'),
+                smileyTreeProduction: localStorage.getItem('smileyTreeProduction'),
+                smileyFactoryProduction: localStorage.getItem('smileyFactoryProduction'),
+                forschungspunkte: localStorage.getItem('forschungspunkte'),
+                forschungslabor_count: localStorage.getItem('forschungslabor_count'),
+                researchUpgradeIndex: localStorage.getItem('researchUpgradeIndex'),
+                clickerUpgrades: localStorage.getItem('clickerUpgrades'),
+                buildings: localStorage.getItem('buildings')
+            };
 
-        // Prüfe, ob die Daten existieren und gültig sind.
-        if (savedData.aktuelle_smileys && savedData.clickerUpgrades) {
-            aktuelle_smileys = parseFloat(savedData.aktuelle_smileys);
-            gesammelte_smileys = parseFloat(savedData.gesammelte_smileys);
-            smiley_points = parseFloat(savedData.smiley_points);
-            multiplikator = parseFloat(savedData.multiplikator);
-            auto_klicker_count = parseFloat(savedData.auto_klicker_count);
-            auto_clicker_cost = parseFloat(savedData.auto_clicker_cost);
-            prestige_kosten = parseFloat(savedData.prestige_kosten);
-            prestige_punkte = parseFloat(savedData.prestige_punkte);
-            smileyTreeProduction = parseFloat(savedData.smileyTreeProduction);
-            globalerMultiplikator = parseFloat(savedData.globalerMultiplikator);
-            smileyFactoryProduction = parseFloat(savedData.smileyFactoryProduction);
-            forschungspunkte = parseFloat(savedData.forschungspunkte);
-            forschungslabor_count = parseFloat(savedData.forschungslabor_count);
-            klickUpgradeBonus = parseFloat(savedData.klickUpgradeBonus);
-            autoClickerResearchBonus = parseFloat(savedData.autoClickerResearchBonus);
-            smileyTreeResearchBonus = parseFloat(savedData.smileyTreeResearchBonus);
-            smileyFactoryResearchBonus = parseFloat(savedData.smileyFactoryResearchBonus);
-            efficiencyBonus = parseFloat(savedData.efficiencyBonus);
-            autoClickerSpeedBonus = parseFloat(savedData.autoClickerSpeedBonus);
-            autoClickerClickBonus = parseFloat(savedData.autoClickerClickBonus);
-            autoClickerEfficiencyBonus = parseFloat(savedData.autoClickerEfficiencyBonus);
-            autoClickerProductionBonus = parseFloat(savedData.autoClickerProductionBonus);
-            autoClickerCostReduction = parseFloat(savedData.autoClickerCostReduction);
-            autoClickerGrowthRate = parseFloat(savedData.autoClickerGrowthRate);
-            researchUpgradeIndex = parseFloat(savedData.researchUpgradeIndex);
-            gesamteGeklickteSmileys = parseFloat(savedData.gesamteGeklickteSmileys);
-            gesamteGesammelteSmileys = parseFloat(savedData.gesamteGesammelteSmileys);
-            gesamtPrestigePunkte = parseFloat(savedData.gesamtPrestigePunkte);
-            gekaufteUpgrades = parseFloat(savedData.gekaufteUpgrades);
-            gekauft_auto_klicker = parseFloat(savedData.gekauft_auto_klicker);
-            gekauft_smiley_baeume = parseFloat(savedData.gekauft_smiley_baeume);
-            gekauft_smiley_fabriken = parseFloat(savedData.gekauft_smiley_fabriken);
-            prestigeUpgradeStates = JSON.parse(savedData.prestigeUpgradeStates);
-            forschungslabor_fps_multiplier = parseFloat(savedData.forschungslabor_fps_multiplier);
-            autoClickerUpgradeIndex = parseFloat(savedData.autoClickerUpgradeIndex);
+            aktuelle_smileys = parseFloat(savedData.aktuelle_smileys) || 0;
+            gesammelte_smileys = parseFloat(savedData.gesammelte_smileys) || 0;
+            smiley_points = parseFloat(savedData.smiley_points) || 0;
+            multiplikator = parseFloat(savedData.multiplikator) || 1;
+            prestige_kosten = parseFloat(savedData.prestige_kosten) || 1000;
+            prestige_punkte = parseFloat(savedData.prestige_punkte) || 0;
+            auto_klicker_count = parseFloat(savedData.auto_klicker_count) || 0;
+            auto_clicker_cost = parseFloat(savedData.auto_clicker_cost) || 0;
+            smileyTreeProduction = parseFloat(savedData.smileyTreeProduction) || 0;
+            smileyFactoryProduction = parseFloat(savedData.smileyFactoryProduction) || 0;
+            forschungspunkte = parseFloat(savedData.forschungspunkte) || 0;
+            forschungslabor_count = parseFloat(savedData.forschungslabor_count) || 0;
+            researchUpgradeIndex = parseFloat(savedData.researchUpgradeIndex) || 0;
 
-            clickerUpgrades = JSON.parse(savedData.clickerUpgrades);
-            buildings = JSON.parse(savedData.buildings);
-        } else {
-            // Daten sind ungültig, also lösche sie und starte neu
+            try {
+                if (savedData.clickerUpgrades) clickerUpgrades = JSON.parse(savedData.clickerUpgrades);
+                if (savedData.buildings) buildings = JSON.parse(savedData.buildings);
+                if (savedData.prestigeUpgradeStates) prestigeUpgradeStates = JSON.parse(savedData.prestigeUpgradeStates);
+            } catch (e) {
+                console.error("Fehler beim Parsen der gespeicherten Arrays. Daten werden zurückgesetzt.", e);
+                localStorage.clear();
+            }
+
+        } catch (e) {
+            console.error("Laden fehlgeschlagen, Spielstand wird zurückgesetzt:", e);
             localStorage.clear();
-            console.warn("Fehlerhafte Spieldaten erkannt. Der Spielstand wurde zurückgesetzt.");
         }
-
-    } catch (e) {
-        // Bei einem Fehler (z.B. Parse-Fehler) wird der Spielstand gelöscht.
-        console.error("Laden fehlgeschlagen, Spielstand wird zurückgesetzt:", e);
-        localStorage.clear();
     }
-}
 
     function updateGame() {
         speichereSpiel();
@@ -518,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function formatLargeNumber(number) {
+     function formatLargeNumber(number) {
         if (number > 999) {
             return Intl.NumberFormat('de-DE', { notation: 'compact', maximumFractionDigits: 2 }).format(number);
         }
@@ -527,30 +444,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateDisplay() {
         const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
-        if (aktuelleSmileysElement) aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
+        if (aktuelleSmileysElement) {
+            aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
+        }
         const gesammelteSmileysElement = document.getElementById("gesammelte_smileys");
-        if (gesammelteSmileysElement) gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
+        if (gesammelteSmileysElement) {
+            gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
+        }
         const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
         const smileysPerClickValue = multiplikator * (1 + klickUpgradeBonus);
-        if (smileysPerClickElement) smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
+        if (smileysPerClickElement) {
+            smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
+        }
         const spsAnzeigeElement = document.getElementById("sps_anzeige");
         const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
         const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
         const smileyFactorySPS = smileyFactoryProduction * (150 * (1 + smileyFactoryResearchBonus));
         const totalSPS = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + efficiencyBonus) * globalerMultiplikator;
-        if (spsAnzeigeElement) spsAnzeigeElement.innerText = formatLargeNumber(totalSPS);
+        if (spsAnzeigeElement) {
+            spsAnzeigeElement.innerText = formatLargeNumber(totalSPS);
+        }
         const smpAnzeigeElement = document.getElementById("smp_anzeige");
-        if (smpAnzeigeElement) smpAnzeigeElement.innerText = formatLargeNumber(totalSPS * 60);
+        if (smpAnzeigeElement) {
+            smpAnzeigeElement.innerText = formatLargeNumber(totalSPS * 60);
+        }
 
-        const autoKlickerButton = document.getElementById("auto_clicker_button_1x");
-        if(autoKlickerButton) autoKlickerButton.innerText = `Kaufen (${formatLargeNumber(auto_clicker_cost)})`;
+    // === Upgrade-Seite (upgrades.html) ===
+   const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
+        if (aktuelleSmileysUpgrades) {
+            aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
+        }
+        const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
+        if (spsAnzeigeUpgrades) {
+            spsAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS);
+        }
+        const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
+        if (smpAnzeigeUpgrades) {
+            smpAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS * 60);
+        }
+        const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
+        if (smileyPointsUpgrades) {
+            smileyPointsUpgrades.innerText = formatLargeNumber(smiley_points);
+        }
 
+        updateButtons();
         createUpgradeElements(clickerUpgrades, 'upgrade-grid');
         createUpgradeElements(buildings, 'building-grid');
-        updateButtons();
+        updateUpgradesDisplay();
+        updatePrestigeShopDisplay();
     }
 
-    function produziereSmileys() {
+   function produziereSmileys() {
         const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
         const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
         const smileyFactorySPS = smileyFactoryProduction * (150 * (1 + smileyFactoryResearchBonus));
@@ -570,86 +514,88 @@ document.addEventListener('DOMContentLoaded', () => {
                 prestigeButton.classList.add("available");
             }
         } else {
-            const prestigeButton = document.getElementById("prestige_button");
+           const prestigeButton = document.getElementById("prestige_button");
             if (prestigeButton) {
                 prestigeButton.classList.remove("available");
             }
         }
 
         updateDisplay();
+   }
+
+  function klickeSmiley() {
+    const smileyElement = document.getElementById('smiley_button');
+    if (smileyElement) {
+        smileyElement.classList.add('pop');
+        setTimeout(() => {
+            smileyElement.classList.remove('pop');
+        }, 150);
+    }
+    aktuelle_smileys += multiplikator * (1 + klickUpgradeBonus);
+    gesammelte_smileys += multiplikator * (1 + klickUpgradeBonus);
+    gesamteGeklickteSmileys += multiplikator * (1 + klickUpgradeBonus);
+    speichereSpiel();
+    updateDisplay();
+}
+
+
+  function kaufeForschungsUpgrade() {
+    const upgrade = researchUpgrades[researchUpgradeIndex];
+
+    if (!upgrade) {
+        alert("Alle Forschungs-Upgrades wurden bereits gekauft!");
+        return;
     }
 
-    function klickeSmiley() {
-        const smileyElement = document.getElementById('smiley-image');
-        if (smileyElement) {
-            smileyElement.classList.add('pop');
-            setTimeout(() => {
-                smileyElement.classList.remove('pop');
-            }, 150);
+    if (forschungspunkte >= upgrade.cost) {
+        forschungspunkte -= upgrade.cost;
+
+        if (upgrade.bonusVariable) {
+            window[upgrade.bonusVariable] += upgrade.value;
         }
-        aktuelle_smileys += multiplikator * (1 + klickUpgradeBonus);
-        gesammelte_smileys += multiplikator * (1 + klickUpgradeBonus);
-        gesamteGeklickteSmileys += multiplikator * (1 + klickUpgradeBonus);
+
+        researchUpgradeIndex++;
+
         speichereSpiel();
         updateDisplay();
+        updateUpgradesDisplay();
+    } else {
+        alert("Nicht genügend Forschungspunkte!");
     }
-
-    function kaufeForschungsUpgrade() {
-        const upgrade = researchUpgrades[researchUpgradeIndex];
-
-        if (!upgrade) {
-            alert("Alle Forschungs-Upgrades wurden bereits gekauft!");
-            return;
-        }
-
-        if (forschungspunkte >= upgrade.cost) {
-            forschungspunkte -= upgrade.cost;
-
-            if (upgrade.bonusVariable) {
-                window[upgrade.bonusVariable] += upgrade.value;
-            }
-
-            researchUpgradeIndex++;
-
-            speichereSpiel();
-            updateDisplay();
-            updateUpgradesDisplay();
-        } else {
-            alert("Nicht genügend Forschungspunkte!");
-        }
-    }
+}
 
     // Event-Listener
-    const smileyImage = document.getElementById('smiley-image');
-    if (smileyImage) {
-        smileyImage.addEventListener('click', klickeSmiley);
-    }
-    const upgradeGrid = document.getElementById('upgrade-grid');
-    if (upgradeGrid) {
-        upgradeGrid.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                kaufeItem(e.target.dataset.type, e.target.dataset.index);
-            }
-        });
-    }
-    const buildingGrid = document.getElementById('building-grid');
-    if (buildingGrid) {
-        buildingGrid.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                kaufeItem(e.target.dataset.type, e.target.dataset.index);
-            }
-        });
-    }
-    const researchUpgradeButton = document.getElementById("forschungUpgradeButton");
-    if(researchUpgradeButton) {
-        researchUpgradeButton.addEventListener('click', kaufeForschungsUpgrade);
-    }
+   const smileyButton = document.getElementById('smiley_button');
+if (smileyButton) {
+    smileyButton.addEventListener('click', klickeSmiley);
+}
 
-    // Initialisierung
-    ladeSpiel();
-    updateDisplay();
-    updatePrestigeShopDisplay();
-    updateUpgradesDisplay();
-    setInterval(produziereSmileys, 100);
+const upgradeGrid = document.getElementById('upgrade-grid');
+if (upgradeGrid) {
+    upgradeGrid.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            kaufeItem(e.target.dataset.type, e.target.dataset.index);
+        }
+    });
+}
+const buildingGrid = document.getElementById('building-grid');
+if (buildingGrid) {
+    buildingGrid.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            kaufeItem(e.target.dataset.type, e.target.dataset.index);
+        }
+    });
+}
+const researchUpgradeButton = document.getElementById("forschungUpgradeButton");
+if(researchUpgradeButton) {
+    researchUpgradeButton.addEventListener('click', kaufeForschungsUpgrade);
+}
+
+// Initialisierung
+ ladeSpiel();
+updateDisplay();
+updatePrestigeShopDisplay();
+updateUpgradesDisplay();
+setInterval(produziereSmileys, 100);
 
 });
