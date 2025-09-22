@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     //================================================================================================================
     // --- VARIABLEN & DATEN ---
     //================================================================================================================
-    const buildingsData = [
+    let buildingsData = [
         { name: "Auto-Klicker", basePrice: 20, growthRate: 1.1, elementId: "auto_clicker_button_1x" },
         { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x" },
         { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.2, elementId: "smileyFactoryButton1x" },
@@ -127,11 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const prestige_kosten = 1000;
     let prestige_punkte = 0;
     let globalerMultiplikator = 1.0;
-
-
+    
     //================================================================================================================
     // --- FUNKTIONEN ---
     //================================================================================================================
+    
+    // Diese Funktion erstellt die HTML-Elemente für Upgrades und Gebäude
     function createUpgradeElements(items, containerClass) {
         const container = document.querySelector(`.${containerClass}`);
         if (!container) return;
@@ -182,6 +183,54 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             container.appendChild(upgradeElement);
         });
+    }
+
+    // Diese Funktion aktualisiert nur die Werte, NICHT die HTML-Struktur
+    function updateDisplay() {
+        const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
+        if (aktuelleSmileysElement) {
+            aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
+        }
+        const gesammelteSmileysElement = document.getElementById("gesammelte_smileys");
+        if (gesammelteSmileysElement) {
+            gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
+        }
+        const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
+        const smileysPerClickValue = multiplikator * (1 + klickUpgradeBonus);
+        if (smileysPerClickElement) {
+            smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
+        }
+        const spsAnzeigeElement = document.getElementById("sps_anzeige");
+        const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
+        const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
+        const smileyFactorySPS = smileyFactoryProduction * (150 * (1 + smileyFactoryResearchBonus));
+        const totalSPS = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + efficiencyBonus) * globalerMultiplikator;
+        if (spsAnzeigeElement) {
+            spsAnzeigeElement.innerText = formatLargeNumber(totalSPS);
+        }
+        const smpAnzeigeElement = document.getElementById("smp_anzeige");
+        if (smpAnzeigeElement) {
+            smpAnzeigeElement.innerText = formatLargeNumber(totalSPS * 60);
+        }
+        
+        const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
+        if (aktuelleSmileysUpgrades) {
+            aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
+        }
+        const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
+        if (spsAnzeigeUpgrades) {
+            spsAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS);
+        }
+        const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
+        if (smpAnzeigeUpgrades) {
+            smpAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS * 60);
+        }
+        const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
+        if (smileyPointsUpgrades) {
+            smileyPointsUpgrades.innerText = formatLargeNumber(smiley_points);
+        }
+
+        updateButtons();
     }
 
     function checkAchievements() {
@@ -461,57 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(number).toLocaleString('de-DE');
     }
 
-    function updateDisplay() {
-        const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
-        if (aktuelleSmileysElement) {
-            aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
-        }
-        const gesammelteSmileysElement = document.getElementById("gesammelte_smileys");
-        if (gesammelteSmileysElement) {
-            gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
-        }
-        const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
-        const smileysPerClickValue = multiplikator * (1 + klickUpgradeBonus);
-        if (smileysPerClickElement) {
-            smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
-        }
-        const spsAnzeigeElement = document.getElementById("sps_anzeige");
-        const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
-        const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
-        const smileyFactorySPS = smileyFactoryProduction * (150 * (1 + smileyFactoryResearchBonus));
-        const totalSPS = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + efficiencyBonus) * globalerMultiplikator;
-        if (spsAnzeigeElement) {
-            spsAnzeigeElement.innerText = formatLargeNumber(totalSPS);
-        }
-        const smpAnzeigeElement = document.getElementById("smp_anzeige");
-        if (smpAnzeigeElement) {
-            smpAnzeigeElement.innerText = formatLargeNumber(totalSPS * 60);
-        }
-        
-        const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
-        if (aktuelleSmileysUpgrades) {
-            aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
-        }
-        const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
-        if (spsAnzeigeUpgrades) {
-            spsAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS);
-        }
-        const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
-        if (smpAnzeigeUpgrades) {
-            smpAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS * 60);
-        }
-        const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
-        if (smileyPointsUpgrades) {
-            smileyPointsUpgrades.innerText = formatLargeNumber(smiley_points);
-        }
-
-        updateButtons();
-        createUpgradeElements(clickerUpgrades, 'upgrade-grid');
-        createUpgradeElements(buildingsData, 'building-grid');
-        updateUpgradesDisplay();
-        updatePrestigeShopDisplay();
-    }
-
     function produziereSmileys() {
         const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
         const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
@@ -581,7 +579,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event-Listener
+    //================================================================================================================
+    // --- EVENT LISTENER & INITIALISIERUNG ---
+    //================================================================================================================
+    
+    // Lade den Spielstand
+    ladeSpiel();
+
+    // Erstelle die Elemente für die Upgrades und Gebäude EINMALIG beim Start
+    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
+    createUpgradeElements(buildingsData, 'building-grid');
+
+    // Hänge die Event-Listener für den Hover-Effekt an die JETZT vorhandenen Elemente an
+    const hoverElements = document.querySelectorAll('.upgrade-item, .building-item, .research-lab-container, .prestige-upgrade');
+    
+    hoverElements.forEach(element => {
+        element.addEventListener('mouseover', () => {
+            element.classList.add('is-hovered');
+        });
+        element.addEventListener('mouseout', () => {
+            element.classList.remove('is-hovered');
+        });
+    });
+
+    // Hänge Event-Listener für Klicks an
     const smileyButton = document.getElementById('smiley_button');
     if (smileyButton) {
         smileyButton.addEventListener('click', klickeSmiley);
@@ -609,12 +630,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(researchUpgradeButton) {
         researchUpgradeButton.addEventListener('click', kaufeForschungsUpgrade);
     }
+    
+    // Starte den Game-Loop, um die Produktion und das Display zu aktualisieren
+    setInterval(produziereSmileys, 100);
 
-    // Initialisierung
-    ladeSpiel();
+    // Initialisiere die Anzeige einmalig am Anfang
     updateDisplay();
     updatePrestigeShopDisplay();
     updateUpgradesDisplay();
-    setInterval(produziereSmileys, 100);
 
 });

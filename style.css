@@ -1,5 +1,7 @@
+/* GEFIXTE VERSION - Kein ungewolltes Springen mehr */
+
 body, html {
-    margin: 0 ;
+    margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
     color: #f0f0f0;
@@ -13,11 +15,12 @@ body, html {
 /* Spezifische Hintergründe für die Seiten */
 body.home-page {
     background-color: #011638; 
-    background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1)0% transparent 50%),
+    background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1) 0%, transparent 50%),
                       radial-gradient(circle at bottom right, rgba(107, 5,4,0.1) 0%, transparent 50%),
                       linear-gradient(135deg, #011638, #24243e);
     background-size: 100% 100%;
-    background-attachment: fixed;}
+    background-attachment: fixed;
+}
 
 @keyframes gradientAnimation {
     0% {
@@ -82,7 +85,7 @@ body.info-page {
     padding-bottom: 20px;
     width: 100%;
     box-sizing: border-box;
-    margin: 0 auto; /* Füge diese Zeile hinzu */
+    margin: 0 auto;
 }
 
 .info-box {
@@ -99,19 +102,19 @@ h1, h2, h3 {
     color: #009FFD;
     text-shadow: 0 0 10px rgba(0, 159, 253, 0.5); 
     margin-bottom: 20px;
-    text-align: center; /* Füge diese Zeile hinzu */
+    text-align: center;
 }
 
 .smiley-button {
     background-color: transparent;
     border: none;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.5s ease-in-out; /* Füge box-shadow Transition hinzu */
+    transition: transform 0.1s, box-shadow 0.5s ease-in-out;
     user-select: none;
     padding: 0;
-    position: relative; /* Wichtig für den Glüheffekt */
-    border-radius: 50%; /* Macht den Button kreisförmig */
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6); /* Standard-Glühen (Rot) */
+    position: relative;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
 }
 
 .smiley-button img {
@@ -119,16 +122,16 @@ h1, h2, h3 {
     height: auto;
     display: block;
     margin: 0 auto;
-    border-radius: 50%; /* Macht das Bild auch kreisförmig, falls es nicht quadratisch ist */
+    border-radius: 50%;
 }
 
 .smiley-button:hover {
-    box-shadow: 0 0 25px rgba(0, 159, 253, 0.8); /* Blaues Glühen beim Hover */
+    box-shadow: 0 0 25px rgba(0, 159, 253, 0.8);
 }
 
 .smiley-button:active {
     transform: scale(0.95);
-    box-shadow: 0 0 35px rgba(0, 159,253, 0.9); /* Gelbes Glühen beim Klicken */
+    box-shadow: 0 0 35px rgba(0, 159,253, 0.9);
 }
 
 .btn-buy, .btn-confirm, .btn-cancel {
@@ -205,11 +208,6 @@ h1, h2, h3 {
     margin-top: 20px;
 }
 
-.building-container:hover {
-    transform: translateY(-5px);
-    border-color: #009FFD;
-}
-
 .-container {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid #444;
@@ -222,9 +220,6 @@ h1, h2, h3 {
     margin: 0 auto;
 }
 
-.upgrade-button:hover {
-    background-color: #550403; /* Dunkleres Rot beim Hover */
-}
 .forschungslabor-container {
     flex: 2;
 }
@@ -273,21 +268,18 @@ h1, h2, h3 {
     max-width: 800px;
 }
 
+/* FIX: Damit Prestige-Upgrades nicht springen */
 .prestige-upgrade {
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 15px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.prestige-upgrade:hover {
-    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .upgrade-button {
-    background-color: #6b0504; /* Roter Button */
+    background-color: #6b0504;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -300,14 +292,17 @@ h1, h2, h3 {
 
 /* CSS für deaktivierte Buttons */
 .upgrade-button.disabled {
-    background-color: #3e5641; /* Gedämpftes Grün für deaktiviert */
+    background-color: #011638;
+    color: #009ffd;
+    border: 1px solid #6b0504;
     cursor: not-allowed;
-    color: #a9a9a9;
+    filter: none;
+    opacity: 1;
 }
-.upgrade-button.bought-button {
-    background-color: #011638; /* Dunkelblau, weil gekauft */
-    color: #f0f0f0;
-    border: 2px solid #009FFD; /* Blauer Rand */
+
+.bought-button {
+    background-color: #6B0504; /* Dunkelrot aus deinem Farbschema */
+    color: white;
     cursor: default;
 }
 
@@ -317,24 +312,19 @@ h1, h2, h3 {
     align-items: flex-start;
     gap: 50px;
     width: 100%;
-    max-width: 1200px; /* Gleiche Maximalbreite wie oben */
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
+/* FIX: Isolierte Transformation für Upgrade/Building Container */
 .upgrade-container, .building-container {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid #444;
     border-radius: 10px;
     padding: 20px;
     text-align: center;
-    backdrop-filter: blur(5px);
-    transition: transform 0.2s ease-in-out;
-}
-
-.upgrade-container:hover, .building-container:hover {
-    transform: translateY(-5px);
-    border-color: #009FFD;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .stats-container {
@@ -343,84 +333,57 @@ h1, h2, h3 {
     border-radius: 10px;
     padding: 15px;
     text-align: left;
-    backdrop-filter: blur(5px);
-    transition: transform 0.2s ease-in-out;
+    backdrop-filter: none;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
+
 main {
     display: flex;
-    flex-direction: column; /* Ordnet die Sektionen untereinander an */
-    align-items: center; /* Zentriert die Sektionen horizontal in der Mitte */
-    gap: 50px; /* Fügt einen Abstand zwischen den Sektionen hinzu */
+    flex-direction: column;
+    align-items: center;
+    gap: 50px;
     padding-top: 70px;
     width: 100%;
 }
 
+/* FIX: Grid-Container sollten nicht transformieren */
 .upgrade-grid, .building-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     width: 100%;
-    background-color: rgba(0, 0, 0, 0.4); /* Transparenter Hintergrund statt Filter */
+    background-color: rgba(0, 0, 0, 0.4);
     border: 1px solid #444;
     border-radius: 10px;
     padding: 20px;
 }
-.upgrade-item, .building-item {
-    background-color: #011638;
-    border: 2px solid #010e57;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Hier ist die wichtige Änderung! */
-}
-.upgrade-item:hover, .building-item:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
-    transition: transform 10s ease-in-out
 
-}
-.upgrade-item h3, .building-item h3 {
-    margin-top: 0;
-    color: #009FFD; /* Blauer Text */
-}
 .stats-and-lab-container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
     gap: 50px;
     width: 100%;
-    max-width: 1200px; /* Einheitliche Maximalbreite für die oberen Container */
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-.stats-container {
-    background: rgba(0, 0, 0, 0.4); /* Transparenter Hintergrund */
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 15px;
-    text-align: left;
-    transition: transform 0.2s ease-in-out;
-}
+/* FIX: Research Lab isolierte Transformation */
 .research-lab-container {
-    background-color: rgba(1, 22, 56, 0.7); /* Transparenter Dunkelblau-Hintergrund */
+    background-color: rgba(1, 22, 56, 0.7);
     border: 2px solid #009FFD;
     border-radius: 10px;
     padding: 25px;
     text-align: center;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-
-.research-lab-container:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
+    cursor: pointer;
 }
 
 .forschung-balken-container {
     width: 100%;
     height: 25px;
-    background-color: #3e5641; /* Ein dunkles Grün für den Hintergrund des Balkens */
+    background-color: #3e5641;
     border-radius: 10px;
     overflow: hidden;
     margin-top: 10px;
@@ -429,7 +392,7 @@ main {
 
 .forschung-fortschritt {
     height: 100%;
-    background-color: #009FFD; /* Blau als Fortschrittsfarbe */
+    background-color: #009FFD;
     transition: width 0.3s ease;
 }
 
@@ -442,13 +405,71 @@ main {
 @media (max-width: 900px) {
     .stats-and-lab-container,
     .shop-container {
-        flex-direction: column; /* Ordnet die Container untereinander an */
-        align-items: center; /* Zentriert die Elemente in der Mitte */
+        flex-direction: column;
+        align-items: center;
     }
 
     .research-lab-container,
     .stats-container {
         width: 100%;
-        max-width: 500px; /* Begrenzt die Breite auf kleineren Bildschirmen */
+        max-width: 500px;
     }
+}
+
+.upgrade-button.bought-button,
+.prestige-upgrade-item.bought {
+    background-color: #6b0504;
+    color: #fff;
+    cursor: default;
+    border: 1px solid #3e5641;
+}
+
+.upgrade-button.disabled,
+.prestige-upgrade-item.locked {
+    background-color: #011638;
+    color: #009ffd;
+    border: 1px solid #6b0504;
+    cursor: not-allowed;
+    filter: none;
+    opacity: 1;
+}
+
+/* Erstellt einen unsichtbaren Pufferbereich um die Elemente */
+.upgrade-item,
+.building-item,
+.research-lab-container,
+.prestige-upgrade {
+    position: relative; /* Wichtig für das Pseudo-Element */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.upgrade-item::before,
+.building-item::before,
+.research-lab-container::before,
+.prestige-upgrade::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    bottom: -5px;
+    left: -5px;
+    z-index: -1;
+}
+
+/* Einheitlicher Hover-Effekt auf dem Pufferbereich */
+.upgrade-item:hover,
+.building-item:hover,
+.research-lab-container:hover,
+.prestige-upgrade:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
+    cursor: pointer;
+}
+.upgrade-item.is-hovered,
+.building-item.is-hovered,
+.research-lab-container.is-hovered,
+.prestige-upgrade.is-hovered {
+    border: 2px solid #009FFD; /* Blau aus deinem Farbschema */
+    box-shadow: 0 0 10px rgba(0, 159, 253, 0.7); /* Heller blauer Schatten für den Pop-Effekt */
+    transition: all 0.2s ease-in-out; /* Übergang für eine sanftere Animation */
 }
