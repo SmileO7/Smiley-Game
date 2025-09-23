@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upgrades</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,25 +17,29 @@
         </nav>
     </header>
     <main>
- <div class="stats-and-lab-container">
+
+<div class="stats-and-lab-container">
     <div class="stats-container">
         <p>Aktuelle Smileys: <span id="aktuelle_smileys_upgrades">0</span></p>
         <p>SPS: <span id="sps_anzeige_upgrades">0</span></p>
         <p>SPM: <span id="smp_anzeige_upgrades">0</span></p>
     </div>
+
     <div class="research-lab-container">
         <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
         <p>Generiert Forschungspunkte pro Sekunde.</p>
-        <p>Forschungspunkte: <span id="forschung_punkte_anzeige">0</span></p>
+        <p>Forschungspunkte: <span id="forschungspunkte">0</span></p>
         <div class="forschung-balken-container">
             <div id="forschung_fortschritt" class="forschung-fortschritt"></div>
         </div>
-        <div id="fortschritt-text">0%</div>
-        <button id="forschungslaborButton" class="btn-buy">Kaufen (1,000 Smileys)</button>
-        <button id="forschungUpgradeButton" class="btn-buy">Forschungspunkte-Upgrade kaufen</button>
+        <p class="progress-text">Fortschritt: <span id="fortschritt-text">0%</span></p>
+        
+        <div class="research-buttons">
+            <button id="forschungslaborButton" class="btn-buy">Kaufen (5,000 Smileys)</button>
+            <button id="forschungUpgradeButton" class="btn-buy">Forschungs-Upgrade kaufen</button>
+        </div>
     </div>
 </div>
-        </div>
 
         <div class="shop-container">
             <section class="upgrade-section">
