@@ -491,3 +491,13 @@ main {
     margin: 0;
     text-align: center; /* Ensures the text is centered */
 }
+.purchase-buttons {
+    display: flex;
+    justify-content: space-between; /* Verteilt die Buttons gleichmäßig */
+    align-items: center; /* Zentriert die Buttons vertikal */
+}
+
+.purchase-buttons button {
+    margin: 0 5px; /* Fügt einen kleinen Abstand zwischen den Buttons hinzu */
+    width: 125px;
+}
