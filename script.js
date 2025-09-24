@@ -61,6 +61,95 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'research_multi',
         dependencies: ['auto_klicker_multi']
     },
+    {
+    id: 'klick_multiplikator_2',
+    name: 'Unendliche Klickkraft',
+    description: 'Erhöht deine Klickkraft um 2 pro Prestige-Punkt, den du je gesammelt hast.',
+    cost: 5,
+    type: 'klick_boost_per_pp',
+    dependencies: ['globaler_multiplikator_1']
+},
+{
+    id: 'sps_multiplikator_1',
+    name: 'Überlegenheit in der Produktion',
+    description: 'Erhöht die Produktion aller Gebäude um 15%.',
+    cost: 10,
+    bonus: 0.15,
+    type: 'global_sps_multi',
+    dependencies: ['globaler_multiplikator_1']
+},
+{
+    id: 'kostenreduktion_1',
+    name: 'Ökonomische Voraussicht',
+    description: 'Reduziert die Kosten aller Gebäude um 5%.',
+    cost: 20,
+    bonus: 0.05,
+    type: 'cost_reduction',
+    dependencies: ['sps_multiplikator_1']
+},
+{
+    id: 'forschungslabor_effizienz_2',
+    name: 'Meister der Forschung',
+    description: 'Verdoppelt die Menge an Forschungspunkten, die du pro Sekunde verdienst.',
+    cost: 30,
+    bonus: 1,
+    type: 'research_multi',
+    dependencies: ['forscher_effizienz']
+},
+{
+    id: 'dauerhafter_smiley_baum',
+    name: 'Wunderbaum-Anfang',
+    description: 'Du startest nach jedem Prestige-Reset mit einem dauerhaften Smiley-Baum.',
+    cost: 40,
+    bonus: 1,
+    type: 'permanent_building',
+    dependencies: ['dauerhafter_auto_klicker']
+},
+{
+    id: 'auto_klicker_multiplikator',
+    name: 'Auto-Klicker-Hyper-Antrieb',
+    description: 'Die Produktion der Auto-Klicker wird um weitere 20% erhöht.',
+    cost: 50,
+    bonus: 0.20,
+    type: 'auto_clicker_multi',
+    dependencies: ['sps_multiplikator_1']
+},
+{
+    id: 'smiley_baum_multiplikator',
+    name: 'Ur-Bäume',
+    description: 'Die Produktion der Smiley-Bäume wird um 25% erhöht.',
+    cost: 75,
+    bonus: 0.25,
+    type: 'smiley_tree_multi',
+    dependencies: ['sps_multiplikator_1']
+},
+{
+    id: 'smiley_fabrik_multiplikator',
+    name: 'Giganten-Fabriken',
+    description: 'Die Produktion der Smiley-Fabriken wird um 30% erhöht.',
+    cost: 100,
+    bonus: 0.30,
+    type: 'smiley_factory_multi',
+    dependencies: ['sps_multiplikator_1']
+},
+{
+    id: 'kostenreduktion_2',
+    name: 'Eiserne Sparsamkeit',
+    description: 'Reduziert die Kosten aller Gebäude um weitere 10%.',
+    cost: 150,
+    bonus: 0.10,
+    type: 'cost_reduction',
+    dependencies: ['kostenreduktion_1']
+},
+{
+    id: 'mega_forschung_boost',
+    name: 'Uraltes Wissen',
+    description: 'Erhöht die Produktionsrate deines Forschungslabors um 50%.',
+    cost: 200,
+    bonus: 0.50,
+    type: 'research_multi',
+    dependencies: ['forschungslabor_effizienz_2']
+}
     // Weitere Upgrades hier hinzufügen
 ];
 
@@ -98,6 +187,14 @@ document.addEventListener('DOMContentLoaded', () => {
   //  let smileyTreeCap = 1;
   //  let smileyFactoryCap = 1;
     let prestige_punkte = 0;
+    let globalSpsMultiplier = 1;
+    let buildingCostReduction = 1;
+    let klickBoostPerPrestigePoint = 0;
+    let permanentSmileyTreeCount = 0;
+    let smileyTreePrestigeMulti = 1;
+    let smileyFactoryPrestigeMulti = 1;
+    console.log("Variablen geladen."); // <- Hier einfügen
+
     let prestige_upgrades_gekauft ={};
     let globalerMultiplikator = 1.0;
     let forschungslaborGekauft = false;
@@ -140,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 smileyElement.classList.remove('pop');
             }, 150);
         }
-        const klickwert = (1 + klickUpgradeBonus + sammelbuchClickPowerBonus) * globalerPrestigeMultiplikator;
+    const klickwert = (1 + klickUpgradeBonus + sammelbuchClickPowerBonus) * globalerPrestigeMultiplikator + (gesamtPrestigePunkte * klickBoostPerPrestigePoint);
 
         gesammelte_smileys += klickwert;
         gesamteGeklickteSmileys += klickwert;
@@ -150,13 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
    function produziereSmileys() {
-     const autoClickerSPS = (auto_klicker_count * 1) * autoClickerPrestigeMulti; // Auto-Klicker produzieren 1 SPS
-     const smileyTreeSPS = smileyTreeProduction * 20; // 20 SPS pro Baum
-    const smileyFactorySPS = smileyFactoryProduction * 150; // 150 SPS pro Fabrik
-    const forschungslaborSPS = forschungslabor_count * 0.005; // 0.005 SPS pro Labor
+    const autoClickerSPS = (auto_klicker_count * 1) * autoClickerPrestigeMulti;
+    const smileyTreeSPS = smileyTreeProduction * 20 * smileyTreePrestigeMulti;
+    const smileyFactorySPS = smileyFactoryProduction * 150 * smileyFactoryPrestigeMulti;
+    const forschungslaborSPS = forschungslabor_count * 0.005;
 
     const totalBaseSPS = autoClickerSPS + smileyTreeSPS + smileyFactorySPS;
-    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti;
+    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
 
     aktuelle_smileys += totalBonusSPS / 10;
     gesammelte_smileys += totalBonusSPS / 10;
@@ -174,9 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 }
-
+    console.log("Prestige-Funktion gefunden."); 
     function prestige() {
-    const required_smileys = 1000000; // Beispielwert
+    const required_smileys = 100000; // Beispielwert
     if (aktuelle_smileys < required_smileys) {
         alert("Du hast noch nicht genug Smileys für das Prestige-Upgrade!");
         return;
@@ -202,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Füge die verdienten Punkte hinzu
     prestige_punkte += earned_prestige;
-    gesamt_prestige_punkte += earned_prestige;
+    gesamtPrestigePunkte += earned_prestige;
     
     // Speichere den Spielstand und aktualisiere die Anzeige
     speichereSpiel();
@@ -281,6 +378,24 @@ function updatePrestigeButtons() {
             break;
         case 'research_multi':
             researchLabPrestigeMulti += upgrade.bonus;
+            break;
+        case 'klick_boost_per_pp': // Neu
+            klickBoostPerPrestigePoint += upgrade.bonus;
+            break;
+        case 'global_sps_multi': // Neu
+            globalSpsMultiplier += upgrade.bonus;
+            break;
+        case 'cost_reduction': // Neu
+            buildingCostReduction -= upgrade.bonus;
+            break;
+        case 'permanent_building': // Neu
+            permanentSmileyTreeCount += upgrade.bonus;
+            break;
+        case 'smiley_tree_multi': // Neu
+            smileyTreePrestigeMulti += upgrade.bonus;
+            break;
+        case 'smiley_factory_multi': // Neu
+            smileyFactoryPrestigeMulti += upgrade.bonus;
             break;
     }
 }
@@ -490,6 +605,7 @@ function createUpgradeElements(items, containerClass) {
 }
 
     function updateDisplay() {
+            console.log("UI wird aktualisiert."); // <- Hier einfügen
         const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
         if (aktuelleSmileysElement) {
             aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
@@ -713,6 +829,12 @@ function updateButtons() {
             prestige_punkte = gespeicherterStand.prestige_punkte || 0;
             gesamt_prestige_punkte = gespeicherterStand.gesamt_prestige_punkte || 0;
             prestige_upgrades_gekauft = gespeicherterStand.prestige_upgrades_gekauft || {};
+            globalSpsMultiplier = gespeicherterStand.globalSpsMultiplier || 1;
+            buildingCostReduction = gespeicherterStand.buildingCostReduction || 1;
+            klickBoostPerPrestigePoint = gespeicherterStand.klickBoostPerPrestigePoint || 0;
+            permanentSmileyTreeCount = gespeicherterStand.permanentSmileyTreeCount || 0;
+            smileyTreePrestigeMulti = gespeicherterStand.smileyTreePrestigeMulti || 1;
+            smileyFactoryPrestigeMulti = gespeicherterStand.smileyFactoryPrestigeMulti || 1;
 
             // --- KORRIGIERTER CODE FÜR DAS FORSCHUNGSLABOR ---
             forschungslaborGekauft = gespeicherterStand.forschungslaborGekauft || false;
@@ -769,6 +891,14 @@ function updateButtons() {
     ladeSpiel();
     createUpgradeElements(clickerUpgrades, 'upgrade-grid');
     createUpgradeElements(buildingsData, 'building-grid');
+    createPrestigeUpgrades();
+
+    //Spiel-Loop, der die Funktionen alle 100ms aufruft
+    setInterval(()=>{
+        produziereSmileys();
+        updateDisplay();
+    },100);
+
 
     const smileyButton = document.getElementById('smiley_button');
     if (smileyButton) {
@@ -827,16 +957,13 @@ if (buildingGrid) {
         const type = button.dataset.type;
         const index = parseInt(button.dataset.index);
         const amount = parseInt(button.dataset.buyAmount);
-        kaufeItem(type, index, amount);
-        speichereSpiel();
         createUpgradeElements(clickerUpgrades, 'upgrade-grid');
         createUpgradeElements(buildingsData, 'building-grid');
+        kaufeItem(type, index, amount);
+        speichereSpiel()
         updateDisplay();
     })
 
+    document.getElementById('prestige_button').addEventListener('click', prestige);
 
-    
-setInterval(updateGame, 100);
-    updateDisplay();
-    updateUpgradesDisplay();
 }});
