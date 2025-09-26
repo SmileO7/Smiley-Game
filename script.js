@@ -97,15 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dependencies: ['forscher_effizienz']
 },
 {
-    id: 'dauerhafter_smiley_baum',
-    name: 'Wunderbaum-Anfang',
-    description: 'Du startest nach jedem Prestige-Reset mit einem dauerhaften Smiley-Baum.',
-    cost: 40,
-    bonus: 1,
-    type: 'permanent_building',
-    dependencies: ['dauerhafter_auto_klicker']
-},
-{
     id: 'auto_klicker_multiplikator',
     name: 'Auto-Klicker-Hyper-Antrieb',
     description: 'Die Produktion der Auto-Klicker wird um weitere 20% erhöht.',
@@ -190,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalSpsMultiplier = 1;
     let buildingCostReduction = 1;
     let klickBoostPerPrestigePoint = 0;
-    let permanentSmileyTreeCount = 0;
     let smileyTreePrestigeMulti = 1;
     let smileyFactoryPrestigeMulti = 1;
     console.log("Variablen geladen."); // <- Hier einfügen
@@ -387,9 +377,6 @@ function updatePrestigeButtons() {
             break;
         case 'cost_reduction': // Neu
             buildingCostReduction -= upgrade.bonus;
-            break;
-        case 'permanent_building': // Neu
-            permanentSmileyTreeCount += upgrade.bonus;
             break;
         case 'smiley_tree_multi': // Neu
             smileyTreePrestigeMulti += upgrade.bonus;
@@ -605,80 +592,79 @@ function createUpgradeElements(items, containerClass) {
 }
 
     function updateDisplay() {
-            console.log("UI wird aktualisiert."); // <- Hier einfügen
-        const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
-        if (aktuelleSmileysElement) {
-            aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
-        }
-        const gesammelteSmileysElement = document.getElementById("gesammelte_smileys");
-        if (gesammelteSmileysElement) {
-            gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
-        }
-        const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
-        const smileysPerClickValue = multiplikator * (1 + klickUpgradeBonus);
-        if (smileysPerClickElement) {
-            smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
-        }
-        const spsAnzeigeElement = document.getElementById("sps_anzeige");
-        const autoClickerSPS = (auto_klicker_count * autoClickerSpeedBonus * (1 + autoClickerResearchBonus)) + autoClickerClickBonus + autoClickerProductionBonus;
-        const smileyTreeSPS = smileyTreeProduction * (20 * (1 + smileyTreeResearchBonus));
-        const smileyFactorySPS = smileyFactoryProduction * (150 * (1 + smileyFactoryResearchBonus));
-        const totalSPS = (autoClickerSPS + smileyTreeSPS + smileyFactorySPS) * (1 + efficiencyBonus) * globalerMultiplikator;
-        if (spsAnzeigeElement) {
-            spsAnzeigeElement.innerText = formatLargeNumber(totalSPS);
-        }
-        const smpAnzeigeElement = document.getElementById("smp_anzeige");
-        if (smpAnzeigeElement) {
-            smpAnzeigeElement.innerText = formatLargeNumber(totalSPS * 60);
-        }
-        
-        const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
-        if (aktuelleSmileysUpgrades) {
-            aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
-        }
-        const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
-        if (spsAnzeigeUpgrades) {
-            spsAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS);
-        }
-        const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
-        if (smpAnzeigeUpgrades) {
-            smpAnzeigeUpgrades.innerText = formatLargeNumber(totalSPS * 60);
-        }
-        const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
-        if (smileyPointsUpgrades) {
-            smileyPointsUpgrades.innerText = formatLargeNumber(smiley_points);
-        }
+    console.log("UI wird aktualisiert."); // <- Hier einfügen
+    const aktuelleSmileysElement = document.getElementById("aktuelle_smileys");
+    if (aktuelleSmileysElement) {
+        aktuelleSmileysElement.innerText = formatLargeNumber(aktuelle_smileys);
+    }
+    const gesammelteSmileysElement = document.getElementById("gesammelte_smileys");
+    if (gesammelteSmileysElement) {
+        gesammelteSmileysElement.innerText = formatLargeNumber(gesammelte_smileys);
+    }
+    const smileysPerClickElement = document.getElementById("smileys_pro_klick_anzeige");
+    const smileysPerClickValue = (1 + klickUpgradeBonus) * globalerPrestigeMultiplikator + (gesamtPrestigePunkte * klickBoostPerPrestigePoint);
+    if (smileysPerClickElement) {
+        smileysPerClickElement.innerText = formatLargeNumber(smileysPerClickValue);
+    }
 
-        const forschungspunkteAnzeige = document.getElementById("forschungspunkte");
-        if (forschungspunkteAnzeige) {
-             forschungspunkteAnzeige.innerText = formatLargeNumber(forschungspunkte);
-        }
+    // Korrigierte SPS-Berechnung, die mit produziereSmileys() übereinstimmt
+    const autoClickerSPS = auto_klicker_count * 1 * autoClickerPrestigeMulti;
+    const smileyTreeSPS = smileyTreeProduction * 20 * smileyTreePrestigeMulti;
+    const smileyFactorySPS = smileyFactoryProduction * 150 * smileyFactoryPrestigeMulti;
+    const totalBaseSPS = autoClickerSPS + smileyTreeSPS + smileyFactorySPS;
+    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
 
-        const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
-        if (forschungslaborCountAnzeige) {
+    const spsAnzeigeElement = document.getElementById("sps_anzeige");
+    if (spsAnzeigeElement) {
+        spsAnzeigeElement.innerText = formatLargeNumber(totalBonusSPS);
+    }
+    const smpAnzeigeElement = document.getElementById("smp_anzeige");
+    if (smpAnzeigeElement) {
+        smpAnzeigeElement.innerText = formatLargeNumber(totalBonusSPS * 60);
+    }
+    
+    const aktuelleSmileysUpgrades = document.getElementById("aktuelle_smileys_upgrades");
+    if (aktuelleSmileysUpgrades) {
+        aktuelleSmileysUpgrades.innerText = formatLargeNumber(aktuelle_smileys);
+    }
+    const spsAnzeigeUpgrades = document.getElementById("sps_anzeige_upgrades");
+    if (spsAnzeigeUpgrades) {
+        spsAnzeigeUpgrades.innerText = formatLargeNumber(totalBonusSPS);
+    }
+    const smpAnzeigeUpgrades = document.getElementById("smp_anzeige_upgrades");
+    if (smpAnzeigeUpgrades) {
+        smpAnzeigeUpgrades.innerText = formatLargeNumber(totalBonusSPS * 60);
+    }
+    const smileyPointsUpgrades = document.getElementById("smiley_points_upgrades");
+    if (smileyPointsUpgrades) {
+        smileyPointsUpgrades.innerText = formatLargeNumber(smiley_points);
+    }
+    const forschungspunkteAnzeige = document.getElementById("forschungspunkte");
+    if (forschungspunkteAnzeige) {
+        forschungspunkteAnzeige.innerText = formatLargeNumber(forschungspunkte);
+    }
+    const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
+    if (forschungslaborCountAnzeige) {
         forschungslaborCountAnzeige.innerText = forschungslabor_count;
-        }
-        const prestigePunkteAnzeige = document.getElementById("prestige_punkte_anzeige");
-        if (prestigePunkteAnzeige) {
+    }
+    const prestigePunkteAnzeige = document.getElementById("prestige_punkte_anzeige");
+    if (prestigePunkteAnzeige) {
         prestigePunkteAnzeige.innerText = formatLargeNumber(prestige_punkte);
-        }
-
-        const prestigeButton = document.getElementById("prestige_button");
-        const required_smileys = 1000000;
-        const earned_prestige = Math.floor(aktuelle_smileys / required_smileys);
-
-        if (prestigeButton) {
+    }
+    const prestigeButton = document.getElementById("prestige_button");
+    const required_smileys = 1000000;
+    const earned_prestige = Math.floor(aktuelle_smileys / required_smileys);
+    if (prestigeButton) {
         prestigeButton.innerText = `Prestige (${formatLargeNumber(earned_prestige)} Punkte verdienen)`;
         if (aktuelle_smileys >= required_smileys) {
-        prestigeButton.classList.add("available");
+            prestigeButton.classList.add("available");
         } else {
-        prestigeButton.classList.remove("available");
+            prestigeButton.classList.remove("available");
         }
-        }
-
-        updateButtons();
-        updatePrestigeButtons();
-        }
+    }
+    updateButtons();
+    updatePrestigeButtons();
+}
 
 function updateButtons() {
     const allBuyButtons = document.querySelectorAll('.upgrade-button');
@@ -832,7 +818,6 @@ function updateButtons() {
             globalSpsMultiplier = gespeicherterStand.globalSpsMultiplier || 1;
             buildingCostReduction = gespeicherterStand.buildingCostReduction || 1;
             klickBoostPerPrestigePoint = gespeicherterStand.klickBoostPerPrestigePoint || 0;
-            permanentSmileyTreeCount = gespeicherterStand.permanentSmileyTreeCount || 0;
             smileyTreePrestigeMulti = gespeicherterStand.smileyTreePrestigeMulti || 1;
             smileyFactoryPrestigeMulti = gespeicherterStand.smileyFactoryPrestigeMulti || 1;
 
