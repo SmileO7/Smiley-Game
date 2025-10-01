@@ -1,53 +1,76 @@
-/* GEFIXTE VERSION - Kein ungewolltes Springen mehr */
+/*================================================================================================
+// --- 0. GRUNDEINSTELLUNGEN & VARIABLEN (DEIN FARBSCHEMA) ---
+//================================================================================================*/
+
+:root {
+    /* Dein Farbschema: 011638-6b0504-009ffd-3e5641 */
+    --color-background-dark: #011638;    /* Dunkles Blau/Schwarz (Hintergrund) */
+    --color-red-main: #6B0504;           /* Tiefes Rot (Akzent/Gekauft/Prestige) */
+    --color-blue-main: #009FFD;          /* Helles Blau (Aktion/Währung/Information) */
+    --color-neutral-accent: #3E5641;     /* Olives Grün/Grau (Sekundärer Akzent) */
+    --color-text-light: #f0f0f0;         /* Helle Schrift */
+    --color-dark-overlay: rgba(0, 0, 0, 0.4);
+    --color-semi-dark: #2c3e50;
+    --color-modal-bg: rgba(0,0,0,0.8);
+}
 
 body, html {
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
-    color: #f0f0f0;
+    color: var(--color-text-light);
     height: 100%;
     transition: background-color 0.5s ease;
-    background-color: #2c3e50;
+    background-color: var(--color-semi-dark);
     display: flex;
     flex-direction: column;
 }
 
-/* Spezifische Hintergründe für die Seiten */
+/* Typografie */
+h1, h2, h3 {
+    color: var(--color-blue-main);
+    text-shadow: 0 0 10px rgba(152, 0, 253, 0.5); 
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+
+/*================================================================================================
+// --- 1. SEITEN-HINTERGRÜNDE (FÜR NAVIGATION) ---
+//================================================================================================*/
+
 body.home-page {
-    background-color: #011638; 
+    background-color: var(--color-background-dark); 
     background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1) 0%, transparent 50%),
                       radial-gradient(circle at bottom right, rgba(107, 5,4,0.1) 0%, transparent 50%),
-                      linear-gradient(135deg, #011638, #24243e);
+                      linear-gradient(135deg, var(--color-background-dark), #24243e);
     background-size: 100% 100%;
     background-attachment: fixed;
 }
 
 @keyframes gradientAnimation {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 body.upgrades-page {
-    background-color: #3e5641;
-    background-image: linear-gradient(135deg, #3e5641, #516a53);
+    background-color: var(--color-neutral-accent);
+    background-image: linear-gradient(135deg, var(--color-neutral-accent), #516a53);
 }
 
 body.prestige-page {
-    background-color: #6b0504;
-    background-image: radial-gradient(to top, #6b0504, #940a08);
+    background-color: var(--color-red-main);
+    background-image: radial-gradient(to top, var(--color-red-main), #940a08);
 }
 
 body.info-page {
     background-color: #001f3f;
 }
 
+/*================================================================================================
+// --- 2. NAVIGATION & HAUPT-LAYOUT (UI ANORDNUNG) ---
+//================================================================================================*/
 .navbar {
     background-color: rgba(25, 25, 25, 0.8);
     padding: 8px 0;
@@ -60,7 +83,7 @@ body.info-page {
 }
 
 .navbar a {
-    color: #f0f0f0;
+    color: var(--color-text-light);
     padding: 10px 20px;
     text-decoration: none;
     font-size: 1.2em;
@@ -69,16 +92,15 @@ body.info-page {
 }
 
 .navbar a:hover, .navbar a.active {
-    color: #009FFD;
+    color: var(--color-blue-main);
     background-color: transparent;
-    border: 2px solid #009FFD; 
+    border: 2px solid var(--color-blue-main); 
 }
 
 .main-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     text-align: center;
     padding-top: 70px;
@@ -88,36 +110,70 @@ body.info-page {
     margin: 0 auto;
 }
 
-.info-box {
-    background: rgba(62, 86, 65, 0.7);
-    border: 1px solid #48624a;
-    padding: 15px;
-    margin: 15px auto;
-    border-radius: 8px;
-    text-align: left;
-    max-width: 400px;
+/* Haupt-Container, der die linke und rechte Spalte enthält */
+.main-layout {
+    display: flex;
+    max-width: 1300px; 
+    margin: 20px auto; 
+    gap: 30px; 
+    padding: 0 20px;
+    align-items: flex-start; 
 }
 
-h1, h2, h3 {
-    color: #009FFD;
-    text-shadow: 0 0 10px rgba(0, 159, 253, 0.5); 
-    margin-bottom: 20px;
-    text-align: center;
+/* KORRIGIERT: main-Regel vereinfacht */
+main {
+    padding-top: 70px;
+    width: 100%;
 }
 
-.smiley-button {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.5s ease-in-out;
-    user-select: none;
+/* Hilfs-Container */
+.shop-container, .stats-and-lab-container {
+    display: block;
     padding: 0;
-    position: relative;
-    border-radius: 50%;
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
+    gap: 0;
+    margin: 0;
+    max-width: none;
 }
 
-.smiley-button img {
+
+/*================================================================================================
+// --- 3. KLICKER-BEREICH (LINKE SPALTE) ---
+//================================================================================================*/
+
+/* LINKER BEREICH: Klicker & Stats */
+.klicker-container {
+    flex: 0 0 350px; 
+    padding: 25px;
+    background-color: var(--color-background-dark); 
+    border: 3px solid var(--color-blue-main); 
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Smiley Button (Korrektur: Hintergrund entfernt, da das Bild darüber liegt) */
+.smiley-button, #smiley_button { 
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: transparent; /* Korrigiert: Hintergrund entfernt */
+    color: white;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 30px auto;
+    cursor: pointer;
+    border: 5px solid var(--color-blue-main);
+    transition: transform 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
+    user-select: none;
+}
+
+.smiley-button img, #smiley_button img {
     width: 200px;
     height: auto;
     display: block;
@@ -125,16 +181,78 @@ h1, h2, h3 {
     border-radius: 50%;
 }
 
-.smiley-button:hover {
+.smiley-button:hover, #smiley_button:hover {
     box-shadow: 0 0 25px rgba(0, 159, 253, 0.8);
 }
 
-.smiley-button:active {
+.smiley-button:active, #smiley_button:active {
     transform: scale(0.95);
-    box-shadow: 0 0 35px rgba(0, 159,253, 0.9);
 }
 
-.btn-buy, .btn-confirm, .btn-cancel {
+/* Klick Animation (wird über JS-Klasse .pop ausgelöst) */
+#smiley_image {
+    transition: transform 0.15s ease-out; 
+}
+
+.pop #smiley_image {
+    transform: scale(1.05); 
+}
+
+/* Stat-Anzeige-Box */
+.stats-box, .stats-container, .current-smiley-points {
+    background: var(--color-dark-overlay);
+    border: 1px solid #c01515;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: left;
+    backdrop-filter: none;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+
+/*================================================================================================
+// --- 4. SHOP & FORSCHUNG (RECHTE SPALTE) ---
+//================================================================================================*/
+
+/* RECHTER BEREICH: Shop, Forschung, Upgrades */
+.shop-and-research-container {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column; 
+    gap: 25px;
+}
+
+/* Container für Gebäude und Upgrades */
+.upgrade-grid-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.upgrade-section {
+    flex: 1; 
+    padding: 0;
+}
+/* Container für Grid-Elemente */
+.upgrade-grid, .building-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    background-color: var(--color-dark-overlay);
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+/*================================================================================================
+// --- 5. BUTTONS & INTERAKTION ---
+//================================================================================================*/
+
+/* Allgemeine Button-Klassen (Kauf, Bestätigung, Abbruch) */
+.btn-buy, .btn-confirm, .btn-cancel, .upgrade-button, .purchase-buttons button {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -144,39 +262,153 @@ h1, h2, h3 {
     margin: 5px;
 }
 
-.btn-buy {
-    background-color: #6b0504;
+/* Kauf-Buttons */
+.btn-buy, .upgrade-button, .purchase-buttons button {
+    background-color: var(--color-red-main); /* Rot als Standard-Kauffarbe */
     color: white;
-    padding: 10px 20px;
-    border: none; 
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin: 5px;
 }
 
-.btn-buy:hover {
+.btn-buy:hover, .upgrade-button:hover, .purchase-buttons button:hover {
     background-color: #550403;
 }
 
+/* Bestätigung */
 .btn-confirm {
-    background-color: #2196F3;
+    background-color: #0d20c9; /* blau */
     color: white;
 }
-
 .btn-confirm:hover {
-    background-color: #0b7dda;
+    background-color: #0d20c9;
 }
 
+/* Abbruch/Gefahr */
 .btn-cancel {
     background-color: #f44336;
     color: white;
 }
-
 .btn-cancel:hover {
     background-color: #da190b;
 }
+
+/* Kauf-Button-Layout innerhalb der Item-Card */
+.purchase-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.purchase-buttons button {
+    margin: 0 5px;
+    width: 125px;
+}
+
+/* Deaktiviert/Gesperrt */
+.upgrade-button.disabled,
+.prestige-upgrade-item.locked {
+    background-color: var(--color-background-dark); 
+    color: var(--color-blue-main);
+    border: 1px solid var(--color-red-main);
+    cursor: not-allowed;
+    filter: none;
+    opacity: 1;
+}
+
+/* Gekauft */
+.upgrade-button.bought-button,
+.prestige-upgrade-item.bought {
+    background-color: var(--color-red-main);
+    color: #fff;
+    cursor: default;
+    border: 1px solid var(--color-neutral-accent);
+}
+
+/* Hover-Effekte auf kaufbaren Elementen */
+.upgrade-item:hover,
+.building-item:hover,
+.research-lab-container:hover,
+.prestige-upgrade:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
+    cursor: pointer;
+}
+
+/* Hover-Highlight (falls du JS dafür nutzt) */
+.upgrade-item.is-hovered,
+.building-item.is-hovered,
+.research-lab-container.is-hovered,
+.prestige-upgrade.is-hovered {
+    border: 2px solid var(--color-blue-main); 
+    box-shadow: 0 0 10px rgba(0, 159, 253, 0.7); 
+    transition: all 0.2s ease-in-out;
+}
+
+/*================================================================================================
+// --- 6. FORSCHUNG & PRESTIGE BEREICH ---
+//================================================================================================*/
+
+.research-lab-container {
+    background-color: rgba(1, 22, 56, 0.7);
+    border: 2px solid var(--color-blue-main);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+/* Forschungsbalken */
+.forschung-balken-container {
+    width: 100%;
+    height: 25px;
+    background-color: var(--color-neutral-accent);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+    border: 1px solid var(--color-blue-main);
+}
+
+.forschung-fortschritt {
+    height: 100%;
+    background-color: var(--color-blue-main);
+    transition: width 0.3s ease;
+}
+
+#fortschritt-text {
+    margin-top: 5px;
+    font-weight: bold;
+    color: var(--color-text-light);
+}
+
+/* Prestige Shop */
+.prestige-shop-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+}
+
+#prestige_upgrades_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.prestige-upgrade {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+
+/*================================================================================================
+// --- 7. MODALS & SONSTIGES ---
+//================================================================================================*/
 
 .modal {
     display: flex;
@@ -187,7 +419,7 @@ h1, h2, h3 {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.8);
+    background-color: var(--color-modal-bg);
     justify-content: center;
     align-items: center;
 }
@@ -208,296 +440,91 @@ h1, h2, h3 {
     margin-top: 20px;
 }
 
-.-container {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    backdrop-filter: blur(5px);
-    transition: transform 0.2s ease-in-out;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.forschungslabor-container {
-    flex: 2;
-}
-
-.content-box {
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px 0;
-    width: 100%;
-    max-width: 600px;
-    backdrop-filter: blur(5px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-}
-
-.upgrade-list-item {
-    background-color: rgba(50, 50, 50, 0.7);
+.info-box {
+    background: rgba(62, 86, 65, 0.7);
+    border: 1px solid #48624a;
+    padding: 15px;
+    margin: 15px auto;
     border-radius: 8px;
-    padding: 15px;
-    margin-top: 10px;
-}
-
-.prestige-shop-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 20px;
-}
-
-.current-smiley-points {
-    font-size: 1.5em;
-    margin-bottom: 20px;
-}
-
-#prestige_upgrades_grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
-    width: 100%;
-    max-width: 800px;
-}
-
-/* FIX: Damit Prestige-Upgrades nicht springen */
-.prestige-upgrade {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 15px;
-    text-align: center;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.upgrade-button {
-    background-color: #6b0504;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px;
-}
-
-/* CSS für deaktivierte Buttons */
-.upgrade-button.disabled {
-    background-color: #011638;
-    color: #009ffd;
-    border: 1px solid #6b0504;
-    cursor: not-allowed;
-    filter: none;
-    opacity: 1;
-}
-
-.bought-button {
-    background-color: #6B0504; /* Dunkelrot aus deinem Farbschema */
-    color: white;
-    cursor: default;
-}
-
-.shop-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 50px;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* FIX: Isolierte Transformation für Upgrade/Building Container */
-.upgrade-container, .building-container {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.stats-container {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 15px;
     text-align: left;
-    backdrop-filter: none;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    max-width: 400px;
 }
 
-main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 50px;
-    padding-top: 70px;
-    width: 100%;
-}
 
-/* FIX: Grid-Container sollten nicht transformieren */
-.upgrade-grid, .building-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 20px;
-}
+/*================================================================================================
+// --- 8. RESPONSIVE DESIGN (MEDIA QUERIES) ---
+//================================================================================================*/
 
-.stats-and-lab-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 50px;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* FIX: Research Lab isolierte Transformation */
-.research-lab-container {
-    background-color: rgba(1, 22, 56, 0.7);
-    border: 2px solid #009FFD;
-    border-radius: 10px;
-    padding: 25px;
-    text-align: center;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    cursor: pointer;
-}
-
-.forschung-balken-container {
-    width: 100%;
-    height: 25px;
-    background-color: #3e5641;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 10px;
-    border: 1px solid #009FFD;
-}
-
-.forschung-fortschritt {
-    height: 100%;
-    background-color: #009FFD;
-    transition: width 0.3s ease;
-}
-
-#fortschritt-text {
-    margin-top: 5px;
-    font-weight: bold;
-    color: #f0f0f0;
+@media (max-width: 1200px) {
+    .main-layout {
+        /* Bei kleineren Desktops den Klicker-Bereich flexibler machen */
+        grid-template-columns: 1fr 3fr; 
+    }
 }
 
 @media (max-width: 900px) {
+    /* Wechsel zu vertikalem Stapeln auf Tablets/Mobilgeräten */
+    .main-layout {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    /* Alle Haupt-Container nehmen volle Breite ein */
+    .klicker-container,
+    .shop-and-research-container,
+    .upgrade-grid-container {
+        width: 100%;
+        max-width: 500px; /* Begrenzung für bessere Lesbarkeit */
+        flex: 1 1 auto;
+    }
+    
+    /* Stats/Lab/Shop Stapeln ebenfalls */
     .stats-and-lab-container,
-    .shop-container {
+    .shop-container,
+    .upgrade-grid-container {
         flex-direction: column;
         align-items: center;
     }
-
-    .research-lab-container,
-    .stats-container {
-        width: 100%;
-        max-width: 500px;
+    
+    /* Klicker-Bereich sollte zentriert bleiben */
+    .klicker-container {
+        margin: 0 auto;
     }
 }
+/* --- UI-FIX FÜR UPGRADE- UND GEBÄUDE-BOXEN --- */
 
-.upgrade-button.bought-button,
-.prestige-upgrade-item.bought {
-    background-color: #6b0504;
-    color: #fff;
-    cursor: default;
-    border: 1px solid #3e5641;
-}
-
-.upgrade-button.disabled,
-.prestige-upgrade-item.locked {
-    background-color: #011638;
-    color: #009ffd;
-    border: 1px solid #6b0504;
-    cursor: not-allowed;
-    filter: none;
-    opacity: 1;
+/* Der neue Container aus script.js, der den gesamten Platz einnehmen soll */
+.upgrade-content {
+    flex-grow: 1; /* Nimmt den gesamten vertikalen Platz über den Buttons ein */
+    text-align: left;
 }
 
-/* Erstellt einen unsichtbaren Pufferbereich um die Elemente */
-.upgrade-item,
-.building-item,
-.research-lab-container,
-.prestige-upgrade {
-    position: relative; /* Wichtig für das Pseudo-Element */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+/* WICHTIG: Alle Kauf-Buttons an den unteren Rand der Box drücken */
+.upgrade-item .btn-buy,
+.upgrade-item .purchase-buttons {
+    margin-top: auto; /* Schiebt das Element an das Ende des Flex-Containers */
+    width: 100%; /* Sorgt dafür, dass der einzelne Upgrade-Button volle Breite hat */
+    box-sizing: border-box;
 }
 
-.upgrade-item::before,
-.building-item::before,
-.research-lab-container::before,
-.prestige-upgrade::before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    bottom: -5px;
-    left: -5px;
-    z-index: -1;
-}
-
-/* Einheitlicher Hover-Effekt auf dem Pufferbereich */
-.upgrade-item:hover,
-.building-item:hover,
-.research-lab-container:hover,
-.prestige-upgrade:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
-    cursor: pointer;
-}
-.upgrade-item.is-hovered,
-.building-item.is-hovered,
-.research-lab-container.is-hovered,
-.prestige-upgrade.is-hovered {
-    border: 2px solid #009FFD; /* Blau aus deinem Farbschema */
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.7); /* Heller blauer Schatten für den Pop-Effekt */
-    transition: all 0.2s ease-in-out; /* Übergang für eine sanftere Animation */
-}
-.upgrade-item,
-.building-item {
-    width: 100%;
-    height: 200px; /* Adjust this value as needed */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+/* Korrektur für die Title/Content Ausrichtung im neuen upgrade-content */
+.upgrade-content h3 {
     text-align: center;
-    padding: 10px;
-    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
-}
-.upgrade-item h3,
-.upgrade-item p,
-.building-item h3,
-.building-item p {
-    margin: 0;
-    text-align: center; /* Ensures the text is centered */
-}
-.purchase-buttons {
-    display: flex;
-    justify-content: space-between; /* Verteilt die Buttons gleichmäßig */
-    align-items: center; /* Zentriert die Buttons vertikal */
+    color: var(--color-red-main); /* Deine Lieblingsfarbe Rot */
+    margin-bottom: 8px;
+    margin-top: 0; /* Stellt sicher, dass der Titel ganz oben beginnt */
 }
 
+.upgrade-content p {
+    margin: 5px 0;
+    font-size: 0.9em;
+}
+
+/* Anpassung der allgemeinen Button-Regel (Zeile 227), um die Buttons kleiner zu machen */
 .purchase-buttons button {
-    margin: 0 5px; /* Fügt einen kleinen Abstand zwischen den Buttons hinzu */
-    width: 125px;
+    margin: 0 3px; /* Etwas weniger Margin */
+    flex-grow: 1;
+    width: auto; /* Die Flexbox soll die Breite bestimmen */
+    padding: 8px 5px;
+    font-size: 0.8em;
 }

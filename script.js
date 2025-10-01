@@ -14,9 +14,9 @@ const buildingsData = [
     { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.2, elementId: "smileyFactoryButton1x" },
 ];
 const clickerUpgrades = [
-    { name: "Stärkerer Klick", price: 250, effect: 0.1, type: "click", bought: 0 },
-    { name: "Doppelklick-Upgrade", price: 500, effect: 0.2, type: "click", bought: 0 },
-    { name: "Dreifachklick-Upgrade", price: 1000, effect: 0.3, type: "click", bought: 0 }
+    { name: "Stärkerer Klick", price: 250, effect: 0.1, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 10% des Basiswerts.' },
+    { name: "Doppelklick-Upgrade", price: 500, effect: 0.2, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 20% des Basiswerts.' },
+    { name: "Dreifachklick-Upgrade", price: 1000, effect: 0.3, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 30% des Basiswerts.' }
 ];
 const researchUpgrades = [
     { cost: 10, description: 'Erhöht die Produktion der Auto-Klicker um 10%', type: 'autoClicker', bonusVariable: 'autoClickerResearchBonus', value: 0.1 },
@@ -79,7 +79,7 @@ let autoClickerPrestigeMulti = 1;
 let smileyTreePrestigeMulti = 1;
 let smileyFactoryPrestigeMulti = 1;
 let researchLabPrestigeMulti = 1;
-let sammelbuchClickPowerBonus = 0; // Hinzugefügt, um Fehler in klickeSmiley zu vermeiden
+let sammelbuchClickPowerBonus = 0; 
 
 // Forschungseffizienz-Boni
 let autoClickerResearchBonus = 0;
@@ -88,9 +88,8 @@ let smileyFactoryResearchBonus = 0;
 let efficiencyBonus = 0;
 
 
-// KONSTANTEN & ELEMENTE (Können außerhalb der Initialisierungsfunktion liegen)
-const forschungFortschrittBalken = document.getElementById('forschung_fortschritt');
-const forschungFortschrittText = document.getElementById('fortschritt-text');
+// KONSTANTEN & ELEMENTE
+// Die globalen DOM-Variablen für Forschung wurden entfernt (KORREKTUR für ReferenceError).
 
 //================================================================================================================
 // --- 2. INITIALISIERUNG & SETUP ---
@@ -133,7 +132,8 @@ function setupEventListeners() {
     const buildingGrid = document.querySelector('.building-grid');
     if (buildingGrid) {
         buildingGrid.addEventListener('click', (event) => {
-            const button = event.target.closest('.upgrade-button');
+            // KORREKTUR: Suche nach .btn-buy, da dies das korrekte Selektor ist.
+            const button = event.target.closest('.btn-buy'); 
             if (button && button.dataset.type === 'building-grid') {
                 const index = parseInt(button.dataset.index);
                 const amount = parseInt(button.dataset.buyAmount);
@@ -145,7 +145,8 @@ function setupEventListeners() {
     const upgradeGrid = document.querySelector('.upgrade-grid');
     if (upgradeGrid) {
         upgradeGrid.addEventListener('click', (event) => {
-            const button = event.target.closest('.upgrade-button');
+            // KORREKTUR: Suche nach .btn-buy, da dies das korrekte Selektor ist.
+            const button = event.target.closest('.btn-buy'); 
             if (button && button.dataset.type === 'upgrade-grid') {
                 const index = parseInt(button.dataset.index);
                 kaufeItem('upgrade-grid', index, 1);
@@ -227,14 +228,20 @@ function klickeSmiley() {
 }
 
 function produziereSmileys() {
+    // KORREKTUR: Berechnung der Basis-SPS unter Einbeziehung der Forschungseffizienz
+    const autoClickerBaseSPS = 1 * (1 + autoClickerResearchBonus + efficiencyBonus);
+    const smileyTreeBaseSPS = 20 * (1 + smileyTreeResearchBonus + efficiencyBonus);
+    const smileyFactoryBaseSPS = 150 * (1 + smileyFactoryResearchBonus + efficiencyBonus);
+    
     // Basale SPS-Werte (pro 100ms, wird später durch 10 geteilt)
-    const autoClickerSPS = (auto_klicker_count * 1) * autoClickerPrestigeMulti;
-    const smileyTreeSPS = smileyTreeProduction * 20 * smileyTreePrestigeMulti;
-    const smileyFactorySPS = smileyFactoryProduction * 150 * smileyFactoryPrestigeMulti;
+    const autoClickerSPS = (auto_klicker_count * autoClickerBaseSPS) * autoClickerPrestigeMulti;
+    const smileyTreeSPS = smileyTreeProduction * smileyTreeBaseSPS * smileyTreePrestigeMulti;
+    const smileyFactorySPS = smileyFactoryProduction * smileyFactoryBaseSPS * smileyFactoryPrestigeMulti;
 
     const totalBaseSPS = autoClickerSPS + smileyTreeSPS + smileyFactorySPS;
     // Globale Multiplikatoren anwenden
     const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
+    // Ende KORREKTUR
 
     // Aktualisierung (geteilt durch 10, da diese Funktion alle 100ms läuft)
     aktuelle_smileys += totalBonusSPS / 10;
@@ -522,16 +529,21 @@ function ladeSpiel() {
             smileyTreeProduction = gespeicherterStand.smileyTreeProduction || 0;
             smileyFactoryProduction = gespeicherterStand.smileyFactoryProduction || 0;
             multiplikator = gespeicherterStand.multiplikator || 1;
-            klickUpgradeBonus = gespeicherterStand.klickUpgradeBonus || 0;
-
-            // Upgrades & Gebäude laden
+            
+            // KORREKTUR: klickUpgradeBonus wird beim Laden neu berechnet
+            klickUpgradeBonus = 0; 
             if (gespeicherterStand.clickerUpgrades) {
                 gespeicherterStand.clickerUpgrades.forEach((savedItem, index) => {
                     if (clickerUpgrades[index]) {
                         clickerUpgrades[index].bought = savedItem.bought;
+                        // Füge den Bonus nur hinzu, wenn das Upgrade gekauft wurde
+                        if (savedItem.bought) {
+                            klickUpgradeBonus += clickerUpgrades[index].effect;
+                        }
                     }
                 });
             }
+            // Ende KORREKTUR
             
             // Forschung laden
             forschungPunkte = gespeicherterStand.forschungPunkte || 0;
@@ -544,7 +556,7 @@ function ladeSpiel() {
             gesamtPrestigePunkte = gespeicherterStand.gesamtPrestigePunkte || 0;
             prestige_punkte = gespeicherterStand.prestige_punkte || 0;
             
-            // Prestige Upgrades laden (KEIN VERWEIS AUF prestigeUpgradeStates mehr!)
+            // Prestige Upgrades laden
             if (gespeicherterStand.prestige_upgrades_gekauft) {
                 prestige_upgrades_gekauft = gespeicherterStand.prestige_upgrades_gekauft; 
             }
@@ -587,51 +599,70 @@ function createUpgradeElements(items, containerClass) {
     const container = document.querySelector(`.${containerClass}`);
     if (!container) return;
     container.innerHTML = '';
+    
     items.forEach((item, index) => {
+        // Erstellt das äußere Element, das alle Styles und Data-Attribute erhält
         const upgradeElement = document.createElement('div');
         upgradeElement.classList.add('upgrade-item');
+        upgradeElement.setAttribute('data-index', index); 
         
         let ownedCount = 0;
-        let itemPrice; 
-        let costReductionFactor = 1 - buildingCostReduction; 
+        let costFunction; // Funktion zur Berechnung der Kosten
+        // Ermittelt den Kosten-Reduktionsfaktor
+        let costReductionFactor = 1 - (typeof buildingCostReduction !== 'undefined' ? buildingCostReduction : 0); 
+        let innerHTML = '';
 
         if (containerClass === 'building-grid') {
+            // --- 1. Berechnung der Basis-Kostenfunktion ---
             switch(item.elementId) {
                 case "auto_clicker_button_1x":
-                    ownedCount = auto_klicker_count;
-                    itemPrice = autoClickerBaseCost * Math.pow(autoClickerGrowthRate, auto_klicker_count) * costReductionFactor;
+                    ownedCount = typeof auto_klicker_count !== 'undefined' ? auto_klicker_count : 0;
+                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
                     break;
                 case "smileyTreeButton1x":
-                    ownedCount = smileyTreeProduction;
-                    itemPrice = smileyTreeBaseCost * Math.pow(smileyTreeGrowthRate, smileyTreeProduction) * costReductionFactor;
+                    // KORREKTUR: Falscher Variablenname `smileyTreeCount` korrigiert zu `smileyTreeProduction`
+                    ownedCount = typeof smileyTreeProduction !== 'undefined' ? smileyTreeProduction : 0; 
+                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
                     break;
                 case "smileyFactoryButton1x":
-                    ownedCount = smileyFactoryProduction;
-                    itemPrice = smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, smileyFactoryProduction) * costReductionFactor;
+                    // KORREKTUR: Falscher Variablenname `smileyFactoryCount` korrigiert zu `smileyFactoryProduction`
+                    ownedCount = typeof smileyFactoryProduction !== 'undefined' ? smileyFactoryProduction : 0; 
+                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
                     break;
+                default:
+                    // Fallback, sollte nicht erreicht werden
+                    costFunction = () => Infinity; 
             }
-        } else {
-            itemPrice = item.price;
-        }
 
-        let innerHTML = '';
-        if (containerClass === 'building-grid') {
+            // --- 2. HTML-Erstellung für Gebäude (UI-Anpassung: Titel in Box, "Nächste Kosten" entfernt) ---
             innerHTML = `
-                <h3>${item.name} (${ownedCount})</h3>
+                <div class="upgrade-content">
+                    <h3>${item.name}</h3> <p class="building-count">Anzahl: ${formatLargeNumber(ownedCount)}</p>
+                    <p class="building-production">Produziert: 0 SPS</p>
+                    </div>
+                
                 <div class="purchase-buttons">
-                    <button class="upgrade-button" data-type="${containerClass}" data-index="${index}" data-buy-amount="1">1x</button>
-                    <button class="upgrade-button" data-type="${containerClass}" data-index="${index}" data-buy-amount="10">10x</button>
-                    <button class="upgrade-button" data-type="${containerClass}" data-index="${index}" data-buy-amount="100">100x</button>
+                    <button class="btn-buy" data-type="${containerClass}" data-index="${index}" data-buy-amount="1">1x (0)</button>
+                    <button class="btn-buy" data-type="${containerClass}" data-index="${index}" data-buy-amount="10">10x (0)</button>
+                    <button class="btn-buy" data-type="${containerClass}" data-index="${index}" data-buy-amount="100">100x (0)</button>
                 </div>
             `;
-        } else {
-            let buttonText = item.bought ? 'Gekauft' : `Kaufen (${formatLargeNumber(itemPrice)})`;
-            let buttonDisabled = item.bought ? 'disabled' : '';
+        } else { // Für Klicker-Upgrades
+            // --- 1. Berechnung des Preises ---
+            const itemPrice = item.price;
+
+            // --- 2. HTML-Erstellung für Klicker-Upgrades (UI-Anpassung: Titel in Box, unnötiger Text entfernt) ---
+            const boughtCount = typeof item.bought !== 'undefined' ? item.bought : 0;
+            const buttonText = item.bought ? 'Gekauft' : `Kaufen (${formatLargeNumber(itemPrice)})`;
+            const buttonDisabled = item.bought ? 'disabled' : '';
+            
             innerHTML = `
-                <h3>${item.name}</h3>
-                <p>Kosten: ${formatLargeNumber(itemPrice)} Smileys</p>
-                <p>${item.description || ''}</p>
-                <button class="upgrade-button" data-type="${containerClass}" data-index="${index}" ${buttonDisabled}>
+                <div class="upgrade-content">
+                    <h3>${item.name}</h3> <p class="upgrade-count">Gekauft: ${boughtCount}</p>
+                    <p class="upgrade-description">${item.description || ''}</p> 
+                    </div>
+
+                <button class="btn-buy" data-type="${containerClass}" data-index="${index}" ${buttonDisabled}>
                     ${buttonText}
                 </button>
             `;
@@ -649,31 +680,48 @@ function updateDisplay() {
     
     const smileysPerClickValue = (1 + klickUpgradeBonus + sammelbuchClickPowerBonus) * globalerPrestigeMultiplikator + (gesamtPrestigePunkte * klickBoostPerPrestigePoint);
 
-    // Aktualisiere alle zentralen Anzeigen
-    const updateText = (id, value) => {
+    // HILFSFUNKTION FÜR ZUVERLÄSSIGES UPDATE
+    const updateTextIfExist = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.innerText = formatLargeNumber(value);
     };
 
-    updateText("aktuelle_smileys", aktuelle_smileys);
-    updateText("gesammelte_smileys", gesammelte_smileys);
-    updateText("smileys_pro_klick_anzeige", smileysPerClickValue);
-    updateText("sps_anzeige", totalSPS);
-    updateText("smp_anzeige", totalSPS * 60);
-    updateText("aktuelle_smileys_upgrades", aktuelle_smileys);
-    updateText("sps_anzeige_upgrades", totalSPS);
-    updateText("smp_anzeige_upgrades", totalSPS * 60);
-    updateText("smiley_points_upgrades", smiley_points);
-    updateText("forschungspunkte", forschungPunkte);
+    // Die SPS/SPM IDs müssen im HTML mit der Funktion übereinstimmen!
+    updateTextIfExist("aktuelle_smileys", aktuelle_smileys);
+    updateTextIfExist("gesammelte_smileys", gesammelte_smileys);
+    updateTextIfExist("smileys_pro_klick_anzeige", smileysPerClickValue);
+
+    const spsElement = document.getElementById("smileys_pro_sekunde_anzeige");
+    if(spsElement) spsElement.innerText = formatLargeNumber(totalSPS);
     
-    // Forschungslabor-Anzeige
-    const forschungslaborCountAnzeige = document.getElementById("forschungslabor_count_anzeige");
-    if (forschungslaborCountAnzeige) {
-        forschungslaborCountAnzeige.innerText = forschungslabor_count;
+    const spmElement = document.getElementById("smileys_pro_minute_anzeige");
+    if(spmElement) spmElement.innerText = formatLargeNumber(totalSPS * 60);
+
+    // Forschungs- und Prestige-Werte
+    updateTextIfExist("forschungspunkte", forschungPunkte);
+    updateTextIfExist("forschungslabor_count_anzeige", forschungslabor_count);
+    updateTextIfExist("prestige_punkte_anzeige", prestige_punkte);
+
+    // KORREKTUR: Lokale Abfrage der DOM-Elemente für den Forschungsbalken
+    const forschungFortschrittBalken = document.getElementById('forschung_fortschritt'); 
+    const forschungFortschrittText = document.getElementById('fortschritt-text');
+    
+    if (forschungslaborGekauft && forschungFortschrittBalken && forschungFortschrittText) {
+        const nextUpgrade = researchUpgrades[researchUpgradeIndex];
+        if (nextUpgrade) {
+            const fortschrittProzent = Math.min(100, (forschungPunkte / nextUpgrade.cost) * 100);
+            forschungFortschrittBalken.style.width = fortschrittProzent + '%';
+            forschungFortschrittText.innerText = `Fortschritt: ${fortschrittProzent.toFixed(0)}% (Nächstes Upgrade bei ${formatLargeNumber(nextUpgrade.cost)} FP)`;
+        } else {
+             forschungFortschrittText.innerText = `Alle Forschungs-Upgrades gekauft!`;
+             forschungFortschrittBalken.style.width = '100%';
+        }
+    } else if (forschungFortschrittText) {
+        // Zustand, wenn Labor nicht gekauft
+        forschungFortschrittText.innerText = `Kaufen Sie das Labor für Forschung.`;
     }
 
-    // Prestige-Anzeige und Button-Text
-    updateText("prestige_punkte_anzeige", prestige_punkte);
+    // Prestige Button Text Aktualisierung
     const prestigeButton = document.getElementById("prestige_button");
     const earned_prestige = Math.floor(aktuelle_smileys / prestige_kosten);
     if (prestigeButton) {
@@ -682,7 +730,8 @@ function updateDisplay() {
 }
 
 function updateButtons() {
-    const allBuyButtons = document.querySelectorAll('.upgrade-button');
+    // KORREKTUR: Suche nach .btn-buy, da dies das korrekte Selektor ist.
+    const allBuyButtons = document.querySelectorAll('.btn-buy'); 
     const costReductionFactor = 1 - buildingCostReduction;
 
     allBuyButtons.forEach(button => {
@@ -730,7 +779,8 @@ function updateButtons() {
                  button.classList.add('disabled');
                  return;
             }
-            button.innerText = `Kaufen (${formatLargeNumber(cost)})`;
+            // Der Button-Text wurde bereits in createUpgradeElements gesetzt
+            // Hier muss nur die Kosten-Prüfung durchgeführt werden.
         }
         
         // Allgemeine Verfügbarkeitsprüfung
@@ -742,20 +792,109 @@ function updateButtons() {
             button.classList.add('disabled');
         }
     });
+    
+    // Forschungs-Labor Button
+    const forschungslaborButton = document.getElementById('forschungslaborButton');
+    if (forschungslaborButton && !forschungslaborGekauft) {
+        const cost = forschungslaborBaseCost * Math.pow(forschungslaborGrowthRate, forschungslabor_count);
+        forschungslaborButton.innerText = `Kaufen (${formatLargeNumber(cost)} Smileys)`;
+        if (aktuelle_smileys >= cost) {
+            forschungslaborButton.disabled = false;
+            forschungslaborButton.classList.remove('disabled');
+        } else {
+            forschungslaborButton.disabled = true;
+            forschungslaborButton.classList.add('disabled');
+        }
+    }
+    
+    // Forschungs-Upgrade Button
+    const forschungUpgradeButton = document.getElementById('forschungUpgradeButton');
+    const nextUpgrade = researchUpgrades[researchUpgradeIndex];
+    if (forschungUpgradeButton) {
+        if (nextUpgrade) {
+            forschungUpgradeButton.innerText = `Upgrade kaufen (${formatLargeNumber(nextUpgrade.cost)} FP)`;
+            if (forschungPunkte >= nextUpgrade.cost) {
+                forschungUpgradeButton.disabled = false;
+                forschungUpgradeButton.classList.remove('disabled');
+            } else {
+                forschungUpgradeButton.disabled = true;
+                forschungUpgradeButton.classList.add('disabled');
+            }
+        } else {
+            forschungUpgradeButton.innerText = `Alle Upgrades gekauft`;
+            forschungUpgradeButton.disabled = true;
+            forschungUpgradeButton.classList.add('bought');
+        }
+    }
 }
     
 function updateUpgradesDisplay() {
-    const researchUpgradeButton = document.getElementById("forschungUpgradeButton");
-    if (researchUpgradeButton) {
-        const upgrade = researchUpgrades[researchUpgradeIndex];
-        if (upgrade) {
-            researchUpgradeButton.innerText = `Forschungs-Upgrade kaufen (${upgrade.cost} FP)`;
-            researchUpgradeButton.disabled = forschungPunkte < upgrade.cost;
-        } else {
-            researchUpgradeButton.innerText = "Alle Upgrades gekauft";
-            researchUpgradeButton.disabled = true;
+    // A) Gebäude-Anzeige (Building Count & Production)
+    buildingsData.forEach((building, index) => {
+        const itemDiv = document.querySelector(`.upgrade-item[data-index="${index}"]`);
+        if (!itemDiv) return; 
+
+        let currentCount = 0;
+        let productionPerUnit = 0;
+        let prestigeMulti = 1;
+        
+        // Die globalen Multiplikatoren für die Produktion müssen hier angewendet werden
+        const globalMulti = globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
+
+        // KORREKTUR: Berechnung der Basis-SPS unter Einbeziehung der Forschungseffizienz (wie in produziereSmileys)
+        let autoClickerBaseSPS = 1 * (1 + autoClickerResearchBonus + efficiencyBonus);
+        let smileyTreeBaseSPS = 20 * (1 + smileyTreeResearchBonus + efficiencyBonus);
+        let smileyFactoryBaseSPS = 150 * (1 + smileyFactoryResearchBonus + efficiencyBonus);
+
+        switch (building.elementId) {
+            case "auto_clicker_button_1x":
+                currentCount = auto_klicker_count;
+                productionPerUnit = autoClickerBaseSPS; 
+                prestigeMulti = autoClickerPrestigeMulti;
+                break;
+            case "smileyTreeButton1x":
+                currentCount = smileyTreeProduction;
+                productionPerUnit = smileyTreeBaseSPS;
+                prestigeMulti = smileyTreePrestigeMulti;
+                break;
+            case "smileyFactoryButton1x":
+                currentCount = smileyFactoryProduction;
+                productionPerUnit = smileyFactoryBaseSPS;
+                prestigeMulti = smileyFactoryPrestigeMulti;
+                break;
         }
-    }
+
+        // 1. ANZAHL aktualisieren (sucht das .building-count Element)
+        const countSpan = itemDiv.querySelector('.building-count'); 
+        if (countSpan) {
+            countSpan.innerText = `Anzahl: ${formatLargeNumber(currentCount)}`;
+        }
+        
+        // 2. PRODUKTION/SPS aktualisieren
+        const productionSpan = itemDiv.querySelector('.building-production'); 
+        if (productionSpan) {
+            const totalSPS = currentCount * productionPerUnit * prestigeMulti * globalMulti;
+            productionSpan.innerText = `Produziert: ${formatLargeNumber(totalSPS)} SPS`;
+        }
+    });
+
+    // B) Klick-Upgrades aktualisieren (optional, falls gekauft)
+    clickerUpgrades.forEach((upgrade, index) => {
+        const itemDiv = document.querySelector(`.upgrade-item[data-index="${index}"]`);
+        if (!itemDiv) return;
+
+        const countSpan = itemDiv.querySelector('.upgrade-count'); 
+        if (countSpan) {
+            countSpan.innerText = `Gekauft: ${upgrade.bought}`;
+        }
+        
+        const button = itemDiv.querySelector('.btn-buy');
+        if (button && upgrade.bought) {
+             button.disabled = true;
+             button.innerText = 'Gekauft';
+             button.classList.add('disabled');
+        }
+    });
 }
 
 function createPrestigeUpgrades() {
@@ -812,7 +951,3 @@ function updatePrestigeButtons() {
         }
     });
 }
-
-//  function checkAchievements() {
-// ...
-// }
