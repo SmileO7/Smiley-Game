@@ -679,59 +679,94 @@ function speichereSpiel() {
         forschungslaborGekauft: forschungslaborGekauft,
         prestige_punkte: prestige_punkte,
         prestige_upgrades_gekauft: prestige_upgrades_gekauft, 
+
+                // NEUE FORSCHUNGS-DATEN HINZUFÜGEN
+        researchStatus: researchStatus, // Gekaufte Upgrades
+        forschungPunkte: forschungPunkte, // Währung
+        
+        // Angewandte Boni
+        autoClickerResearchBonus: autoClickerResearchBonus,
+        smileyTreeResearchBonus: smileyTreeResearchBonus,
+        smileyFactoryResearchBonus: smileyFactoryResearchBonus,
+        autoClickerEfficiencyBonus: autoClickerEfficiencyBonus,
+        smileyTreeEfficiencyBonus: smileyTreeEfficiencyBonus,
+        smileyFactoryEfficiencyBonus: smileyFactoryEfficiencyBonus,
+
+        // Prestige
+        smiley_points: smileyPoints, 
     };
+
+    //Speichern im Local Storage
     localStorage.setItem('smileyClickerSave', JSON.stringify(spielstand));
     console.log("Spiel gespeichert.");
 }
 
 function ladeSpiel() {
+    const savedData = localStorage.getItem('smileyClickerSave');
+    if (!savedData) return;
+
     try {
-        const gespeicherterStand = JSON.parse(localStorage.getItem('smileyClickerSave'));
-        if (gespeicherterStand) {
-            aktuelle_smileys = gespeicherterStand.aktuelle_smileys || 0;
-            gesammelte_smileys = gespeicherterStand.gesammelte_smileys || 0;
-            auto_klicker_count = gespeicherterStand.auto_klicker_count || 0;
-            smileyTreeProduction = gespeicherterStand.smileyTreeProduction || 0;
-            smileyFactoryProduction = gespeicherterStand.smileyFactoryProduction || 0;
-            multiplikator = gespeicherterStand.multiplikator || 1;
-            
-            // KORREKTUR: klickUpgradeBonus wird beim Laden neu berechnet
-            klickUpgradeBonus = 0; 
-            if (gespeicherterStand.clickerUpgrades) {
-                gespeicherterStand.clickerUpgrades.forEach((savedItem, index) => {
-                    if (clickerUpgrades[index]) {
-                        clickerUpgrades[index].bought = savedItem.bought;
-                        // Füge den Bonus nur hinzu, wenn das Upgrade gekauft wurde
-                        if (savedItem.bought) {
-                            klickUpgradeBonus += clickerUpgrades[index].effect;
-                        }
-                    }
-                });
-            }
-            // Ende KORREKTUR
-            
-            // Forschung laden
-            forschungPunkte = gespeicherterStand.forschungPunkte || 0;
-            researchUpgradeIndex = gespeicherterStand.researchUpgradeIndex || 0;
-            forschungslabor_count = gespeicherterStand.forschungslabor_count || 0;
-            forschungslaborGekauft = gespeicherterStand.forschungslaborGekauft || false;
-            
-            // Prestige laden
-            gesamteGeklickteSmileys = gespeicherterStand.gesamteGeklickteSmileys || 0;
-            gesamtPrestigePunkte = gespeicherterStand.gesamtPrestigePunkte || 0;
-            prestige_punkte = gespeicherterStand.prestige_punkte || 0;
-            
-            // Prestige Upgrades laden
-            if (gespeicherterStand.prestige_upgrades_gekauft) {
-                prestige_upgrades_gekauft = gespeicherterStand.prestige_upgrades_gekauft; 
-            }
-            
-            console.log("Spielstand geladen.");
-        }
+        const loadedData = JSON.parse(savedData);
+        
+        // --- HAUPT-VARIABLEN ---
+        smileyPoints = loadedData.smileyPoints || 0;
+        klickKraft = loadedData.klickKraft || 1; 
+        
+        // --- GEBÄUDE & WÄHRUNGEN ---
+        auto_klicker_count = loadedData.auto_klicker_count || 0;
+        smileyTreeProduction = loadedData.smileyTreeProduction || 0;
+        smileyFactoryProduction = loadedData.smileyFactoryProduction || 0;
+        
+        auto_klicker_price = loadedData.auto_klicker_price || 20;
+        smileyTreePrice = loadedData.smileyTreePrice || 100;
+        smileyFactoryPrice = loadedData.smileyFactoryPrice || 1000;
+        
+        // --- UPGRADE-STATUS ---
+        upgradeStatus = loadedData.upgradeStatus || {}; // Stellt sicher, dass das Objekt existiert
+
+        // --- PRESTIGE-DATEN ---
+        prestige_punkte = loadedData.prestige_punkte || 0;
+        prestige_upgrades_gekauft = loadedData.prestige_upgrades_gekauft || {};
+        globalerPrestigeMultiplikator = loadedData.globalerPrestigeMultiplikator || 1;
+        klickPrestigeMultiplier = loadedData.klickPrestigeMultiplier || 1;
+        klickBoostPerPPValue = loadedData.klickBoostPerPPValue || 0;
+        autoClickerPrestigeMulti = loadedData.autoClickerPrestigeMulti || 1;
+        smileyTreePrestigeMulti = loadedData.smileyTreePrestigeMulti || 1;
+        smileyFactoryPrestigeMulti = loadedData.smileyFactoryPrestigeMulti || 1;
+        researchLabPrestigeMulti = loadedData.researchLabPrestigeMulti || 1;
+        buildingCostReduction = loadedData.buildingCostReduction || 0;
+        globalSpsMultiplier = loadedData.globalSpsMultiplier || 1;
+
+
+        // --- NEUE FORSCHUNGS-DATEN (WICHTIG!) ---
+        
+        // Währung & Status
+        researchStatus = loadedData.researchStatus || [false, false, false, false, false, false]; 
+        forschungPunkte = loadedData.forschungPunkte || 0;
+
+        // Angewandte Boni (Additive)
+        autoClickerResearchBonus = loadedData.autoClickerResearchBonus || 0;
+        smileyTreeResearchBonus = loadedData.smileyTreeResearchBonus || 0;
+        smileyFactoryResearchBonus = loadedData.smileyFactoryResearchBonus || 0;
+
+        // Angewandte Boni (Multiplikative/Effizienz)
+        autoClickerEfficiencyBonus = loadedData.autoClickerEfficiencyBonus || 0;
+        smileyTreeEfficiencyBonus = loadedData.smileyTreeEfficiencyBonus || 0;
+        smileyFactoryEfficiencyBonus = loadedData.smileyFactoryEfficiencyBonus || 0;
+        
+
+        // --- ZUWEISUNG UND INITIALISIERUNG ---
+        // Stellt sicher, dass alle geladenen Boni sofort auf die UI wirken.
+        updateUI();
+        renderResearchUpgrades(); // Zeigt die gekauften Upgrades sofort als "Gekauft" an
+        updateGame(); // Aktualisiert die CPS-Berechnung und Buttons
+
+        console.log('Spielstand erfolgreich geladen.');
+
     } catch (e) {
-        console.error("Fehler beim Laden des Spielstands:", e);
-        // Altes, defektes Save löschen, um Neustart zu erzwingen
-        localStorage.removeItem('smileyClickerSave'); 
+        console.error('Fehler beim Laden des Spielstands:', e);
+        // Fallback: Lösche den korrupten Spielstand, um einen Neustart zu ermöglichen
+        localStorage.removeItem('smileyClickerSave');
     }
 }
 
