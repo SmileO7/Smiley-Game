@@ -228,40 +228,59 @@ function klickeSmiley() {
 }
 
 function produziereSmileys() {
-    // KORREKTUR: Berechnung der Basis-SPS unter Einbeziehung der Forschungseffizienz
-    const autoClickerBaseSPS = 1 * (1 + autoClickerResearchBonus + efficiencyBonus);
-    const smileyTreeBaseSPS = 20 * (1 + smileyTreeResearchBonus + efficiencyBonus);
-    const smileyFactoryBaseSPS = 150 * (1 + smileyFactoryResearchBonus + efficiencyBonus);
+    // 1. Berechnung der ECHTEN SPS-Werte pro Einheit
+    // Formel: Basis-SPS * (1 + Forschungsbonus) * Prestige-Multiplikator * (1 + Globaler Effizienzbonus)
     
-    // Basale SPS-Werte (pro 100ms, wird später durch 10 geteilt)
-    const autoClickerSPS = (auto_klicker_count * autoClickerBaseSPS) * autoClickerPrestigeMulti;
-    const smileyTreeSPS = smileyTreeProduction * smileyTreeBaseSPS * smileyTreePrestigeMulti;
-    const smileyFactorySPS = smileyFactoryProduction * smileyFactoryBaseSPS * smileyFactoryPrestigeMulti;
+    // Auto-Klicker (Basis 1 SPS)
+    const autoClickerUnitSPS = 
+        1 * (1 + autoClickerResearchBonus) * autoClickerPrestigeMulti * (1 + efficiencyBonus); // Globaler Effizienzbonus als Multiplikator
+    
+    // Smiley-Baum (Basis 20 SPS)
+    const smileyTreeUnitSPS = 
+        20 * (1 + smileyTreeResearchBonus) * smileyTreePrestigeMulti * (1 + efficiencyBonus);
+    
+    // Smiley-Fabrik (Basis 150 SPS)
+    const smileyFactoryUnitSPS = 
+        150 * (1 + smileyFactoryResearchBonus) * smileyFactoryPrestigeMulti * (1 + efficiencyBonus);
 
-    const totalBaseSPS = autoClickerSPS + smileyTreeSPS + smileyFactorySPS;
-    // Globale Multiplikatoren anwenden
-    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
-    // Ende KORREKTUR
 
+    // 2. Gesamtproduktion (Einheit x Anzahl) - Hier wird nun der korrekte UnitSPS verwendet
+    const totalBaseSPS = 
+        (auto_klicker_count * autoClickerUnitSPS) + 
+        (smileyTreeProduction * smileyTreeUnitSPS) + 
+        (smileyFactoryProduction * smileyFactoryUnitSPS);
+
+    // 3. Globale Multiplikatoren anwenden (researchLabPrestigeMulti ist hier der globale Forschungs-Multi)
+    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier; 
+    
     // Aktualisierung (geteilt durch 10, da diese Funktion alle 100ms läuft)
-    aktuelle_smileys += totalBonusSPS / 10;
-    gesammelte_smileys += totalBonusSPS / 10;
-
+    aktuelle_smileys += totalBonusSPS / 10;
+    gesammelte_smileys += totalBonusSPS / 10;
+    
     // Forschungspunkte
-    if (forschungslabor_count > 0) {
-        forschungPunkte += forschungslabor_count * 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
-    }
+    // HINWEIS: Hier sollte später researchLabPrestigeMulti nicht doppelt gezählt werden, 
+    // da es bereits in totalBonusSPS enthalten ist. Wir vereinfachen dies später.
+    if (forschungslabor_count > 0) {
+        // Korrigierte Forschungspunkte-Formel (Basis * Anzahl * Multiplikatoren)
+        const forschungPunkteProEinheit = 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
+        forschungPunkte += forschungslabor_count * forschungPunkteProEinheit / 10; // Auch durch 10 teilen
+    }
 
-    // Prestige Button Aktivierung
-    const prestigeButton = document.getElementById("prestige_button");
-    if (prestigeButton) {
-        const required_smileys = prestige_kosten;
-        if (aktuelle_smileys >= required_smileys) {
-            prestigeButton.classList.add("available");
-        } else {
-            prestigeButton.classList.remove("available");
-        }
-    }
+    // Aktualisiere die Gesamt-SPS-Anzeige im Header
+    document.getElementById('smileys_per_second').innerText = `Smileys/Sekunde: ${formatLargeNumber(totalBonusSPS)}`;
+
+    // Prestige Button Aktivierung
+    const prestigeButton = document.getElementById("prestige_button");
+    if (prestigeButton) {
+        const required_smileys = prestige_kosten;
+        if (aktuelle_smileys >= required_smileys) {
+            prestigeButton.classList.add("available");
+        } else {
+            prestigeButton.classList.remove("available");
+        }
+    }
+    
+    updatePrestigeButtons(); 
 }
 
 function prestige() {
