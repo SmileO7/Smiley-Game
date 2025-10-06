@@ -260,15 +260,19 @@ function produziereSmileys() {
     // Forschungspunkte
     // HINWEIS: Hier sollte später researchLabPrestigeMulti nicht doppelt gezählt werden, 
     // da es bereits in totalBonusSPS enthalten ist. Wir vereinfachen dies später.
-    if (forschungslabor_count > 0) {
-        // Korrigierte Forschungspunkte-Formel (Basis * Anzahl * Multiplikatoren)
-        const forschungPunkteProEinheit = 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
-        forschungPunkte += forschungslabor_count * forschungPunkteProEinheit / 10; // Auch durch 10 teilen
-    }
+    if (forschungslabor_count > 0) {
+        // Basis-Produktion pro Labor (0.005) * Multiplikatoren
+        const forschungSPSProEinheit = 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
+
+        // Gesamtproduktion pro Sekunde
+        const forschungSPS = forschungslabor_count * forschungSPSProEinheit;
+
+        // Erhöhung der Forschungspunkte (durch 10 teilen, da alle 100ms)
+        forschungPunkte += forschungSPS / 10;
+    }
 
     // Aktualisiere die Gesamt-SPS-Anzeige im Header
-    document.getElementById('smileys_per_second').innerText = `Smileys/Sekunde: ${formatLargeNumber(totalBonusSPS)}`;
-
+    document.getElementById('smileys_pro_sekunde_anzeige').innerText = formatLargeNumber(totalBonusSPS);
     // Prestige Button Aktivierung
     const prestigeButton = document.getElementById("prestige_button");
     if (prestigeButton) {
@@ -888,20 +892,24 @@ function updateUpgradesDisplay() {
         const unitSPS = baseSPS * (1 + researchBonus) * prestigeMulti * (1 + efficiencyBonus);
         
         // Gesamt-SPS, die dieser Gebäudetyp generiert (ownedCount * unitSPS)
-        const totalBuildingSPS = unitSPS * ownedCount;
+        const totalBuildingSPS_individual = unitSPS * ownedCount; // Umbenannt zur Klarheit
 
-        // 1. UI-Element der Anzahl aktualisieren
-        const countP = upgradeElement.querySelector('.building-count');
-        if (countP) {
-            countP.innerText = `Anzahl: ${formatLargeNumber(ownedCount)}`;
-        }
-        
-        // 2. NEU: UI-Element der Produktion aktualisieren
-        const productionP = upgradeElement.querySelector('.building-production');
-        if (productionP) {
-            // Zeigt die Gesamtproduktion DIESES Gebäudetyps (ohne globale Multiplikatoren!)
-            productionP.innerText = `Produziert: ${formatLargeNumber(totalBuildingSPS)} SPS`;
-        }
+        // NEU: Globale Multiplikatoren anwenden, damit die Summe mit dem Header übereinstimmt!
+        const totalBuildingSPS_final = 
+            totalBuildingSPS_individual * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
+
+        // 1. UI-Element der Anzahl aktualisieren
+        const countP = upgradeElement.querySelector('.building-count');
+        if (countP) {
+            countP.innerText = `Anzahl: ${formatLargeNumber(ownedCount)}`;
+        }
+        
+        // 2. UI-Element der Produktion aktualisieren (zeigt jetzt den synchronisierten Wert!)
+        const productionP = upgradeElement.querySelector('.building-production');
+        if (productionP) {
+            // Zeigt die ENDGÜLTIGE, globale SPS-Rate
+            productionP.innerText = `Produziert: ${formatLargeNumber(totalBuildingSPS_final)} SPS`;
+        }
         // Ende der SPS-Anzeige Implementierung
 
         // 3. Preise in den Buttons aktualisieren (Kosten für 1x, 10x, 100x)
