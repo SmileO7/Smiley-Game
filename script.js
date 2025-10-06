@@ -81,15 +81,22 @@ let smileyFactoryPrestigeMulti = 1;
 let researchLabPrestigeMulti = 1;
 let sammelbuchClickPowerBonus = 0; 
 
-// Forschungseffizienz-Boni
+// Forschungseffizienz-Boni (Additive Boni für die Basisproduktion)
 let autoClickerResearchBonus = 0;
 let smileyTreeResearchBonus = 0;
 let smileyFactoryResearchBonus = 0;
-let efficiencyBonus = 0;
 
-//prestige Variablen
+// Forschungseffizienz-Boni (Multiplikative Boni pro Einheit - ersetzt den globalen 'efficiencyBonus')
+let autoClickerEfficiencyBonus = 0;
+let smileyTreeEfficiencyBonus = 0;
+let smileyFactoryEfficiencyBonus = 0;
+
+// Prestige Variablen
 let klickPrestigeMultiplier = 1;      // Startwert 1 (für 'global_multi')
 let klickBoostPerPPValue = 0;         // Startwert 0 (für 'klick_boost_per_pp')
+
+// Research Status (HINZUGEFÜGT: Der Status der 6 Forschungs-Upgrades)
+const researchStatus = [false, false, false, false, false, false];
 
 // KONSTANTEN & ELEMENTE
 // Die globalen DOM-Variablen für Forschung wurden entfernt (KORREKTUR für ReferenceError).
@@ -242,16 +249,17 @@ function produziereSmileys() {
     // Formel: Basis-SPS * (1 + Forschungsbonus) * Prestige-Multiplikator * (1 + Globaler Effizienzbonus)
     
     // Auto-Klicker (Basis 1 SPS)
+    // Auto-Klicker (Basis 1 SPS)
     const autoClickerUnitSPS = 
-        1 * (1 + autoClickerResearchBonus) * autoClickerPrestigeMulti * (1 + efficiencyBonus); // Globaler Effizienzbonus als Multiplikator
+        1 * (1 + autoClickerResearchBonus) * autoClickerPrestigeMulti * (1 + autoClickerEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
     
     // Smiley-Baum (Basis 20 SPS)
     const smileyTreeUnitSPS = 
-        20 * (1 + smileyTreeResearchBonus) * smileyTreePrestigeMulti * (1 + efficiencyBonus);
+        20 * (1 + smileyTreeResearchBonus) * smileyTreePrestigeMulti * (1 + smileyTreeEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
     
     // Smiley-Fabrik (Basis 150 SPS)
     const smileyFactoryUnitSPS = 
-        150 * (1 + smileyFactoryResearchBonus) * smileyFactoryPrestigeMulti * (1 + efficiencyBonus);
+        150 * (1 + smileyFactoryResearchBonus) * smileyFactoryPrestigeMulti * (1 + smileyFactoryEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
 
 
     // 2. Gesamtproduktion (Einheit x Anzahl) - Hier wird nun der korrekte UnitSPS verwendet
@@ -484,41 +492,47 @@ function kaufeForschungsUpgrade(upgradeIndex) {
         return;
     }
     
-    // 2. Prüfen, ob der Spieler genug Forschungspunkte hat
-    if (gameData.researchPoints >= upgrade.cost) {
+    // 2. Prüfen, ob der Spieler genug Forschungspunkte hat (KORREKTUR: forschungPunkte statt gameData.researchPoints)
+    if (forschungPunkte >= upgrade.cost) { 
         // Punkte abziehen
-        gameData.researchPoints -= upgrade.cost;
+        forschungPunkte -= upgrade.cost; // KORREKTUR: forschungPunkte statt gameData.researchPoints
         
         // Upgrade als gekauft markieren
         researchStatus[upgradeIndex] = true;
         
         // 3. Bonus anwenden: Die spezifische Bonusvariable updaten
         
-        // A. Additive Produktions-Boni (0.1, 0.2, etc.)
-        if (upgrade.bonusVariable === 'autoClickerResearchBonus') {
-            autoClickerResearchBonus += upgrade.value;
-        } else if (upgrade.bonusVariable === 'smileyTreeResearchBonus') {
-            smileyTreeResearchBonus += upgrade.value;
-        } else if (upgrade.bonusVariable === 'smileyFactoryResearchBonus') {
-            smileyFactoryResearchBonus += upgrade.value;
+        // A. Additive Produktions-Boni (unit_production)
+        if (upgrade.type === 'unit_production') {
+            if (upgrade.unit === 'autoClicker') {
+                 autoClickerResearchBonus += upgrade.value;
+            } else if (upgrade.unit === 'smileyTree') {
+                 smileyTreeResearchBonus += upgrade.value;
+            } else if (upgrade.unit === 'smileyFactory') {
+                 smileyFactoryResearchBonus += upgrade.value;
+            }
         
-        // B. Multiplikative Effizienz-Boni (1.0 -> 1.2 -> 1.4, etc.)
-        // Da alle Effizienz-Upgrades denselben Namen ('efficiencyBonus') teilen, 
-        // müssen wir hier unterscheiden, welche Einheit gemeint ist.
-        // FÜR DIESEN AUFBAU: Ich interpretiere 'efficiencyBonus' als ein globales Multiplikator.
-        // Wenn du separate Effizienz-Boni pro Einheit möchtest, müssten wir hier getrennte Variablen (z.B. autoClickerEfficiencyBonus) definieren.
-        } else if (upgrade.bonusVariable === 'efficiencyBonus') {
-            efficiencyBonus += upgrade.value; // Fügt 0.2 hinzu (1.0 -> 1.2)
+        // B. Multiplikative Effizienz-Boni (unit_efficiency)
+        } else if (upgrade.type === 'unit_efficiency') {
+             // Wende den Bonus auf die entsprechende Einheit an
+            if (upgrade.unit === 'autoClicker') {
+                autoClickerEfficiencyBonus += upgrade.value;
+            } else if (upgrade.unit === 'smileyTree') {
+                smileyTreeEfficiencyBonus += upgrade.value;
+            } else if (upgrade.unit === 'smileyFactory') {
+                smileyFactoryEfficiencyBonus += upgrade.value;
+            }
         }
         
         // WICHTIG: UI und Stats aktualisieren
         updateUI();
         renderResearchUpgrades();
-        berechneGesamtKlicksProSekunde(); // Sorgt dafür, dass der neue Bonus angewendet wird
+        // updateGame() sorgt für sofortige Aktualisierung der SPS-Anzeige
+        updateGame(); 
         
         console.log(`Forschungs-Upgrade ${upgradeIndex} erfolgreich gekauft!`);
     } else {
-        zeigeNachricht('Nicht genug Forschungspunkte!', 'error');
+        console.log('Nicht genug Forschungspunkte!');
     }
 }
 
@@ -1105,36 +1119,40 @@ function updateUpgradesDisplay() {
         let ownedCount = 0;
         let baseSPS = 0; // Basiswert für die SPS-Berechnung
         let prestigeMulti = 1; // Individueller Prestige-Multi
-        let researchBonus = 0; // Individueller Forschungsbonus
+        let researchBonus = 0; // Individueller ADDITIVER Forschungsbonus
+        let currentEfficiencyBonus = 0; // Individueller MULTIPLIKATIVER Effizienzbonus (NEU)
         let costReductionFactor = 1 - buildingCostReduction; 
 
         // Anzahl, Boni und Basis-SPS abrufen
         switch(item.elementId) {
             case "auto_clicker_button_1x":
                 ownedCount = auto_klicker_count; 
-                baseSPS = 1; // Basis SPS für Auto-Klicker
+                baseSPS = 1; 
                 prestigeMulti = autoClickerPrestigeMulti;
                 researchBonus = autoClickerResearchBonus;
+                currentEfficiencyBonus = autoClickerEfficiencyBonus; // NEU
                 break;
             case "smileyTreeButton1x":
                 ownedCount = smileyTreeProduction;
-                baseSPS = 20; // Basis SPS für Smiley-Baum
+                baseSPS = 20; 
                 prestigeMulti = smileyTreePrestigeMulti;
                 researchBonus = smileyTreeResearchBonus;
+                currentEfficiencyBonus = smileyTreeEfficiencyBonus; // NEU
                 break;
             case "smileyFactoryButton1x":
                 ownedCount = smileyFactoryProduction;
-                baseSPS = 150; // Basis SPS für Smiley-Fabrik
+                baseSPS = 150; 
                 prestigeMulti = smileyFactoryPrestigeMulti;
                 researchBonus = smileyFactoryResearchBonus;
+                currentEfficiencyBonus = smileyFactoryEfficiencyBonus; // NEU
                 break;
         }
 
         // Berechnung der SPS pro Einheit (inkl. individueller Multiplikatoren)
-        const unitSPS = baseSPS * (1 + researchBonus) * prestigeMulti * (1 + efficiencyBonus);
+        const unitSPS = baseSPS * (1 + researchBonus) * prestigeMulti * (1 + currentEfficiencyBonus);
         
         // Gesamt-SPS, die dieser Gebäudetyp generiert (ownedCount * unitSPS)
-        const totalBuildingSPS_individual = unitSPS * ownedCount; // Umbenannt zur Klarheit
+        const totalBuildingSPS_individual = unitSPS * ownedCount; 
 
         // NEU: Globale Multiplikatoren anwenden, damit die Summe mit dem Header übereinstimmt!
         const totalBuildingSPS_final = 
