@@ -9,9 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // SPIEL-DATEN (Konstanten)
 const buildingsData = [
-    { name: "Auto-Klicker", basePrice: 20, growthRate: 1.1, elementId: "auto_clicker_button_1x" },
-    { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x" },
-    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.2, elementId: "smileyFactoryButton1x" },
+    { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, elementId: "auto_klicker_button_1x", baseSPS: 1 },
+    { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x", baseSPS: 20 },
+    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, elementId: "smileyFactoryButton1x", baseSPS: 150 },
+    
+    // NEUE GEBÄUDE (4 - 15)
+    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, elementId: "smileyMineButton1x", baseSPS: 1000 },
+    { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, elementId: "smileyBohrerButton1x", baseSPS: 5000 },
+    { name: "Smiley-Kernkraftwerk", basePrice: 250000, growthRate: 1.35, elementId: "smileyKernkraftwerkButton1x", baseSPS: 25000 },
+    { name: "Smiley-Galaxie", basePrice: 1250000, growthRate: 1.40, elementId: "smileyGalaxieButton1x", baseSPS: 125000 },
+    { name: "Dimensionsportal", basePrice: 6250000, growthRate: 1.45, elementId: "dimensionsPortalButton1x", baseSPS: 625000 },
+    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, elementId: "zeitmaschineButton1x", baseSPS: 3125000 },
+    { name: "Meta-Klicker", basePrice: 156250000, growthRate: 1.55, elementId: "metaKlickerButton1x", baseSPS: 15625000 },
+    { name: "Quanten-Netzwerk", basePrice: 781250000, growthRate: 1.60, elementId: "quantenNetzwerkButton1x", baseSPS: 78125000 },
+    { name: "Endloser Speicher", basePrice: 3906250000, growthRate: 1.65, elementId: "endloserSpeicherButton1x", baseSPS: 390625000 },
+    { name: "Ursprung", basePrice: 19531250000, growthRate: 1.70, elementId: "ursprungButton1x", baseSPS: 1953125000 },
+    { name: "Kosmische Einheit", basePrice: 97656250000, growthRate: 1.75, elementId: "kosmischeEinheitButton1x", baseSPS: 9765625000 },
+    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, elementId: "absoluterSchoepferButton1x", baseSPS: 48828125000 },
 ];
 const clickerUpgrades = [
     { name: "Stärkerer Klick", price: 250, effect: 0.1, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 10% des Basiswerts.' },
@@ -51,55 +65,132 @@ const smileyFactoryBaseCost = 2500;
 const smileyFactoryGrowthRate = 1.25;
 
 
-// SPIEL-ZUSTAND (let-Variablen, die gespeichert und geändert werden)
+//================================================================================================================
+// --- 1.1 SPIEL-ZUSTAND (let-Variablen, die gespeichert und geändert werden) ---
+//================================================================================================================
+
+// --- HAUPT-SPIELSTATUS ---
 let aktuelle_smileys = 0;
 let gesammelte_smileys = 0;
-let smiley_points = 0; // Nicht verwendet, aber beibehalten
-let multiplikator = 1; // Nicht verwendet, aber beibehalten
+let smileyPoints = 0;             // Währung
+let klickKraft = 1;               // Basiswert für Klicks
+let multiplikator = 1;            // Nicht primär verwendet, aber beibehalten
+let klickUpgradeBonus = 0;        // Additiver Klick-Bonus
+let gesamteGeklickteSmileys = 0;
+let gesamtPrestigePunkte = 0;
+
+// --- FORSCHUNG & PRESTIGE STATUS ---
+let forschungPunkte = 0;
+let prestige_punkte = 0;
+let prestige_upgrades_gekauft = {}; 
+let forschungslabor_count = 0;
+let forschungslabor_fps_multiplier = 1.0;
+let forschungslaborGekauft = false;
+let researchUpgradeIndex = 0;
+// WICHTIG: Muss 'let' sein, damit es in ladeSpiel() neu zugewiesen werden kann!
+let researchStatus = [false, false, false, false, false, false]; 
+
+// --- GEBÄUDE ZÄHLER (15x) ---
 let auto_klicker_count = 0;
 let smileyTreeProduction = 0;
 let smileyFactoryProduction = 0;
-let forschungslabor_count = 0;
-let forschungslabor_fps_multiplier = 1.0;
-let klickUpgradeBonus = 0;
-let forschungPunkte = 0; // Wichtig: Groß-/Kleinschreibung beibehalten
-let researchUpgradeIndex = 0;
-let gesamteGeklickteSmileys = 0;
-let gesamtPrestigePunkte = 0;
-let forschungslaborGekauft = false;
-let prestige_punkte = 0;
-let prestige_upgrades_gekauft = {}; 
+let smileyMineProduction = 0;
+let smileyBohrerProduction = 0;
+let smileyKernkraftwerkProduction = 0;
+let smileyGalaxieProduction = 0;
+let dimensionsPortalProduction = 0;
+let zeitmaschineProduction = 0;
+let metaKlickerProduction = 0;
+let quantenNetzwerkProduction = 0;
+let endloserSpeicherProduction = 0;
+let ursprungProduction = 0;
+let kosmischeEinheitProduction = 0;
+let absoluterSchoepferProduction = 0;
 
-// Bonus-Variablen
+// --- GEBÄUDE PREISE (15x) ---
+let auto_klicker_price = 20;
+let smileyTreePrice = 100;
+let smileyFactoryPrice = 1000;
+let smileyMinePrice = 10000;
+let smileyBohrerPrice = 50000;
+let smileyKernkraftwerkPrice = 250000;
+let smileyGalaxiePrice = 1250000;
+let dimensionsPortalPrice = 6250000;
+let zeitmaschinePrice = 31250000;
+let metaKlickerPrice = 156250000;
+let quantenNetzwerkPrice = 781250000;
+let endloserSpeicherPrice = 3906250000;
+let ursprungPrice = 19531250000;
+let kosmischeEinheitPrice = 97656250000;
+let absoluterSchoepferPrice = 488281250000;
+
+//================================================================================================================
+// --- 1.2  BONI & MULTIPLIER (let) ---
+//================================================================================================================
+
+// --- GLOBALE BONI ---
 let globalerPrestigeMultiplikator = 1.0;
 let globalSpsMultiplier = 1.0;
 let buildingCostReduction = 0; 
+let sammelbuchClickPowerBonus = 0;
 let klickBoostPerPrestigePoint = 0;
+let klickPrestigeMultiplier = 1; 
+let klickBoostPerPPValue = 0; 
+let researchLabPrestigeMulti = 1;
+
+
+// --- PRESTIGE MULTIPLIER (15x) ---
 let autoClickerPrestigeMulti = 1;
 let smileyTreePrestigeMulti = 1;
 let smileyFactoryPrestigeMulti = 1;
-let researchLabPrestigeMulti = 1;
-let sammelbuchClickPowerBonus = 0; 
+let smileyMinePrestigeMulti = 1;
+let smileyBohrerPrestigeMulti = 1;
+let smileyKernkraftwerkPrestigeMulti = 1;
+let smileyGalaxiePrestigeMulti = 1;
+let dimensionsPortalPrestigeMulti = 1;
+let zeitmaschinePrestigeMulti = 1;
+let metaKlickerPrestigeMulti = 1;
+let quantenNetzwerkPrestigeMulti = 1;
+let endloserSpeicherPrestigeMulti = 1;
+let ursprungPrestigeMulti = 1;
+let kosmischeEinheitPrestigeMulti = 1;
+let absoluterSchoepferPrestigeMulti = 1;
 
-// Forschungseffizienz-Boni (Additive Boni für die Basisproduktion)
+// --- FORSCHUNGSEFFIZIENZ-BONI (30x) ---
+
+// Additive Boni (steigern die Basis-SPS)
 let autoClickerResearchBonus = 0;
 let smileyTreeResearchBonus = 0;
 let smileyFactoryResearchBonus = 0;
+let smileyMineResearchBonus = 0;
+let smileyBohrerResearchBonus = 0;
+let smileyKernkraftwerkResearchBonus = 0;
+let smileyGalaxieResearchBonus = 0;
+let dimensionsPortalResearchBonus = 0;
+let zeitmaschineResearchBonus = 0;
+let metaKlickerResearchBonus = 0;
+let quantenNetzwerkResearchBonus = 0;
+let endloserSpeicherResearchBonus = 0;
+let ursprungResearchBonus = 0;
+let kosmischeEinheitResearchBonus = 0;
+let absoluterSchoepferResearchBonus = 0;
 
-// Forschungseffizienz-Boni (Multiplikative Boni pro Einheit - ersetzt den globalen 'efficiencyBonus')
+// Multiplikative Boni (steigern die Effizienz)
 let autoClickerEfficiencyBonus = 0;
 let smileyTreeEfficiencyBonus = 0;
 let smileyFactoryEfficiencyBonus = 0;
-
-// Prestige Variablen
-let klickPrestigeMultiplier = 1;      // Startwert 1 (für 'global_multi')
-let klickBoostPerPPValue = 0;         // Startwert 0 (für 'klick_boost_per_pp')
-
-// Research Status (HINZUGEFÜGT: Der Status der 6 Forschungs-Upgrades)
-const researchStatus = [false, false, false, false, false, false];
-
-// KONSTANTEN & ELEMENTE
-// Die globalen DOM-Variablen für Forschung wurden entfernt (KORREKTUR für ReferenceError).
+let smileyMineEfficiencyBonus = 0;
+let smileyBohrerEfficiencyBonus = 0;
+let smileyKernkraftwerkEfficiencyBonus = 0;
+let smileyGalaxieEfficiencyBonus = 0;
+let dimensionsPortalEfficiencyBonus = 0;
+let zeitmaschineEfficiencyBonus = 0;
+let metaKlickerEfficiencyBonus = 0;
+let quantenNetzwerkEfficiencyBonus = 0;
+let endloserSpeicherEfficiencyBonus = 0;
+let ursprungEfficiencyBonus = 0;
+let kosmischeEinheitEfficiencyBonus = 0;
+let absoluterSchoepferEfficiencyBonus = 0;
 
 //================================================================================================================
 // --- 2. INITIALISIERUNG & SETUP ---
@@ -245,39 +336,62 @@ function klickeSmiley() {
 }
 
 function produziereSmileys() {
-    // 1. Berechnung der ECHTEN SPS-Werte pro Einheit
-    // Formel: Basis-SPS * (1 + Forschungsbonus) * Prestige-Multiplikator * (1 + Globaler Effizienzbonus)
+    // Array mit den Zähler-Variablen für einen einfacheren Zugriff in der Berechnung
+    const productionCounts = [
+        auto_klicker_count, smileyTreeProduction, smileyFactoryProduction, smileyMineProduction, smileyBohrerProduction,
+        smileyKernkraftwerkProduction, smileyGalaxieProduction, dimensionsPortalProduction, zeitmaschineProduction,
+        metaKlickerProduction, quantenNetzwerkProduction, endloserSpeicherProduction, ursprungProduction,
+        kosmischeEinheitProduction, absoluterSchoepferProduction
+    ];
     
-    // Auto-Klicker (Basis 1 SPS)
-    // Auto-Klicker (Basis 1 SPS)
-    const autoClickerUnitSPS = 
-        1 * (1 + autoClickerResearchBonus) * autoClickerPrestigeMulti * (1 + autoClickerEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
-    
-    // Smiley-Baum (Basis 20 SPS)
-    const smileyTreeUnitSPS = 
-        20 * (1 + smileyTreeResearchBonus) * smileyTreePrestigeMulti * (1 + smileyTreeEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
-    
-    // Smiley-Fabrik (Basis 150 SPS)
-    const smileyFactoryUnitSPS = 
-        150 * (1 + smileyFactoryResearchBonus) * smileyFactoryPrestigeMulti * (1 + smileyFactoryEfficiencyBonus); // Einheitenspezifischer Effizienzbonus
+    // Array mit den Additiven Forschungs-Boni (ResearchBonus)
+    const researchBonuses = [
+        autoClickerResearchBonus, smileyTreeResearchBonus, smileyFactoryResearchBonus, smileyMineResearchBonus, smileyBohrerResearchBonus,
+        smileyKernkraftwerkResearchBonus, smileyGalaxieResearchBonus, dimensionsPortalResearchBonus, zeitmaschineResearchBonus,
+        metaKlickerResearchBonus, quantenNetzwerkResearchBonus, endloserSpeicherResearchBonus, ursprungResearchBonus,
+        kosmischeEinheitResearchBonus, absoluterSchoepferResearchBonus
+    ];
+
+    // Array mit den Multiplikativen Prestige-Boni (PrestigeMulti)
+    const prestigeMultis = [
+        autoClickerPrestigeMulti, smileyTreePrestigeMulti, smileyFactoryPrestigeMulti, smileyMinePrestigeMulti, smileyBohrerPrestigeMulti,
+        smileyKernkraftwerkPrestigeMulti, smileyGalaxiePrestigeMulti, dimensionsPortalPrestigeMulti, zeitmaschinePrestigeMulti,
+        metaKlickerPrestigeMulti, quantenNetzwerkPrestigeMulti, endloserSpeicherPrestigeMulti, ursprungPrestigeMulti,
+        kosmischeEinheitPrestigeMulti, absoluterSchoepferPrestigeMulti
+    ];
+
+    // Array mit den Multiplikativen Effizienz-Boni (EfficiencyBonus)
+    const efficiencyBonuses = [
+        autoClickerEfficiencyBonus, smileyTreeEfficiencyBonus, smileyFactoryEfficiencyBonus, smileyMineEfficiencyBonus, smileyBohrerEfficiencyBonus,
+        smileyKernkraftwerkEfficiencyBonus, smileyGalaxieEfficiencyBonus, dimensionsPortalEfficiencyBonus, zeitmaschineEfficiencyBonus,
+        metaKlickerEfficiencyBonus, quantenNetzwerkEfficiencyBonus, endloserSpeicherEfficiencyBonus, ursprungEfficiencyBonus,
+        kosmischeEinheitEfficiencyBonus, absoluterSchoepferEfficiencyBonus
+    ];
 
 
-    // 2. Gesamtproduktion (Einheit x Anzahl) - Hier wird nun der korrekte UnitSPS verwendet
-    const totalBaseSPS = 
-        (auto_klicker_count * autoClickerUnitSPS) + 
-        (smileyTreeProduction * smileyTreeUnitSPS) + 
-        (smileyFactoryProduction * smileyFactoryUnitSPS);
+    // --- 1. GESAMTPRODUKTION BERECHNEN (ALLE 15 GEBÄUDE) ---
+    let totalBaseSPS = 0;
+    
+    // Wir iterieren durch alle 15 Gebäude in der buildingsData-Konstante (die du korrekt definiert hast)
+    for (let i = 0; i < buildingsData.length; i++) {
+        const data = buildingsData[i];
+        
+        // Formel: Basis-SPS * (1 + Forschungsbonus) * Prestige-Multiplikator * (1 + Effizienzbonus)
+        const unitSPS = 
+            data.baseSPS * (1 + researchBonuses[i]) * prestigeMultis[i] * (1 + efficiencyBonuses[i]);
 
-    // 3. Globale Multiplikatoren anwenden (researchLabPrestigeMulti ist hier der globale Forschungs-Multi)
-    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier; 
+        // Gesamt-SPS = UnitSPS * Anzahl der Einheiten
+        totalBaseSPS += productionCounts[i] * unitSPS;
+    }
+
+    // --- 2. GLOBALE MULTIPLIER ANWENDEN ---
+    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
     
     // Aktualisierung (geteilt durch 10, da diese Funktion alle 100ms läuft)
     aktuelle_smileys += totalBonusSPS / 10;
     gesammelte_smileys += totalBonusSPS / 10;
     
-    // Forschungspunkte
-    // HINWEIS: Hier sollte später researchLabPrestigeMulti nicht doppelt gezählt werden, 
-    // da es bereits in totalBonusSPS enthalten ist. Wir vereinfachen dies später.
+    // --- 3. FORSCHUNGSPUNKTE ---
     if (forschungslabor_count > 0) {
         // Basis-Produktion pro Labor (0.005) * Multiplikatoren
         const forschungSPSProEinheit = 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
@@ -291,6 +405,7 @@ function produziereSmileys() {
 
     // Aktualisiere die Gesamt-SPS-Anzeige im Header
     document.getElementById('smileys_pro_sekunde_anzeige').innerText = formatLargeNumber(totalBonusSPS);
+    
     // Prestige Button Aktivierung
     const prestigeButton = document.getElementById("prestige_button");
     if (prestigeButton) {
@@ -350,72 +465,111 @@ function prestige() {
     alert(`Du hast ${earned_prestige} Prestige-Punkte erhalten!`);
 }
 
-function kaufeItem(type, index, amount = 1) {
-    let item, currentCount, costFunction;
-    let costReductionFactor = 1 - buildingCostReduction; 
+function kaufeItem(index, amount) {
+    const item = buildingsData[index];
+    if (!item) return;
 
-    if (type === 'upgrade-grid') {
-        item = clickerUpgrades[index];
-        const cost = item.price;
-        if (aktuelle_smileys >= cost && item.bought === 0) {
-            aktuelle_smileys -= cost;
-            // Der Multiplikator ist hier nicht definiert. Ich nutze den korrekten Bonus:
-            klickUpgradeBonus += item.effect; 
-            item.bought = 1;
-        } else {
-            return;
-        }
-    } else if (type === 'building-grid') {
-        item = buildingsData[index];
-        let totalCost = 0;
-        let itemsToBuy = 0;
+    // --- HILFS-ARRAYS FÜR VARIABLE ZUWEISUNG ---
+    const priceArray = [
+        auto_klicker_price, smileyTreePrice, smileyFactoryPrice, smileyMinePrice, smileyBohrerPrice,
+        smileyKernkraftwerkPrice, smileyGalaxiePrice, dimensionsPortalPrice, zeitmaschinePrice, 
+        metaKlickerPrice, quantenNetzwerkPrice, endloserSpeicherPrice, ursprungPrice, 
+        kosmischeEinheitPrice, absoluterSchoepferPrice
+    ];
+    let currentPrice = priceArray[index];
 
-        switch (item.elementId) {
-            case "auto_clicker_button_1x":
-                currentCount = auto_klicker_count;
-                costFunction = (count) => autoClickerBaseCost * Math.pow(autoClickerGrowthRate, count) * costReductionFactor;
-                break;
-            case "smileyTreeButton1x":
-                currentCount = smileyTreeProduction;
-                costFunction = (count) => smileyTreeBaseCost * Math.pow(smileyTreeGrowthRate, count) * costReductionFactor;
-                break;
-            case "smileyFactoryButton1x":
-                currentCount = smileyFactoryProduction;
-                costFunction = (count) => smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, count) * costReductionFactor;
-                break;
-            default:
-                return;
-        }
+    // --- KAUF-LOGIK ---
 
+    let gesamtKosten = 0;
+    
+    // Einfacher Kauf (amount = 1)
+    if (amount === 1) {
+        gesamtKosten = currentPrice * (1 - buildingCostReduction);
+    } 
+    // Kauf von mehreren (amount > 1)
+    else if (amount > 1) {
+        let tempPrice = currentPrice;
         for (let i = 0; i < amount; i++) {
-            const nextCost = costFunction(currentCount + i);
-            if (aktuelle_smileys >= totalCost + nextCost) {
-                totalCost += nextCost;
-                itemsToBuy++;
-            } else {
-                break;
-            }
-        }
-
-        if (itemsToBuy > 0) {
-            aktuelle_smileys -= totalCost;
-            switch (item.elementId) {
-                case "auto_clicker_button_1x":
-                    auto_klicker_count += itemsToBuy;
-                    break;
-                case "smileyTreeButton1x":
-                    smileyTreeProduction += itemsToBuy;
-                    break;
-                case "smileyFactoryButton1x":
-                    smileyFactoryProduction += itemsToBuy;
-                    break;
-            }
-        } else {
-            return;
+            gesamtKosten += tempPrice * (1 - buildingCostReduction);
+            tempPrice *= item.growthRate;
         }
     }
-    speichereSpiel();
-    updateGame();
+
+    if (smileyPoints >= gesamtKosten) {
+        smileyPoints -= gesamtKosten;
+
+        // --- ZUWEISUNG DER GEKAUFTEN EINHEITEN & PREIS-UPATE ---
+        
+        switch (item.elementId) {
+            case "auto_klicker_button_1x":
+                auto_klicker_count += amount;
+                auto_klicker_price = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "smileyTreeButton1x":
+                smileyTreeProduction += amount;
+                smileyTreePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "smileyFactoryButton1x":
+                smileyFactoryProduction += amount;
+                smileyFactoryPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            // NEUE GEBÄUDE (4 bis 15)
+            case "smileyMineButton1x":
+                smileyMineProduction += amount;
+                smileyMinePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "smileyBohrerButton1x":
+                smileyBohrerProduction += amount;
+                smileyBohrerPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "smileyKernkraftwerkButton1x":
+                smileyKernkraftwerkProduction += amount;
+                smileyKernkraftwerkPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "smileyGalaxieButton1x":
+                smileyGalaxieProduction += amount;
+                smileyGalaxiePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "dimensionsPortalButton1x":
+                dimensionsPortalProduction += amount;
+                dimensionsPortalPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "zeitmaschineButton1x":
+                zeitmaschineProduction += amount;
+                zeitmaschinePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "metaKlickerButton1x":
+                metaKlickerProduction += amount;
+                metaKlickerPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "quantenNetzwerkButton1x":
+                quantenNetzwerkProduction += amount;
+                quantenNetzwerkPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "endloserSpeicherButton1x":
+                endloserSpeicherProduction += amount;
+                endloserSpeicherPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "ursprungButton1x":
+                ursprungProduction += amount;
+                ursprungPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "kosmischeEinheitButton1x":
+                kosmischeEinheitProduction += amount;
+                kosmischeEinheitPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+            case "absoluterSchoepferButton1x":
+                absoluterSchoepferProduction += amount;
+                absoluterSchoepferPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
+                break;
+        }
+
+        updateUI();
+        speichereSpiel();
+    } else {
+        // Optionale Nachricht
+        console.log("Nicht genug Smileys für den Kauf.");
+    }
 }
 
 /**
@@ -662,43 +816,127 @@ function applyPrestigeBonus(upgrade) {
 //================================================================================================================
 
 function speichereSpiel() {
-    const spielstand = {
+    const dataToSave = {
+        // --- HAUPT-VARIABLEN ---
         aktuelle_smileys: aktuelle_smileys,
         gesammelte_smileys: gesammelte_smileys,
+        smileyPoints: smileyPoints, 
+        klickKraft: klickKraft, // Deine Variable klickKraft wird in ladeSpiel benötigt
+        multiplikator: multiplikator,
+        klickUpgradeBonus: klickUpgradeBonus,
+        gesamteGeklickteSmileys: gesamteGeklickteSmileys,
+        gesamtPrestigePunkte: gesamtPrestigePunkte,
+
+        // --- FORSCHUNGSLABOR & STATUS ---
+        forschungslabor_count: forschungslabor_count,
+        forschungslabor_fps_multiplier: forschungslabor_fps_multiplier,
+        forschungslaborGekauft: forschungslaborGekauft,
+        forschungPunkte: forschungPunkte,
+        researchStatus: researchStatus, 
+        researchUpgradeIndex: researchUpgradeIndex,
+
+        // --- GEBÄUDE ZÄHLER (15x) ---
         auto_klicker_count: auto_klicker_count,
         smileyTreeProduction: smileyTreeProduction,
         smileyFactoryProduction: smileyFactoryProduction,
-        multiplikator: multiplikator,
-        klickUpgradeBonus: klickUpgradeBonus,
-        clickerUpgrades: clickerUpgrades,
-        forschungPunkte: forschungPunkte,
-        researchUpgradeIndex: researchUpgradeIndex,
-        gesamteGeklickteSmileys: gesamteGeklickteSmileys,
-        gesamtPrestigePunkte: gesamtPrestigePunkte,
-        forschungslabor_count: forschungslabor_count,
-        forschungslaborGekauft: forschungslaborGekauft,
-        prestige_punkte: prestige_punkte,
-        prestige_upgrades_gekauft: prestige_upgrades_gekauft, 
+        smileyMineProduction: smileyMineProduction,
+        smileyBohrerProduction: smileyBohrerProduction,
+        smileyKernkraftwerkProduction: smileyKernkraftwerkProduction,
+        smileyGalaxieProduction: smileyGalaxieProduction,
+        dimensionsPortalProduction: dimensionsPortalProduction,
+        zeitmaschineProduction: zeitmaschineProduction,
+        metaKlickerProduction: metaKlickerProduction,
+        quantenNetzwerkProduction: quantenNetzwerkProduction,
+        endloserSpeicherProduction: endloserSpeicherProduction,
+        ursprungProduction: ursprungProduction,
+        kosmischeEinheitProduction: kosmischeEinheitProduction,
+        absoluterSchoepferProduction: absoluterSchoepferProduction,
 
-                // NEUE FORSCHUNGS-DATEN HINZUFÜGEN
-        researchStatus: researchStatus, // Gekaufte Upgrades
-        forschungPunkte: forschungPunkte, // Währung
+        // --- GEBÄUDE PREISE (15x) ---
+        auto_klicker_price: auto_klicker_price,
+        smileyTreePrice: smileyTreePrice,
+        smileyFactoryPrice: smileyFactoryPrice,
+        smileyMinePrice: smileyMinePrice,
+        smileyBohrerPrice: smileyBohrerPrice,
+        smileyKernkraftwerkPrice: smileyKernkraftwerkPrice,
+        smileyGalaxiePrice: smileyGalaxiePrice,
+        dimensionsPortalPrice: dimensionsPortalPrice,
+        zeitmaschinePrice: zeitmaschinePrice,
+        metaKlickerPrice: metaKlickerPrice,
+        quantenNetzwerkPrice: quantenNetzwerkPrice,
+        endloserSpeicherPrice: endloserSpeicherPrice,
+        ursprungPrice: ursprungPrice,
+        kosmischeEinheitPrice: kosmischeEinheitPrice,
+        absoluterSchoepferPrice: absoluterSchoepferPrice,
+
+        // --- PRESTIGE-DATEN ---
+        prestige_punkte: prestige_punkte,
+        prestige_upgrades_gekauft: prestige_upgrades_gekauft,
+        globalerPrestigeMultiplikator: globalerPrestigeMultiplikator,
+        researchLabPrestigeMulti: researchLabPrestigeMulti,
+        klickPrestigeMultiplier: klickPrestigeMultiplier,
+        klickBoostPerPPValue: klickBoostPerPPValue,
+        buildingCostReduction: buildingCostReduction,
+        globalSpsMultiplier: globalSpsMultiplier,
+        klickBoostPerPrestigePoint: klickBoostPerPrestigePoint,
+        sammelbuchClickPowerBonus: sammelbuchClickPowerBonus,
         
-        // Angewandte Boni
+        // --- PRESTIGE MULTIPLIKATOREN (15x) ---
+        autoClickerPrestigeMulti: autoClickerPrestigeMulti,
+        smileyTreePrestigeMulti: smileyTreePrestigeMulti,
+        smileyFactoryPrestigeMulti: smileyFactoryPrestigeMulti,
+        smileyMinePrestigeMulti: smileyMinePrestigeMulti,
+        smileyBohrerPrestigeMulti: smileyBohrerPrestigeMulti,
+        smileyKernkraftwerkPrestigeMulti: smileyKernkraftwerkPrestigeMulti,
+        smileyGalaxiePrestigeMulti: smileyGalaxiePrestigeMulti,
+        dimensionsPortalPrestigeMulti: dimensionsPortalPrestigeMulti,
+        zeitmaschinePrestigeMulti: zeitmaschinePrestigeMulti,
+        metaKlickerPrestigeMulti: metaKlickerPrestigeMulti,
+        quantenNetzwerkPrestigeMulti: quantenNetzwerkPrestigeMulti,
+        endloserSpeicherPrestigeMulti: endloserSpeicherPrestigeMulti,
+        ursprungPrestigeMulti: ursprungPrestigeMulti,
+        kosmischeEinheitPrestigeMulti: kosmischeEinheitPrestigeMulti,
+        absoluterSchoepferPrestigeMulti: absoluterSchoepferPrestigeMulti,
+
+        // --- FORSCHUNGS-BONI (30x) ---
+        // Additive
         autoClickerResearchBonus: autoClickerResearchBonus,
         smileyTreeResearchBonus: smileyTreeResearchBonus,
         smileyFactoryResearchBonus: smileyFactoryResearchBonus,
+        smileyMineResearchBonus: smileyMineResearchBonus,
+        smileyBohrerResearchBonus: smileyBohrerResearchBonus,
+        smileyKernkraftwerkResearchBonus: smileyKernkraftwerkResearchBonus,
+        smileyGalaxieResearchBonus: smileyGalaxieResearchBonus,
+        dimensionsPortalResearchBonus: dimensionsPortalResearchBonus,
+        zeitmaschineResearchBonus: zeitmaschineResearchBonus,
+        metaKlickerResearchBonus: metaKlickerResearchBonus,
+        quantenNetzwerkResearchBonus: quantenNetzwerkResearchBonus,
+        endloserSpeicherResearchBonus: endloserSpeicherResearchBonus,
+        ursprungResearchBonus: ursprungResearchBonus,
+        kosmischeEinheitResearchBonus: kosmischeEinheitResearchBonus,
+        absoluterSchoepferResearchBonus: absoluterSchoepferResearchBonus,
+        // Multiplikative
         autoClickerEfficiencyBonus: autoClickerEfficiencyBonus,
         smileyTreeEfficiencyBonus: smileyTreeEfficiencyBonus,
         smileyFactoryEfficiencyBonus: smileyFactoryEfficiencyBonus,
+        smileyMineEfficiencyBonus: smileyMineEfficiencyBonus,
+        smileyBohrerEfficiencyBonus: smileyBohrerEfficiencyBonus,
+        smileyKernkraftwerkEfficiencyBonus: smileyKernkraftwerkEfficiencyBonus,
+        smileyGalaxieEfficiencyBonus: smileyGalaxieEfficiencyBonus,
+        dimensionsPortalEfficiencyBonus: dimensionsPortalEfficiencyBonus,
+        zeitmaschineEfficiencyBonus: zeitmaschineEfficiencyBonus,
+        metaKlickerEfficiencyBonus: metaKlickerEfficiencyBonus,
+        quantenNetzwerkEfficiencyBonus: quantenNetzwerkEfficiencyBonus,
+        endloserSpeicherEfficiencyBonus: endloserSpeicherEfficiencyBonus,
+        ursprungEfficiencyBonus: ursprungEfficiencyBonus,
+        kosmischeEinheitEfficiencyBonus: kosmischeEinheitEfficiencyBonus,
+        absoluterSchoepferEfficiencyBonus: absoluterSchoepferEfficiencyBonus,
 
-        // Prestige
-        smiley_points: smileyPoints, 
+        // upgradeStatus: upgradeStatus, // Wird nicht mehr direkt gespeichert
     };
-
-    //Speichern im Local Storage
-    localStorage.setItem('smileyClickerSave', JSON.stringify(spielstand));
-    console.log("Spiel gespeichert.");
+    
+    // Speichern im Local Storage
+    localStorage.setItem('smileyClickerSave', JSON.stringify(dataToSave));
 }
 
 function ladeSpiel() {
@@ -709,63 +947,130 @@ function ladeSpiel() {
         const loadedData = JSON.parse(savedData);
         
         // --- HAUPT-VARIABLEN ---
+        // Wichtig: Deine globalen Variablen müssen mit 'let' deklariert sein, um neu zugewiesen werden zu können.
+        aktuelle_smileys = loadedData.aktuelle_smileys || 0;
+        gesammelte_smileys = loadedData.gesammelte_smileys || 0;
         smileyPoints = loadedData.smileyPoints || 0;
-        klickKraft = loadedData.klickKraft || 1; 
-        
-        // --- GEBÄUDE & WÄHRUNGEN ---
+        klickKraft = loadedData.klickKraft || 1;
+        multiplikator = loadedData.multiplikator || 1;
+        klickUpgradeBonus = loadedData.klickUpgradeBonus || 0;
+        gesamteGeklickteSmileys = loadedData.gesamteGeklickteSmileys || 0;
+        gesamtPrestigePunkte = loadedData.gesamtPrestigePunkte || 0;
+
+        // --- FORSCHUNGSLABOR & STATUS ---
+        forschungslabor_count = loadedData.forschungslabor_count || 0;
+        forschungslabor_fps_multiplier = loadedData.forschungslabor_fps_multiplier || 1.0;
+        forschungslaborGekauft = loadedData.forschungslaborGekauft || false;
+        forschungPunkte = loadedData.forschungPunkte || 0;
+        researchStatus = loadedData.researchStatus || [false, false, false, false, false, false]; 
+        researchUpgradeIndex = loadedData.researchUpgradeIndex || 0;
+
+        // --- GEBÄUDE ZÄHLER (15x) ---
         auto_klicker_count = loadedData.auto_klicker_count || 0;
         smileyTreeProduction = loadedData.smileyTreeProduction || 0;
         smileyFactoryProduction = loadedData.smileyFactoryProduction || 0;
-        
+        smileyMineProduction = loadedData.smileyMineProduction || 0;
+        smileyBohrerProduction = loadedData.smileyBohrerProduction || 0;
+        smileyKernkraftwerkProduction = loadedData.smileyKernkraftwerkProduction || 0;
+        smileyGalaxieProduction = loadedData.smileyGalaxieProduction || 0;
+        dimensionsPortalProduction = loadedData.dimensionsPortalProduction || 0;
+        zeitmaschineProduction = loadedData.zeitmaschineProduction || 0;
+        metaKlickerProduction = loadedData.metaKlickerProduction || 0;
+        quantenNetzwerkProduction = loadedData.quantenNetzwerkProduction || 0;
+        endloserSpeicherProduction = loadedData.endloserSpeicherProduction || 0;
+        ursprungProduction = loadedData.ursprungProduction || 0;
+        kosmischeEinheitProduction = loadedData.kosmischeEinheitProduction || 0;
+        absoluterSchoepferProduction = loadedData.absoluterSchoepferProduction || 0;
+
+        // --- GEBÄUDE PREISE (15x) ---
         auto_klicker_price = loadedData.auto_klicker_price || 20;
         smileyTreePrice = loadedData.smileyTreePrice || 100;
         smileyFactoryPrice = loadedData.smileyFactoryPrice || 1000;
-        
-        // --- UPGRADE-STATUS ---
-        upgradeStatus = loadedData.upgradeStatus || {}; // Stellt sicher, dass das Objekt existiert
+        smileyMinePrice = loadedData.smileyMinePrice || 10000;
+        smileyBohrerPrice = loadedData.smileyBohrerPrice || 50000;
+        smileyKernkraftwerkPrice = loadedData.smileyKernkraftwerkPrice || 250000;
+        smileyGalaxiePrice = loadedData.smileyGalaxiePrice || 1250000;
+        dimensionsPortalPrice = loadedData.dimensionsPortalPrice || 6250000;
+        zeitmaschinePrice = loadedData.zeitmaschinePrice || 31250000;
+        metaKlickerPrice = loadedData.metaKlickerPrice || 156250000;
+        quantenNetzwerkPrice = loadedData.quantenNetzwerkPrice || 781250000;
+        endloserSpeicherPrice = loadedData.endloserSpeicherPrice || 3906250000;
+        ursprungPrice = loadedData.ursprungPrice || 19531250000;
+        kosmischeEinheitPrice = loadedData.kosmischeEinheitPrice || 97656250000;
+        absoluterSchoepferPrice = loadedData.absoluterSchoepferPrice || 488281250000;
 
         // --- PRESTIGE-DATEN ---
         prestige_punkte = loadedData.prestige_punkte || 0;
         prestige_upgrades_gekauft = loadedData.prestige_upgrades_gekauft || {};
-        globalerPrestigeMultiplikator = loadedData.globalerPrestigeMultiplikator || 1;
-        klickPrestigeMultiplier = loadedData.klickPrestigeMultiplier || 1;
+        globalerPrestigeMultiplikator = loadedData.globalerPrestigeMultiplikator || 1.0;
+        researchLabPrestigeMulti = loadedData.researchLabPrestigeMulti || 1.0;
+        klickPrestigeMultiplier = loadedData.klickPrestigeMultiplier || 1.0;
         klickBoostPerPPValue = loadedData.klickBoostPerPPValue || 0;
-        autoClickerPrestigeMulti = loadedData.autoClickerPrestigeMulti || 1;
-        smileyTreePrestigeMulti = loadedData.smileyTreePrestigeMulti || 1;
-        smileyFactoryPrestigeMulti = loadedData.smileyFactoryPrestigeMulti || 1;
-        researchLabPrestigeMulti = loadedData.researchLabPrestigeMulti || 1;
         buildingCostReduction = loadedData.buildingCostReduction || 0;
-        globalSpsMultiplier = loadedData.globalSpsMultiplier || 1;
-
-
-        // --- NEUE FORSCHUNGS-DATEN (WICHTIG!) ---
+        globalSpsMultiplier = loadedData.globalSpsMultiplier || 1.0;
+        klickBoostPerPrestigePoint = loadedData.klickBoostPerPrestigePoint || 0;
+        sammelbuchClickPowerBonus = loadedData.sammelbuchClickPowerBonus || 0;
         
-        // Währung & Status
-        researchStatus = loadedData.researchStatus || [false, false, false, false, false, false]; 
-        forschungPunkte = loadedData.forschungPunkte || 0;
+        // --- PRESTIGE MULTIPLIKATOREN (15x) ---
+        autoClickerPrestigeMulti = loadedData.autoClickerPrestigeMulti || 1.0;
+        smileyTreePrestigeMulti = loadedData.smileyTreePrestigeMulti || 1.0;
+        smileyFactoryPrestigeMulti = loadedData.smileyFactoryPrestigeMulti || 1.0;
+        smileyMinePrestigeMulti = loadedData.smileyMinePrestigeMulti || 1.0;
+        smileyBohrerPrestigeMulti = loadedData.smileyBohrerPrestigeMulti || 1.0;
+        smileyKernkraftwerkPrestigeMulti = loadedData.smileyKernkraftwerkPrestigeMulti || 1.0;
+        smileyGalaxiePrestigeMulti = loadedData.smileyGalaxiePrestigeMulti || 1.0;
+        dimensionsPortalPrestigeMulti = loadedData.dimensionsPortalPrestigeMulti || 1.0;
+        zeitmaschinePrestigeMulti = loadedData.zeitmaschinePrestigeMulti || 1.0;
+        metaKlickerPrestigeMulti = loadedData.metaKlickerPrestigeMulti || 1.0;
+        quantenNetzwerkPrestigeMulti = loadedData.quantenNetzwerkPrestigeMulti || 1.0;
+        endloserSpeicherPrestigeMulti = loadedData.endloserSpeicherPrestigeMulti || 1.0;
+        ursprungPrestigeMulti = loadedData.ursprungPrestigeMulti || 1.0;
+        kosmischeEinheitPrestigeMulti = loadedData.kosmischeEinheitPrestigeMulti || 1.0;
+        absoluterSchoepferPrestigeMulti = loadedData.absoluterSchoepferPrestigeMulti || 1.0;
 
-        // Angewandte Boni (Additive)
+        // --- FORSCHUNGS-BONI (30x) ---
+        // Additive
         autoClickerResearchBonus = loadedData.autoClickerResearchBonus || 0;
         smileyTreeResearchBonus = loadedData.smileyTreeResearchBonus || 0;
         smileyFactoryResearchBonus = loadedData.smileyFactoryResearchBonus || 0;
-
-        // Angewandte Boni (Multiplikative/Effizienz)
+        smileyMineResearchBonus = loadedData.smileyMineResearchBonus || 0;
+        smileyBohrerResearchBonus = loadedData.smileyBohrerResearchBonus || 0;
+        smileyKernkraftwerkResearchBonus = loadedData.smileyKernkraftwerkResearchBonus || 0;
+        smileyGalaxieResearchBonus = loadedData.smileyGalaxieResearchBonus || 0;
+        dimensionsPortalResearchBonus = loadedData.dimensionsPortalResearchBonus || 0;
+        zeitmaschineResearchBonus = loadedData.zeitmaschineResearchBonus || 0;
+        metaKlickerResearchBonus = loadedData.metaKlickerResearchBonus || 0;
+        quantenNetzwerkResearchBonus = loadedData.quantenNetzwerkResearchBonus || 0;
+        endloserSpeicherResearchBonus = loadedData.endloserSpeicherResearchBonus || 0;
+        ursprungResearchBonus = loadedData.ursprungResearchBonus || 0;
+        kosmischeEinheitResearchBonus = loadedData.kosmischeEinheitResearchBonus || 0;
+        absoluterSchoepferResearchBonus = loadedData.absoluterSchoepferResearchBonus || 0;
+        // Multiplikative
         autoClickerEfficiencyBonus = loadedData.autoClickerEfficiencyBonus || 0;
         smileyTreeEfficiencyBonus = loadedData.smileyTreeEfficiencyBonus || 0;
         smileyFactoryEfficiencyBonus = loadedData.smileyFactoryEfficiencyBonus || 0;
+        smileyMineEfficiencyBonus = loadedData.smileyMineEfficiencyBonus || 0;
+        smileyBohrerEfficiencyBonus = loadedData.smileyBohrerEfficiencyBonus || 0;
+        smileyKernkraftwerkEfficiencyBonus = loadedData.smileyKernkraftwerkEfficiencyBonus || 0;
+        smileyGalaxieEfficiencyBonus = loadedData.smileyGalaxieEfficiencyBonus || 0;
+        dimensionsPortalEfficiencyBonus = loadedData.dimensionsPortalEfficiencyBonus || 0;
+        zeitmaschineEfficiencyBonus = loadedData.zeitmaschineEfficiencyBonus || 0;
+        metaKlickerEfficiencyBonus = loadedData.metaKlickerEfficiencyBonus || 0;
+        quantenNetzwerkEfficiencyBonus = loadedData.quantenNetzwerkEfficiencyBonus || 0;
+        endloserSpeicherEfficiencyBonus = loadedData.endloserSpeicherEfficiencyBonus || 0;
+        ursprungEfficiencyBonus = loadedData.ursprungEfficiencyBonus || 0;
+        kosmischeEinheitEfficiencyBonus = loadedData.kosmischeEinheitEfficiencyBonus || 0;
+        absoluterSchoepferEfficiencyBonus = loadedData.absoluterSchoepferEfficiencyBonus || 0;
         
-
-        // --- ZUWEISUNG UND INITIALISIERUNG ---
-        // Stellt sicher, dass alle geladenen Boni sofort auf die UI wirken.
+        // --- UI & LOGIK AKTUALISIEREN ---
         updateUI();
-        renderResearchUpgrades(); // Zeigt die gekauften Upgrades sofort als "Gekauft" an
-        updateGame(); // Aktualisiert die CPS-Berechnung und Buttons
+        renderResearchUpgrades();
+        updateGame();
 
         console.log('Spielstand erfolgreich geladen.');
 
     } catch (e) {
         console.error('Fehler beim Laden des Spielstands:', e);
-        // Fallback: Lösche den korrupten Spielstand, um einen Neustart zu ermöglichen
         localStorage.removeItem('smileyClickerSave');
     }
 }
@@ -1146,107 +1451,89 @@ function updateButtons() {
 }
     
 function updateUpgradesDisplay() {
-    // 1. Gebäude-Karten (building-grid) aktualisieren
+    const grid = document.getElementById('building_grid');
+    if (!grid) return; // Stoppt, falls das Element nicht existiert
+    grid.innerHTML = ''; // Leert das Grid
+
+    // --- HILFS-ARRAYS ZUM ABGLEICH MIT buildingsData ---
+    const counts = [
+        auto_klicker_count, smileyTreeProduction, smileyFactoryProduction, smileyMineProduction, smileyBohrerProduction,
+        smileyKernkraftwerkProduction, smileyGalaxieProduction, dimensionsPortalProduction, zeitmaschineProduction, 
+        metaKlickerProduction, quantenNetzwerkProduction, endloserSpeicherProduction, ursprungProduction, 
+        kosmischeEinheitProduction, absoluterSchoepferProduction
+    ];
+    const prices = [
+        auto_klicker_price, smileyTreePrice, smileyFactoryPrice, smileyMinePrice, smileyBohrerPrice,
+        smileyKernkraftwerkPrice, smileyGalaxiePrice, dimensionsPortalPrice, zeitmaschinePrice, 
+        metaKlickerPrice, quantenNetzwerkPrice, endloserSpeicherPrice, ursprungPrice, 
+        kosmischeEinheitPrice, absoluterSchoepferPrice
+    ];
+    const prestigeMultis = [
+        autoClickerPrestigeMulti, smileyTreePrestigeMulti, smileyFactoryPrestigeMulti, smileyMinePrestigeMulti, smileyBohrerPrestigeMulti,
+        smileyKernkraftwerkPrestigeMulti, smileyGalaxiePrestigeMulti, dimensionsPortalPrestigeMulti, zeitmaschinePrestigeMulti, 
+        metaKlickerPrestigeMulti, quantenNetzwerkPrestigeMulti, endloserSpeicherPrestigeMulti, ursprungPrestigeMulti, 
+        kosmischeEinheitPrestigeMulti, absoluterSchoepferPrestigeMulti
+    ];
+    const researchBonuses = [
+        autoClickerResearchBonus, smileyTreeResearchBonus, smileyFactoryResearchBonus, smileyMineResearchBonus, smileyBohrerResearchBonus,
+        smileyKernkraftwerkResearchBonus, smileyGalaxieResearchBonus, dimensionsPortalResearchBonus, zeitmaschineResearchBonus, 
+        metaKlickerResearchBonus, quantenNetzwerkResearchBonus, endloserSpeicherResearchBonus, ursprungResearchBonus, 
+        kosmischeEinheitResearchBonus, absoluterSchoepferResearchBonus
+    ];
+    const efficiencyBonuses = [
+        autoClickerEfficiencyBonus, smileyTreeEfficiencyBonus, smileyFactoryEfficiencyBonus, smileyMineEfficiencyBonus, smileyBohrerEfficiencyBonus,
+        smileyKernkraftwerkEfficiencyBonus, smileyGalaxieEfficiencyBonus, dimensionsPortalEfficiencyBonus, zeitmaschineEfficiencyBonus, 
+        metaKlickerEfficiencyBonus, quantenNetzwerkEfficiencyBonus, endloserSpeicherEfficiencyBonus, ursprungEfficiencyBonus, 
+        kosmischeEinheitEfficiencyBonus, absoluterSchoepferEfficiencyBonus
+    ];
+    
+    // Iteriere über alle 15 Gebäude in buildingsData
     buildingsData.forEach((item, index) => {
-        const upgradeElement = document.querySelector(`.building-grid .upgrade-item[data-index="${index}"]`);
-        if (!upgradeElement) return; // Karte existiert nicht
+        
+        // --- WERTE FÜR DIESES GEBÄUDE ABGREIFEN ---
+        const ownedCount = counts[index];
+        const currentPrice = prices[index];
+        const baseSPS = item.baseSPS; // Neu: baseSPS direkt aus dem Array
+        const prestigeMulti = prestigeMultis[index];
+        const researchBonus = researchBonuses[index]; // Additiver Bonus
+        const currentEfficiencyBonus = efficiencyBonuses[index]; // Multiplikativer Bonus
+        const costReductionFactor = 1 - buildingCostReduction;
 
-        let ownedCount = 0;
-        let baseSPS = 0; // Basiswert für die SPS-Berechnung
-        let prestigeMulti = 1; // Individueller Prestige-Multi
-        let researchBonus = 0; // Individueller ADDITIVER Forschungsbonus
-        let currentEfficiencyBonus = 0; // Individueller MULTIPLIKATIVER Effizienzbonus (NEU)
-        let costReductionFactor = 1 - buildingCostReduction; 
-
-        // Anzahl, Boni und Basis-SPS abrufen
-        switch(item.elementId) {
-            case "auto_clicker_button_1x":
-                ownedCount = auto_klicker_count; 
-                baseSPS = 1; 
-                prestigeMulti = autoClickerPrestigeMulti;
-                researchBonus = autoClickerResearchBonus;
-                currentEfficiencyBonus = autoClickerEfficiencyBonus; // NEU
-                break;
-            case "smileyTreeButton1x":
-                ownedCount = smileyTreeProduction;
-                baseSPS = 20; 
-                prestigeMulti = smileyTreePrestigeMulti;
-                researchBonus = smileyTreeResearchBonus;
-                currentEfficiencyBonus = smileyTreeEfficiencyBonus; // NEU
-                break;
-            case "smileyFactoryButton1x":
-                ownedCount = smileyFactoryProduction;
-                baseSPS = 150; 
-                prestigeMulti = smileyFactoryPrestigeMulti;
-                researchBonus = smileyFactoryResearchBonus;
-                currentEfficiencyBonus = smileyFactoryEfficiencyBonus; // NEU
-                break;
-        }
-
-        // Berechnung der SPS pro Einheit (inkl. individueller Multiplikatoren)
+        // --- BERECHNUNG DER SPS ---
+        // Einheitenspezifische SPS: Basis-SPS * (1 + Add. Forschung) * Prestige-Multi * (1 + Effizienz)
         const unitSPS = baseSPS * (1 + researchBonus) * prestigeMulti * (1 + currentEfficiencyBonus);
         
-        // Gesamt-SPS, die dieser Gebäudetyp generiert (ownedCount * unitSPS)
+        // Gesamt-SPS dieses Gebäudes (inkl. Boni, aber noch ohne GLOBALE Boni)
         const totalBuildingSPS_individual = unitSPS * ownedCount; 
 
-        // NEU: Globale Multiplikatoren anwenden, damit die Summe mit dem Header übereinstimmt!
+        // Gesamt-SPS FINAL (inkl. ALLER Globalen Boni)
         const totalBuildingSPS_final = 
             totalBuildingSPS_individual * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
 
-        // 1. UI-Element der Anzahl aktualisieren
-        const countP = upgradeElement.querySelector('.building-count');
-        if (countP) {
-            countP.innerText = `Anzahl: ${formatLargeNumber(ownedCount)}`;
-        }
-        
-        // 2. UI-Element der Produktion aktualisieren (zeigt jetzt den synchronisierten Wert!)
-        const productionP = upgradeElement.querySelector('.building-production');
-        if (productionP) {
-            // Zeigt die ENDGÜLTIGE, globale SPS-Rate
-            productionP.innerText = `Produziert: ${formatLargeNumber(totalBuildingSPS_final)} SPS`;
-        }
-        // Ende der SPS-Anzeige Implementierung
 
-        // 3. Preise in den Buttons aktualisieren (Kosten für 1x, 10x, 100x)
-        const buttons = upgradeElement.querySelectorAll('.btn-buy');
-        buttons.forEach(button => {
-            const amount = parseInt(button.dataset.buyAmount);
-            let nextCost = 0;
-            let currentBuyCount = ownedCount;
-            
-            // Gesamtkosten für die Menge berechnen
-            for(let i = 0; i < amount; i++) {
-                let costFunction;
-                // Bestimme die korrekte Kosten-Funktion basierend auf der Building-ID
-                switch(item.elementId) {
-                    case "auto_clicker_button_1x": costFunction = (count) => autoClickerBaseCost * Math.pow(autoClickerGrowthRate, count) * costReductionFactor; break;
-                    case "smileyTreeButton1x": costFunction = (count) => smileyTreeBaseCost * Math.pow(smileyTreeGrowthRate, count) * costReductionFactor; break;
-                    case "smileyFactoryButton1x": costFunction = (count) => smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, count) * costReductionFactor; break;
-                }
-                nextCost += costFunction(currentBuyCount + i);
-            }
-
-            // Text des Buttons aktualisieren
-            button.innerText = `${amount}x (${formatLargeNumber(nextCost)})`;
-        });
-    });
-
-    // 2. Klicker-Upgrades (upgrade-grid) aktualisieren
-    clickerUpgrades.forEach((item, index) => {
-        const upgradeElement = document.querySelector(`.upgrade-grid .upgrade-item[data-index="${index}"]`);
-        if (!upgradeElement) return;
-
-        const button = upgradeElement.querySelector('.btn-buy');
-        if (button) {
-            const buttonText = item.bought ? 'Gekauft' : `Kaufen (${formatLargeNumber(item.price)})`;
-            button.innerText = buttonText;
-            button.disabled = item.bought;
-        }
+        // --- RENDERING DES ELEMENTS ---
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.className = `upgrade-item building-item`;
+        upgradeDiv.setAttribute('data-index', index);
         
-        const boughtP = upgradeElement.querySelector('.upgrade-count');
-        if (boughtP) {
-            boughtP.innerText = `Gekauft: ${item.bought}`;
-        }
+        const canAfford = smileyPoints >= currentPrice * costReductionFactor;
+        
+        upgradeDiv.innerHTML = `
+            <div class="upgrade-content">
+                <h3>${item.name}</h3>
+                <p>Besitz: ${formatNumber(ownedCount)}</p>
+                <p>Basis-SPS: ${formatNumber(item.baseSPS)}</p>
+                <p>Aktuelle SPS/Einheit: ${formatNumber(unitSPS)}</p>
+                <p>Gesamtproduktion: ${formatNumber(totalBuildingSPS_final)} SPS</p>
+            </div>
+            <div class="purchase-buttons">
+                <button class="btn-buy ${canAfford ? '' : 'disabled'}" onclick="kaufeUpgrade(${index}, 1)">Kauf (1x): ${formatNumber(currentPrice * costReductionFactor)}</button>
+                <button class="btn-buy ${smileyPoints >= calculateMultiBuyCost(index, 10) ? '' : 'disabled'}" onclick="kaufeUpgrade(${index}, 10)">Kauf (10x): ${formatNumber(calculateMultiBuyCost(index, 10) * costReductionFactor)}</button>
+                <button class="btn-buy ${smileyPoints >= calculateMultiBuyCost(index, 100) ? '' : 'disabled'}" onclick="kaufeUpgrade(${index}, 100)">Kauf (100x): ${formatNumber(calculateMultiBuyCost(index, 100) * costReductionFactor)}</button>
+            </div>
+        `;
+        
+        grid.appendChild(upgradeDiv);
     });
 }
 
