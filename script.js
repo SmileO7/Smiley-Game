@@ -646,10 +646,10 @@ function kaufeForschungsUpgrade(upgradeIndex) {
         return;
     }
     
-    // 2. Prüfen, ob der Spieler genug Forschungspunkte hat (KORREKTUR: forschungPunkte statt gameData.researchPoints)
+    // 2. Prüfen, ob der Spieler genug Forschungspunkte hat
     if (forschungPunkte >= upgrade.cost) { 
         // Punkte abziehen
-        forschungPunkte -= upgrade.cost; // KORREKTUR: forschungPunkte statt gameData.researchPoints
+        forschungPunkte -= upgrade.cost;
         
         // Upgrade als gekauft markieren
         researchStatus[upgradeIndex] = true;
@@ -658,30 +658,52 @@ function kaufeForschungsUpgrade(upgradeIndex) {
         
         // A. Additive Produktions-Boni (unit_production)
         if (upgrade.type === 'unit_production') {
-            if (upgrade.unit === 'autoClicker') {
-                 autoClickerResearchBonus += upgrade.value;
-            } else if (upgrade.unit === 'smileyTree') {
-                 smileyTreeResearchBonus += upgrade.value;
-            } else if (upgrade.unit === 'smileyFactory') {
-                 smileyFactoryResearchBonus += upgrade.value;
+            switch(upgrade.unit) {
+                case 'autoClicker': autoClickerResearchBonus += upgrade.value; break;
+                case 'smileyTree': smileyTreeResearchBonus += upgrade.value; break;
+                case 'smileyFactory': smileyFactoryResearchBonus += upgrade.value; break;
+                
+                // NEUE GEBÄUDE (Additive Boni)
+                case 'smileyMine': smileyMineResearchBonus += upgrade.value; break;
+                case 'smileyBohrer': smileyBohrerResearchBonus += upgrade.value; break;
+                case 'smileyKernkraftwerk': smileyKernkraftwerkResearchBonus += upgrade.value; break;
+                case 'smileyGalaxie': smileyGalaxieResearchBonus += upgrade.value; break;
+                case 'dimensionsPortal': dimensionsPortalResearchBonus += upgrade.value; break;
+                case 'zeitmaschine': zeitmaschineResearchBonus += upgrade.value; break;
+                case 'metaKlicker': metaKlickerResearchBonus += upgrade.value; break;
+                case 'quantenNetzwerk': quantenNetzwerkResearchBonus += upgrade.value; break;
+                case 'endloserSpeicher': endloserSpeicherResearchBonus += upgrade.value; break;
+                case 'ursprung': ursprungResearchBonus += upgrade.value; break;
+                case 'kosmischeEinheit': kosmischeEinheitResearchBonus += upgrade.value; break;
+                case 'absoluterSchoepfer': absoluterSchoepferResearchBonus += upgrade.value; break;
             }
         
         // B. Multiplikative Effizienz-Boni (unit_efficiency)
         } else if (upgrade.type === 'unit_efficiency') {
-             // Wende den Bonus auf die entsprechende Einheit an
-            if (upgrade.unit === 'autoClicker') {
-                autoClickerEfficiencyBonus += upgrade.value;
-            } else if (upgrade.unit === 'smileyTree') {
-                smileyTreeEfficiencyBonus += upgrade.value;
-            } else if (upgrade.unit === 'smileyFactory') {
-                smileyFactoryEfficiencyBonus += upgrade.value;
-            }
+             switch(upgrade.unit) {
+                case 'autoClicker': autoClickerEfficiencyBonus += upgrade.value; break;
+                case 'smileyTree': smileyTreeEfficiencyBonus += upgrade.value; break;
+                case 'smileyFactory': smileyFactoryEfficiencyBonus += upgrade.value; break;
+                
+                // NEUE GEBÄUDE (Multiplikative Boni)
+                case 'smileyMine': smileyMineEfficiencyBonus += upgrade.value; break;
+                case 'smileyBohrer': smileyBohrerEfficiencyBonus += upgrade.value; break;
+                case 'smileyKernkraftwerk': smileyKernkraftwerkEfficiencyBonus += upgrade.value; break;
+                case 'smileyGalaxie': smileyGalaxieEfficiencyBonus += upgrade.value; break;
+                case 'dimensionsPortal': dimensionsPortalEfficiencyBonus += upgrade.value; break;
+                case 'zeitmaschine': zeitmaschineEfficiencyBonus += upgrade.value; break;
+                case 'metaKlicker': metaKlickerEfficiencyBonus += upgrade.value; break;
+                case 'quantenNetzwerk': quantenNetzwerkEfficiencyBonus += upgrade.value; break;
+                case 'endloserSpeicher': endloserSpeicherEfficiencyBonus += upgrade.value; break;
+                case 'ursprung': ursprungEfficiencyBonus += upgrade.value; break;
+                case 'kosmischeEinheit': kosmischeEinheitEfficiencyBonus += upgrade.value; break;
+                case 'absoluterSchoepfer': absoluterSchoepferEfficiencyBonus += upgrade.value; break;
+             }
         }
         
         // WICHTIG: UI und Stats aktualisieren
         updateUI();
         renderResearchUpgrades();
-        // updateGame() sorgt für sofortige Aktualisierung der SPS-Anzeige
         updateGame(); 
         
         console.log(`Forschungs-Upgrade ${upgradeIndex} erfolgreich gekauft!`);
