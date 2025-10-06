@@ -195,6 +195,7 @@ function updateGame() {
     updateButtons();
     updateUpgradesDisplay();
     updatePrestigeButtons();
+    updateResearchButtons();
 }
 
 //================================================================================================================
@@ -718,6 +719,45 @@ function applyAllPrestigeBonuses() {
 //================================================================================================================
 // --- 6. UI-AKTUALISIERUNGSFUNKTIONEN ---
 //================================================================================================================
+
+function updateResearchButtons() {
+    // Ruft das aktuell verfügbare Upgrade ab
+    const upgrade = researchUpgrades[researchUpgradeIndex];
+    
+    // Annahme: Du hast ein zentrales UI-Element für das Upgrade (z.B. eine Box oder einen Button)
+    const upgradeButton = document.getElementById('forschungsUpgradeButton'); 
+    const upgradeName = document.getElementById('forschungsUpgradeName');
+    const upgradeDescription = document.getElementById('forschungsUpgradeDescription');
+    const researchPanel = document.getElementById('research-upgrade-panel'); // Container
+
+    // 1. Prüfe, ob alle Upgrades gekauft sind
+    if (!upgrade) {
+        if (researchPanel) researchPanel.style.display = 'none';
+        if (upgradeName) upgradeName.innerText = 'Alle Forschung abgeschlossen';
+        return;
+    }
+
+    // 2. Element-Texte aktualisieren
+    if (upgradeName) upgradeName.innerText = upgrade.name;
+    if (upgradeDescription) upgradeDescription.innerText = upgrade.description;
+    
+    // 3. Button-Status (Kosten & Verfügbarkeit) aktualisieren
+    const cost = upgrade.cost;
+    const canAfford = forschungPunkte >= cost;
+
+    if (upgradeButton) {
+        upgradeButton.innerText = `Kaufen (${formatLargeNumber(cost)} FP)`; // FP = Forschungspunkte
+        upgradeButton.disabled = !canAfford;
+        
+        // Füge den Event Listener hinzu (oder überprüfe, ob er bereits existiert)
+        // Wir setzen hier nur den Zustand, der Event Listener muss einmalig im HTML oder in einer init-Funktion gesetzt werden.
+        if (canAfford) {
+            upgradeButton.classList.add('available');
+        } else {
+            upgradeButton.classList.remove('available');
+        }
+    }
+}
 
 function createUpgradeElements(items, containerClass) {
     const container = document.querySelector(`.${containerClass}`);
