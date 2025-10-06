@@ -59,13 +59,15 @@ body.upgrades-page {
     background-image: linear-gradient(135deg, var(--color-neutral-accent), #516a53);
 }
 
+/* KORRIGIERT: Dunkler, ruhiger Hintergrund für Prestige-Seite */
 body.prestige-page {
-    background-color: var(--color-red-main);
-    background-image: radial-gradient(to top, var(--color-red-main), #940a08);
+    background-color: var(--color-background-dark); 
+    background-image: radial-gradient(circle at top, #1a3863 0%, var(--color-background-dark) 80%);
 }
 
+/* KORRIGIERT: Info-Seite nutzt ebenfalls den dunklen Hintergrund */
 body.info-page {
-    background-color: #001f3f;
+    background-color: var(--color-background-dark); 
 }
 
 /*================================================================================================
@@ -120,7 +122,7 @@ body.info-page {
     align-items: flex-start; 
 }
 
-/* KORRIGIERT: main-Regel vereinfacht */
+/* main-Regel vereinfacht */
 main {
     padding-top: 70px;
     width: 100%;
@@ -153,12 +155,12 @@ main {
     flex-direction: column;
 }
 
-/* Smiley Button (Korrektur: Hintergrund entfernt, da das Bild darüber liegt) */
+/* Smiley Button */
 .smiley-button, #smiley_button { 
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    background-color: transparent; /* Korrigiert: Hintergrund entfernt */
+    background-color: transparent; 
     color: white;
     font-size: 1.5em;
     font-weight: bold;
@@ -189,7 +191,7 @@ main {
     transform: scale(0.95);
 }
 
-/* Klick Animation (wird über JS-Klasse .pop ausgelöst) */
+/* Klick Animation */
 #smiley_image {
     transition: transform 0.15s ease-out; 
 }
@@ -247,6 +249,29 @@ main {
     padding: 20px;
 }
 
+
+/* --- UI-FIX FÜR UPGRADE- UND GEBÄUDE-BOXEN --- */
+
+/* Der neue Container aus script.js, der den gesamten Platz einnehmen soll */
+.upgrade-content {
+    flex-grow: 1; /* Nimmt den gesamten vertikalen Platz über den Buttons ein */
+    text-align: left;
+}
+
+/* Korrektur für die Title/Content Ausrichtung im neuen upgrade-content */
+.upgrade-content h3 {
+    text-align: center;
+    color: var(--color-red-main); /* Deine Lieblingsfarbe Rot */
+    margin-bottom: 8px;
+    margin-top: 0; /* Stellt sicher, dass der Titel ganz oben beginnt */
+}
+
+.upgrade-content p {
+    margin: 5px 0;
+    font-size: 0.9em;
+}
+
+
 /*================================================================================================
 // --- 5. BUTTONS & INTERAKTION ---
 //================================================================================================*/
@@ -262,14 +287,15 @@ main {
     margin: 5px;
 }
 
-/* Kauf-Buttons */
+/* KORRIGIERT: Kauf-Buttons (Blau als Standard-Kauffarbe und Aktionsfarbe) */
 .btn-buy, .upgrade-button, .purchase-buttons button {
-    background-color: var(--color-red-main); /* Rot als Standard-Kauffarbe */
-    color: white;
+    background-color: var(--color-blue-main); /* Helles Blau als Standard-Kauffarbe */
+    color: var(--color-background-dark); /* Dunkler Text auf hellem Blau */
+    font-weight: bold;
 }
 
 .btn-buy:hover, .upgrade-button:hover, .purchase-buttons button:hover {
-    background-color: #550403;
+    background-color: #0077c2; /* Dunkleres Blau beim Hover */
 }
 
 /* Bestätigung */
@@ -300,6 +326,26 @@ main {
     margin: 0 5px;
     width: 125px;
 }
+
+/* WICHTIG: Alle Kauf-Buttons an den unteren Rand der Box drücken (Vom UI-FIX verschoben) */
+.upgrade-item .btn-buy,
+.upgrade-item .purchase-buttons {
+    margin-top: auto; /* Schiebt das Element an das Ende des Flex-Containers */
+    width: 100%; 
+    box-sizing: border-box;
+}
+
+/* Anpassung der allgemeinen Button-Regel (Vom UI-FIX verschoben) */
+.purchase-buttons button {
+    margin: 0 3px; 
+    flex-grow: 1;
+    width: auto; 
+    padding: 8px 5px;
+    font-size: 0.8em;
+}
+
+
+/* Zustände der Buttons */
 
 /* Deaktiviert/Gesperrt */
 .upgrade-button.disabled,
@@ -341,6 +387,7 @@ main {
     transition: all 0.2s ease-in-out;
 }
 
+
 /*================================================================================================
 // --- 6. FORSCHUNG & PRESTIGE BEREICH ---
 //================================================================================================*/
@@ -370,6 +417,8 @@ main {
     height: 100%;
     background-color: var(--color-blue-main);
     transition: width 0.3s ease;
+    /* NEU: Leichter 3D-Effekt im Balken (vom NEUE AKZENTE Block verschoben) */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 #fortschritt-text {
@@ -396,13 +445,58 @@ main {
     max-width: 800px;
 }
 
+/* --- Prestige Shop Upgrade-Karten (Konsolidiert) --- */
 .prestige-upgrade {
-    background-color: rgba(255, 255, 255, 0.1);
+    /* Nutzt das Dunkelblau/Schwarz für den Kontrast */
+    background-color: var(--color-background-dark); 
+    border: 2px solid var(--color-neutral-accent); /* Neutraler Rahmen im Ruhezustand */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease-in-out;
+    opacity: 0.95;
     border-radius: 10px;
     padding: 15px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Hover-Effekt: Blauer Fokus */
+.prestige-upgrade:hover {
+    border-color: var(--color-blue-main); /* Helles Blau als Fokus-Farbe */
+    box-shadow: 0 0 15px var(--color-blue-main);
+}
+
+/* Zustand: NICHT VERFÜGBAR (Gesperrt/Zu teuer) */
+.prestige-upgrade.locked, .prestige-upgrade:not(.available):not(.bought) {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: var(--color-red-main); /* Rote Umrandung für gesperrt/zu teuer */
+    box-shadow: none;
+}
+
+/* Zustand: KAUFBAR (available) */
+.prestige-upgrade.available {
+    box-shadow: 0 0 10px var(--color-blue-main); 
+}
+
+/* Zustand: GEKAUFT */
+.prestige-upgrade.bought {
+    /* Hintergrund wird Tiefrot, um den Kauf-Abschluss zu signalisieren */
+    background-color: var(--color-red-main); 
+    border-color: var(--color-red-main);
+    opacity: 1;
+    color: var(--color-text-light); 
+    cursor: default;
+    box-shadow: 0 0 8px rgba(107, 5, 4, 0.9);
+}
+
+/* Titel und Kosten in Prestige-Karten hervorheben */
+.prestige-upgrade h3 {
+    color: var(--color-blue-main); /* Prestige-Titel in hellem Blau */
+    text-shadow: none;
+}
+.prestige-cost span {
+    color: var(--color-blue-main); /* Prestige-Punkte (PP) in hellem Blau */
+    font-weight: bold;
 }
 
 
@@ -440,14 +534,16 @@ main {
     margin-top: 20px;
 }
 
+/* Verbesserte Info-Boxen für die Info-Seite (Konsolidiert) */
 .info-box {
-    background: rgba(62, 86, 65, 0.7);
-    border: 1px solid #48624a;
-    padding: 15px;
+    background: rgba(1, 22, 56, 0.7); /* Dein color-background-dark */
+    border: 1px solid var(--color-blue-main);
+    box-shadow: 0 0 10px rgba(0, 159, 253, 0.2);
+    padding: 20px;
     margin: 15px auto;
     border-radius: 8px;
     text-align: left;
-    max-width: 400px;
+    max-width: 500px; 
 }
 
 
@@ -490,41 +586,4 @@ main {
     .klicker-container {
         margin: 0 auto;
     }
-}
-/* --- UI-FIX FÜR UPGRADE- UND GEBÄUDE-BOXEN --- */
-
-/* Der neue Container aus script.js, der den gesamten Platz einnehmen soll */
-.upgrade-content {
-    flex-grow: 1; /* Nimmt den gesamten vertikalen Platz über den Buttons ein */
-    text-align: left;
-}
-
-/* WICHTIG: Alle Kauf-Buttons an den unteren Rand der Box drücken */
-.upgrade-item .btn-buy,
-.upgrade-item .purchase-buttons {
-    margin-top: auto; /* Schiebt das Element an das Ende des Flex-Containers */
-    width: 100%; /* Sorgt dafür, dass der einzelne Upgrade-Button volle Breite hat */
-    box-sizing: border-box;
-}
-
-/* Korrektur für die Title/Content Ausrichtung im neuen upgrade-content */
-.upgrade-content h3 {
-    text-align: center;
-    color: var(--color-red-main); /* Deine Lieblingsfarbe Rot */
-    margin-bottom: 8px;
-    margin-top: 0; /* Stellt sicher, dass der Titel ganz oben beginnt */
-}
-
-.upgrade-content p {
-    margin: 5px 0;
-    font-size: 0.9em;
-}
-
-/* Anpassung der allgemeinen Button-Regel (Zeile 227), um die Buttons kleiner zu machen */
-.purchase-buttons button {
-    margin: 0 3px; /* Etwas weniger Margin */
-    flex-grow: 1;
-    width: auto; /* Die Flexbox soll die Breite bestimmen */
-    padding: 8px 5px;
-    font-size: 0.8em;
 }

@@ -19,12 +19,12 @@ const clickerUpgrades = [
     { name: "Dreifachklick-Upgrade", price: 1000, effect: 0.3, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 30% des Basiswerts.' }
 ];
 const researchUpgrades = [
-    { cost: 10, description: 'Erhöht die Produktion der Auto-Klicker um 10%', type: 'autoClicker', bonusVariable: 'autoClickerResearchBonus', value: 0.1 },
-    { cost: 25, description: 'Erhöht die Produktion der Smiley-Bäume um 10%', type: 'smileyTree', bonusVariable: 'smileyTreeResearchBonus', value: 0.1 },
-    { cost: 50, description: 'Erhöht die Produktion der Smiley-Fabriken um 10%', type: 'smileyFactory', bonusVariable: 'smileyFactoryResearchBonus', value: 0.1 },
-    { cost: 100, description: 'Deine Auto-Klicker sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 },
-    { cost: 200, description: 'Deine Smiley-Bäume sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 },
-    { cost: 500, description: 'Deine Smiley-Fabriken sind 20% effizienter.', type: 'efficiency', bonusVariable: 'efficiencyBonus', value: 0.2 }
+    { id: 0, cost: 10, description: 'Erhöht die Produktion der Auto-Klicker um 10%', type: 'unit_production', unit: 'autoClicker', bonusVariable: 'autoClickerResearchBonus', value: 0.1 },
+    { id: 1, cost: 25, description: 'Erhöht die Produktion der Smiley-Bäume um 10%', type: 'unit_production', unit: 'smileyTree', bonusVariable: 'smileyTreeResearchBonus', value: 0.1 },
+    { id: 2, cost: 50, description: 'Erhöht die Produktion der Smiley-Fabriken um 10%', type: 'unit_production', unit: 'smileyFactory', bonusVariable: 'smileyFactoryResearchBonus', value: 0.1 },
+    { id: 3, cost: 100, description: 'Deine Auto-Klicker sind 20% effizienter.', type: 'unit_efficiency', unit: 'autoClicker', bonusVariable: 'efficiencyBonus', value: 0.2 },
+    { id: 4, cost: 200, description: 'Deine Smiley-Bäume sind 20% effizienter.', type: 'unit_efficiency', unit: 'smileyTree', bonusVariable: 'efficiencyBonus', value: 0.2 },
+    { id: 5, cost: 500, description: 'Deine Smiley-Fabriken sind 20% effizienter.', type: 'unit_efficiency', unit: 'smileyFactory', bonusVariable: 'efficiencyBonus', value: 0.2 }
 ];
 const prestigeUpgrades = [
     { id: 'globaler_multiplikator_1', name: 'Globaler Klick-Multiplikator', description: 'Erhöht die Klickkraft und die Produktion aller Gebäude um 25%.', cost: 1, bonus: 0.25, type: 'global_multi', dependencies: [] },
@@ -112,6 +112,8 @@ function initialisiereSpiel() {
     createUpgradeElements(buildingsData, 'building-grid');
     createPrestigeUpgrades();
     createPrestigeElements();
+    renderResearchUpgrades(); 
+
 
     // 4. Setze alle Event Listener
     setupEventListeners(); 
@@ -196,6 +198,8 @@ function updateGame() {
     updateUpgradesDisplay();
     updatePrestigeButtons();
     updateResearchButtons();
+    renderResearchUpgrades(); 
+
 }
 
 //================================================================================================================
@@ -471,28 +475,50 @@ function kaufePrestigeUpgrade(upgradeId){
 }
 
 
-function kaufeForschungsUpgrade() {
-    const upgrade = researchUpgrades[researchUpgradeIndex];
-    if (!upgrade) {
-        alert("Alle Forschungs-Upgrades wurden bereits gekauft!");
+function kaufeForschungsUpgrade(upgradeIndex) {
+    const upgrade = researchUpgrades[upgradeIndex];
+    
+    // 1. Prüfen, ob das Upgrade existiert und noch nicht gekauft wurde
+    if (!upgrade || researchStatus[upgradeIndex]) {
+        console.warn('Upgrade existiert nicht oder wurde bereits gekauft.');
         return;
     }
-    if (forschungPunkte >= upgrade.cost) {
-        forschungPunkte -= upgrade.cost;
-        // WICHTIG: window[upgrade.bonusVariable] durch direkte Zuweisung ersetzen,
-        // um Abhängigkeit von globalen Variablen zu behalten.
-        switch(upgrade.bonusVariable) {
-            case 'autoClickerResearchBonus': autoClickerResearchBonus += upgrade.value; break;
-            case 'smileyTreeResearchBonus': smileyTreeResearchBonus += upgrade.value; break;
-            case 'smileyFactoryResearchBonus': smileyFactoryResearchBonus += upgrade.value; break;
-            case 'efficiencyBonus': efficiencyBonus += upgrade.value; break;
+    
+    // 2. Prüfen, ob der Spieler genug Forschungspunkte hat
+    if (gameData.researchPoints >= upgrade.cost) {
+        // Punkte abziehen
+        gameData.researchPoints -= upgrade.cost;
+        
+        // Upgrade als gekauft markieren
+        researchStatus[upgradeIndex] = true;
+        
+        // 3. Bonus anwenden: Die spezifische Bonusvariable updaten
+        
+        // A. Additive Produktions-Boni (0.1, 0.2, etc.)
+        if (upgrade.bonusVariable === 'autoClickerResearchBonus') {
+            autoClickerResearchBonus += upgrade.value;
+        } else if (upgrade.bonusVariable === 'smileyTreeResearchBonus') {
+            smileyTreeResearchBonus += upgrade.value;
+        } else if (upgrade.bonusVariable === 'smileyFactoryResearchBonus') {
+            smileyFactoryResearchBonus += upgrade.value;
+        
+        // B. Multiplikative Effizienz-Boni (1.0 -> 1.2 -> 1.4, etc.)
+        // Da alle Effizienz-Upgrades denselben Namen ('efficiencyBonus') teilen, 
+        // müssen wir hier unterscheiden, welche Einheit gemeint ist.
+        // FÜR DIESEN AUFBAU: Ich interpretiere 'efficiencyBonus' als ein globales Multiplikator.
+        // Wenn du separate Effizienz-Boni pro Einheit möchtest, müssten wir hier getrennte Variablen (z.B. autoClickerEfficiencyBonus) definieren.
+        } else if (upgrade.bonusVariable === 'efficiencyBonus') {
+            efficiencyBonus += upgrade.value; // Fügt 0.2 hinzu (1.0 -> 1.2)
         }
         
-        researchUpgradeIndex++;
-        speichereSpiel();
-        updateGame();
+        // WICHTIG: UI und Stats aktualisieren
+        updateUI();
+        renderResearchUpgrades();
+        berechneGesamtKlicksProSekunde(); // Sorgt dafür, dass der neue Bonus angewendet wird
+        
+        console.log(`Forschungs-Upgrade ${upgradeIndex} erfolgreich gekauft!`);
     } else {
-        alert("Nicht genügend Forschungspunkte!");
+        zeigeNachricht('Nicht genug Forschungspunkte!', 'error');
     }
 }
 
@@ -720,6 +746,33 @@ function applyAllPrestigeBonuses() {
 // --- 6. UI-AKTUALISIERUNGSFUNKTIONEN ---
 //================================================================================================================
 
+function renderResearchUpgrades() {
+    const grid = document.getElementById('research_upgrades_grid');
+    if (!grid) return; // Stoppt, falls das Element nicht existiert
+
+    grid.innerHTML = ''; // Leert den Container
+
+    researchUpgrades.forEach((upgrade, index) => {
+        // Prüfen, ob bereits gekauft
+        const isBought = researchStatus[index];
+        const canAfford = gameData.researchPoints >= upgrade.cost;
+        const className = isBought ? 'bought' : (canAfford ? 'available' : 'locked');
+
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.className = `research-upgrade ${className}`;
+        upgradeDiv.setAttribute('onclick', isBought ? '' : `kaufeForschungsUpgrade(${index})`);
+        
+        upgradeDiv.innerHTML = `
+            <h3>Forschung ${index + 1}</h3>
+            <p>${upgrade.description}</p>
+            <div class="research-cost">
+                Kosten: <span>${upgrade.cost} RP</span>
+            </div>
+        `;
+
+        grid.appendChild(upgradeDiv);
+    });
+}
 function updateResearchButtons() {
     // Ruft das aktuell verfügbare Upgrade ab
     const upgrade = researchUpgrades[researchUpgradeIndex];
