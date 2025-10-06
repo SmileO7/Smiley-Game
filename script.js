@@ -96,29 +96,29 @@ let efficiencyBonus = 0;
 //================================================================================================================
 
 function initialisiereSpiel() {
-    console.log("Spielinitialisierung gestartet.");
+    console.log("Spielinitialisierung gestartet.");
 
-    // 1. Initialisiere die UI-Elemente
-    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
-    createUpgradeElements(buildingsData, 'building-grid');
-    createPrestigeUpgrades();
+    // 1. Lade den gespeicherten Zustand ZUERST!
+    ladeSpiel(); 
+    
+    // 2. Wende Prestige-Boni an (muss nach ladeSpiel() erfolgen)
+    applyAllPrestigeBonuses(); 
 
-    // 2. Lade den gespeicherten Zustand
-    ladeSpiel(); 
-    
-    // 3. Wende Prestige-Boni an (muss nach ladeSpiel() erfolgen)
-    applyAllPrestigeBonuses(); 
+    // 3. Initialisiere die UI-Elemente (JETZT mit den geladenen Werten)
+    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
+    createUpgradeElements(buildingsData, 'building-grid');
+    createPrestigeUpgrades();
 
-    // 4. Setze alle Event Listener
-    setupEventListeners(); 
+    // 4. Setze alle Event Listener
+    setupEventListeners(); 
 
-    // 5. Starte die Spiel-Loops
-    updateGame(); 
-    setInterval(produziereSmileys, 100); 
-    setInterval(updateGame, 1000); 
-    window.addEventListener('beforeunload', speichereSpiel); 
-    
-    console.log("Spielinitialisierung abgeschlossen. Spiel ist nun aktiv.");
+    // 5. Starte die Spiel-Loops
+    updateGame(); 
+    setInterval(produziereSmileys, 100); 
+    setInterval(updateGame, 1000); 
+    window.addEventListener('beforeunload', speichereSpiel); 
+    
+    console.log("Spielinitialisierung abgeschlossen. Spiel ist nun aktiv.");
 }
 
 function setupEventListeners() {
@@ -613,26 +613,29 @@ function createUpgradeElements(items, containerClass) {
         let innerHTML = '';
 
         if (containerClass === 'building-grid') {
-            // --- 1. Berechnung der Basis-Kostenfunktion ---
+            // --- 1. Berechnung des Preises und der Anzahl ---
             switch(item.elementId) {
                 case "auto_clicker_button_1x":
-                    ownedCount = typeof auto_klicker_count !== 'undefined' ? auto_klicker_count : 0;
-                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
+                    // auto_klicker_count war bereits korrekt
+                    ownedCount = typeof auto_klicker_count !== 'undefined' ? auto_klicker_count : 0; 
+                    itemPrice = item.basePrice * Math.pow(item.growthRate, ownedCount) * costReductionFactor;
                     break;
                 case "smileyTreeButton1x":
-                    // KORREKTUR: Falscher Variablenname `smileyTreeCount` korrigiert zu `smileyTreeProduction`
+                    // ✅ KORREKTUR: Verwende smileyTreeProduction
                     ownedCount = typeof smileyTreeProduction !== 'undefined' ? smileyTreeProduction : 0; 
-                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
+                    itemPrice = item.basePrice * Math.pow(item.growthRate, ownedCount) * costReductionFactor;
                     break;
                 case "smileyFactoryButton1x":
-                    // KORREKTUR: Falscher Variablenname `smileyFactoryCount` korrigiert zu `smileyFactoryProduction`
+                    // ✅ KORREKTUR: Verwende smileyFactoryProduction
                     ownedCount = typeof smileyFactoryProduction !== 'undefined' ? smileyFactoryProduction : 0; 
-                    costFunction = (count) => item.basePrice * Math.pow(item.growthRate, count) * costReductionFactor;
+                    itemPrice = item.basePrice * Math.pow(item.growthRate, ownedCount) * costReductionFactor;
                     break;
                 default:
+                    itemPrice = item.basePrice * costReductionFactor;
+            }
                     // Fallback, sollte nicht erreicht werden
                     costFunction = () => Infinity; 
-            }
+            
 
             // --- 2. HTML-Erstellung für Gebäude (UI-Anpassung: Titel in Box, "Nächste Kosten" entfernt) ---
             innerHTML = `
@@ -829,70 +832,98 @@ function updateButtons() {
 }
     
 function updateUpgradesDisplay() {
-    // A) Gebäude-Anzeige (Building Count & Production)
-    buildingsData.forEach((building, index) => {
-        const itemDiv = document.querySelector(`.upgrade-item[data-index="${index}"]`);
-        if (!itemDiv) return; 
+    // 1. Gebäude-Karten (building-grid) aktualisieren
+    buildingsData.forEach((item, index) => {
+        const upgradeElement = document.querySelector(`.building-grid .upgrade-item[data-index="${index}"]`);
+        if (!upgradeElement) return; // Karte existiert nicht
 
-        let currentCount = 0;
-        let productionPerUnit = 0;
-        let prestigeMulti = 1;
-        
-        // Die globalen Multiplikatoren für die Produktion müssen hier angewendet werden
-        const globalMulti = globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
+        let ownedCount = 0;
+        let baseSPS = 0; // Basiswert für die SPS-Berechnung
+        let prestigeMulti = 1; // Individueller Prestige-Multi
+        let researchBonus = 0; // Individueller Forschungsbonus
+        let costReductionFactor = 1 - buildingCostReduction; 
 
-        // KORREKTUR: Berechnung der Basis-SPS unter Einbeziehung der Forschungseffizienz (wie in produziereSmileys)
-        let autoClickerBaseSPS = 1 * (1 + autoClickerResearchBonus + efficiencyBonus);
-        let smileyTreeBaseSPS = 20 * (1 + smileyTreeResearchBonus + efficiencyBonus);
-        let smileyFactoryBaseSPS = 150 * (1 + smileyFactoryResearchBonus + efficiencyBonus);
-
-        switch (building.elementId) {
+        // Anzahl, Boni und Basis-SPS abrufen
+        switch(item.elementId) {
             case "auto_clicker_button_1x":
-                currentCount = auto_klicker_count;
-                productionPerUnit = autoClickerBaseSPS; 
+                ownedCount = auto_klicker_count; 
+                baseSPS = 1; // Basis SPS für Auto-Klicker
                 prestigeMulti = autoClickerPrestigeMulti;
+                researchBonus = autoClickerResearchBonus;
                 break;
             case "smileyTreeButton1x":
-                currentCount = smileyTreeProduction;
-                productionPerUnit = smileyTreeBaseSPS;
+                ownedCount = smileyTreeProduction;
+                baseSPS = 20; // Basis SPS für Smiley-Baum
                 prestigeMulti = smileyTreePrestigeMulti;
+                researchBonus = smileyTreeResearchBonus;
                 break;
             case "smileyFactoryButton1x":
-                currentCount = smileyFactoryProduction;
-                productionPerUnit = smileyFactoryBaseSPS;
+                ownedCount = smileyFactoryProduction;
+                baseSPS = 150; // Basis SPS für Smiley-Fabrik
                 prestigeMulti = smileyFactoryPrestigeMulti;
+                researchBonus = smileyFactoryResearchBonus;
                 break;
         }
 
-        // 1. ANZAHL aktualisieren (sucht das .building-count Element)
-        const countSpan = itemDiv.querySelector('.building-count'); 
-        if (countSpan) {
-            countSpan.innerText = `Anzahl: ${formatLargeNumber(currentCount)}`;
+        // Berechnung der SPS pro Einheit (inkl. individueller Multiplikatoren)
+        const unitSPS = baseSPS * (1 + researchBonus) * prestigeMulti * (1 + efficiencyBonus);
+        
+        // Gesamt-SPS, die dieser Gebäudetyp generiert (ownedCount * unitSPS)
+        const totalBuildingSPS = unitSPS * ownedCount;
+
+        // 1. UI-Element der Anzahl aktualisieren
+        const countP = upgradeElement.querySelector('.building-count');
+        if (countP) {
+            countP.innerText = `Anzahl: ${formatLargeNumber(ownedCount)}`;
         }
         
-        // 2. PRODUKTION/SPS aktualisieren
-        const productionSpan = itemDiv.querySelector('.building-production'); 
-        if (productionSpan) {
-            const totalSPS = currentCount * productionPerUnit * prestigeMulti * globalMulti;
-            productionSpan.innerText = `Produziert: ${formatLargeNumber(totalSPS)} SPS`;
+        // 2. NEU: UI-Element der Produktion aktualisieren
+        const productionP = upgradeElement.querySelector('.building-production');
+        if (productionP) {
+            // Zeigt die Gesamtproduktion DIESES Gebäudetyps (ohne globale Multiplikatoren!)
+            productionP.innerText = `Produziert: ${formatLargeNumber(totalBuildingSPS)} SPS`;
         }
+        // Ende der SPS-Anzeige Implementierung
+
+        // 3. Preise in den Buttons aktualisieren (Kosten für 1x, 10x, 100x)
+        const buttons = upgradeElement.querySelectorAll('.btn-buy');
+        buttons.forEach(button => {
+            const amount = parseInt(button.dataset.buyAmount);
+            let nextCost = 0;
+            let currentBuyCount = ownedCount;
+            
+            // Gesamtkosten für die Menge berechnen
+            for(let i = 0; i < amount; i++) {
+                let costFunction;
+                // Bestimme die korrekte Kosten-Funktion basierend auf der Building-ID
+                switch(item.elementId) {
+                    case "auto_clicker_button_1x": costFunction = (count) => autoClickerBaseCost * Math.pow(autoClickerGrowthRate, count) * costReductionFactor; break;
+                    case "smileyTreeButton1x": costFunction = (count) => smileyTreeBaseCost * Math.pow(smileyTreeGrowthRate, count) * costReductionFactor; break;
+                    case "smileyFactoryButton1x": costFunction = (count) => smileyFactoryBaseCost * Math.pow(smileyFactoryGrowthRate, count) * costReductionFactor; break;
+                }
+                nextCost += costFunction(currentBuyCount + i);
+            }
+
+            // Text des Buttons aktualisieren
+            button.innerText = `${amount}x (${formatLargeNumber(nextCost)})`;
+        });
     });
 
-    // B) Klick-Upgrades aktualisieren (optional, falls gekauft)
-    clickerUpgrades.forEach((upgrade, index) => {
-        const itemDiv = document.querySelector(`.upgrade-item[data-index="${index}"]`);
-        if (!itemDiv) return;
+    // 2. Klicker-Upgrades (upgrade-grid) aktualisieren
+    clickerUpgrades.forEach((item, index) => {
+        const upgradeElement = document.querySelector(`.upgrade-grid .upgrade-item[data-index="${index}"]`);
+        if (!upgradeElement) return;
 
-        const countSpan = itemDiv.querySelector('.upgrade-count'); 
-        if (countSpan) {
-            countSpan.innerText = `Gekauft: ${upgrade.bought}`;
+        const button = upgradeElement.querySelector('.btn-buy');
+        if (button) {
+            const buttonText = item.bought ? 'Gekauft' : `Kaufen (${formatLargeNumber(item.price)})`;
+            button.innerText = buttonText;
+            button.disabled = item.bought;
         }
         
-        const button = itemDiv.querySelector('.btn-buy');
-        if (button && upgrade.bought) {
-             button.disabled = true;
-             button.innerText = 'Gekauft';
-             button.classList.add('disabled');
+        const boughtP = upgradeElement.querySelector('.upgrade-count');
+        if (boughtP) {
+            boughtP.innerText = `Gekauft: ${item.bought}`;
         }
     });
 }
