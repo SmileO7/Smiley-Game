@@ -87,6 +87,9 @@ let smileyTreeResearchBonus = 0;
 let smileyFactoryResearchBonus = 0;
 let efficiencyBonus = 0;
 
+//prestige Variablen
+let klickPrestigeMultiplier = 1;      // Startwert 1 (für 'global_multi')
+let klickBoostPerPPValue = 0;         // Startwert 0 (für 'klick_boost_per_pp')
 
 // KONSTANTEN & ELEMENTE
 // Die globalen DOM-Variablen für Forschung wurden entfernt (KORREKTUR für ReferenceError).
@@ -108,6 +111,7 @@ function initialisiereSpiel() {
     createUpgradeElements(clickerUpgrades, 'upgrade-grid');
     createUpgradeElements(buildingsData, 'building-grid');
     createPrestigeUpgrades();
+    createPrestigeElements();
 
     // 4. Setze alle Event Listener
     setupEventListeners(); 
@@ -218,10 +222,11 @@ function klickeSmiley() {
     }
     // Klickwert-Berechnung: (Basis + Upgrades + Sammelbuch) * Globaler Multi + (Gesamt PP * PP-Klickboost)
     const klickwert = (1 + klickUpgradeBonus + sammelbuchClickPowerBonus) * globalerPrestigeMultiplikator + (gesamtPrestigePunkte * klickBoostPerPrestigePoint);
+    const pp_klick_bonus = gesammelte_prestige_punkte * klickBoostPerPPValue;
 
-    aktuelle_smileys += klickwert;
-    gesammelte_smileys += klickwert;
-    gesamteGeklickteSmileys += klickwert;
+    aktuelle_smileys += klickwert * klickPrestigeMultiplier + pp_klick_bonus; 
+    gesammelte_smileys += klickwert * klickPrestigeMultiplier + pp_klick_bonus;
+    gesamteGeklickteSmileys += klickwert * klickPrestigeMultiplier + pp_klick_bonus; 
     speichereSpiel();
     updateDisplay();
     // checkAchievements(); // Auskommentiert gelassen
@@ -400,6 +405,71 @@ function kaufeItem(type, index, amount = 1) {
     updateGame();
 }
 
+/**
+ * 
+ * @param {number} upgradeId - Die ID des Upgrdes (z.B. 1, 2, 3...)
+ */
+function kaufePrestigeUpgrade(upgradeId){
+    //Finde das Upgrade anhand seiner ID 
+    const upgrade = prestigeUpgrades.find(up => up.id === upgradeId);
+
+    if  (!upgrade) return;
+
+    const isBought = prestige_upgrades_gekauft[upgradeId];
+    const cost = upgrade.cost;
+
+    // 1. Prüfe Verfügbarkeit und Kosten 
+    if (isBought) {
+        console.log ("Upgrade wurde Bereits gekauft.");
+        return;
+    }
+
+    if (prestige_punkte < cost) {
+        console.log ("Nicht genug Prestige-Punkte.");
+        return;
+    }
+
+    // Prüfe Abhängigkeiten (fallls im Array definiert)
+    const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
+    if (!allDependenciesMet) {
+        console.log ("Abhängigkeiten sind nicht erfüllt.");
+        return;
+    }
+
+    // 2. Kauf durchführen und Effekt anwenden 
+    prestige_punkte -= cost; 
+
+    // Die Upgrade-ID als gekaft markieren
+    prestige_upgrades_gekauft[upgradeId] = 1;
+
+    //Effekt auf die relevanten Multiplikatoren anwenden 
+    switch(upgrade.target) {
+        case 'glonal_sps':
+            globalerPrestigeMultiplikator *= upgrade.multiplier;
+            break;
+        case 'forschungslabor_fps':
+            forschungslabor_fps_multiplier *= upgrade.multiplier;
+            break;
+        case 'research_lab_prestige_multi':
+            researchLabPrestigeMulti *= upgrade.multiplier;
+            break;
+        case 'auto_clicker':
+            autoClickerPrestigeMulti *= upgrade.multiplier;
+            break;
+        case 'smiley_tree':
+            smileyTreePrestigeMulti *= upgrade.multiplier;
+            break;
+        case 'smiley_factory':
+            smileyFactoryPrestigeMulti *= upgrade.multiplier;
+            break;
+    }
+
+    // 3. Speichern und UI aktualisieren 
+    speichereSpiel();
+    updateGame();
+}
+
+
 function kaufeForschungsUpgrade() {
     const upgrade = researchUpgrades[researchUpgradeIndex];
     if (!upgrade) {
@@ -451,39 +521,70 @@ function kaufeForschungslabor() {
         alert("Nicht genügend Smileys!");
     }
 }
-
+/**
+ * 
+ * @param {string} upgradeId 
+ */
 function kaufePrestigeUpgrade(upgradeId) {
-    const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
-    if (!upgrade) {
-        console.error("Upgrade nicht gefunden:", upgradeId);
-        return;
-    }
+    // Finde das Upgrade anhand seiner ID
+    const upgrade = prestigeUpgrades.find(up => up.id === upgradeId);
+    
+    if (!upgrade) return;
 
-    const isBought = prestige_upgrades_gekauft[upgrade.id];
+    // Wir gehen davon aus, dass prestige_upgrades_gekauft ein Objekt ist: { 'id': 1/0, ... }
+    const isBought = prestige_upgrades_gekauft[upgradeId];
+    const cost = upgrade.cost;
+
+    // Abhängigkeitsprüfung
     const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
 
-    if (isBought) {
-        alert("Dieses Upgrade hast du bereits gekauft!");
-        return;
-    }
-    if (!allDependenciesMet) {
-        alert("Du musst zuerst die vorausgehenden Upgrades kaufen!");
+    // 1. Prüfe Verfügbarkeit und Kosten
+    if (isBought || prestige_punkte < cost || !allDependenciesMet) {
         return;
     }
 
-    if (prestige_punkte >= upgrade.cost) {
-        prestige_punkte -= upgrade.cost;
-        prestige_upgrades_gekauft[upgrade.id] = true;
-        
-        applyPrestigeBonus(upgrade);
+    // 2. Kauf durchführen und Effekt anwenden
+    prestige_punkte -= cost;
+    
+    // Die Upgrade-ID als gekauft markieren
+    prestige_upgrades_gekauft[upgradeId] = 1; 
 
-        speichereSpiel();
-        updateGame();
-        
-        alert(`Upgrade "${upgrade.name}" gekauft!`);
-    } else {
-        alert("Nicht genügend Prestige-Punkte!");
+    // Effekt auf die relevanten Multiplikatoren anwenden (Multiplikation mit 1 + Bonus für SPS-Upgrades!)
+    switch(upgrade.type) {
+        case 'global_multi':
+            // Betrifft Klickkraft UND alle Gebäude (Globaler Multiplikator)
+            globalerPrestigeMultiplikator *= (1 + upgrade.bonus);
+            clickPrestigeMultiplier *= (1 + upgrade.bonus); // Annahme: clickPrestigeMultiplier existiert für Klickkraft
+            break;
+        case 'auto_clicker_multi':
+            autoClickerPrestigeMulti *= (1 + upgrade.bonus);
+            break;
+        case 'smiley_tree_multi':
+            smileyTreePrestigeMulti *= (1 + upgrade.bonus);
+            break;
+        case 'smiley_factory_multi':
+            smileyFactoryPrestigeMulti *= (1 + upgrade.bonus);
+            break;
+        case 'research_multi':
+            forschungslabor_fps_multiplier *= (1 + upgrade.bonus);
+            break;
+        case 'global_sps_multi':
+            // Nur globale SPS-Produktion, NICHT Klickkraft
+            globalerPrestigeMultiplikator *= (1 + upgrade.bonus);
+            break;
+        case 'cost_reduction':
+            // Kostenreduktionen werden addiert (z.B. 0.05 + 0.10 = 0.15)
+            buildingCostReduction += upgrade.bonus;
+            break;
+        case 'klick_boost_per_pp':
+            // Annahme: Wir definieren eine Variable, die den totalen Boost pro PP speichert
+            klickBoostPerPPValue += upgrade.bonus; 
+            break;
     }
+
+    // 3. Speichern und UI aktualisieren
+    speichereSpiel();
+    updateGame();
 }
 
 function applyPrestigeBonus(upgrade) {
@@ -696,6 +797,54 @@ function createUpgradeElements(items, containerClass) {
 
         upgradeElement.innerHTML = innerHTML;
         container.appendChild(upgradeElement);
+    });
+}
+
+function createPrestigeElements() {
+    // Stellen Sie sicher, dass Sie im HTML einen Container mit der ID 'prestige-grid' haben
+    const container = document.getElementById('prestige-grid'); 
+    if (!container) return; 
+
+    container.innerHTML = ''; // Vorherige Elemente entfernen
+
+    prestigeUpgrades.forEach(upgrade => {
+        // 1. Hauptelement erstellen (WICHTIG: Verwende die Klasse aus deiner update-Funktion!)
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.classList.add('upgrade-item', 'prestige-upgrade'); 
+        upgradeDiv.dataset.id = upgrade.id; // Damit der Query-Selector in updatePrestigeButtons funktioniert
+
+        // 2. Inhalt (Titel, Beschreibung)
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('upgrade-content');
+        
+        const nameH3 = document.createElement('h3');
+        nameH3.innerText = upgrade.name;
+        
+        const descP = document.createElement('p');
+        descP.innerText = upgrade.description;
+        
+        const costP = document.createElement('p');
+        costP.classList.add('prestige-cost'); 
+        costP.innerHTML = `Kosten: <span>${formatLargeNumber(upgrade.cost)} PP</span>`;
+        
+        contentDiv.appendChild(nameH3);
+        contentDiv.appendChild(descP);
+        contentDiv.appendChild(costP);
+        
+        // 3. Kauf-Button
+        const button = document.createElement('button');
+        button.classList.add('btn-buy');
+        button.innerText = `Kaufen (${formatLargeNumber(upgrade.cost)} PP)`;
+
+        // WICHTIG: Event Listener für den Kauf
+        button.addEventListener('click', () => {
+            kaufePrestigeUpgrade(upgrade.id); 
+        });
+
+        // 4. Alles zusammenfügen
+        upgradeDiv.appendChild(contentDiv);
+        upgradeDiv.appendChild(button);
+        container.appendChild(upgradeDiv);
     });
 }
 
@@ -990,22 +1139,39 @@ function createPrestigeUpgrades() {
 
 function updatePrestigeButtons() {
     prestigeUpgrades.forEach(upgrade => {
-        const upgradeDiv = document.querySelector(`.prestige-upgrade[data-id="${upgrade.id}"]`);
-        if (!upgradeDiv) return;
+        // Hier sollte upgradeDiv jetzt gefunden werden, da es in createPrestigeElements erzeugt wird
+        const upgradeDiv = document.querySelector(`.prestige-upgrade[data-id="${upgrade.id}"]`);
+        if (!upgradeDiv) return;
 
-        const isBought = prestige_upgrades_gekauft[upgrade.id];
-        const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
-        const isAvailable = !isBought && allDependenciesMet && prestige_punkte >= upgrade.cost;
-
-        // Aktualisiere die Klassen
-        upgradeDiv.classList.toggle('bought', isBought);
-        upgradeDiv.classList.toggle('available', isAvailable);
-        upgradeDiv.classList.toggle('locked', !isBought && !allDependenciesMet); // Lock-Zustand nur, wenn Abhängigkeiten fehlen
-
-        // Aktualisiere den Button-Status
         const button = upgradeDiv.querySelector('button');
-        if (button) {
-            button.disabled = !isAvailable;
+        if (!button) return; 
+        
+        const isBought = prestige_upgrades_gekauft[upgrade.id];
+        const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
+        const isAffordable = prestige_punkte >= upgrade.cost;
+        const isAvailable = !isBought && allDependenciesMet && isAffordable;
+
+        // 1. Aktualisiere die Klassen
+        upgradeDiv.classList.toggle('bought', isBought);
+        upgradeDiv.classList.toggle('available', isAvailable);
+        upgradeDiv.classList.toggle('locked', !isBought && !allDependenciesMet); 
+
+        // 2. Aktualisiere den Button-Text und Zustand (UX-Verbesserung)
+        if (isBought) {
+            button.innerText = 'Gekauft';
+            button.disabled = true;
+        } else if (!allDependenciesMet) {
+            button.innerText = 'Gesperrt';
+            button.disabled = true;
+        } else {
+            button.innerText = `Kaufen (${formatLargeNumber(upgrade.cost)} PP)`;
+            button.disabled = !isAvailable;
+        }
+        
+        // 3. Optional: Kosten-Text einfärben (falls Sie das möchten)
+        const costSpan = upgradeDiv.querySelector('.prestige-cost span');
+        if (costSpan) {
+            costSpan.style.color = isAffordable ? 'var(--color-blue-main)' : 'var(--color-red-main)';
         }
-    });
+    });
 }
