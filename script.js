@@ -12,7 +12,6 @@ const buildingsData = [
     { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, elementId: "auto_klicker_button_1x", baseSPS: 1 },
     { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x", baseSPS: 20 },
     { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, elementId: "smileyFactoryButton1x", baseSPS: 150 },
-    
     // NEUE GEBÄUDE (4 - 15)
     { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, elementId: "smileyMineButton1x", baseSPS: 1000 },
     { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, elementId: "smileyBohrerButton1x", baseSPS: 5000 },
@@ -90,40 +89,15 @@ let forschungslaborGekauft = false;
 let researchUpgradeIndex = 0;
 // WICHTIG: Muss 'let' sein, damit es in ladeSpiel() neu zugewiesen werden kann!
 let researchStatus = [false, false, false, false, false, false]; 
+let gesammelte_prestige_punkte = 0;
 
-// --- GEBÄUDE ZÄHLER (15x) ---
-let auto_klicker_count = 0;
-let smileyTreeProduction = 0;
-let smileyFactoryProduction = 0;
-let smileyMineProduction = 0;
-let smileyBohrerProduction = 0;
-let smileyKernkraftwerkProduction = 0;
-let smileyGalaxieProduction = 0;
-let dimensionsPortalProduction = 0;
-let zeitmaschineProduction = 0;
-let metaKlickerProduction = 0;
-let quantenNetzwerkProduction = 0;
-let endloserSpeicherProduction = 0;
-let ursprungProduction = 0;
-let kosmischeEinheitProduction = 0;
-let absoluterSchoepferProduction = 0;
+/// --- NEUE GEBÄUDE-ZUSTÄNDE (Ersetzen die 30 Einzelvariablen) ---
+// Alle Zähler, initialisiert auf 0 (Muss 15 Elemente haben)
+let buildingCounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; 
 
-// --- GEBÄUDE PREISE (15x) ---
-let auto_klicker_price = 20;
-let smileyTreePrice = 100;
-let smileyFactoryPrice = 1000;
-let smileyMinePrice = 10000;
-let smileyBohrerPrice = 50000;
-let smileyKernkraftwerkPrice = 250000;
-let smileyGalaxiePrice = 1250000;
-let dimensionsPortalPrice = 6250000;
-let zeitmaschinePrice = 31250000;
-let metaKlickerPrice = 156250000;
-let quantenNetzwerkPrice = 781250000;
-let endloserSpeicherPrice = 3906250000;
-let ursprungPrice = 19531250000;
-let kosmischeEinheitPrice = 97656250000;
-let absoluterSchoepferPrice = 488281250000;
+// Alle aktuellen Preise (Muss 15 Elemente haben, entsprechend buildingsData)
+let buildingPrices = [20, 100, 1000, 10000, 50000, 250000, 1250000, 6250000, 31250000, 156250000, 781250000, 3906250000, 19531250000, 97656250000, 488281250000];
+
 
 //================================================================================================================
 // --- 1.2  BONI & MULTIPLIER (let) ---
@@ -369,12 +343,7 @@ function klickeSmiley() {
 
 function produziereSmileys() {
     // Array mit den Zähler-Variablen für einen einfacheren Zugriff in der Berechnung
-    const productionCounts = [
-        auto_klicker_count, smileyTreeProduction, smileyFactoryProduction, smileyMineProduction, smileyBohrerProduction,
-        smileyKernkraftwerkProduction, smileyGalaxieProduction, dimensionsPortalProduction, zeitmaschineProduction,
-        metaKlickerProduction, quantenNetzwerkProduction, endloserSpeicherProduction, ursprungProduction,
-        kosmischeEinheitProduction, absoluterSchoepferProduction
-    ];
+    const productionCounts = buildingCounts;
     
     // Array mit den Additiven Forschungs-Boni (ResearchBonus)
     const researchBonuses = [
@@ -485,119 +454,58 @@ function prestige() {
     alert(`Du hast ${earned_prestige} Prestige-Punkte erhalten!`);
 }
 
-function kaufeItem(index, amount) {
-    const item = buildingsData[index];
-    if (!item) return;
-
-    // --- HILFS-ARRAYS FÜR VARIABLE ZUWEISUNG ---
-    const priceArray = [
-        auto_klicker_price, smileyTreePrice, smileyFactoryPrice, smileyMinePrice, smileyBohrerPrice,
-        smileyKernkraftwerkPrice, smileyGalaxiePrice, dimensionsPortalPrice, zeitmaschinePrice, 
-        metaKlickerPrice, quantenNetzwerkPrice, endloserSpeicherPrice, ursprungPrice, 
-        kosmischeEinheitPrice, absoluterSchoepferPrice
-    ];
-    let currentPrice = priceArray[index];
-
-    // --- KAUF-LOGIK ---
-
-    let gesamtKosten = 0;
-    
-    // Einfacher Kauf (amount = 1)
-    if (amount === 1) {
-        gesamtKosten = currentPrice * (1 - buildingCostReduction);
-    } 
-    // Kauf von mehreren (amount > 1)
-    else if (amount > 1) {
-        let tempPrice = currentPrice;
-        for (let i = 0; i < amount; i++) {
-            gesamtKosten += tempPrice * (1 - buildingCostReduction);
-            tempPrice *= item.growthRate;
-        }
-    }
-
-    if (smileyPoints >= gesamtKosten) {
-        smileyPoints -= gesamtKosten;
-
-        // --- ZUWEISUNG DER GEKAUFTEN EINHEITEN & PREIS-UPATE ---
+/**
+ * Allgemeine Funktion zum Kauf von Gebäuden oder Upgrades
+ * @param {String} type - 'building-grid' oder 'upgrade-grid'
+ * @param {number} index - Der Index des Items im jeweiligen Array (buildingsData oder clickerUpgrades)
+ * @param {number} amount - Die Menge, die gekauft werden soll (Standard: 1)
+ */
+function kaufeItem(type, index, amount) {
+    if (type === 'building-grid') {
+        const item = buildingsData[index];
         
-        switch (item.elementId) {
-            case "auto_klicker_button_1x":
-                auto_klicker_count += amount;
-                auto_klicker_price = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "smileyTreeButton1x":
-                smileyTreeProduction += amount;
-                smileyTreePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "smileyFactoryButton1x":
-                smileyFactoryProduction += amount;
-                smileyFactoryPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            // NEUE GEBÄUDE (4 bis 15)
-            case "smileyMineButton1x":
-                smileyMineProduction += amount;
-                smileyMinePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "smileyBohrerButton1x":
-                smileyBohrerProduction += amount;
-                smileyBohrerPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "smileyKernkraftwerkButton1x":
-                smileyKernkraftwerkProduction += amount;
-                smileyKernkraftwerkPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "smileyGalaxieButton1x":
-                smileyGalaxieProduction += amount;
-                smileyGalaxiePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "dimensionsPortalButton1x":
-                dimensionsPortalProduction += amount;
-                dimensionsPortalPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "zeitmaschineButton1x":
-                zeitmaschineProduction += amount;
-                zeitmaschinePrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "metaKlickerButton1x":
-                metaKlickerProduction += amount;
-                metaKlickerPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "quantenNetzwerkButton1x":
-                quantenNetzwerkProduction += amount;
-                quantenNetzwerkPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "endloserSpeicherButton1x":
-                endloserSpeicherProduction += amount;
-                endloserSpeicherPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "ursprungButton1x":
-                ursprungProduction += amount;
-                ursprungPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "kosmischeEinheitButton1x":
-                kosmischeEinheitProduction += amount;
-                kosmischeEinheitPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
-            case "absoluterSchoepferButton1x":
-                absoluterSchoepferProduction += amount;
-                absoluterSchoepferPrice = (amount === 1) ? currentPrice * item.growthRate : currentPrice * Math.pow(item.growthRate, amount);
-                break;
+        // KORREKTUR: Wenn das Item NICHT existiert, springe heraus.
+        if (!item) return; 
+
+        // --- 1. KAUFKOSTEN BERECHNEN ---
+        let currentPrice = buildingPrices[index];
+        let gesamtKosten = 0; // KORREKTUR: Einheitliche Schreibweise (CamelCase)
+        let finalPrice = currentPrice;
+        
+        // Berechnung für den Kauf von 'amount' Einheiten 
+        let tempPrice = currentPrice;
+        for (let i = 0; i < amount; i++){
+            // Kosten mit Rabatt (buildingCostReduction)
+            const costAfterReduction = tempPrice * (1 - buildingCostReduction);
+            gesamtKosten += costAfterReduction;
+
+            // Preis für das nächste Item nach dem Kauf berechnen 
+            finalPrice = tempPrice * item.growthRate;
+            tempPrice = finalPrice;
         }
 
-        updateUI();
-        speichereSpiel();
-    } else {
-        // Optionale Nachricht
-        console.log("Nicht genug Smileys für den Kauf.");
+        // --- 2. KAUFPRÜFUNG ---
+        if (aktuelle_smileys >= gesamtKosten){
+            // KORREKTUR: Subtrahiere den akkumulierten, korrekten Wert (gesamtKosten)
+            aktuelle_smileys -= gesamtKosten; 
+            buildingCounts[index] += amount;
+            buildingPrices[index] = finalPrice; // Speichere den neuen, korrekten Preis
+        
+            speichereSpiel();
+            updateUI(); // Aktualisiert die Anzeige und Buttons
+        }
+
+    } else if (type === 'upgrade-grid'){
+        // Logik für Clicker Upgrades
     }
 }
 
-/**
- * Berechnet den Preis für die nächste Einheit eines Gebäudes basierend auf der buildingsData-Konstante.
- * @param {number} index - Der Index des Gebäudes in der buildingsData-Liste (0-14).
- * @param {number} count - Die aktuelle Anzahl der gekauften Einheiten dieses Gebäudes.
- * @returns {number} Der berechnete Preis.
- */
+
+
+
+
+
+
 function getBuildingPrice(index, count) {
     // Sicherstellen, dass der Index gültig ist
     if (index < 0 || index >= buildingsData.length) {
@@ -1427,86 +1335,46 @@ function updateButtons() {
     const costReductionFactor = 1 - buildingCostReduction;
 
     // --- GEBÄUDE BUTTONS AKTUALISIEREN ---
-    
-    // Wir verwenden die buildingsData-Konstante, um alle 15 Gebäude zu iterieren
     buildingsData.forEach((item, index) => {
-        // Wir gehen davon aus, dass du .btn-buy-building anstelle von .btn-buy für Gebäude verwendest
-        // oder du musst sicherstellen, dass dein HTML-Element die ID des Buttons enthält.
         
-        // Suche den Button anhand der elementId in der buildingsData
-        const button = document.getElementById(item.elementId);
+        // FIX 1: Lese den korrekten Zähler und Preis aus den globalen Arrays
+        const currentCount = buildingCounts[index]; 
+        const nextPriceFor1x = buildingPrices[index]; // Das ist der Preis für den Kauf von 1x Item
+        
+        const itemDiv = document.querySelector(`.building-item[data-index="${index}"]`);
+        
+        // Finde den Button anhand der elementId (Wenn du die Id verwendest) ODER das Item-DIV
+        const button = document.getElementById(item.elementId); // Nur für den 1x Kauf
         if (!button) return; 
 
-        // Die aktuelle Anzahl des Gebäudes über den Index ermitteln (wie im vorherigen Schritt vorbereitet)
-        const productionCounts = [
-            auto_klicker_count, smileyTreeProduction, smileyFactoryProduction, smileyMineProduction, smileyBohrerProduction,
-            smileyKernkraftwerkProduction, smileyGalaxieProduction, dimensionsPortalProduction, zeitmaschineProduction,
-            metaKlickerProduction, quantenNetzwerkProduction, endloserSpeicherProduction, ursprungProduction,
-            kosmischeEinheitProduction, absoluterSchoepferProduction
-        ];
-        const currentCount = productionCounts[index];
-
-        // Die Kaufmenge aus dem data-buy-amount Attribut holen (oder Standard: 1)
-        const amount = parseInt(button.dataset.buyAmount, 10) || 1;
-        let totalCost = 0;
-
-        // 1. Berechnung der Gesamtkosten für die Menge 'amount'
-        const basePrice = item.basePrice;
-        const growthRate = item.growthRate;
-
-        for (let i = 0; i < amount; i++) {
-            // Dies ist die Preisberechnungs-Formel, die vorher in 'costFunction' steckte
-            let price = basePrice * Math.pow(growthRate, currentCount + i) * costReductionFactor;
-            totalCost += price;
-        }
-
-        const finalCost = Math.floor(totalCost);
+        // 1. Berechnung der Gesamtkosten für die Menge 'amount' (Hier nur für 1x)
+        const finalCost = nextPriceFor1x * costReductionFactor;
 
         // 2. Button-Text und Verfügbarkeit aktualisieren
         const countElement = button.querySelector('.count');
         const priceElement = button.querySelector('.price');
         
-        // Stelle sicher, dass du formatLargeNumber() hinzugefügt hast (aus dem letzten Schritt)
+        // Preis-Text (sichtbar machen)
         if (priceElement) {
             priceElement.innerText = formatLargeNumber(finalCost);
         }
+        
+        // Zähler-Text (sichtbar machen)
         if (countElement) {
-            // Aktualisiere den Zähler auf dem Button (z.B. 10x kaufen)
-            countElement.innerText = currentCount; 
+            countElement.innerText = formatLargeNumber(currentCount); 
         }
 
         // Allgemeine Verfügbarkeitsprüfung (Gebäude)
         const isAvailable = aktuelle_smileys >= finalCost;
         button.classList.toggle('available', isAvailable);
         button.disabled = !isAvailable;
-    });
-    
-    // --- KLICK-UPGRADES (upgrade-grid) AKTUALISIEREN ---
-    // Dieser Teil muss separat behandelt werden, da er eine andere Datenstruktur hat
-    document.querySelectorAll('[data-type="upgrade-grid"]').forEach(button => {
-        const index = parseInt(button.dataset.index);
-        const item = clickerUpgrades[index];
-        let cost = item.price;
-        
-        if (item.bought > 0) { // Ändere dies auf > 0, wenn Upgrades mehrfach kaufbar sind, sonst bleibt es 'item.bought'
-            button.disabled = true;
-            button.innerText = 'Gekauft';
-            button.classList.add('disabled', 'bought');
-            button.classList.remove('available');
-            return;
+
+        // OPTIONAL: Preis einfärben
+        const priceSpan = button.querySelector('.price');
+        if (priceSpan) {
+            priceSpan.style.color = isAvailable ? 'blue' : 'red'; // Deine Lieblingsfarben!
         }
-        
-        // Verfügbarkeitsprüfung (Klick-Upgrades)
-        const isAffordable = aktuelle_smileys >= cost;
-        button.disabled = !isAffordable;
-        button.classList.toggle('available', isAffordable);
-        button.classList.toggle('disabled', !isAffordable);
     });
-    
-    // --- FORSCHUNGS-UPGRADES & PRESTIGE MÜSSEN SEPARAT AUFGERUFEN WERDEN ---
-    renderResearchUpgrades(); // Diese Funktion sollte die Forschungs-Buttons aktualisieren
-    updatePrestigeButtons();  // Diese Funktion sollte die Prestige-Buttons aktualisieren
-}
     
     // Forschungs-Labor Button
     const forschungslaborButton = document.getElementById('forschungslaborButton');
@@ -1540,7 +1408,7 @@ function updateButtons() {
             forschungUpgradeButton.disabled = true;
             forschungUpgradeButton.classList.add('bought');
         }
-    }
+    }}
 
     
 function updateUpgradesDisplay() {
