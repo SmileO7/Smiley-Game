@@ -268,11 +268,12 @@ function updateGame() {
     // Die zentrale Funktion, die alles aktualisiert
     updateDisplay();
     updateButtons();
+    berechneKlickkraft();
     updateUpgradesDisplay();
     updatePrestigeButtons();
     updateResearchButtons();
     renderResearchUpgrades(); 
-
+    updateUI();
 }
 
 /**
@@ -339,6 +340,30 @@ function klickeSmiley() {
     speichereSpiel();
     updateDisplay();
     // checkAchievements(); // Auskommentiert gelassen
+}
+
+/**
+ * Berechnet die Gesamt-Klickkraft des Spielers basierend auf allen Boni.
+ * Das Ergebnis wird in die globale Variable klickKraft geschrieben.
+ */
+function berechneKlickkraft() {
+    // 1. Basiswert
+    let baseClickPower = 1; 
+    
+    // 2. Additive Boni
+    // KORREKTUR: Verwende hier die Variablen, die du für Upgrades/Prestige speichern wirst!
+    let totalAdditiveBonus = klickUpgradeBonus + sammelbuchClickPowerBonus + klickBoostPerPPValue;
+    
+    // 3. Multiplikative Boni
+    let totalMultipliers = klickPrestigeMultiplier * 1.0; 
+    
+    // Formel: (Basiswert + Additiver Bonus) * Multiplikator
+    klickKraft = (baseClickPower + totalAdditiveBonus) * totalMultipliers;
+    
+    // Sicherstellen, dass die Klickkraft mindestens 1 ist
+    if (klickKraft < 1) {
+        klickKraft = 1;
+    }
 }
 
 function produziereSmileys() {
@@ -814,39 +839,8 @@ function speichereSpiel() {
         researchStatus: researchStatus, 
         researchUpgradeIndex: researchUpgradeIndex,
 
-        // --- GEBÄUDE ZÄHLER (15x) ---
-        auto_klicker_count: auto_klicker_count,
-        smileyTreeProduction: smileyTreeProduction,
-        smileyFactoryProduction: smileyFactoryProduction,
-        smileyMineProduction: smileyMineProduction,
-        smileyBohrerProduction: smileyBohrerProduction,
-        smileyKernkraftwerkProduction: smileyKernkraftwerkProduction,
-        smileyGalaxieProduction: smileyGalaxieProduction,
-        dimensionsPortalProduction: dimensionsPortalProduction,
-        zeitmaschineProduction: zeitmaschineProduction,
-        metaKlickerProduction: metaKlickerProduction,
-        quantenNetzwerkProduction: quantenNetzwerkProduction,
-        endloserSpeicherProduction: endloserSpeicherProduction,
-        ursprungProduction: ursprungProduction,
-        kosmischeEinheitProduction: kosmischeEinheitProduction,
-        absoluterSchoepferProduction: absoluterSchoepferProduction,
-
-        // --- GEBÄUDE PREISE (15x) ---
-        auto_klicker_price: auto_klicker_price,
-        smileyTreePrice: smileyTreePrice,
-        smileyFactoryPrice: smileyFactoryPrice,
-        smileyMinePrice: smileyMinePrice,
-        smileyBohrerPrice: smileyBohrerPrice,
-        smileyKernkraftwerkPrice: smileyKernkraftwerkPrice,
-        smileyGalaxiePrice: smileyGalaxiePrice,
-        dimensionsPortalPrice: dimensionsPortalPrice,
-        zeitmaschinePrice: zeitmaschinePrice,
-        metaKlickerPrice: metaKlickerPrice,
-        quantenNetzwerkPrice: quantenNetzwerkPrice,
-        endloserSpeicherPrice: endloserSpeicherPrice,
-        ursprungPrice: ursprungPrice,
-        kosmischeEinheitPrice: kosmischeEinheitPrice,
-        absoluterSchoepferPrice: absoluterSchoepferPrice,
+        buildingCounts: buildingCounts,
+        buildingPrices: buildingPrices,
 
         // --- PRESTIGE-DATEN ---
         prestige_punkte: prestige_punkte,
@@ -911,6 +905,8 @@ function speichereSpiel() {
         kosmischeEinheitEfficiencyBonus: kosmischeEinheitEfficiencyBonus,
         absoluterSchoepferEfficiencyBonus: absoluterSchoepferEfficiencyBonus,
 
+        buildingCounts: buildingCounts,
+        buildingPrices: buildingPrices,
         // upgradeStatus: upgradeStatus, // Wird nicht mehr direkt gespeichert
     };
     
@@ -936,6 +932,13 @@ function ladeSpiel() {
         gesamteGeklickteSmileys = loadedData.gesamteGeklickteSmileys || 0;
         gesamtPrestigePunkte = loadedData.gesamtPrestigePunkte || 0;
 
+        if (loadedData.buildingCounts){
+            buildingCounts = loadedData.buildingCounts;
+        }
+        if ( loadedData.buildingPrices){
+            buildingPrices = loadedData.buildingPrices;
+        }
+
         // --- FORSCHUNGSLABOR & STATUS ---
         forschungslabor_count = loadedData.forschungslabor_count || 0;
         forschungslabor_fps_multiplier = loadedData.forschungslabor_fps_multiplier || 1.0;
@@ -943,40 +946,6 @@ function ladeSpiel() {
         forschungPunkte = loadedData.forschungPunkte || 0;
         researchStatus = loadedData.researchStatus || [false, false, false, false, false, false]; 
         researchUpgradeIndex = loadedData.researchUpgradeIndex || 0;
-
-        // --- GEBÄUDE ZÄHLER (15x) ---
-        auto_klicker_count = loadedData.auto_klicker_count || 0;
-        smileyTreeProduction = loadedData.smileyTreeProduction || 0;
-        smileyFactoryProduction = loadedData.smileyFactoryProduction || 0;
-        smileyMineProduction = loadedData.smileyMineProduction || 0;
-        smileyBohrerProduction = loadedData.smileyBohrerProduction || 0;
-        smileyKernkraftwerkProduction = loadedData.smileyKernkraftwerkProduction || 0;
-        smileyGalaxieProduction = loadedData.smileyGalaxieProduction || 0;
-        dimensionsPortalProduction = loadedData.dimensionsPortalProduction || 0;
-        zeitmaschineProduction = loadedData.zeitmaschineProduction || 0;
-        metaKlickerProduction = loadedData.metaKlickerProduction || 0;
-        quantenNetzwerkProduction = loadedData.quantenNetzwerkProduction || 0;
-        endloserSpeicherProduction = loadedData.endloserSpeicherProduction || 0;
-        ursprungProduction = loadedData.ursprungProduction || 0;
-        kosmischeEinheitProduction = loadedData.kosmischeEinheitProduction || 0;
-        absoluterSchoepferProduction = loadedData.absoluterSchoepferProduction || 0;
-
-        // --- GEBÄUDE PREISE (15x) ---
-        auto_klicker_price = loadedData.auto_klicker_price || 20;
-        smileyTreePrice = loadedData.smileyTreePrice || 100;
-        smileyFactoryPrice = loadedData.smileyFactoryPrice || 1000;
-        smileyMinePrice = loadedData.smileyMinePrice || 10000;
-        smileyBohrerPrice = loadedData.smileyBohrerPrice || 50000;
-        smileyKernkraftwerkPrice = loadedData.smileyKernkraftwerkPrice || 250000;
-        smileyGalaxiePrice = loadedData.smileyGalaxiePrice || 1250000;
-        dimensionsPortalPrice = loadedData.dimensionsPortalPrice || 6250000;
-        zeitmaschinePrice = loadedData.zeitmaschinePrice || 31250000;
-        metaKlickerPrice = loadedData.metaKlickerPrice || 156250000;
-        quantenNetzwerkPrice = loadedData.quantenNetzwerkPrice || 781250000;
-        endloserSpeicherPrice = loadedData.endloserSpeicherPrice || 3906250000;
-        ursprungPrice = loadedData.ursprungPrice || 19531250000;
-        kosmischeEinheitPrice = loadedData.kosmischeEinheitPrice || 97656250000;
-        absoluterSchoepferPrice = loadedData.absoluterSchoepferPrice || 488281250000;
 
         // --- PRESTIGE-DATEN ---
         prestige_punkte = loadedData.prestige_punkte || 0;
