@@ -39,7 +39,7 @@ const researchUpgrades = [
     { id: 4, cost: 200, description: 'Deine Smiley-Bäume sind 20% effizienter.', type: 'unit_efficiency', unit: 'smileyTree', bonusVariable: 'efficiencyBonus', value: 0.2 },
     { id: 5, cost: 500, description: 'Deine Smiley-Fabriken sind 20% effizienter.', type: 'unit_efficiency', unit: 'smileyFactory', bonusVariable: 'efficiencyBonus', value: 0.2 }
 ];
-const prestigeUpgrades = [
+const prestigeUpgradesData = [
     { id: 'globaler_multiplikator_1', name: 'Globaler Klick-Multiplikator', description: 'Erhöht die Klickkraft und die Produktion aller Gebäude um 25%.', cost: 1, bonus: 0.25, type: 'global_multi', dependencies: [] },
     { id: 'auto_klicker_multi', name: 'Auto-Klicker-Boost', description: 'Die Produktion von Auto-Klickern wird verdoppelt.', cost: 5, bonus: 1, type: 'auto_clicker_multi', dependencies: ['globaler_multiplikator_1'] },
     { id: 'forschungs_multi', name: 'Forschungs-Boost', description: 'Die Produktion des Forschungslabors wird verdoppelt.', cost: 10, bonus: 1, type: 'research_multi', dependencies: ['auto_klicker_multi'] },
@@ -76,7 +76,6 @@ let klickKraft = 1;               // Basiswert für Klicks
 let multiplikator = 1;            // Nicht primär verwendet, aber beibehalten
 let klickUpgradeBonus = 0;        // Additiver Klick-Bonus
 let gesamteGeklickteSmileys = 0;
-let gesamt_prestige_punkte = 0;
 let totalSPS = 0; 
 
 // --- FORSCHUNG & PRESTIGE STATUS ---
@@ -89,7 +88,6 @@ let forschungslaborGekauft = false;
 let researchUpgradeIndex = 0;
 // WICHTIG: Muss 'let' sein, damit es in ladeSpiel() neu zugewiesen werden kann!
 let researchStatus = [false, false, false, false, false, false]; 
-let gesammelte_prestige_punkte = 0;
 
 /// --- NEUE GEBÄUDE-ZUSTÄNDE (Ersetzen die 30 Einzelvariablen) ---
 // Alle Zähler, initialisiert auf 0 (Muss 15 Elemente haben)
@@ -104,14 +102,21 @@ let buildingPrices = [20, 100, 1000, 10000, 50000, 250000, 1250000, 6250000, 312
 //================================================================================================================
 
 // --- GLOBALE BONI ---
-let globalerPrestigeMultiplikator = 1.0;
 let globalSpsMultiplier = 1.0;
-let buildingCostReduction = 0; 
 let sammelbuchClickPowerBonus = 0;
-let klickBoostPerPrestigePoint = 0;
 let klickPrestigeMultiplier = 1; 
 let klickBoostPerPPValue = 0; 
 let researchLabPrestigeMulti = 1;
+
+// --- PRESTIGE ZUSTAND & GLOBALE BONI ---
+let gesamt_prestige_punkte = 0;      // Punkte, die aktuell ausgegeben werden können
+let gesammelte_prestige_punkte = 0;   // Punkte, die jemals gesammelt wurden (für klick_boost_per_pp)
+let globalerPrestigeMultiplikator = 1; // Multiplikator für die gesamte SPS-Produktion (Standard: 1)
+let globalerKlickBonus = 0;            // Absoluter Bonus auf die Klickkraft, der addiert wird
+let klickBoostPerPrestigePoint = 0;    // Klickbonus, der pro gesammelten Prestige-Punkt angewandt wird
+let buildingCostReduction = 0;         // Reduktion der Kostenwachstumsrate (z.B. 0.15)
+let researchLabSPSMultiplier = 1;      // Multiplikator für die Forschungsproduktion (Standard: 1)
+// ----------------------------------------
 
 // --- FORSCHUNGSEFFIZIENZ-BONI (30x) ---
 
@@ -165,7 +170,6 @@ function initialisiereSpiel() {
     // 3. Initialisiere die UI-Elemente (JETZT mit den geladenen Werten)
     createUpgradeElements(clickerUpgrades, 'upgrade-grid');
     createUpgradeElements(buildingsData, 'building-grid');
-    createPrestigeUpgrades();
     createPrestigeElements();
     renderResearchUpgrades(); 
 
@@ -411,62 +415,45 @@ function berechneKlickkraft() {
 }
 
 function produziereSmileys() {
-    // Array mit den Zähler-Variablen für einen einfacheren Zugriff in der Berechnung
+    // Array mit den Zähler-Variablen für einen einfacheren Zugriff
     const productionCounts = buildingCounts;
     
-    // Array mit den Additiven Forschungs-Boni (ResearchBonus)
-    const researchBonuses = [
-        autoClickerResearchBonus, smileyTreeResearchBonus, smileyFactoryResearchBonus, smileyMineResearchBonus, smileyBohrerResearchBonus,
-        smileyKernkraftwerkResearchBonus, smileyGalaxieResearchBonus, dimensionsPortalResearchBonus, zeitmaschineResearchBonus,
-        metaKlickerResearchBonus, quantenNetzwerkResearchBonus, endloserSpeicherResearchBonus, ursprungResearchBonus,
-        kosmischeEinheitResearchBonus, absoluterSchoepferResearchBonus
-    ];
-
-    // Array mit den Multiplikativen Prestige-Boni (PrestigeMulti)
-    const prestigeMultis = [
-        autoClickerPrestigeMulti, smileyTreePrestigeMulti, smileyFactoryPrestigeMulti, smileyMinePrestigeMulti, smileyBohrerPrestigeMulti,
-        smileyKernkraftwerkPrestigeMulti, smileyGalaxiePrestigeMulti, dimensionsPortalPrestigeMulti, zeitmaschinePrestigeMulti,
-        metaKlickerPrestigeMulti, quantenNetzwerkPrestigeMulti, endloserSpeicherPrestigeMulti, ursprungPrestigeMulti,
-        kosmischeEinheitPrestigeMulti, absoluterSchoepferPrestigeMulti
-    ];
-
-    // Array mit den Multiplikativen Effizienz-Boni (EfficiencyBonus)
-    const efficiencyBonuses = [
-        autoClickerEfficiencyBonus, smileyTreeEfficiencyBonus, smileyFactoryEfficiencyBonus, smileyMineEfficiencyBonus, smileyBohrerEfficiencyBonus,
-        smileyKernkraftwerkEfficiencyBonus, smileyGalaxieEfficiencyBonus, dimensionsPortalEfficiencyBonus, zeitmaschineEfficiencyBonus,
-        metaKlickerEfficiencyBonus, quantenNetzwerkEfficiencyBonus, endloserSpeicherEfficiencyBonus, ursprungEfficiencyBonus,
-        kosmischeEinheitEfficiencyBonus, absoluterSchoepferEfficiencyBonus
-    ];
-
-
+    // WICHTIG: Die separaten Arrays für Boni (researchBonuses, prestigeMultis, efficiencyBonuses)
+    // SIND NICHT MEHR NOTWENDIG und wurden entfernt, um den ReferenceError zu beheben.
+    
     // --- 1. GESAMTPRODUKTION BERECHNEN (ALLE 15 GEBÄUDE) ---
     let totalBaseSPS = 0;
     
-    // Wir iterieren durch alle 15 Gebäude in der buildingsData-Konstante (die du korrekt definiert hast)
+    // Wir iterieren durch alle Gebäude in der buildingsData-Konstante
     for (let i = 0; i < buildingsData.length; i++) {
         const data = buildingsData[i];
+        const count = productionCounts[i]; // Die Anzahl des aktuellen Gebäudes
         
         // Formel: Basis-SPS * (1 + Forschungsbonus) * Prestige-Multiplikator * (1 + Effizienzbonus)
+        // KORREKTUR: Wir greifen die Multiplikatoren nun direkt aus dem 'data'-Objekt ab!
         const unitSPS = 
-            data.baseSPS * (1 + researchBonuses[i]) * prestigeMultis[i] * (1 + efficiencyBonuses[i]);
+            data.baseSPS * (1 + data.researchBonus) * // researchBonus ist jetzt in buildingsData
+            data.prestigeMulti * // prestigeMulti ist jetzt in buildingsData (kein Fehler mehr!)
+            (1 + data.efficiencyBonus);     // efficiencyBonus ist jetzt in buildingsData
 
         // Gesamt-SPS = UnitSPS * Anzahl der Einheiten
-        totalBaseSPS += productionCounts[i] * unitSPS;
+        totalBaseSPS += count * unitSPS;
     }
 
     // --- 2. GLOBALE MULTIPLIER ANWENDEN ---
-        // totalBonusSPS enthält die korrekte SPS mit allen Multiplikatoren
-        const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
+    // totalBonusSPS enthält die korrekte SPS mit allen Multiplikatoren
+    // HINWEIS: researchLabPrestigeMulti und globalSpsMultiplier müssen noch globale Variablen sein!
+    const totalBonusSPS = totalBaseSPS * globalerPrestigeMultiplikator * researchLabPrestigeMulti * globalSpsMultiplier;
 
-        // KORREKT HINZUFÜGEN: Speichere den finalen Wert in der globalen Variable!
-        totalSPS = totalBonusSPS; 
+    // Speichere den finalen Wert
+    totalSPS = totalBonusSPS; 
 
-        // Aktualisierung (geteilt durch 10, da diese Funktion alle 100ms läuft)
-        aktuelle_smileys += totalSPS / 10;
-        gesammelte_smileys += totalSPS / 10;
+    // Aktualisierung (geteilt durch 10, da diese Funktion alle 100ms läuft)
+    aktuelle_smileys += totalSPS / 10;
+    gesammelte_smileys += totalSPS / 10;
     
     // --- 3. FORSCHUNGSPUNKTE ---
-    if (forschungslabor_count > 0) {
+    if (forschungslabor_count > 0) {
         // Basis-Produktion pro Labor (0.005) * Multiplikatoren
         const forschungSPSProEinheit = 0.005 * forschungslabor_fps_multiplier * researchLabPrestigeMulti;
 
@@ -474,7 +461,7 @@ function produziereSmileys() {
         const forschungSPS = forschungslabor_count * forschungSPSProEinheit;
 
         // Erhöhung der Forschungspunkte (durch 10 teilen, da alle 100ms)
-        forschungPunkte += forschungSPS / 10;
+        forschungPunkte += forschungSPS / 10;
     }
 }
 
@@ -600,67 +587,101 @@ function getBuildingPrice(index, count) {
 
 
 /**
- * 
- * @param {number} upgradeId - Die ID des Upgrdes (z.B. 1, 2, 3...)
+ * Führt den Kauf eines Prestige-Upgrades durch und wendet den permanenten Bonus an.
+ * @param {string} upgradeId - Die ID des Upgrades (z.B. 'globaler_multiplikator_1').
  */
-function kaufePrestigeUpgrade(upgradeId){
-    //Finde das Upgrade anhand seiner ID 
-    const upgrade = prestigeUpgrades.find(up => up.id === upgradeId);
-
-    if  (!upgrade) return;
-
-    const isBought = prestige_upgrades_gekauft[upgradeId];
-    const cost = upgrade.cost;
-
-    // 1. Prüfe Verfügbarkeit und Kosten 
-    if (isBought) {
-        console.log ("Upgrade wurde Bereits gekauft.");
+function kaufePrestigeUpgrade(upgradeId) {
+    // 1. Finde das Upgrade anhand seiner ID in den Daten
+    const upgrade = prestigeUpgradesData.find(up => up.id === upgradeId); 
+    
+    // Prüfe, ob das Upgrade existiert
+    if (!upgrade) {
+        console.error(`Upgrade mit ID ${upgradeId} nicht gefunden.`);
+        return;
+    }
+    
+    // ******************************************************************************
+    // HINWEIS: Wir verwenden upgrade.bought als primären Status im Array-Objekt.
+    // ******************************************************************************
+    
+    // 2. Prüfe Kaufbedingungen
+    if (upgrade.bought) {
+        console.log("Upgrade wurde bereits gekauft.");
         return;
     }
 
-    if (prestige_punkte < cost) {
-        console.log ("Nicht genug Prestige-Punkte.");
+    // KORREKTUR: Wir nutzen die korrekte Variable für die verfügbaren Punkte
+    if (gesamt_prestige_punkte < upgrade.cost) {
+        console.log("Nicht genug Prestige-Punkte.");
         return;
     }
 
-    // Prüfe Abhängigkeiten (fallls im Array definiert)
-    const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
+    // 3. Prüfe Abhängigkeiten
+    const allDependenciesMet = upgrade.dependencies.every(depId => {
+        const depUpgrade = prestigeUpgradesData.find(up => up.id === depId);
+        // Prüfe, ob das Abhängigkeits-Upgrade existiert UND gekauft wurde
+        return depUpgrade && depUpgrade.bought; 
+    });
+    
     if (!allDependenciesMet) {
-        console.log ("Abhängigkeiten sind nicht erfüllt.");
+        console.log("Abhängigkeiten sind nicht erfüllt.");
         return;
     }
 
-    // 2. Kauf durchführen und Effekt anwenden 
-    prestige_punkte -= cost; 
+    // 4. Kauf durchführen und Status/Punkte aktualisieren
+    gesamt_prestige_punkte -= upgrade.cost; 
+    upgrade.bought = true; // Status im Array aktualisieren
 
-    // Die Upgrade-ID als gekaft markieren
-    prestige_upgrades_gekauft[upgradeId] = 1;
+    // --- 5. EFFEKT ANWENDEN (switch-case an dein Array angepasst) ---
+    switch (upgrade.type) { // KORREKTUR: Verwenden von upgrade.type
+        
+        // Globale Effekte (Additiv)
+        case 'global_multi':
+            globalerKlickBonus += upgrade.bonus;         // globaler Klick-Bonus
+            globalerPrestigeMultiplikator += upgrade.bonus; // globaler SPS-Multiplikator
+            break;
+            
+        case 'global_sps_multi':
+            globalerPrestigeMultiplikator += upgrade.bonus;
+            break;
 
-    //Effekt auf die relevanten Multiplikatoren anwenden 
-    switch(upgrade.target) {
-        case 'glonal_sps':
-            globalerPrestigeMultiplikator *= upgrade.multiplier;
+        case 'klick_boost_per_pp':
+            klickBoostPerPrestigePoint += upgrade.bonus;
             break;
-        case 'forschungslabor_fps':
-            forschungslabor_fps_multiplier *= upgrade.multiplier;
+            
+        case 'cost_reduction':
+            buildingCostReduction += upgrade.bonus;
             break;
-        case 'research_lab_prestige_multi':
-            researchLabPrestigeMulti *= upgrade.multiplier;
+
+        case 'research_multi':
+            // NEUE VARIABLE researchLabSPSMultiplier verwenden
+            researchLabSPSMultiplier += upgrade.bonus; 
             break;
-        case 'auto_clicker':
-            autoClickerPrestigeMulti *= upgrade.multiplier;
+
+        // Gebäudespezifische Multiplier (Additiv auf buildingsData[i].prestigeMulti)
+        // WICHTIG: Die Indizes sind 0, 1, 2 für Auto-Klicker, Baum, Fabrik
+        case 'auto_clicker_multi':
+            buildingsData[0].prestigeMulti += upgrade.bonus; 
             break;
-        case 'smiley_tree':
-            smileyTreePrestigeMulti *= upgrade.multiplier;
+
+        case 'smiley_tree_multi':
+            buildingsData[1].prestigeMulti += upgrade.bonus;
             break;
-        case 'smiley_factory':
-            smileyFactoryPrestigeMulti *= upgrade.multiplier;
+
+        case 'smiley_factory_multi':
+            buildingsData[2].prestigeMulti += upgrade.bonus;
             break;
+            
+        default:
+            console.warn(`Unbekannter Prestige-Upgrade-Typ: ${upgrade.type} für Upgrade ID: ${upgradeId}`);
     }
 
-    // 3. Speichern und UI aktualisieren 
+    // 6. Speichern und UI aktualisieren
     speichereSpiel();
-    updateGame();
+    updateUI(); // KORREKTUR: updateUI ist die Standardfunktion
+    
+    // Commit-Erinnerung
+    console.log(`Upgrade '${upgrade.name}' erfolgreich gekauft!`);
 }
 
 
@@ -899,23 +920,6 @@ function speichereSpiel() {
         klickBoostPerPrestigePoint: klickBoostPerPrestigePoint,
         sammelbuchClickPowerBonus: sammelbuchClickPowerBonus,
         
-        // --- PRESTIGE MULTIPLIKATOREN (15x) ---
-        autoClickerPrestigeMulti: autoClickerPrestigeMulti,
-        smileyTreePrestigeMulti: smileyTreePrestigeMulti,
-        smileyFactoryPrestigeMulti: smileyFactoryPrestigeMulti,
-        smileyMinePrestigeMulti: smileyMinePrestigeMulti,
-        smileyBohrerPrestigeMulti: smileyBohrerPrestigeMulti,
-        smileyKernkraftwerkPrestigeMulti: smileyKernkraftwerkPrestigeMulti,
-        smileyGalaxiePrestigeMulti: smileyGalaxiePrestigeMulti,
-        dimensionsPortalPrestigeMulti: dimensionsPortalPrestigeMulti,
-        zeitmaschinePrestigeMulti: zeitmaschinePrestigeMulti,
-        metaKlickerPrestigeMulti: metaKlickerPrestigeMulti,
-        quantenNetzwerkPrestigeMulti: quantenNetzwerkPrestigeMulti,
-        endloserSpeicherPrestigeMulti: endloserSpeicherPrestigeMulti,
-        ursprungPrestigeMulti: ursprungPrestigeMulti,
-        kosmischeEinheitPrestigeMulti: kosmischeEinheitPrestigeMulti,
-        absoluterSchoepferPrestigeMulti: absoluterSchoepferPrestigeMulti,
-
         // --- FORSCHUNGS-BONI (30x) ---
         // Additive
         autoClickerResearchBonus: autoClickerResearchBonus,
@@ -1003,23 +1007,6 @@ function ladeSpiel() {
         globalSpsMultiplier = loadedData.globalSpsMultiplier || 1.0;
         klickBoostPerPrestigePoint = loadedData.klickBoostPerPrestigePoint || 0;
         sammelbuchClickPowerBonus = loadedData.sammelbuchClickPowerBonus || 0;
-        
-        // --- PRESTIGE MULTIPLIKATOREN (15x) ---
-        autoClickerPrestigeMulti = loadedData.autoClickerPrestigeMulti || 1.0;
-        smileyTreePrestigeMulti = loadedData.smileyTreePrestigeMulti || 1.0;
-        smileyFactoryPrestigeMulti = loadedData.smileyFactoryPrestigeMulti || 1.0;
-        smileyMinePrestigeMulti = loadedData.smileyMinePrestigeMulti || 1.0;
-        smileyBohrerPrestigeMulti = loadedData.smileyBohrerPrestigeMulti || 1.0;
-        smileyKernkraftwerkPrestigeMulti = loadedData.smileyKernkraftwerkPrestigeMulti || 1.0;
-        smileyGalaxiePrestigeMulti = loadedData.smileyGalaxiePrestigeMulti || 1.0;
-        dimensionsPortalPrestigeMulti = loadedData.dimensionsPortalPrestigeMulti || 1.0;
-        zeitmaschinePrestigeMulti = loadedData.zeitmaschinePrestigeMulti || 1.0;
-        metaKlickerPrestigeMulti = loadedData.metaKlickerPrestigeMulti || 1.0;
-        quantenNetzwerkPrestigeMulti = loadedData.quantenNetzwerkPrestigeMulti || 1.0;
-        endloserSpeicherPrestigeMulti = loadedData.endloserSpeicherPrestigeMulti || 1.0;
-        ursprungPrestigeMulti = loadedData.ursprungPrestigeMulti || 1.0;
-        kosmischeEinheitPrestigeMulti = loadedData.kosmischeEinheitPrestigeMulti || 1.0;
-        absoluterSchoepferPrestigeMulti = loadedData.absoluterSchoepferPrestigeMulti || 1.0;
 
         // --- FORSCHUNGS-BONI (30x) ---
         // Additive
@@ -1068,24 +1055,70 @@ function ladeSpiel() {
     }
 }
 
+/**
+ * Wendet alle permanenten Prestige-Boni an (wird beim Laden des Spiels aufgerufen).
+ */
 function applyAllPrestigeBonuses() {
-    // Alle Boni zurücksetzen
-    globalerPrestigeMultiplikator = 1.0;
-    globalSpsMultiplier = 1.0;
+    // --- 1. GLOBALE BONI ZURÜCKSETZEN ---
+    // Wichtig: Wir setzen die Variablen zurück, die durch Prestige-Upgrades beeinflusst werden.
+    globalerPrestigeMultiplikator = 1.0; 
+    globalerKlickBonus = 0;              // Für 'global_multi' (Klickkraft)
     buildingCostReduction = 0;
     klickBoostPerPrestigePoint = 0;
-    autoClickerPrestigeMulti = 1;
-    smileyTreePrestigeMulti = 1;
-    smileyFactoryPrestigeMulti = 1;
-    researchLabPrestigeMulti = 1;
-    
-    // Alle Upgrades durchgehen und deren Boni anwenden
-    prestigeUpgrades.forEach(upgrade => {
-        if (prestige_upgrades_gekauft[upgrade.id]) {
-            applyPrestigeBonus(upgrade); 
+    researchLabSPSMultiplier = 1;
+
+    // Setze die gebäudespezifischen Multiplikatoren im buildingsData-Array zurück
+    buildingsData.forEach(building => {
+        building.prestigeMulti = 1; // Wichtig: Zurücksetzen auf den Startwert 1
+    });
+
+    // --- 2. ALLE GEKAUFTEN UPGRADES ANWENDEN ---
+    // KORREKTUR: Verwende den korrekten Array-Namen: prestigeUpgradesData
+    prestigeUpgradesData.forEach(upgrade => { 
+        // WICHTIG: Wir prüfen den Kaufstatus direkt im Array-Objekt
+        if (upgrade.bought) { 
+            
+            // Die Logik muss die gleiche sein wie in kaufePrestigeUpgrade()
+            switch (upgrade.type) { 
+                case 'global_multi':
+                    globalerKlickBonus += upgrade.bonus; 
+                    globalerPrestigeMultiplikator += upgrade.bonus;
+                    break;
+                    
+                case 'global_sps_multi':
+                    globalerPrestigeMultiplikator += upgrade.bonus;
+                    break;
+
+                case 'klick_boost_per_pp':
+                    klickBoostPerPrestigePoint += upgrade.bonus;
+                    break;
+                    
+                case 'cost_reduction':
+                    buildingCostReduction += upgrade.bonus;
+                    break;
+
+                case 'research_multi':
+                    researchLabSPSMultiplier += upgrade.bonus;
+                    break;
+
+                // --- GEBÄUDESPEZIFISCHE MULTIPLIER ---
+                case 'auto_clicker_multi':
+                    buildingsData[0].prestigeMulti += upgrade.bonus; 
+                    break;
+
+                case 'smiley_tree_multi':
+                    buildingsData[1].prestigeMulti += upgrade.bonus;
+                    break;
+
+                case 'smiley_factory_multi':
+                    buildingsData[2].prestigeMulti += upgrade.bonus;
+                    break;
+            }
         }
     });
-    console.log("Prestige-Boni neu angewendet.");
+    
+    // Die Konsolenausgabe ist in deiner Lieblingsfarbe! 🔵
+    console.log("%cPrestige-Boni erfolgreich neu angewendet.", "color: #009FFD;");
 }
 
 
@@ -1245,18 +1278,23 @@ innerHTML = `
     });
 }
 
+/**
+ * Erstellt die HTML-Elemente für alle Prestige-Upgrades einmalig.
+ * Diese Funktion muss beim Laden der Seite aufgerufen werden, wenn man sich auf prestige_shop.html befindet.
+ */
 function createPrestigeElements() {
-    // Stellen Sie sicher, dass Sie im HTML einen Container mit der ID 'prestige-grid' haben
-    const container = document.getElementById('prestige-grid'); 
+    // KORREKTUR 1: Verwenden der korrekten ID aus prestige_shop.html
+    const container = document.getElementById('prestige_upgrades_grid'); 
     if (!container) return; 
 
-    container.innerHTML = ''; // Vorherige Elemente entfernen
-
-    prestigeUpgrades.forEach(upgrade => {
-        // 1. Hauptelement erstellen (WICHTIG: Verwende die Klasse aus deiner update-Funktion!)
+    // KORREKTUR: Wir lassen den zentralen Smiley in prestige_upgrades_grid und hängen die Upgrades einfach an.
+    
+    // KORREKTUR 2: Verwenden des standardisierten Array-Namens
+        prestigeUpgradesData.forEach(upgrade => {        
         const upgradeDiv = document.createElement('div');
         upgradeDiv.classList.add('upgrade-item', 'prestige-upgrade'); 
-        upgradeDiv.dataset.id = upgrade.id; // Damit der Query-Selector in updatePrestigeButtons funktioniert
+        upgradeDiv.id = `prestige-upgrade-${upgrade.id}`; // Wichtig für renderPrestigeUpgrades
+        upgradeDiv.dataset.id = upgrade.id; 
 
         // 2. Inhalt (Titel, Beschreibung)
         const contentDiv = document.createElement('div');
@@ -1270,6 +1308,7 @@ function createPrestigeElements() {
         
         const costP = document.createElement('p');
         costP.classList.add('prestige-cost'); 
+        // KORREKTUR 3: formatNumber muss formatNumber heißen
         costP.innerHTML = `Kosten: <span>${formatNumber(upgrade.cost)} PP</span>`;
         
         contentDiv.appendChild(nameH3);
@@ -1278,12 +1317,14 @@ function createPrestigeElements() {
         
         // 3. Kauf-Button
         const button = document.createElement('button');
-        button.classList.add('btn-buy');
-        button.innerText = `Kaufen (${formatNumber(upgrade.cost)} PP)`;
+        button.classList.add('btn-buy', 'prestige-buy-button'); // Füge eine Klasse für die render-Funktion hinzu
+        // KORREKTUR 3: formatNumber muss formatNumber heißen
+        button.innerText = `Kaufen (${formatNumber(upgrade.cost)} PP)`; 
 
         // WICHTIG: Event Listener für den Kauf
         button.addEventListener('click', () => {
-            kaufePrestigeUpgrade(upgrade.id); 
+            // Wir verwenden den Index, um sicherzustellen, dass wir das korrekte Upgrade kaufen
+            kaufePrestigeUpgrade(index); 
         });
 
         // 4. Alles zusammenfügen
@@ -1482,12 +1523,7 @@ function updateUpgradesDisplay() {
     // --- HILFS-ARRAYS ZUM ABGLEICH MIT buildingsData ---
     const counts = buildingCounts;
     const prices = buildingPrices;
-    const prestigeMultis = [
-        autoClickerPrestigeMulti, smileyTreePrestigeMulti, smileyFactoryPrestigeMulti, smileyMinePrestigeMulti, smileyBohrerPrestigeMulti,
-        smileyKernkraftwerkPrestigeMulti, smileyGalaxiePrestigeMulti, dimensionsPortalPrestigeMulti, zeitmaschinePrestigeMulti, 
-        metaKlickerPrestigeMulti, quantenNetzwerkPrestigeMulti, endloserSpeicherPrestigeMulti, ursprungPrestigeMulti, 
-        kosmischeEinheitPrestigeMulti, absoluterSchoepferPrestigeMulti
-    ];
+    const prestigeMultis = buildingsData;
     const researchBonuses = [
         autoClickerResearchBonus, smileyTreeResearchBonus, smileyFactoryResearchBonus, smileyMineResearchBonus, smileyBohrerResearchBonus,
         smileyKernkraftwerkResearchBonus, smileyGalaxieResearchBonus, dimensionsPortalResearchBonus, zeitmaschineResearchBonus, 
@@ -1559,41 +1595,8 @@ function updateUpgradesDisplay() {
     });
 }
 
-function createPrestigeUpgrades() {
-    const grid = document.getElementById('prestige_upgrades_grid');
-    if (!grid) return; 
-
-    grid.innerHTML = ''; 
-    prestigeUpgrades.forEach(upgrade => {
-        const upgradeDiv = document.createElement('div');
-        upgradeDiv.classList.add('prestige-upgrade');
-        upgradeDiv.dataset.id = upgrade.id;
-
-        const isBought = prestige_upgrades_gekauft[upgrade.id];
-        let className = isBought ? 'bought' : 'available';
-
-        const allDependenciesMet = upgrade.dependencies.every(depId => prestige_upgrades_gekauft[depId]);
-        if (!allDependenciesMet && !isBought) {
-            className = 'locked';
-        }
-
-        upgradeDiv.classList.add(className);
-
-        const button = document.createElement('button');
-        button.innerText = `${upgrade.name} - ${upgrade.cost} PP`;
-        button.disabled = !allDependenciesMet || isBought || prestige_punkte < upgrade.cost;
-        
-        const description = document.createElement('p');
-        description.innerText = upgrade.description;
-
-        upgradeDiv.appendChild(button);
-        upgradeDiv.appendChild(description);
-        grid.appendChild(upgradeDiv);
-    });
-}
-
 function updatePrestigeButtons() {
-    prestigeUpgrades.forEach(upgrade => {
+    prestigeUpgradesData.forEach(upgrade => {
         // Hier sollte upgradeDiv jetzt gefunden werden, da es in createPrestigeElements erzeugt wird
         const upgradeDiv = document.querySelector(`.prestige-upgrade[data-id="${upgrade.id}"]`);
         if (!upgradeDiv) return;
@@ -1632,23 +1635,57 @@ function updatePrestigeButtons() {
 }
 
 /**
- * Rendert die Prestige-Upgrades in der Benutzeroberfläche und aktualisiert deren Status.
- * Diese Funktion wird einmal beim Laden/Prestige und bei jedem UI-Update aufgerufen.
+ * Aktualisiert den visuellen Status aller Prestige-Upgrades und Buttons.
  */
 function renderPrestigeUpgrades() {
-    // Annahme: Die Prestige-Upgrades sind in einem globalen Array/Objekt namens 'prestigeUpgradesData' gespeichert.
+    // 1. Aktualisiere die Anzeige der Prestige-Punkte
+    const pointsElement = document.getElementById('current_prestige_points');
+    if (pointsElement) {
+        pointsElement.innerText = formatNumber(gesamt_prestige_punkte);
+    }
     
-    // Die Logik, um die DOM-Elemente zu finden und zu aktualisieren, ist komplex, 
-    // aber wir definieren hier zumindest die Funktion, um den ReferenceError zu beheben.
-    
-    // Du kannst hier später die Logik hinzufügen, die durch dein prestigeUpgradesData-Objekt iteriert.
-    
-    // Da wir keine Upgrade-Daten vorliegen haben, fügen wir nur eine Logik für die Anzeige hinzu.
-    // **WICHTIG:** Wenn du eine Funktion `createPrestigeElements()` hast, die die HTML-Elemente erstellt, 
-    // muss diese beim initialen Spielstart einmal aufgerufen werden, nicht hier.
-    
-    // Diese Funktion wird in der Regel nur die Status-Klassen (bought, available, locked) aktualisieren.
-    
-    // Ein leerer Platzhalter, um den Fehler zu beheben:
-    // Hier sollte später deine Iterations-Logik stehen, die die Klassen anpasst.
+    prestigeUpgradesData.forEach((upgrade) => {
+        const upgradeDiv = document.getElementById(`prestige-upgrade-${upgrade.id}`);
+        if (!upgradeDiv) return;
+
+        const buyButton = upgradeDiv.querySelector('.prestige-buy-button'); 
+        const isAffordable = gesamt_prestige_punkte >= upgrade.cost;
+        
+        // --- Status-Klassen und Button-Status aktualisieren ---
+        if (upgrade.bought) {
+            upgradeDiv.classList.add('bought');
+            upgradeDiv.classList.remove('affordable', 'unaffordable');
+            if (buyButton) {
+                buyButton.disabled = true;
+                buyButton.innerText = "Gekauft!";
+                // Entferne den alten Event Listener, indem du den Button ersetzt
+                const newButton = buyButton.cloneNode(true);
+                buyButton.replaceWith(newButton);
+            }
+        } else {
+            upgradeDiv.classList.remove('bought');
+            
+            if (buyButton) {
+                buyButton.disabled = !isAffordable;
+                // KORREKTUR: Aktualisiere den Button-Text mit dem korrekten Format
+                buyButton.innerText = `Kaufen (${formatNumber(upgrade.cost)} PP)`; 
+            }
+            
+            if (isAffordable) {
+                upgradeDiv.classList.add('affordable');
+                upgradeDiv.classList.remove('unaffordable');
+                upgradeDiv.style.cursor = 'pointer';
+            } else {
+                upgradeDiv.classList.add('unaffordable');
+                upgradeDiv.classList.remove('affordable');
+                upgradeDiv.style.cursor = 'default';
+            }
+        }
+        
+        // Optional: Kosten-Text einfärben (für deinen Farbwunsch)
+        const costSpan = upgradeDiv.querySelector('.prestige-cost span');
+        if (costSpan && !upgrade.bought) {
+            costSpan.style.color = isAffordable ? 'var(--color-blue-main)' : 'var(--color-red-main)';
+        }
+    });
 }
