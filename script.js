@@ -9,22 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // SPIEL-DATEN (Konstanten)
 const buildingsData = [
-    { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, elementId: "auto_klicker_button_1x", baseSPS: 1 },
-    { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x", baseSPS: 20 },
-    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, elementId: "smileyFactoryButton1x", baseSPS: 150 },
+    { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, elementId: "auto_klicker_button_1x", baseSPS: 1, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0 },
+    { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, elementId: "smileyTreeButton1x", baseSPS: 20, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, elementId: "smileyFactoryButton1x", baseSPS: 150, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
     // NEUE GEBÄUDE (4 - 15)
-    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, elementId: "smileyMineButton1x", baseSPS: 1000 },
-    { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, elementId: "smileyBohrerButton1x", baseSPS: 5000 },
-    { name: "Smiley-Kernkraftwerk", basePrice: 250000, growthRate: 1.35, elementId: "smileyKernkraftwerkButton1x", baseSPS: 25000 },
-    { name: "Smiley-Galaxie", basePrice: 1250000, growthRate: 1.40, elementId: "smileyGalaxieButton1x", baseSPS: 125000 },
-    { name: "Dimensionsportal", basePrice: 6250000, growthRate: 1.45, elementId: "dimensionsPortalButton1x", baseSPS: 625000 },
-    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, elementId: "zeitmaschineButton1x", baseSPS: 3125000 },
-    { name: "Meta-Klicker", basePrice: 156250000, growthRate: 1.55, elementId: "metaKlickerButton1x", baseSPS: 15625000 },
-    { name: "Quanten-Netzwerk", basePrice: 781250000, growthRate: 1.60, elementId: "quantenNetzwerkButton1x", baseSPS: 78125000 },
-    { name: "Endloser Speicher", basePrice: 3906250000, growthRate: 1.65, elementId: "endloserSpeicherButton1x", baseSPS: 390625000 },
-    { name: "Ursprung", basePrice: 19531250000, growthRate: 1.70, elementId: "ursprungButton1x", baseSPS: 1953125000 },
-    { name: "Kosmische Einheit", basePrice: 97656250000, growthRate: 1.75, elementId: "kosmischeEinheitButton1x", baseSPS: 9765625000 },
-    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, elementId: "absoluterSchoepferButton1x", baseSPS: 48828125000 },
+    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, elementId: "smileyMineButton1x", baseSPS: 1000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, elementId: "smileyBohrerButton1x", baseSPS: 5000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Smiley-Kernkraftwerk", basePrice: 250000, growthRate: 1.35, elementId: "smileyKernkraftwerkButton1x", baseSPS: 25000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Smiley-Galaxie", basePrice: 1250000, growthRate: 1.40, elementId: "smileyGalaxieButton1x", baseSPS: 125000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Dimensionsportal", basePrice: 6250000, growthRate: 1.45, elementId: "dimensionsPortalButton1x", baseSPS: 625000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, elementId: "zeitmaschineButton1x", baseSPS: 3125000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Meta-Klicker", basePrice: 156250000, growthRate: 1.55, elementId: "metaKlickerButton1x", baseSPS: 15625000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Quanten-Netzwerk", basePrice: 781250000, growthRate: 1.60, elementId: "quantenNetzwerkButton1x", baseSPS: 78125000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Endloser Speicher", basePrice: 3906250000, growthRate: 1.65, elementId: "endloserSpeicherButton1x", baseSPS: 390625000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Ursprung", basePrice: 19531250000, growthRate: 1.70, elementId: "ursprungButton1x", baseSPS: 1953125000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
+    { name: "Kosmische Einheit", basePrice: 97656250000, growthRate: 1.75, elementId: "kosmischeEinheitButton1x", baseSPS: 9765625000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0 },
+    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, elementId: "absoluterSchoepferButton1x", baseSPS: 48828125000, prestigeMulti: 1, researchBonus: 0, efficiencyBonus: 0  },
 ];
 const clickerUpgrades = [
     { name: "Stärkerer Klick", price: 250, effect: 0.1, type: "click", bought: 0, description: 'Erhöht deine Klickkraft um 10% des Basiswerts.' },
@@ -112,24 +112,6 @@ let klickBoostPerPrestigePoint = 0;
 let klickPrestigeMultiplier = 1; 
 let klickBoostPerPPValue = 0; 
 let researchLabPrestigeMulti = 1;
-
-
-// --- PRESTIGE MULTIPLIER (15x) ---
-let autoClickerPrestigeMulti = 1;
-let smileyTreePrestigeMulti = 1;
-let smileyFactoryPrestigeMulti = 1;
-let smileyMinePrestigeMulti = 1;
-let smileyBohrerPrestigeMulti = 1;
-let smileyKernkraftwerkPrestigeMulti = 1;
-let smileyGalaxiePrestigeMulti = 1;
-let dimensionsPortalPrestigeMulti = 1;
-let zeitmaschinePrestigeMulti = 1;
-let metaKlickerPrestigeMulti = 1;
-let quantenNetzwerkPrestigeMulti = 1;
-let endloserSpeicherPrestigeMulti = 1;
-let ursprungPrestigeMulti = 1;
-let kosmischeEinheitPrestigeMulti = 1;
-let absoluterSchoepferPrestigeMulti = 1;
 
 // --- FORSCHUNGSEFFIZIENZ-BONI (30x) ---
 
@@ -349,54 +331,37 @@ function klickeSmiley() {
  * Berechnet den finalen SPS-Wert pro Einheit eines Gebäudes,
  * unter Berücksichtigung aller globalen und spezifischen Boni.
  * @param {object} item - Das buildingsData-Objekt des Gebäudes.
- * @param {number} index - Der Index des Gebäudes.
  * @returns {number} Der endgültige SPS-Wert pro Einheit.
  */
-function berechneSPSProEinheit(item, index) {
-    // Array mit den Additiven Forschungs-Boni (ResearchBonus) - aus produziereSmileys kopiert
-    const researchBonuses = [
-        autoClickerResearchBonus, smileyTreeResearchBonus, smileyFactoryResearchBonus, smileyMineResearchBonus, smileyBohrerResearchBonus,
-        smileyKernkraftwerkResearchBonus, smileyGalaxieResearchBonus, dimensionsPortalResearchBonus, zeitmaschineResearchBonus,
-        metaKlickerResearchBonus, quantenNetzwerkResearchBonus, endloserSpeicherResearchBonus, ursprungResearchBonus,
-        kosmischeEinheitResearchBonus, absoluterSchoepferResearchBonus
-    ];
+function berechneSPSProEinheit(item) {
+    // KEINE ARRAYS MEHR BENÖTIGT! Alle Boni kommen direkt aus dem 'item'-Objekt.
 
-    // Array mit den Multiplikativen Prestige-Boni (PrestigeMulti) - aus produziereSmileys kopiert
-    const prestigeMultis = [
-        autoClickerPrestigeMulti, smileyTreePrestigeMulti, smileyFactoryPrestigeMulti, smileyMinePrestigeMulti, smileyBohrerPrestigeMulti,
-        smileyKernkraftwerkPrestigeMulti, smileyGalaxiePrestigeMulti, dimensionsPortalPrestigeMulti, zeitmaschinePrestigeMulti,
-        metaKlickerPrestigeMulti, quantenNetzwerkPrestigeMulti, endloserSpeicherPrestigeMulti, ursprungPrestigeMulti,
-        kosmischeEinheitPrestigeMulti, absoluterSchoepferPrestigeMulti
-    ];
+    // 1. Hole die Werte direkt aus dem Gebäude-Objekt
+    const researchBonus = item.researchBonus;
+    const prestigeMulti = item.prestigeMulti;
+    const efficiencyBonus = item.efficiencyBonus;
 
-    // Array mit den Multiplikativen Effizienz-Boni (EfficiencyBonus) - aus produziereSmileys kopiert
-    const efficiencyBonuses = [
-        autoClickerEfficiencyBonus, smileyTreeEfficiencyBonus, smileyFactoryEfficiencyBonus, smileyMineEfficiencyBonus, smileyBohrerEfficiencyBonus,
-        smileyKernkraftwerkEfficiencyBonus, smileyGalaxieEfficiencyBonus, dimensionsPortalEfficiencyBonus, zeitmaschineEfficiencyBonus,
-        metaKlickerEfficiencyBonus, quantenNetzwerkEfficiencyBonus, endloserSpeicherEfficiencyBonus, ursprungEfficiencyBonus,
-        kosmischeEinheitEfficiencyBonus, absoluterSchoepferEfficiencyBonus
-    ];
-    
-    // Die Berechnung aus produziereSmileys (für eine Einheit)
-    let unitSPS = item.baseSPS * (1 + researchBonuses[index]) * prestigeMultis[index] * (1 + efficiencyBonuses[index]);
+    // 2. Die ursprüngliche Berechnung wird beibehalten, nur die Variablen-Namen sind neu
+    let unitSPS = item.baseSPS * (1 + researchBonus) * prestigeMulti * (1 + efficiencyBonus);
 
-    // Globale Multiplier anwenden (wie in produziereSmileys)
+    // Globale Multiplier anwenden (diese sind NICHT gebäudespezifisch, also bleiben sie global)
     unitSPS *= globalerPrestigeMultiplikator;
-    unitSPS *= researchLabPrestigeMulti;
-    unitSPS *= globalSpsMultiplier;
+    // unitSPS *= researchLabPrestigeMulti; // <-- Nutzt du diese Variable noch?
+    // unitSPS *= globalSpsMultiplier;     // <-- Nutzt du diese Variable noch?
     
     return unitSPS;
 }
-
 /**
  * Berechnet den gesamten SPS-Output aller besessenen Einheiten dieses Gebäudetyps.
  * DIESE FUNKTION BEHEBT DEN ReferenceError, WENN SIE FRÜH GENUG PLATZIERT WIRD.
  */
 function berechneGesamtSPSGebaeude(item, index) {
-    // 1. Hole den geboosteten Wert pro Stück
-    const spsPerUnit = berechneSPSProEinheit(item, index);
+    // 1. Hole den geboosteten Wert pro Stück.
+    // Index wird NICHT mehr übergeben, da berechneSPSProEinheit nur 'item' nutzt.
+    const spsPerUnit = berechneSPSProEinheit(item); // <--- KORRIGIERT!
     
-    // 2. Multipliziere mit der besessenen Anzahl
+    // 2. Multipliziere mit der besessenen Anzahl.
+    // Index wird hier nur für den Zugriff auf buildingCounts benötigt.
     const currentCount = buildingCounts[index];
     
     return spsPerUnit * currentCount;
