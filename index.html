@@ -42,6 +42,14 @@
         <div class="shop-and-research-container">
 
             <div class="research-lab-container">
+                <!-- Ergänzt: Research Upgrade Panel für bessere Kompatibilität -->
+                <div id="research-upgrade-panel" style="display:none;">
+                    <h3 id="forschungsUpgradeName"></h3>
+                    <p id="forschungsUpgradeDescription"></p>
+                    <button id="forschungUpgradeButton">Upgrade kaufen</button>
+                </div>
+                <!-- Ergänzt: Research Upgrades Grid -->
+                <div id="research_upgrades_grid"></div>
                 <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
                 <p>Generiert Forschungspunkte pro Sekunde.</p>
                 <p>Forschungspunkte: <span id="forschungspunkte">0</span></p>
@@ -57,6 +65,9 @@
             </div>
 
             <div class="upgrade-grid-container">
+                <!-- Ergänzt: Prestige Upgrades Grid für Kompatibilität -->
+                <div id="prestige_upgrades_grid" style="display:none;"></div>
+                <div id="prestige-grid" style="display:none;"></div>
                 <section class="upgrade-section">
                     <h2>Upgrades</h2>
                     <div class="upgrade-grid" id="upgrade-grid"></div>
