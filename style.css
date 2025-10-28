@@ -3,35 +3,87 @@
 //================================================================================================*/
 
 :root {
-    /* Dein Farbschema: 011638-6b0504-009ffd-3e5641 */
-    --color-background-dark: #011638;    /* Dunkles Blau/Schwarz (Hintergrund) */
-    --color-red-main: #6B0504;           /* Tiefes Rot (Akzent/Gekauft/Prestige) */
-    --color-blue-main: #009FFD;          /* Helles Blau (Aktion/Währung/Information) */
-    --color-neutral-accent: #3E5641;     /* Olives Grün/Grau (Sekundärer Akzent) */
+    /* Neues Farbschema mit besserer Lesbarkeit */
+    --color-background-dark: #1a1a2e;    /* Dunkleres, satteres Blau für Hintergrund */
+    --color-red-main: #e94560;           /* Helleres, moderneres Rot */
+    --color-blue-main: #40a9ff;          /* Mittelhelles Blau für besseren Kontrast */
+    --color-neutral-accent: #4a5568;     /* Neutraleres Grau */
+    
+    /* Text Farben */
+    --color-text-primary: #ffffff;        /* Weiß für Haupttext */
+    --color-text-secondary: #b3b3b3;     /* Hellgrau für sekundären Text */
+    --color-text-accent: #40a9ff;        /* Akzentfarbe für wichtige Texte */
     --color-text-light: #f0f0f0;         /* Helle Schrift */
+    
+    /* Layout Spacings */
+    --spacing-sm: 10px;
+    --spacing-md: 20px;
+    --spacing-lg: 30px;
+    
+    /* Container & Overlay Backgrounds */
+    --container-bg: rgba(255, 255, 255, 0.05);
+    --container-bg-hover: rgba(255, 255, 255, 0.08);
     --color-dark-overlay: rgba(0, 0, 0, 0.4);
     --color-semi-dark: #2c3e50;
-    --color-modal-bg: rgba(0,0,0,0.8);
+    --color-modal-bg: rgba(0, 0, 0, 0.8);
 }
+
 
 body, html {
     margin: 0;
     padding: 0;
-    font-family: 'Arial', sans-serif;
-    color: var(--color-text-light);
+    font-family: 'Roboto', sans-serif;
+    color: var(--color-text-primary);
     height: 100%;
     transition: background-color 0.5s ease;
-    background-color: var(--color-semi-dark);
+    background-color: var(--color-background-dark);
     display: flex;
     flex-direction: column;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Typografie */
 h1, h2, h3 {
-    color: var(--color-blue-main);
-    text-shadow: 0 0 10px rgba(152, 0, 253, 0.5); 
+    color: var(--color-text-accent);
     margin-bottom: 20px;
     text-align: center;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--color-text-primary);
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: var(--color-text-accent);
+}
+
+p {
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.stats-box p {
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.stats-box span {
+    color: var(--color-text-accent);
+    font-weight: 500;
 }
 
 
@@ -114,12 +166,14 @@ body.info-page {
 
 /* Haupt-Container, der die linke und rechte Spalte enthält */
 .main-layout {
-    display: flex;
-    max-width: 1300px; 
-    margin: 20px auto; 
-    gap: 30px; 
-    padding: 0 20px;
-    align-items: flex-start; 
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    max-width: 1600px;
+    margin: 20px auto;
+    min-height: calc(100vh - 100px);
+    align-items: start;
 }
 
 /* main-Regel vereinfacht */
@@ -143,16 +197,38 @@ main {
 //================================================================================================*/
 
 /* LINKER BEREICH: Klicker & Stats */
-.klicker-container {
-    flex: 0 0 350px; 
-    padding: 25px;
-    background-color: var(--color-background-dark); 
-    border: 3px solid var(--color-blue-main); 
-    border-radius: 12px;
+.left-column, .middle-column, .right-column {
+    padding: 30px;
+    background-color: rgba(26, 26, 46, 0.95);
+    border: 2px solid var(--color-blue-main);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.left-column {
     text-align: center;
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.middle-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.right-column {
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+}
+
+/* Verbesserte Container Hover-Effekte */
+.left-column:hover, .middle-column:hover, .right-column:hover {
+    border-color: var(--color-text-accent);
+    box-shadow: 0 6px 25px rgba(64, 169, 255, 0.2);
+    transition: all 0.3s ease;
 }
 
 /* Smiley Button */
@@ -437,12 +513,105 @@ main {
     padding: 20px;
 }
 
+/* Prestige map: radial layout with central Smiley */
 #prestige_upgrades_grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
+    position: relative;
     width: 100%;
-    max-width: 800px;
+    max-width: 1100px;
+    height: 680px; /* visual area for radial map */
+    margin: 0 auto;
+    display: block; /* switched from grid to map */
+    background: radial-gradient(ellipse at center, rgba(64,169,255,0.02) 0%, transparent 40%);
+}
+
+.prestige-map { /* helper class applied by JS */
+    position: relative;
+}
+
+.prestige-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+}
+.prestige-center-inner img {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(64,169,255,0.35), 0 0 8px rgba(233,69,96,0.2);
+    border: 6px solid rgba(255,255,255,0.06);
+}
+.prestige-center-label {
+    margin-top: 8px;
+    text-align: center;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.prestige-node {
+    width: 160px;
+    height: auto;
+    z-index: 6;
+}
+.prestige-node .node-inner {
+    background: rgba(1,22,56,0.85);
+    color: var(--color-text-primary);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 140px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+.node-icon img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 6px auto;
+    border: 3px solid rgba(64,169,255,0.12);
+}
+.node-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-accent);
+    margin-bottom: 6px;
+}
+.node-cost {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+.prestige-buy-button {
+    background: linear-gradient(180deg, var(--color-blue-main), #0d6fb8);
+    color: var(--color-text-primary);
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Cluster label for sections */
+.cluster-label {
+    background: rgba(0,0,0,0.45);
+    color: var(--color-text-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    border: 1px solid rgba(64,169,255,0.12);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    z-index: 7;
+}
+
+/* Responsive: fallback to simple grid on very small screens */
+@media (max-width: 760px) {
+    #prestige_upgrades_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        height: auto;
+    }
+    .prestige-center-inner img { width: 120px; height:120px; }
+    .prestige-node { width: 100%; position: static; transform: none; }
 }
 
 /* --- Prestige Shop Upgrade-Karten (Konsolidiert) --- */
@@ -551,39 +720,62 @@ main {
 // --- 8. RESPONSIVE DESIGN (MEDIA QUERIES) ---
 //================================================================================================*/
 
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .main-layout {
-        /* Bei kleineren Desktops den Klicker-Bereich flexibler machen */
-        grid-template-columns: 1fr 3fr; 
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .left-column {
+        grid-column: 1 / -1;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .middle-column {
+        grid-column: 1;
+    }
+    
+    .right-column {
+        grid-column: 2;
     }
 }
 
 @media (max-width: 900px) {
-    /* Wechsel zu vertikalem Stapeln auf Tablets/Mobilgeräten */
     .main-layout {
-        flex-direction: column;
-        gap: 30px;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm);
     }
     
-    /* Alle Haupt-Container nehmen volle Breite ein */
-    .klicker-container,
-    .shop-and-research-container,
-    .upgrade-grid-container {
+    .left-column,
+    .middle-column,
+    .right-column {
+        grid-column: 1;
         width: 100%;
-        max-width: 500px; /* Begrenzung für bessere Lesbarkeit */
-        flex: 1 1 auto;
+        max-width: 500px;
+        margin: 0 auto;
     }
     
-    /* Stats/Lab/Shop Stapeln ebenfalls */
-    .stats-and-lab-container,
-    .shop-container,
-    .upgrade-grid-container {
+    .right-column {
+        max-height: none;
+        overflow-y: visible;
+    }
+    
+    .main-content {
         flex-direction: column;
         align-items: center;
     }
     
-    /* Klicker-Bereich sollte zentriert bleiben */
-    .klicker-container {
-        margin: 0 auto;
+    /* Container-Anpassungen für mobile Ansicht */
+    .left-column,
+    .middle-column,
+    .right-column {
+        padding: var(--spacing-md);
+    }
+    
+    /* Stats-Box-Anpassungen */
+    .stats-box {
+        font-size: 1rem;
     }
 }

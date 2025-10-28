@@ -1,0 +1,61 @@
+/** 
+ * Initialisiert das Spiel. Word einmal beim DOMContentLoaded aufgerufen.
+*/
+function initialisiereSpiel() {
+    console.log("%cSpielinitialisierung gestartet.", "color: #009FFD"); // Blauer Text für Start
+
+    // 1. Lade den gespeicherten Zustand. 
+    // ladeSpiel() ruft intern applyAllPrestigeBonuses() nach dem Laden auf!
+    ladeSpiel(); 
+    
+    // 2. Wende Prestige-Boni an (nur für den NEU-START-Fall nötig, da ladeSpiel() es sonst tut).
+    // WENN DEINE ladeSpiel()-Funktion im Block 4 den Aufruf applyAllPrestigeBonuses() ENTHÄLT, 
+    // MUSST DU DIESEN AUFRUF HIER ENTFERNEN.
+    // Falls deine ladeSpiel() nur true/false zurückgibt, muss hier gepüft werden:
+    /*
+    const spielGeladen = ladeSpiel();
+    if (!spielGeladen) {
+        // Prestige-Boni für den initialen Startfall anwenden (falls nötig, 
+        // da sie von den Standardwerten (1.0) im gameState ausgehen)
+        applyAllPrestigeBonuses(); 
+    }
+    */
+    // WENN DEIN BLOCK 4 KORREKT IST, IST KEIN ZUSÄTZLICHER AUFRUF NÖTIG.
+
+    // 3. Initialisiere die UI-Elemente (JETZT mit den geladenen Werten)
+    createUpgradeElements(clickerUpgrades, 'upgrade-grid');
+    createUpgradeElements(buildingsData, 'building-grid');
+    createPrestigeElements();
+    renderResearchUpgrades(); 
+
+    // 4. Setze alle Event Listener
+    setupEventListeners(); 
+
+    // 5. Starte die Spiel-Loops
+    // updateGame() direkt einmal aufrufen, um die UI sofort zu initialisieren
+    updateGame(); 
+    setInterval(produziereSmileys, 100); // Schnelle Produktion
+    setInterval(updateGame, 1000); // Langsames UI-Update
+    
+    // Sicherstellen, dass gespeichert wird, bevor der Browser geschlossen wird
+    window.addEventListener('beforeunload', speichereSpiel); 
+    
+    console.log("%cSpielinitialisierung abgeschlossen. Spiel ist nun aktiv.", "color: #6B0504"); // Roter Text für Abschluss
+}
+
+
+
+
+
+
+//================================================================================================================
+// --- 5. KERN-SPIELLOGIK & HAUPTSCHLEIFE ---
+//================================================================================================================
+
+function updateGame() { /* ... */ } // NEU
+function updateUI() { /* ... */ } // NEU
+function klickeSmiley() { /* ... */ } // NEU
+function setupEventListeners() { /* ... */ } // NEU
+function produziereSmileys() { /* ... */ } // Schon besprochen (enthält Forschungslabor-Fix)
+function kaufeGebaeude(index) { /* ... */ } // Schon besprochen (enthält maxCount-Check)
+function initialisiereSpiel() { /* ... */ } // Deine aktuellste Version (startet alles)

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smiley Clicker</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="home-page"> <header>
@@ -16,39 +19,39 @@
     </header>
     
     <main class="main-layout">
-        
-        <div class="klicker-container">
+        <!-- Linke Spalte: Smiley und Stats -->
+        <div class="left-column">
             <h1>Smiley Clicker</h1>
+            
+            <button id="smiley_button">
+                <img src="Smiley.jpg" alt="Smiley" id="smiley_image">
+            </button>
 
             <div class="stats-box">
                 <h3>Aktuelle Smileys: <span id="aktuelle_smileys">0</span></h3>
-                <p>Gesammelte Smileys: <span id="gesammelte_smileys">0</span></p>
                 <p>Klickkraft: <span id="smileys_pro_klick_anzeige">1</span></p>
                 <hr>
                 <p>SPS: <span id="smileys_pro_sekunde_anzeige">0</span></p>
                 <p>SPM: <span id="smileys_pro_minute_anzeige">0</span></p>
-                <p>Smiley-Points: <span id="prestige_punkte_anzeige">0</span></p>
+            </div>
+        </div>
+
+        <!-- Mittlere Spalte: Upgrades und Forschung -->
+        <div class="middle-column">
+            <!-- Upgrades -->
+            <div class="upgrade-section">
+                <h2>Upgrades</h2>
+                <div class="upgrade-grid" id="upgrade-grid"></div>
+                <div id="prestige_upgrades_grid" style="display:none;"></div>
             </div>
 
-            <button id="smiley_button">
-                <img src="Smiley.jpg" alt="Smiley" id="smiley_image">
-            </button>
-            
-            <button id="prestige_button" class="btn-prestige">
-                Prestige (0 Punkte verdienen)
-            </button>
-        </div>
-        
-        <div class="shop-and-research-container">
-
+            <!-- Forschungslabor -->
             <div class="research-lab-container">
-                <!-- Ergänzt: Research Upgrade Panel für bessere Kompatibilität -->
                 <div id="research-upgrade-panel" style="display:none;">
                     <h3 id="forschungsUpgradeName"></h3>
                     <p id="forschungsUpgradeDescription"></p>
                     <button id="forschungUpgradeButton">Upgrade kaufen</button>
                 </div>
-                <!-- Ergänzt: Research Upgrades Grid -->
                 <div id="research_upgrades_grid"></div>
                 <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
                 <p>Generiert Forschungspunkte pro Sekunde.</p>
@@ -63,20 +66,15 @@
                     <button id="forschungUpgradeButton" class="btn-buy">Forschungs-Upgrade kaufen</button>
                 </div>
             </div>
+        </div>
 
-            <div class="upgrade-grid-container">
-                <!-- Ergänzt: Prestige Upgrades Grid für Kompatibilität -->
-                <div id="prestige_upgrades_grid" style="display:none;"></div>
-                <div id="prestige-grid" style="display:none;"></div>
-                <section class="upgrade-section">
-                    <h2>Upgrades</h2>
-                    <div class="upgrade-grid" id="upgrade-grid"></div>
-                </section>
-                <section class="upgrade-section">
-                    <h2>Gebäude</h2>
-                    <div class="building-grid" id="building-grid"></div>
-                </section>
-            </div>
+        <!-- Rechte Spalte: Buildings -->
+        <div class="right-column">
+            <section class="building-section">
+                <h2>Gebäude</h2>
+                <div class="building-grid" id="building-grid"></div>
+            </section>
+        </div>
             
         </div>
     </main>
