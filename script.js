@@ -26,10 +26,70 @@ const buildingsData = [
 ];
 
 const researchUpgrades = [
-    { id: 0, cost: 10, description: 'Erhöht die Produktion der Auto-Klicker um 10%', type: 'building_mult', buildingIndex: 0, value: 0.1 },
-    { id: 1, cost: 25, description: 'Erhöht die Produktion der Smiley-Bäume um 10%', type: 'building_mult', buildingIndex: 1, value: 0.1 },
-    { id: 2, cost: 50, description: 'Erhöht die Produktion der Smiley-Fabriken um 10%', type: 'building_mult', buildingIndex: 2, value: 0.1 },
-    { id: 3, cost: 100, description: 'Erhöht die globale Klick-Kraft um 5%', type: 'click_mult', value: 0.05 },
+    { id: 0, cost: 10, description: 'Auto-Klicker Produktion +10%', type: 'building_mult', buildingIndex: 0, value: 0.1 },
+    { id: 1, cost: 50, description: 'Auto-Klicker Produktion +15%', type: 'building_mult', buildingIndex: 0, value: 0.15 },
+    { id: 2, cost: 200, description: 'Auto-Klicker Produktion +25%', type: 'building_mult', buildingIndex: 0, value: 0.25 },
+    { id: 3, cost: 1000, description: 'Auto-Klicker Produktion +50%', type: 'building_mult', buildingIndex: 0, value: 0.5 },
+    { id: 4, cost: 50, description: 'Smiley-Baum Produktion +10%', type: 'building_mult', buildingIndex: 1, value: 0.1 },
+    { id: 5, cost: 250, description: 'Smiley-Baum Produktion +15%', type: 'building_mult', buildingIndex: 1, value: 0.15 },
+    { id: 6, cost: 1000, description: 'Smiley-Baum Produktion +25%', type: 'building_mult', buildingIndex: 1, value: 0.25 },
+    { id: 7, cost: 5000, description: 'Smiley-Baum Produktion +50%', type: 'building_mult', buildingIndex: 1, value: 0.5 },
+    { id: 8, cost: 250, description: 'Smiley-Fabrik Produktion +10%', type: 'building_mult', buildingIndex: 2, value: 0.1 },
+    { id: 9, cost: 1250, description: 'Smiley-Fabrik Produktion +15%', type: 'building_mult', buildingIndex: 2, value: 0.15 },
+    { id: 10, cost: 5000, description: 'Smiley-Fabrik Produktion +25%', type: 'building_mult', buildingIndex: 2, value: 0.25 },
+    { id: 11, cost: 25000, description: 'Smiley-Fabrik Produktion +50%', type: 'building_mult', buildingIndex: 2, value: 0.5 },
+    { id: 12, cost: 1000, description: 'Smiley-Mine Produktion +10%', type: 'building_mult', buildingIndex: 4, value: 0.1 },
+    { id: 13, cost: 5000, description: 'Smiley-Mine Produktion +15%', type: 'building_mult', buildingIndex: 4, value: 0.15 },
+    { id: 14, cost: 20000, description: 'Smiley-Mine Produktion +25%', type: 'building_mult', buildingIndex: 4, value: 0.25 },
+    { id: 15, cost: 100000, description: 'Smiley-Mine Produktion +50%', type: 'building_mult', buildingIndex: 4, value: 0.5 },
+    { id: 16, cost: 5000, description: 'Smiley-Bohrer Produktion +10%', type: 'building_mult', buildingIndex: 5, value: 0.1 },
+    { id: 17, cost: 25000, description: 'Smiley-Bohrer Produktion +15%', type: 'building_mult', buildingIndex: 5, value: 0.15 },
+    { id: 18, cost: 100000, description: 'Smiley-Bohrer Produktion +25%', type: 'building_mult', buildingIndex: 5, value: 0.25 },
+    { id: 19, cost: 500000, description: 'Smiley-Bohrer Produktion +50%', type: 'building_mult', buildingIndex: 5, value: 0.5 },
+    { id: 20, cost: 25000, description: 'Kernkraftwerk Produktion +10%', type: 'building_mult', buildingIndex: 6, value: 0.1 },
+    { id: 21, cost: 125000, description: 'Kernkraftwerk Produktion +15%', type: 'building_mult', buildingIndex: 6, value: 0.15 },
+    { id: 22, cost: 500000, description: 'Kernkraftwerk Produktion +25%', type: 'building_mult', buildingIndex: 6, value: 0.25 },
+    { id: 23, cost: 2500000, description: 'Kernkraftwerk Produktion +50%', type: 'building_mult', buildingIndex: 6, value: 0.5 },
+    { id: 24, cost: 125000, description: 'Galaxie Produktion +10%', type: 'building_mult', buildingIndex: 7, value: 0.1 },
+    { id: 25, cost: 625000, description: 'Galaxie Produktion +15%', type: 'building_mult', buildingIndex: 7, value: 0.15 },
+    { id: 26, cost: 2500000, description: 'Galaxie Produktion +25%', type: 'building_mult', buildingIndex: 7, value: 0.25 },
+    { id: 27, cost: 12500000, description: 'Galaxie Produktion +50%', type: 'building_mult', buildingIndex: 7, value: 0.5 },
+    { id: 28, cost: 625000, description: 'Dimensionsportal Produktion +10%', type: 'building_mult', buildingIndex: 8, value: 0.1 },
+    { id: 29, cost: 3125000, description: 'Dimensionsportal Produktion +15%', type: 'building_mult', buildingIndex: 8, value: 0.15 },
+    { id: 30, cost: 12500000, description: 'Dimensionsportal Produktion +25%', type: 'building_mult', buildingIndex: 8, value: 0.25 },
+    { id: 31, cost: 62500000, description: 'Dimensionsportal Produktion +50%', type: 'building_mult', buildingIndex: 8, value: 0.5 },
+    { id: 32, cost: 3125000, description: 'Zeitmaschine Produktion +10%', type: 'building_mult', buildingIndex: 9, value: 0.1 },
+    { id: 33, cost: 15625000, description: 'Zeitmaschine Produktion +15%', type: 'building_mult', buildingIndex: 9, value: 0.15 },
+    { id: 34, cost: 62500000, description: 'Zeitmaschine Produktion +25%', type: 'building_mult', buildingIndex: 9, value: 0.25 },
+    { id: 35, cost: 312500000, description: 'Zeitmaschine Produktion +50%', type: 'building_mult', buildingIndex: 9, value: 0.5 },
+    { id: 36, cost: 15625000, description: 'Meta-Klicker Produktion +10%', type: 'building_mult', buildingIndex: 10, value: 0.1 },
+    { id: 37, cost: 78125000, description: 'Meta-Klicker Produktion +15%', type: 'building_mult', buildingIndex: 10, value: 0.15 },
+    { id: 38, cost: 312500000, description: 'Meta-Klicker Produktion +25%', type: 'building_mult', buildingIndex: 10, value: 0.25 },
+    { id: 39, cost: 1562500000, description: 'Meta-Klicker Produktion +50%', type: 'building_mult', buildingIndex: 10, value: 0.5 },
+    { id: 40, cost: 78125000, description: 'Quanten-Netzwerk Produktion +10%', type: 'building_mult', buildingIndex: 11, value: 0.1 },
+    { id: 41, cost: 390625000, description: 'Quanten-Netzwerk Produktion +15%', type: 'building_mult', buildingIndex: 11, value: 0.15 },
+    { id: 42, cost: 1562500000, description: 'Quanten-Netzwerk Produktion +25%', type: 'building_mult', buildingIndex: 11, value: 0.25 },
+    { id: 43, cost: 7812500000, description: 'Quanten-Netzwerk Produktion +50%', type: 'building_mult', buildingIndex: 11, value: 0.5 },
+    { id: 44, cost: 390625000, description: 'Endloser Speicher Produktion +10%', type: 'building_mult', buildingIndex: 12, value: 0.1 },
+    { id: 45, cost: 1953125000, description: 'Endloser Speicher Produktion +15%', type: 'building_mult', buildingIndex: 12, value: 0.15 },
+    { id: 46, cost: 7812500000, description: 'Endloser Speicher Produktion +25%', type: 'building_mult', buildingIndex: 12, value: 0.25 },
+    { id: 47, cost: 39062500000, description: 'Endloser Speicher Produktion +50%', type: 'building_mult', buildingIndex: 12, value: 0.5 },
+    { id: 48, cost: 1953125000, description: 'Ursprung Produktion +10%', type: 'building_mult', buildingIndex: 13, value: 0.1 },
+    { id: 49, cost: 9765625000, description: 'Ursprung Produktion +15%', type: 'building_mult', buildingIndex: 13, value: 0.15 },
+    { id: 50, cost: 39062500000, description: 'Ursprung Produktion +25%', type: 'building_mult', buildingIndex: 13, value: 0.25 },
+    { id: 51, cost: 195312500000, description: 'Ursprung Produktion +50%', type: 'building_mult', buildingIndex: 13, value: 0.5 },
+    { id: 52, cost: 9765625000, description: 'Kosmische Einheit Produktion +10%', type: 'building_mult', buildingIndex: 14, value: 0.1 },
+    { id: 53, cost: 48828125000, description: 'Kosmische Einheit Produktion +15%', type: 'building_mult', buildingIndex: 14, value: 0.15 },
+    { id: 54, cost: 195312500000, description: 'Kosmische Einheit Produktion +25%', type: 'building_mult', buildingIndex: 14, value: 0.25 },
+    { id: 55, cost: 976562500000, description: 'Kosmische Einheit Produktion +50%', type: 'building_mult', buildingIndex: 14, value: 0.5 },
+    { id: 56, cost: 48828125000, description: 'Absoluter Schöpfer Produktion +10%', type: 'building_mult', buildingIndex: 15, value: 0.1 },
+    { id: 57, cost: 244140625000, description: 'Absoluter Schöpfer Produktion +15%', type: 'building_mult', buildingIndex: 15, value: 0.15 },
+    { id: 58, cost: 976562500000, description: 'Absoluter Schöpfer Produktion +25%', type: 'building_mult', buildingIndex: 15, value: 0.25 },
+    { id: 59, cost: 4882812500000, description: 'Absoluter Schöpfer Produktion +50%', type: 'building_mult', buildingIndex: 15, value: 0.5 },
+    // Klick-Upgrades
+    { id: 60, cost: 100, description: 'Globale Klick-Kraft +5%', type: 'click_mult', value: 0.05 },
+    { id: 61, cost: 500, description: 'Globale Klick-Kraft +10%', type: 'click_mult', value: 0.1 },
+    { id: 62, cost: 2000, description: 'Globale Klick-Kraft +15%', type: 'click_mult', value: 0.15 },
 ];
 
 let buildingCounts = buildingsData.map(() => 0);
@@ -98,16 +158,22 @@ function ladeSpiel() {
             if(savedPrices) buildingPrices = savedPrices;
 
             const savedResearch = JSON.parse(localStorage.getItem('researchStatus'));
-            if(savedResearch) researchStatus = savedResearch;
+            if(savedResearch && savedResearch.length === researchUpgrades.length) {
+                 researchStatus = savedResearch;
+            } else {
+                researchStatus = researchUpgrades.map(() => false);
+            }
 
             researchStatus.forEach((bought, id) => {
                 if(bought) {
                     const upgrade = researchUpgrades.find(u => u.id === id);
-                    if(upgrade && upgrade.type === 'building_mult') {
-                         buildingsData[upgrade.buildingIndex].prestigeMulti = (buildingsData[upgrade.buildingIndex].prestigeMulti || 1) + upgrade.value;
+                    if(!upgrade) return;
+
+                    if(upgrade.type === 'building_mult') {
+                         buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
                     }
-                    else if(upgrade && upgrade.type === 'click_mult'){
-                        gameState.klickKraftMultiplier = (gameState.klickKraftMultiplier || 1) + upgrade.value;
+                    else if(upgrade.type === 'click_mult'){
+                        gameState.klickKraftMultiplier += upgrade.value;
                     }
                 }
             });
@@ -189,7 +255,7 @@ function kaufeResearchUpgrade(id) {
 
 
 //================================================================================================================
-//--- 4. Rendering & UI Updates ---
+//--- 4. Rendering & UI Updates (PERFORMANCE-OPTIMIERT) ---
 //================================================================================================================
 
 function createBuildingElements() {
@@ -264,13 +330,17 @@ function updateResearchUI() {
     if(buildingCounts[3] > 0) researchGrid.style.display = 'grid';
     else { researchGrid.style.display = 'none'; return; }
     researchUpgrades.forEach(upgrade => {
-        const btn = getById(`buy-research-${upgrade.id}`);
-        if(!btn) return;
+        const researchItem = document.querySelector(`.research-item[data-id="${upgrade.id}"]`);
+        if (!researchItem) return;
+
         if (researchStatus[upgrade.id]) {
-            btn.disabled = true;
-            btn.innerText = "Erforscht";
+            researchItem.style.display = 'none'; 
         } else {
-            btn.disabled = gameState.forschungPunkte < upgrade.cost;
+            researchItem.style.display = 'flex'; 
+            const btn = researchItem.querySelector('.btn-buy-research');
+            if(btn) {
+                btn.disabled = gameState.forschungPunkte < upgrade.cost;
+            }
         }
     });
 }
@@ -280,8 +350,7 @@ function updateUI() {
     getById('aktuelle_smileys').innerText = formatNumber(gameState.aktuelle_smileys);
     getById('smileys_pro_sekunde_anzeige').innerText = formatNumber(gameState.totalSPS);
     getById('smileys_pro_minute_anzeige').innerText = formatNumber(gameState.totalSPS * 60);
-    const finalClickPower = gameState.klickKraft * gameState.klickKraftMultiplier;
-    getById('smileys_pro_klick_anzeige').innerText = formatNumber(finalClickPower);
+    getById('smileys_pro_klick_anzeige').innerText = formatNumber(gameState.klickKraft * gameState.klickKraftMultiplier);
     getById('klick_multiplikator_anzeige').innerText = `x${gameState.klickKraftMultiplier.toFixed(2)}`;
     getById('globaler_multiplikator_anzeige').innerText = `x${gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
     updateBuildingUI(); 
@@ -338,6 +407,7 @@ function setupEventListeners() {
 function initialisiereSpiel() {
     if (getById('building-grid')) {
         ladeSpiel();
+        researchUpgrades.sort((a,b) => a.cost - b.cost);
         createBuildingElements();
         createResearchElements();
         setupEventListeners();
