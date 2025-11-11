@@ -29,7 +29,9 @@
 
             <div class="stats-box">
                 <h3>Aktuelle Smileys: <span id="aktuelle_smileys">0</span></h3>
-                <p>Klickkraft: <span id="smileys_pro_klick_anzeige">1</span></p>
+                <p>Smiley Per Click: <span id="smileys_pro_klick_anzeige">1</span></p>
+                <p>Klick-Multiplikator: <span id="klick_multiplikator_anzeige">x1.00</span></p>
+                <p>Globaler Multiplikator: <span id="globaler_multiplikator_anzeige">x1.00</span></p>
                 <hr>
                 <p>SPS: <span id="smileys_pro_sekunde_anzeige">0</span></p>
                 <p>SPM: <span id="smileys_pro_minute_anzeige">0</span></p>
@@ -38,33 +40,15 @@
 
         <!-- Mittlere Spalte: Upgrades und Forschung -->
         <div class="middle-column">
-            <!-- Upgrades -->
-            <div class="upgrade-section">
-                <h2>Upgrades</h2>
-                <div class="upgrade-grid" id="upgrade-grid"></div>
-                <div id="prestige_upgrades_grid" style="display:none;"></div>
+             <div id="lab-purchase-container">
+                <h3>Forschungslabor freischalten</h3>
+                <p>Einmaliger Kauf zur Freischaltung von Forschungspunkten und -upgrades.</p>
+                <button id="forschungslaborButton" class="btn-buy">Kaufen</button>
             </div>
-
-            <!-- Forschungslabor -->
-            <div class="research-lab-container">
-                <div id="research-upgrade-panel" style="display:none;">
-                    <h3 id="forschungsUpgradeName"></h3>
-                    <p id="forschungsUpgradeDescription"></p>
-                    <button id="forschungUpgradeButton">Upgrade kaufen</button>
-                </div>
-                <div id="research_upgrades_grid"></div>
-                <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
-                <p>Generiert Forschungspunkte pro Sekunde.</p>
+            <div id="lab-main-content" style="display:none;">
+                <h3>Forschungslabor</h3>
                 <p>Forschungspunkte: <span id="forschungspunkte">0</span></p>
-                <div class="forschung-balken-container">
-                    <div id="forschung_fortschritt" class="forschung-fortschritt"></div>
-                </div>
-                <p class="progress-text"><span id="fortschritt-text">Forschungslabor nicht gekauft.</span></p>
-                
-                <div class="research-buttons">
-                    <button id="forschungslaborButton" class="btn-buy">Kaufen (5,000 Smileys)</button>
-                    <button id="forschungUpgradeButton" class="btn-buy">Forschungs-Upgrade kaufen</button>
-                </div>
+                 <div id="research_upgrades_grid"></div>
             </div>
         </div>
 
@@ -75,8 +59,7 @@
                 <div class="building-grid" id="building-grid"></div>
             </section>
         </div>
-            
-        </div>
+
     </main>
 
     <script src="script.js"></script>

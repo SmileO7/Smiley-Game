@@ -6,66 +6,77 @@
     <title>Info & Tipps</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="info-page">
     <header>
         <nav class="navbar">
             <a href="index.html">Startseite</a>
             <a href="prestige_shop.html">Prestige Shop</a>
             <a href="info.html" class="active">Info & Tipps</a>
-            
         </nav>
     </header>
 
-    <main class="main-container">
-        <div class="content-box">
-            <h1 class="text-3xl font-bold mb-4 text-center">Info & Tipps</h1>
+    <main class="info-main">
+        <h1>Info & Tipps</h1>
 
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Das Spiel</h2>
-                <p>Smiley Clicker ist ein simples, aber süchtig machendes Spiel. Das Hauptziel ist es, so viele Smileys wie möglich zu sammeln, um Upgrades zu kaufen und deine Produktion zu automatisieren.</p>
-            </div>
+        <div class="info-section">
+            <h2>Das Spiel</h2>
+            <p>Smiley Clicker ist ein simples, aber süchtig machendes Spiel. Das Hauptziel ist es, so viele Smileys wie möglich zu sammeln, um Upgrades zu kaufen und deine Produktion zu automatisieren.</p>
+        </div>
 
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Wie man spielt</h2>
-                <ol class="list-decimal pl-5">
-                    <li>Klicke auf den großen Smiley, um Smileys zu sammeln.</li>
-                    <li>Wechsle zum Tab "Upgrades", um Gebäude wie Auto-Klicker und Smiley-Bäume zu kaufen, die deine Produktion automatisieren.</li>
-                    <li>Kaufe Multiplikator-Upgrades, um mehr Smileys pro Klick zu erhalten.</li>
-                    <li>Wenn du eine hohe Anzahl an Smileys gesammelt hast, kannst du im Prestige-Shop permanenten Boni freischalten, um dein Spiel noch schneller voranzutreiben.</li>
-                </ol>
-            </div>
+        <div class="info-section">
+            <h2>Wie man spielt</h2>
+            <ol>
+                <li>Klicke auf den großen Smiley, um Smileys zu sammeln.</li>
+                <li>Kaufe Gebäude wie Auto-Klicker, um deine Produktion (SPS) zu automatisieren.</li>
+                <li>Schalte Klick-Upgrades frei, um deine manuelle Klick-Leistung zu steigern.</li>
+                <li>Wenn du eine hohe Anzahl an Smileys gesammelt hast, kannst du im Prestige-Shop permanente Boni freischalten.</li>
+            </ol>
+        </div>
 
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Upgrades im Detail</h2>
-                <p>Jedes Gebäude erhöht deine Smileys pro Sekunde (SPS). Die Kosten für jedes weitere Gebäude steigen exponentiell an.</p>
-                <div class="upgrade-list-item">
+        <div class="info-section">
+            <h2>Upgrades im Detail</h2>
+            <p>Jedes Gebäude erhöht deine Smileys pro Sekunde (SPS). Die Kosten für jedes weitere Gebäude steigen exponentiell an.</p>
+            <div class="info-upgrades-container">
+                <div class="info-upgrade-item">
                     <h3>Auto-Klicker</h3>
                     <p><strong>Effekt:</strong> Generiert automatisch Smileys für dich.</p>
                     <p><strong>Kosten:</strong> Beginnt bei 20 Smileys.</p>
                 </div>
-                <div class="upgrade-list-item">
+                <div class="info-upgrade-item">
                     <h3>Smiley-Baum</h3>
                     <p><strong>Effekt:</strong> Generiert 20 Smileys pro Sekunde.</p>
                     <p><strong>Kosten:</strong> Beginnt bei 150 Smileys.</p>
                 </div>
-                <div class="upgrade-list-item">
+                <div class="info-upgrade-item">
                     <h3>Smiley-Fabrik</h3>
                     <p><strong>Effekt:</strong> Generiert 150 Smileys pro Sekunde.</p>
                     <p><strong>Kosten:</strong> Beginnt bei 2,500 Smileys.</p>
                 </div>
             </div>
-
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Prestige-System</h2>
-                <p>Sobald du genügend Smileys gesammelt hast, kannst du das Smileyversum "aktivieren" (Prestige). Dadurch verlierst du alle deine aktuellen Smileys und Gebäude, erhältst aber wertvolle "Smileyvers-Punkte". Diese Punkte können im Prestige-Shop für permanente Upgrades ausgegeben werden, die dein Spiel beschleunigen.</p>
-            </div>
-            
         </div>
+
+        <div class="info-section">
+            <h2>Strategie-Tipps für den Anfang</h2>
+            <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele Auto-Klicker und Smiley-Bäume wie möglich zu kaufen.</p>
+            <p><strong>Klick-Upgrades nicht vernachlässigen:</strong> Ein paar frühe Klick-Upgrades können dir helfen, die ersten Hürden schneller zu überwinden, aber dein Hauptfokus sollte auf den Gebäuden liegen.</p>
+        </div>
+
+        <div class="info-section">
+            <h2>Das Prestige-System</h2>
+            <p>Sobald du genügend Smileys gesammelt hast, kannst du das Smileyversum "aktivieren" (Prestige). Dadurch wird dein Spiel zurückgesetzt (Smileys, Gebäude, Upgrades), aber du erhältst wertvolle <strong>Prestige-Punkte</strong>. Diese Punkte können im Prestige-Shop für sehr mächtige, permanente Upgrades ausgegeben werden, die jeden neuen Spieldurchlauf beschleunigen.</p>
+        </div>
+
+        <div class="info-section">
+            <h2>Tipps für Fortgeschrittene</h2>
+            <p><strong>Wann sollte man prestigen?</strong> Ein guter Anhaltspunkt ist, dann einen Prestige-Reset durchzuführen, wenn du für deinen nächsten Reset mindestens 5-10 neue Prestige-Punkte erhalten würdest. Ein zu früher Reset bremst dich aus, ein zu später ebenfalls.</p>
+            <p><strong>Synergien nutzen:</strong> Lies dir die Prestige-Upgrades genau durch. Einige verbessern alle Gebäude, während andere spezifische Gebäude stark verbessern. Plane deine Käufe so, dass sie zu deinem Spielstil passen.</p>
+             <p><strong>Geduld ist eine Tugend:</strong> Manchmal ist es am besten, das Spiel einfach laufen zu lassen (AFK - away from keyboard), um eine große Menge an Smileys für das nächste große Upgrade oder den nächsten Prestige-Punkt anzusammeln.</p>
+        </div>
+        
     </main>
 </body>
 </html>

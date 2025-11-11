@@ -3,31 +3,23 @@
 //================================================================================================*/
 
 :root {
-    /* Neues Farbschema mit besserer Lesbarkeit */
-    --color-background-dark: #1a1a2e;    /* Dunkleres, satteres Blau für Hintergrund */
-    --color-red-main: #e94560;           /* Helleres, moderneres Rot */
-    --color-blue-main: #40a9ff;          /* Mittelhelles Blau für besseren Kontrast */
-    --color-neutral-accent: #4a5568;     /* Neutraleres Grau */
-    
-    /* Text Farben */
-    --color-text-primary: #ffffff;        /* Weiß für Haupttext */
-    --color-text-secondary: #b3b3b3;     /* Hellgrau für sekundären Text */
-    --color-text-accent: #40a9ff;        /* Akzentfarbe für wichtige Texte */
-    --color-text-light: #f0f0f0;         /* Helle Schrift */
-    
-    /* Layout Spacings */
+    --color-background-dark: #1a1a2e;
+    --color-red-main: #e94560;
+    --color-blue-main: #40a9ff;
+    --color-neutral-accent: #4a5568;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #b3b3b3;
+    --color-text-accent: #40a9ff;
+    --color-text-light: #f0f0f0;
     --spacing-sm: 10px;
     --spacing-md: 20px;
     --spacing-lg: 30px;
-    
-    /* Container & Overlay Backgrounds */
-    --container-bg: rgba(255, 255, 255, 0.05);
-    --container-bg-hover: rgba(255, 255, 255, 0.08);
-    --color-dark-overlay: rgba(0, 0, 0, 0.4);
-    --color-semi-dark: #2c3e50;
-    --color-modal-bg: rgba(0, 0, 0, 0.8);
 }
 
+/* KORREKTUR: Universelles Box-Sizing für einheitliches Layout */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
 
 body, html {
     margin: 0;
@@ -35,96 +27,31 @@ body, html {
     font-family: 'Roboto', sans-serif;
     color: var(--color-text-primary);
     height: 100%;
-    transition: background-color 0.5s ease;
     background-color: var(--color-background-dark);
-    display: flex;
-    flex-direction: column;
-    font-size: 16px;
     line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
-
-/* Typografie */
-h1, h2, h3 {
-    color: var(--color-text-accent);
-    margin-bottom: 20px;
-    text-align: center;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-}
-
-h2 {
-    font-size: 2rem;
-    color: var(--color-text-primary);
-}
-
-h3 {
-    font-size: 1.5rem;
-    color: var(--color-text-accent);
-}
-
-p {
-    color: var(--color-text-secondary);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-}
-
-.stats-box p {
-    color: var(--color-text-primary);
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-}
-
-.stats-box span {
-    color: var(--color-text-accent);
-    font-weight: 500;
-}
-
 
 /*================================================================================================
-// --- 1. SEITEN-HINTERGRÜNDE (FÜR NAVIGATION) ---
+// --- 1. HINTERGRÜNDE & TYPOGRAFIE ---
 //================================================================================================*/
 
-body.home-page {
-    background-color: var(--color-background-dark); 
+body {
     background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1) 0%, transparent 50%),
                       radial-gradient(circle at bottom right, rgba(107, 5,4,0.1) 0%, transparent 50%),
                       linear-gradient(135deg, var(--color-background-dark), #24243e);
-    background-size: 100% 100%;
     background-attachment: fixed;
 }
 
-@keyframes gradientAnimation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-body.upgrades-page {
-    background-color: var(--color-neutral-accent);
-    background-image: linear-gradient(135deg, var(--color-neutral-accent), #516a53);
-}
-
-/* KORRIGIERT: Dunkler, ruhiger Hintergrund für Prestige-Seite */
-body.prestige-page {
-    background-color: var(--color-background-dark); 
-    background-image: radial-gradient(circle at top, #1a3863 0%, var(--color-background-dark) 80%);
-}
-
-/* KORRIGIERT: Info-Seite nutzt ebenfalls den dunklen Hintergrund */
-body.info-page {
-    background-color: var(--color-background-dark); 
+h1, h2, h3 {
+    color: var(--color-text-accent);
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 /*================================================================================================
-// --- 2. NAVIGATION & HAUPT-LAYOUT (UI ANORDNUNG) ---
+// --- 2. LAYOUT & NAVIGATION ---
 //================================================================================================*/
+
 .navbar {
     background-color: rgba(25, 25, 25, 0.8);
     padding: 8px 0;
@@ -142,29 +69,13 @@ body.info-page {
     text-decoration: none;
     font-size: 1.2em;
     font-weight: bold;
-    transition: color 0.3s, background-color 0.3s;
 }
 
-.navbar a:hover, .navbar a.active {
-    color: var(--color-blue-main);
-    background-color: transparent;
-    border: 2px solid var(--color-blue-main); 
-}
-
-.main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+main {
     padding-top: 70px;
-    padding-bottom: 20px;
     width: 100%;
-    box-sizing: border-box;
-    margin: 0 auto;
 }
 
-/* Haupt-Container, der die linke und rechte Spalte enthält */
 .main-layout {
     display: grid;
     grid-template-columns: 1fr 2fr 2fr;
@@ -172,610 +83,142 @@ body.info-page {
     padding: var(--spacing-md);
     max-width: 1600px;
     margin: 20px auto;
-    min-height: calc(100vh - 100px);
     align-items: start;
 }
 
-/* main-Regel vereinfacht */
-main {
-    padding-top: 70px;
-    width: 100%;
-}
-
-/* Hilfs-Container */
-.shop-container, .stats-and-lab-container {
-    display: block;
-    padding: 0;
-    gap: 0;
-    margin: 0;
-    max-width: none;
-}
-
-
 /*================================================================================================
-// --- 3. KLICKER-BEREICH (LINKE SPALTE) ---
+// --- 3. CONTAINER & BOX-STYLES ---
 //================================================================================================*/
 
-/* LINKER BEREICH: Klicker & Stats */
 .left-column, .middle-column, .right-column {
-    padding: 30px;
-    background-color: rgba(26, 26, 46, 0.95);
-    border: 2px solid var(--color-blue-main);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid var(--color-blue-main);
+    padding: var(--spacing-md);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
 }
 
-.left-column {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-}
-
-.middle-column {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-}
-
-.right-column {
-    overflow-y: auto;
-    max-height: calc(100vh - 120px);
-}
-
-/* Verbesserte Container Hover-Effekte */
-.left-column:hover, .middle-column:hover, .right-column:hover {
-    border-color: var(--color-text-accent);
-    box-shadow: 0 6px 25px rgba(64, 169, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-/* Smiley Button */
-.smiley-button, #smiley_button { 
-    width: 200px;
-    height: 200px;
+/* KORREKTUR: Smiley-Button Größe */
+#smiley_button {
+    width: 250px;
+    height: 250px;
+    margin: 20px auto;
+    padding: 0; 
     border-radius: 50%;
-    background-color: transparent; 
-    color: white;
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 30px auto;
+    border: 5px solid var(--color-blue-main); 
     cursor: pointer;
-    border: 5px solid var(--color-blue-main);
-    transition: transform 0.1s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: transparent;
     box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
-    user-select: none;
+    transition: transform 0.1s, box-shadow 0.2s;
 }
 
-.smiley-button img, #smiley_button img {
-    width: 200px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-    border-radius: 50%;
-}
-
-.smiley-button:hover, #smiley_button:hover {
+#smiley_button:active {
+    transform: scale(0.95);
     box-shadow: 0 0 25px rgba(0, 159, 253, 0.8);
 }
 
-.smiley-button:active, #smiley_button:active {
-    transform: scale(0.95);
-}
-
-/* Klick Animation */
 #smiley_image {
-    transition: transform 0.15s ease-out; 
-}
-
-.pop #smiley_image {
-    transform: scale(1.05); 
-}
-
-/* Stat-Anzeige-Box */
-.stats-box, .stats-container, .current-smiley-points {
-    background: var(--color-dark-overlay);
-    border: 1px solid #c01515;
-    border-radius: 10px;
-    padding: 15px;
-    text-align: left;
-    backdrop-filter: none;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    margin-bottom: 20px;
-    font-size: 1.5em;
-}
-
-
-/*================================================================================================
-// --- 4. SHOP & FORSCHUNG (RECHTE SPALTE) ---
-//================================================================================================*/
-
-/* RECHTER BEREICH: Shop, Forschung, Upgrades */
-.shop-and-research-container {
-    flex-grow: 1; 
-    display: flex;
-    flex-direction: column; 
-    gap: 25px;
-}
-
-/* Container für Gebäude und Upgrades */
-.upgrade-grid-container {
-    display: flex;
-    gap: 20px;
     width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block; 
 }
 
-.upgrade-section {
-    flex: 1; 
-    padding: 0;
-}
-/* Container für Grid-Elemente */
-.upgrade-grid, .building-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    width: 100%;
-    background-color: var(--color-dark-overlay);
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 20px;
-}
-
-
-/* --- UI-FIX FÜR UPGRADE- UND GEBÄUDE-BOXEN --- */
-
-/* Der neue Container aus script.js, der den gesamten Platz einnehmen soll */
-.upgrade-content {
-    flex-grow: 1; /* Nimmt den gesamten vertikalen Platz über den Buttons ein */
+.stats-box {
     text-align: left;
 }
 
-/* Korrektur für die Title/Content Ausrichtung im neuen upgrade-content */
-.upgrade-content h3 {
+.stats-box h3 {
     text-align: center;
-    color: var(--color-red-main); /* Deine Lieblingsfarbe Rot */
-    margin-bottom: 8px;
-    margin-top: 0; /* Stellt sicher, dass der Titel ganz oben beginnt */
+    font-size: 1.4em;
+    margin-bottom: 15px;
 }
 
-.upgrade-content p {
-    margin: 5px 0;
-    font-size: 0.9em;
-}
-
-
-/*================================================================================================
-// --- 5. BUTTONS & INTERAKTION ---
-//================================================================================================*/
-
-/* Allgemeine Button-Klassen (Kauf, Bestätigung, Abbruch) */
-.btn-buy, .btn-confirm, .btn-cancel, .upgrade-button, .purchase-buttons button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin: 5px;
-}
-
-/* KORRIGIERT: Kauf-Buttons (Blau als Standard-Kauffarbe und Aktionsfarbe) */
-.btn-buy, .upgrade-button, .purchase-buttons button {
-    background-color: var(--color-blue-main); /* Helles Blau als Standard-Kauffarbe */
-    color: var(--color-background-dark); /* Dunkler Text auf hellem Blau */
-    font-weight: bold;
-}
-
-.btn-buy:hover, .upgrade-button:hover, .purchase-buttons button:hover {
-    background-color: #0077c2; /* Dunkleres Blau beim Hover */
-}
-
-/* Bestätigung */
-.btn-confirm {
-    background-color: #0d20c9; /* blau */
-    color: white;
-}
-.btn-confirm:hover {
-    background-color: #0d20c9;
-}
-
-/* Abbruch/Gefahr */
-.btn-cancel {
-    background-color: #f44336;
-    color: white;
-}
-.btn-cancel:hover {
-    background-color: #da190b;
-}
-
-/* Kauf-Button-Layout innerhalb der Item-Card */
-.purchase-buttons {
+.stats-box p {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-}
-.purchase-buttons button {
-    margin: 0 5px;
-    width: 125px;
+    font-size: 1.1em;
+    margin: 8px 0;
 }
 
-/* WICHTIG: Alle Kauf-Buttons an den unteren Rand der Box drücken (Vom UI-FIX verschoben) */
-.upgrade-item .btn-buy,
-.upgrade-item .purchase-buttons {
-    margin-top: auto; /* Schiebt das Element an das Ende des Flex-Containers */
-    width: 100%; 
-    box-sizing: border-box;
+.stats-box hr {
+    border-color: var(--color-neutral-accent);
+    margin: 15px 0;
 }
 
-/* Anpassung der allgemeinen Button-Regel (Vom UI-FIX verschoben) */
-.purchase-buttons button {
-    margin: 0 3px; 
-    flex-grow: 1;
-    width: auto; 
-    padding: 8px 5px;
-    font-size: 0.8em;
+.building-grid, #research-upgrades-grid {
+    display: grid;
+    gap: var(--spacing-md);
 }
 
-
-/* Zustände der Buttons */
-
-/* Deaktiviert/Gesperrt */
-.upgrade-button.disabled,
-.prestige-upgrade-item.locked {
-    background-color: var(--color-background-dark); 
-    color: var(--color-blue-main);
-    border: 1px solid var(--color-red-main);
-    cursor: not-allowed;
-    filter: none;
-    opacity: 1;
+.building-grid {
+    grid-template-columns: repeat(2, 1fr);
 }
 
-/* Gekauft */
-.upgrade-button.bought-button,
-.prestige-upgrade-item.bought {
-    background-color: var(--color-red-main);
-    color: #fff;
-    cursor: default;
-    border: 1px solid var(--color-neutral-accent);
+#research-upgrades-grid {
+    grid-template-columns: 1fr;
 }
 
-/* Hover-Effekte auf kaufbaren Elementen */
-.upgrade-item:hover,
-.building-item:hover,
-.research-lab-container:hover,
-.prestige-upgrade:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.5);
-    cursor: pointer;
-}
-
-/* Hover-Highlight (falls du JS dafür nutzt) */
-.upgrade-item.is-hovered,
-.building-item.is-hovered,
-.research-lab-container.is-hovered,
-.prestige-upgrade.is-hovered {
-    border: 2px solid var(--color-blue-main); 
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.7); 
-    transition: all 0.2s ease-in-out;
-}
-
-
-/*================================================================================================
-// --- 6. FORSCHUNG & PRESTIGE BEREICH ---
-//================================================================================================*/
-
-.research-lab-container {
-    background-color: rgba(1, 22, 56, 0.7);
-    border: 2px solid var(--color-blue-main);
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    cursor: pointer;
-}
-
-/* Forschungsbalken */
-.forschung-balken-container {
-    width: 100%;
-    height: 25px;
-    background-color: var(--color-neutral-accent);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 10px;
-    border: 1px solid var(--color-blue-main);
-}
-
-.forschung-fortschritt {
-    height: 100%;
-    background-color: var(--color-blue-main);
-    transition: width 0.3s ease;
-    /* NEU: Leichter 3D-Effekt im Balken (vom NEUE AKZENTE Block verschoben) */
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-}
-
-#fortschritt-text {
-    margin-top: 5px;
-    font-weight: bold;
-    color: var(--color-text-light);
-}
-
-/* Prestige Shop */
-.prestige-shop-container {
+.building-item, .research-item {
+    background-color: rgba(0,0,0,0.2);
+    padding: 15px;
+    border-radius: 5px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 20px;
 }
 
-/* Prestige map: radial layout with central Smiley */
-#prestige_upgrades_grid {
-    position: relative;
-    width: 100%;
-    max-width: 1100px;
-    height: 680px; /* visual area for radial map */
-    margin: 0 auto;
-    display: block; /* switched from grid to map */
-    background: radial-gradient(ellipse at center, rgba(64,169,255,0.02) 0%, transparent 40%);
+.building-item h3, .research-item h4 {
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 10px;
 }
 
-.prestige-map { /* helper class applied by JS */
-    position: relative;
+.building-item p {
+    font-size: 0.9em;
+    margin: 4px 0;
 }
 
-.prestige-center {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 5;
-}
-.prestige-center-inner img {
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    box-shadow: 0 0 40px rgba(64,169,255,0.35), 0 0 8px rgba(233,69,96,0.2);
-    border: 6px solid rgba(255,255,255,0.06);
-}
-.prestige-center-label {
-    margin-top: 8px;
-    text-align: center;
-    color: var(--color-text-primary);
-    font-weight: 600;
-}
-
-.prestige-node {
-    width: 160px;
-    height: auto;
-    z-index: 6;
-}
-.prestige-node .node-inner {
-    background: rgba(1,22,56,0.85);
-    color: var(--color-text-primary);
-    border-radius: 12px;
-    padding: 8px;
-    min-width: 140px;
-    text-align: center;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-}
-.node-icon img {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    display: block;
-    margin: 0 auto 6px auto;
-    border: 3px solid rgba(64,169,255,0.12);
-}
-.node-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-text-accent);
-    margin-bottom: 6px;
-}
-.node-cost {
-    font-size: 0.85rem;
+.production {
     color: var(--color-text-secondary);
-    margin-bottom: 6px;
-}
-.prestige-buy-button {
-    background: linear-gradient(180deg, var(--color-blue-main), #0d6fb8);
-    color: var(--color-text-primary);
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
+    margin-bottom: auto; 
 }
 
-/* Cluster label for sections */
-.cluster-label {
-    background: rgba(0,0,0,0.45);
-    color: var(--color-text-primary);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    border: 1px solid rgba(64,169,255,0.12);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-    z-index: 7;
-}
-
-/* Responsive: fallback to simple grid on very small screens */
-@media (max-width: 760px) {
-    #prestige_upgrades_grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        height: auto;
-    }
-    .prestige-center-inner img { width: 120px; height:120px; }
-    .prestige-node { width: 100%; position: static; transform: none; }
-}
-
-/* --- Prestige Shop Upgrade-Karten (Konsolidiert) --- */
-.prestige-upgrade {
-    /* Nutzt das Dunkelblau/Schwarz für den Kontrast */
-    background-color: var(--color-background-dark); 
-    border: 2px solid var(--color-neutral-accent); /* Neutraler Rahmen im Ruhezustand */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: all 0.2s ease-in-out;
-    opacity: 0.95;
-    border-radius: 10px;
-    padding: 15px;
-    text-align: center;
-    cursor: pointer;
-}
-
-/* Hover-Effekt: Blauer Fokus */
-.prestige-upgrade:hover {
-    border-color: var(--color-blue-main); /* Helles Blau als Fokus-Farbe */
-    box-shadow: 0 0 15px var(--color-blue-main);
-}
-
-/* Zustand: NICHT VERFÜGBAR (Gesperrt/Zu teuer) */
-.prestige-upgrade.locked, .prestige-upgrade:not(.available):not(.bought) {
-    opacity: 0.6;
-    cursor: not-allowed;
-    border-color: var(--color-red-main); /* Rote Umrandung für gesperrt/zu teuer */
-    box-shadow: none;
-}
-
-/* Zustand: KAUFBAR (available) */
-.prestige-upgrade.available {
-    box-shadow: 0 0 10px var(--color-blue-main); 
-}
-
-/* Zustand: GEKAUFT */
-.prestige-upgrade.bought {
-    /* Hintergrund wird Tiefrot, um den Kauf-Abschluss zu signalisieren */
-    background-color: var(--color-red-main); 
-    border-color: var(--color-red-main);
-    opacity: 1;
-    color: var(--color-text-light); 
-    cursor: default;
-    box-shadow: 0 0 8px rgba(107, 5, 4, 0.9);
-}
-
-/* Titel und Kosten in Prestige-Karten hervorheben */
-.prestige-upgrade h3 {
-    color: var(--color-blue-main); /* Prestige-Titel in hellem Blau */
-    text-shadow: none;
-}
-.prestige-cost span {
-    color: var(--color-blue-main); /* Prestige-Punkte (PP) in hellem Blau */
-    font-weight: bold;
-}
-
-
-/*================================================================================================
-// --- 7. MODALS & SONSTIGES ---
-//================================================================================================*/
-
-.modal {
+.button-group {
     display: flex;
-    position: fixed;
-    z-index: 1001;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: var(--color-modal-bg);
-    justify-content: center;
-    align-items: center;
+    gap: 5px;
+    margin-top: 15px;
 }
 
-.modal-content {
-    background-color: #333;
-    padding: 30px;
-    border: 1px solid #888;
-    border-radius: 10px;
-    width: 80%;
-    max-width: 500px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+.btn-buy, .btn-buy-research {
+    flex-grow: 1;
+    padding: 8px 5px;
+    background-color: var(--color-blue-main);
+    color: var(--color-background-dark);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
 }
 
-.modal-buttons {
-    margin-top: 20px;
+.btn-buy:hover:not(:disabled), .btn-buy-research:hover:not(:disabled) {
+    background-color: #70c1ff;
 }
 
-/* Verbesserte Info-Boxen für die Info-Seite (Konsolidiert) */
-.info-box {
-    background: rgba(1, 22, 56, 0.7); /* Dein color-background-dark */
-    border: 1px solid var(--color-blue-main);
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.2);
-    padding: 20px;
-    margin: 15px auto;
-    border-radius: 8px;
-    text-align: left;
-    max-width: 500px; 
+.btn-buy:disabled, .btn-buy-research:disabled {
+    background-color: var(--color-neutral-accent);
+    cursor: not-allowed;
 }
 
 
 /*================================================================================================
-// --- 8. RESPONSIVE DESIGN (MEDIA QUERIES) ---
+// --- 8. RESPONSIVE DESIGN ---
 //================================================================================================*/
 
-@media (max-width: 1400px) {
-    .main-layout {
-        grid-template-columns: 1fr 1fr;
-        gap: var(--spacing-md);
-    }
-    
-    .left-column {
-        grid-column: 1 / -1;
-        max-width: 500px;
-        margin: 0 auto;
-    }
-    
-    .middle-column {
-        grid-column: 1;
-    }
-    
-    .right-column {
-        grid-column: 2;
-    }
+@media (max-width: 1024px) {
+    .main-layout { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 900px) {
-    .main-layout {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-        padding: var(--spacing-sm);
-    }
-    
-    .left-column,
-    .middle-column,
-    .right-column {
-        grid-column: 1;
-        width: 100%;
-        max-width: 500px;
-        margin: 0 auto;
-    }
-    
-    .right-column {
-        max-height: none;
-        overflow-y: visible;
-    }
-    
-    .main-content {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    /* Container-Anpassungen für mobile Ansicht */
-    .left-column,
-    .middle-column,
-    .right-column {
-        padding: var(--spacing-md);
-    }
-    
-    /* Stats-Box-Anpassungen */
-    .stats-box {
-        font-size: 1rem;
-    }
+@media (max-width: 760px) {
+    .building-grid { grid-template-columns: 1fr; }
 }
