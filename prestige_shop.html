@@ -39,12 +39,9 @@
                     <li><span class="con">-</span> Dein Forschungsfortschritt wird zurückgesetzt.</li>
                 </ul>
             </div>
-            <button id="prestige_reset_button" class="btn-prestige">Prestige</button>
-        </section>
-
-        <section class="prestige-shop-container">
-            <div class="prestige-grid" id="prestige_upgrades_grid">
-                <!-- Prestige Upgrades werden hier dynamisch eingefügt -->
+            <div class="prestige-actions">
+                <button id="prestige_reset_button" class="btn-prestige">Prestige</button>
+                <button id="open_skill_tree_button" class="btn-primary">Skill-Tree öffnen</button>
             </div>
         </section>
     </main>
@@ -69,6 +66,19 @@
             <div class="modal-buttons">
                 <button id="confirm_prestige_button" class="btn-confirm">Ja, prestigen!</button>
                 <button id="cancel_prestige_button" class="btn-cancel">Nein, abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Tree Modal -->
+    <div id="skill_tree_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Prestige Skill-Tree</h2>
+            <div id="prestige-tree-container">
+                <!-- Skill-Tree wird hier dynamisch via JS generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_skill_tree_button" class="btn-cancel">Schließen</button>
             </div>
         </div>
     </div>

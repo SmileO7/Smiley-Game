@@ -91,9 +91,35 @@ const researchUpgrades = [
     { id: 62, cost: 2000, description: 'Globale Klick-Kraft +15%', type: 'click_mult', value: 0.15 },
 ];
 
+const prestigeUpgrades = [
+    // Tier 1 (Start)
+    { id: 0, cost: 1, description: 'Starte mit einem permanenten +10% SPS-Bonus', type: 'global_sps_mult', value: 0.1, x: 0, y: 0, requirements: [] },
+
+    // Tier 2 (Branching from start)
+    { id: 1, cost: 2, description: 'Permanenter globaler Klick-Multiplikator +25%', type: 'global_click_mult', value: 0.25, x: -100, y: 100, requirements: [0] },
+    { id: 2, cost: 2, description: 'Erhöhe den Forschungs-Output um 50%', type: 'research_lab_mult', value: 0.5, x: 100, y: 100, requirements: [0] },
+
+    // Tier 3 (Deeper)
+    { id: 3, cost: 5, description: 'Erhöhe die Effektivität von Prestige-Punkten um 0.1% (additiv)', type: 'prestige_point_eff', value: 0.001, x: 0, y: 200, requirements: [1, 2] },
+    { id: 4, cost: 3, description: 'Auto-Klicker & Smiley-Bäume sind 50% günstiger', type: 'building_cost_reduction', buildingIndices: [0, 1], value: 0.5, x: -200, y: 200, requirements: [1] },
+    { id: 5, cost: 3, description: 'Schalte einen neuen globalen Bonus frei: +1% SPS pro Prestige-Reset', type: 'prestige_reset_bonus', value: 0.01, x: 200, y: 200, requirements: [2] },
+
+    // Tier 4 (Endgame)
+    { id: 6, cost: 10, description: 'Verbessere den globalen Klick-Multiplikator um weitere 50%', type: 'global_click_mult', value: 0.5, x: -100, y: 300, requirements: [3, 4] },
+    { id: 7, cost: 10, description: 'Der Bonus pro Prestige-Reset wird verdoppelt', type: 'prestige_reset_bonus', value: 0.01, x: 100, y: 300, requirements: [3, 5] },
+
+    // Tier 5 (Feature Unlocks)
+    { id: 8, cost: 15, description: 'Schalte das Pet-System frei, um Begleiter zu sammeln, die passive Boni geben.', type: 'unlock_pets', value: 0, x: -200, y: 400, requirements: [6] },
+    { id: 9, cost: 15, description: 'Schalte die Diamanten-Mine frei, eine neue Ressource für exklusive Upgrades.', type: 'unlock_mine', value: 0, x: 200, y: 400, requirements: [7] },
+
+    // Tier 6 (Social Feature)
+    { id: 10, cost: 50, description: 'Schalte das Gilden-System frei, um dich mit anderen Spielern zusammenzuschließen.', type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [8, 9] },
+];
+
 let buildingCounts = buildingsData.map(() => 0);
 let buildingPrices = buildingsData.map(item => item.basePrice);
 let researchStatus = researchUpgrades.map(() => false);
+let prestigeUpgradeStatus = prestigeUpgrades.map(() => false);
 
 let gameState = {
     aktuelle_smileys: 0,
@@ -103,9 +129,13 @@ let gameState = {
     forschungPunkte: 0,
     prestige_punkte_verfügbar: 0,
     gesamt_prestige_punkte: 0,
+    prestigeResets: 0, 
     globalerPrestigeMultiplikator: 1,
     researchLabPrestigeMulti: 1,
     klickKraftMultiplier: 1,
+    globalSPSMultiplier: 1,
+    prestigePointMultiplier: 0.01,
+    prestigeResetBonus: 0,
 };
 
 //================================================================================================================
@@ -127,8 +157,20 @@ function formatNumber(num) {
 
 function getById(id) { return document.getElementById(id); }
 
-function calculateNextCost(basePrice, count, growthRate) {
-    return Math.floor(basePrice * Math.pow(growthRate, count));
+function calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
+    let price = Math.floor(basePrice * Math.pow(growthRate, count));
+    
+    const reductionUpgrade = prestigeUpgrades.find(upg => 
+        upg.type === 'building_cost_reduction' && 
+        prestigeUpgradeStatus[upg.id] &&
+        upg.buildingIndices.includes(buildingIndex)
+    );
+
+    if (reductionUpgrade) {
+        price *= (1 - reductionUpgrade.value); 
+    }
+
+    return Math.floor(price);
 }
 
 function speichereSpiel() {
@@ -137,6 +179,7 @@ function speichereSpiel() {
         localStorage.setItem('buildingCounts', JSON.stringify(buildingCounts));
         localStorage.setItem('buildingPrices', JSON.stringify(buildingPrices));
         localStorage.setItem('researchStatus', JSON.stringify(researchStatus));
+        localStorage.setItem('prestigeUpgradeStatus', JSON.stringify(prestigeUpgradeStatus));
     } catch (e) {}
 }
 
@@ -144,7 +187,15 @@ function ladeSpiel() {
     try {
         const savedState = localStorage.getItem('gameState');
         if (savedState) {
-            Object.assign(gameState, JSON.parse(savedState));
+            let loadedGameState = JSON.parse(savedState);
+            const defaultGameState = {
+                prestigeResets: 0,
+                prestigeResetBonus: 0,
+                 globalSPSMultiplier: 1,
+                prestigePointMultiplier: 0.01,
+            };
+            Object.assign(gameState, { ...defaultGameState, ...loadedGameState });
+
             for (const key in gameState) {
                 if(typeof gameState[key] === 'string' && !isNaN(parseFloat(gameState[key]))) {
                     gameState[key] = parseFloat(gameState[key]);
@@ -156,23 +207,29 @@ function ladeSpiel() {
             const savedPrices = JSON.parse(localStorage.getItem('buildingPrices'));
             if(savedPrices) buildingPrices = savedPrices;
 
-            const savedResearch = JSON.parse(localStorage.getItem('researchStatus'));
-            if(savedResearch && savedResearch.length === researchUpgrades.length) {
-                researchStatus = savedResearch;
-            } else {
-                researchStatus = researchUpgrades.map(()=>false);
-            }
+            const savedResearchRaw = localStorage.getItem('researchStatus');
+            const savedResearch = savedResearchRaw ? JSON.parse(savedResearchRaw) : [];
+            researchStatus = researchUpgrades.map((upgrade, index) => savedResearch[index] || false);
 
-            applyAllResearchBonuses();
+            const savedPrestigeUpgradesRaw = localStorage.getItem('prestigeUpgradeStatus');
+            const savedPrestigeUpgrades = savedPrestigeUpgradesRaw ? JSON.parse(savedPrestigeUpgradesRaw) : [];
+            prestigeUpgradeStatus = prestigeUpgrades.map((upgrade, index) => savedPrestigeUpgrades[index] || false);
+
+            applyAllBoni();
         }
     } catch (e) {
+        console.error("Fehler beim Laden des Spiels:", e);
         localStorage.clear();
     }
 }
 
-function applyAllResearchBonuses() {
+function applyAllBoni() {
     buildingsData.forEach(b => { b.prestigeMulti = 1; });
     gameState.klickKraftMultiplier = 1;
+    gameState.globalSPSMultiplier = 1;
+    gameState.researchLabPrestigeMulti = 1;
+    gameState.prestigePointMultiplier = 0.01;
+    gameState.prestigeResetBonus = 0;
 
     researchStatus.forEach((bought, id) => {
         if(bought) {
@@ -182,6 +239,31 @@ function applyAllResearchBonuses() {
                     buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
                 } else if (upgrade.type === 'click_mult') {
                     gameState.klickKraftMultiplier += upgrade.value;
+                }
+            }
+        }
+    });
+
+    prestigeUpgradeStatus.forEach((bought, id) => {
+        if(bought) {
+            const upgrade = prestigeUpgrades.find(u => u.id === id);
+            if(upgrade) {
+                switch(upgrade.type) {
+                    case 'global_sps_mult':
+                        gameState.globalSPSMultiplier += upgrade.value;
+                        break;
+                    case 'global_click_mult':
+                        gameState.klickKraftMultiplier += upgrade.value;
+                        break;
+                    case 'research_lab_mult':
+                        gameState.researchLabPrestigeMulti += upgrade.value;
+                        break;
+                    case 'prestige_point_eff':
+                        gameState.prestigePointMultiplier += upgrade.value;
+                        break;
+                    case 'prestige_reset_bonus':
+                        gameState.prestigeResetBonus += upgrade.value;
+                        break;
                 }
             }
         }
@@ -210,18 +292,20 @@ function produziereSmileys() {
 
 function computeTotalSPS() {
     let sps = 0;
-    // 1. Basis-SPS aus Gebäuden und deren spezifischen Boni (aus Forschung etc.) berechnen
+
     buildingsData.forEach((item, index) => {
         if (item.isSpecial) return;
-        // Beachten Sie, dass der globalePrestigeMultiplikator hier NICHT mehr angewendet wird
         sps += (buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
     });
 
-    // 2. Globalen Prestige-Bonus berechnen (1% pro gesamt Prestige-Punkt)
-    const prestigeBonus = 1 + (gameState.gesamt_prestige_punkte * 0.01);
-    gameState.globalerPrestigeMultiplikator = prestigeBonus;
+    sps *= gameState.globalSPSMultiplier;
+    
+    const resetBonus = 1 + (gameState.prestigeResets * gameState.prestigeResetBonus);
+    sps *= resetBonus;
 
-    // 3. Finalen SPS-Wert mit globalem Bonus setzen (wobei der Multiplikator nur EINMAL angewendet wird)
+    const prestigeBonus = 1 + (gameState.gesamt_prestige_punkte * gameState.prestigePointMultiplier);
+    gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus;
+
     gameState.totalSPS = sps * prestigeBonus;
 }
 
@@ -234,15 +318,13 @@ function kaufeMehrereGebaeude(index, amount) {
     let tempCount = buildingCounts[index];
 
     for (let i = 0; i < anzahl; i++) {
-        totalCost += calculateNextCost(item.basePrice, tempCount + i, item.growthRate);
+        totalCost += calculateNextCost(item.basePrice, tempCount + i, item.growthRate, index);
     }
 
     if (gameState.aktuelle_smileys >= totalCost) {
         gameState.aktuelle_smileys -= totalCost;
         buildingCounts[index] += anzahl;
-        if(!item.isSpecial) {
-            buildingPrices[index] = calculateNextCost(item.basePrice, buildingCounts[index], item.growthRate);
-        }
+        buildingPrices[index] = calculateNextCost(item.basePrice, buildingCounts[index], item.growthRate, index);
         updateUI(); 
     }
 }
@@ -254,12 +336,24 @@ function kaufeResearchUpgrade(id) {
     gameState.forschungPunkte -= upgrade.cost;
     researchStatus[id] = true;
 
-    if (upgrade.type === 'building_mult') {
-        buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
-    } else if (upgrade.type === 'click_mult') {
-        gameState.klickKraftMultiplier += upgrade.value;
-    }
+    applyAllBoni();
     updateUI();
+}
+
+function kaufePrestigeUpgrade(id) {
+    const upgrade = prestigeUpgrades.find(u => u.id === id);
+    const requirementsMet = upgrade.requirements.every(reqId => prestigeUpgradeStatus[reqId]);
+
+    if (!upgrade || prestigeUpgradeStatus[id] || gameState.prestige_punkte_verfügbar < upgrade.cost || !requirementsMet) return;
+
+    gameState.prestige_punkte_verfügbar -= upgrade.cost;
+    prestigeUpgradeStatus[id] = true;
+
+    applyAllBoni();
+    updatePrestigeUI();
+    if (document.querySelector('.main-layout')) {
+        updateUI();
+    }
 }
 
 function prestigeReset() {
@@ -273,15 +367,15 @@ function prestigeReset() {
     gameState.klickKraft = 1;
     gameState.totalSPS = 0;
     gameState.forschungPunkte = 0;
-    gameState.klickKraftMultiplier = 1;
     gameState.prestige_punkte_verfügbar += pointsToGain;
     gameState.gesamt_prestige_punkte += pointsToGain;
+    gameState.prestigeResets += 1; 
 
     buildingCounts = buildingsData.map(() => 0);
     buildingPrices = buildingsData.map(item => item.basePrice);
     researchStatus = researchUpgrades.map(() => false);
     
-    applyAllResearchBonuses(); 
+    applyAllBoni(); 
     speichereSpiel();
     
     if(document.querySelector('.prestige-main')) {
@@ -334,16 +428,65 @@ function createResearchElements() {
     });
 }
 
+function createPrestigeUpgradeElements() {
+    const treeContainer = getById('prestige-tree-container');
+    if (!treeContainer) return;
+    treeContainer.innerHTML = '';
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = 'prestige-lines';
+    treeContainer.appendChild(svg);
+
+    prestigeUpgrades.forEach(upgrade => {
+        const nodeDiv = document.createElement('div');
+        nodeDiv.className = 'prestige-node';
+        nodeDiv.dataset.id = upgrade.id;
+        nodeDiv.style.left = `calc(50% + ${upgrade.x}px)`;
+        nodeDiv.style.top = `${upgrade.y}px`;
+        nodeDiv.innerHTML = `
+            <div class="node-icon"></div>
+            <div class="node-tooltip">
+                <h4>${upgrade.description}</h4>
+                <p>Kosten: ${formatNumber(upgrade.cost)} PP</p>
+            </div>
+        `;
+        treeContainer.appendChild(nodeDiv);
+
+        upgrade.requirements.forEach(reqId => {
+            const reqUpgrade = prestigeUpgrades.find(u => u.id === reqId);
+            if (reqUpgrade) {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                // Startpunkt der Linie in der Mitte des Eltern-Knotens
+                const startX = `calc(50% + ${reqUpgrade.x}px + 20px)`;
+                const startY = `${reqUpgrade.y + 20}px`;
+                // Endpunkt der Linie in der Mitte des aktuellen Knotens
+                const endX = `calc(50% + ${upgrade.x}px + 20px)`;
+                const endY = `${upgrade.y + 20}px`;
+                
+                line.setAttribute('x1', startX);
+                line.setAttribute('y1', startY);
+                line.setAttribute('x2', endX);
+                line.setAttribute('y2', endY);
+                line.setAttribute('class', 'prestige-line');
+                line.dataset.from = reqId;
+                line.dataset.to = upgrade.id;
+                svg.appendChild(line);
+            }
+        });
+    });
+}
+
 function updateBuildingUI() {
     buildingsData.forEach((building, index) => {
         if (building.isSpecial) return;
-        const cost1x = buildingPrices[index];
-        let cost10x = 0; for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
-        let cost100x = 0; for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
-        const buildingSPS = (buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1) * gameState.globalerPrestigeMultiplikator;
+        const cost1x = calculateNextCost(building.basePrice, buildingCounts[index], building.growthRate, index);
+        let cost10x = 0; for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate, index);
+        let cost100x = 0; for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate, index);
+        const buildingSPS = (buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
         const spsPercentage = gameState.totalSPS > 0 ? (buildingSPS / gameState.totalSPS * 100) : 0;
+        
         getById(`building-count-${index}`).innerText = buildingCounts[index];
-        getById(`building-sps-${index}`).innerText = formatNumber(buildingSPS);
+        getById(`building-sps-${index}`).innerText = formatNumber(buildingSPS * gameState.globalerPrestigeMultiplikator);
         getById(`building-sps-pct-${index}`).innerText = spsPercentage.toFixed(1);
         const btn1x = getById(`buy-1-${index}`);
         btn1x.innerHTML = `1x (${formatNumber(cost1x)})`;
@@ -396,7 +539,7 @@ function updateUI() {
     } else {
         const labButton = getById('forschungslaborButton');
         if (labButton) {
-            const labCost = buildingPrices[labIndex];
+            const labCost = calculateNextCost(buildingsData[labIndex].basePrice, buildingCounts[labIndex], buildingsData[labIndex].growthRate, labIndex);
             labButton.innerText = `Kaufen (${formatNumber(labCost)})`;
             labButton.disabled = gameState.aktuelle_smileys < labCost;
         }
@@ -404,10 +547,9 @@ function updateUI() {
 }
 
 function updatePrestigeUI() {
-    ladeSpiel(); 
+    if(!getById('prestige-tree-container')) return;
     const prestigePointThreshold = 1000000;
     const pointsToGain = Math.max(0, Math.floor(Math.log10(gameState.gesammelte_smileys / prestigePointThreshold)) - gameState.gesamt_prestige_punkte);
-    
     let nextPointRequirement = prestigePointThreshold * Math.pow(10, gameState.gesamt_prestige_punkte + pointsToGain);
 
     getById('prestige_punkte_verfügbar').innerText = formatNumber(gameState.prestige_punkte_verfügbar);
@@ -415,14 +557,47 @@ function updatePrestigeUI() {
     getById('aktuelle_smileys_prestige').innerText = formatNumber(gameState.aktuelle_smileys);
     getById('next_prestige_point').innerText = formatNumber(nextPointRequirement);
 
-    const prestigeButton = getById('prestige_reset_button');
-    if(prestigeButton) {
-        prestigeButton.disabled = pointsToGain <= 0;
-    }
+const prestigeButton = getById('prestige_reset_button');
+if(prestigeButton) {
+    prestigeButton.disabled = pointsToGain <= 0;
+    // Hinzugefügt/korrigiert:
+    prestigeButton.innerText = `Prestige Reset (${formatNumber(pointsToGain)} Punkte)`;
+}
     const pointsToGainElement = getById('prestige_points_to_gain');
     if(pointsToGainElement) {
         pointsToGainElement.innerText = pointsToGain;
     }
+
+    prestigeUpgrades.forEach(upgrade => {
+        const node = document.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
+        if (!node) return;
+
+        const requirementsMet = upgrade.requirements.every(reqId => prestigeUpgradeStatus[reqId]);
+        const canAfford = gameState.prestige_punkte_verfügbar >= upgrade.cost;
+        const isPurchased = prestigeUpgradeStatus[upgrade.id];
+
+        node.classList.remove('purchased', 'available', 'locked');
+
+        if (isPurchased) {
+            node.classList.add('purchased');
+        } else if (requirementsMet && canAfford) {
+            node.classList.add('available');
+        } else {
+            node.classList.add('locked');
+        }
+    });
+
+    const svg = getById('prestige-lines');
+    if (!svg) return;
+    svg.querySelectorAll('line').forEach(line => {
+        const fromId = parseInt(line.dataset.from, 10);
+        const toId = parseInt(line.dataset.to, 10);
+        if (prestigeUpgradeStatus[fromId] && prestigeUpgradeStatus[toId]) {
+            line.classList.add('active');
+        } else {
+            line.classList.remove('active');
+        }
+    });
 }
 
 //================================================================================================================
@@ -452,26 +627,47 @@ function setupMainEventListeners() {
 }
 
 function setupPrestigeEventListeners() {
-    const modal = getById('prestige_confirm_modal');
-    const openModalButton = getById('prestige_reset_button');
-    const closeModalButton = getById('cancel_prestige_button');
-    const confirmButton = getById('confirm_prestige_button');
+    const prestigeModal = getById('prestige_confirm_modal');
+    const openPrestigeModalButton = getById('prestige_reset_button');
+    const closePrestigeModalButton = getById('cancel_prestige_button');
+    const confirmPrestigeButton = getById('confirm_prestige_button');
 
-    openModalButton?.addEventListener('click', () => {
-        updatePrestigeUI(); // Update values before showing
+    openPrestigeModalButton?.addEventListener('click', () => {
+        updatePrestigeUI();
         const pointsToGain = Math.max(0, Math.floor(Math.log10(gameState.gesammelte_smileys / 1000000)) - gameState.gesamt_prestige_punkte);
         if (pointsToGain > 0) {
-            modal.style.display = 'flex';
+            prestigeModal.style.display = 'flex';
         }
     });
 
-    closeModalButton?.addEventListener('click', () => {
-        modal.style.display = 'none';
+    closePrestigeModalButton?.addEventListener('click', () => {
+        prestigeModal.style.display = 'none';
     });
 
-    confirmButton?.addEventListener('click', () => {
+    confirmPrestigeButton?.addEventListener('click', () => {
         prestigeReset();
-        modal.style.display = 'none';
+        prestigeModal.style.display = 'none';
+    });
+
+    const skillTreeModal = getById('skill_tree_modal');
+    const openSkillTreeButton = getById('open_skill_tree_button');
+    const closeSkillTreeButton = getById('close_skill_tree_button');
+
+    openSkillTreeButton?.addEventListener('click', () => {
+        skillTreeModal.style.display = 'flex';
+    });
+
+    closeSkillTreeButton?.addEventListener('click', () => {
+        skillTreeModal.style.display = 'none';
+    });
+
+    getById('prestige-tree-container')?.addEventListener('click', (e) => {
+        const node = e.target.closest('.prestige-node');
+        if (!node) return;
+        const id = parseInt(node.dataset.id, 10);
+        if (!isNaN(id)) {
+            kaufePrestigeUpgrade(id);
+        }
     });
 }
 
@@ -488,6 +684,8 @@ function initialisiereHauptSpiel() {
 }
 
 function initialisierePrestigeSeite() {
+    ladeSpiel();
+    createPrestigeUpgradeElements();
     setupPrestigeEventListeners();
     updatePrestigeUI();
     setInterval(updatePrestigeUI, 1000); 

@@ -16,7 +16,6 @@
     --spacing-lg: 30px;
 }
 
-/* KORREKTUR: Universelles Box-Sizing für einheitliches Layout */
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -207,8 +206,8 @@ main {
     margin-top: 15px;
 }
 
-.btn-buy, .btn-buy-research, .btn-prestige, .btn-confirm, .btn-cancel {
-    padding: 8px 5px;
+.btn-buy, .btn-buy-research, .btn-prestige, .btn-confirm, .btn-cancel, .btn-primary {
+    padding: 10px 15px;
     background-color: var(--color-blue-main);
     color: var(--color-background-dark);
     border: none;
@@ -216,6 +215,8 @@ main {
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s;
+    flex-grow: 1;
+    text-align: center;
 }
 
 .btn-prestige, .btn-confirm {
@@ -228,7 +229,7 @@ main {
     color: white;
 }
 
-.btn-buy:hover:not(:disabled), .btn-buy-research:hover:not(:disabled) {
+.btn-buy:hover:not(:disabled), .btn-buy-research:hover:not(:disabled), .btn-primary:hover {
     background-color: #70c1ff;
 }
 
@@ -236,6 +237,123 @@ main {
     background-color: var(--color-neutral-accent);
     cursor: not-allowed;
 }
+
+/*================================================================================================
+// --- PRESTIGE SKILL-TREE STYLES ---
+//================================================================================================*/
+
+.prestige-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+#prestige-tree-container {
+    position: relative;
+    width: 100%;
+    height: 600px; /* Erhöht für mehr Platz nach unten */
+    margin: 20px auto;
+    overflow: visible;
+}
+
+#prestige-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; 
+}
+
+.prestige-line {
+    stroke: var(--color-neutral-accent);
+    stroke-width: 2px;
+    transition: stroke 0.3s;
+}
+
+.prestige-line.active {
+    stroke: var(--color-blue-main);
+    stroke-width: 3px;
+}
+
+.prestige-node {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    transform: translate(-50%, -50%); 
+    z-index: 2;
+}
+
+.node-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--color-neutral-accent);
+    background-color: var(--color-background-dark);
+    transition: all 0.3s;
+}
+
+/* Zustände der Knoten */
+.prestige-node.locked .node-icon {
+    border-color: #555;
+    background-color: #333;
+    filter: grayscale(80%);
+    cursor: not-allowed;
+}
+
+.prestige-node.available .node-icon {
+    border-color: var(--color-blue-main);
+    box-shadow: 0 0 10px rgba(64, 169, 255, 0.7);
+}
+
+.prestige-node.available:hover .node-icon {
+    transform: scale(1.1);
+}
+
+.prestige-node.purchased .node-icon {
+    border-color: var(--color-red-main);
+    background-color: var(--color-red-main);
+    box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
+}
+
+/* Tooltip-Styling */
+.node-tooltip {
+    visibility: hidden;
+    width: 200px;
+    background-color: rgba(0,0,0,0.85);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%; 
+    left: 50%;
+    margin-left: -100px; 
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.prestige-node:hover .node-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.node-tooltip h4 {
+    font-size: 1em;
+    color: var(--color-text-accent);
+    margin-top: 0;
+}
+
+.node-tooltip p {
+    font-size: 0.9em;
+    margin: 5px 0 0;
+}
+
 
 /*================================================================================================
 // --- PRESTIGE & MODAL STYLES ---
@@ -252,6 +370,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .modal-content {
@@ -262,6 +381,12 @@ main {
     width: 90%;
     max-width: 500px;
     text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content.large {
+    max-width: 800px;
 }
 
 .prestige-consequences ul {
@@ -293,8 +418,6 @@ main {
     justify-content: space-around;
 }
 
-
-
 /*================================================================================================
 // --- 8. RESPONSIVE DESIGN ---
 //================================================================================================*/
@@ -305,4 +428,7 @@ main {
 
 @media (max-width: 760px) {
     .building-grid { grid-template-columns: 1fr; }
+    .modal-content.large {
+        max-width: 95%;
+    }
 }
