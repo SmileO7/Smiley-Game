@@ -86,11 +86,17 @@ main {
     align-items: start;
 }
 
+.prestige-main, .info-main {
+    max-width: 900px;
+    margin: auto;
+    padding: var(--spacing-md);
+}
+
 /*================================================================================================
 // --- 3. CONTAINER & BOX-STYLES ---
 //================================================================================================*/
 
-.left-column, .middle-column, .right-column {
+.left-column, .middle-column, .right-column, .info-section, .prestige-info {
     background: rgba(26, 26, 46, 0.8);
     border: 1px solid var(--color-blue-main);
     padding: var(--spacing-md);
@@ -98,7 +104,40 @@ main {
     margin-bottom: var(--spacing-md);
 }
 
-/* KORREKTUR: Smiley-Button Größe */
+.stats-box {
+    text-align: left;
+}
+
+.stats-box h3 {
+    text-align: center;
+    font-size: 1.4em;
+    margin-bottom: 15px;
+}
+
+.stats-box p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1em;
+    margin: 8px 0;
+}
+
+.stats-box hr {
+    border-color: var(--color-neutral-accent);
+    margin: 15px 0;
+}
+
+.prestige-stats {
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid var(--color-blue-main);
+    padding: var(--spacing-md);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
 #smiley_button {
     width: 250px;
     height: 250px;
@@ -124,29 +163,8 @@ main {
     display: block; 
 }
 
-.stats-box {
-    text-align: left;
-}
 
-.stats-box h3 {
-    text-align: center;
-    font-size: 1.4em;
-    margin-bottom: 15px;
-}
-
-.stats-box p {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1.1em;
-    margin: 8px 0;
-}
-
-.stats-box hr {
-    border-color: var(--color-neutral-accent);
-    margin: 15px 0;
-}
-
-.building-grid, #research-upgrades-grid {
+.building-grid, #research_upgrades_grid {
     display: grid;
     gap: var(--spacing-md);
 }
@@ -155,7 +173,7 @@ main {
     grid-template-columns: repeat(2, 1fr);
 }
 
-#research-upgrades-grid {
+#research_upgrades_grid {
     grid-template-columns: 1fr;
 }
 
@@ -189,8 +207,7 @@ main {
     margin-top: 15px;
 }
 
-.btn-buy, .btn-buy-research {
-    flex-grow: 1;
+.btn-buy, .btn-buy-research, .btn-prestige, .btn-confirm, .btn-cancel {
     padding: 8px 5px;
     background-color: var(--color-blue-main);
     color: var(--color-background-dark);
@@ -201,6 +218,16 @@ main {
     transition: background-color 0.2s;
 }
 
+.btn-prestige, .btn-confirm {
+    background-color: var(--color-red-main);
+    color: white;
+}
+
+.btn-cancel {
+     background-color: var(--color-neutral-accent);
+    color: white;
+}
+
 .btn-buy:hover:not(:disabled), .btn-buy-research:hover:not(:disabled) {
     background-color: #70c1ff;
 }
@@ -209,6 +236,63 @@ main {
     background-color: var(--color-neutral-accent);
     cursor: not-allowed;
 }
+
+/*================================================================================================
+// --- PRESTIGE & MODAL STYLES ---
+//================================================================================================*/
+
+.modal {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--color-background-dark);
+    padding: var(--spacing-lg);
+    border-radius: 8px;
+    border: 1px solid var(--color-blue-main);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.prestige-consequences ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    display: inline-block;
+}
+
+.prestige-consequences li {
+    margin-bottom: var(--spacing-sm);
+}
+
+.pro {
+    color: #4CAF50;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.con {
+    color: var(--color-red-main);
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.modal-buttons {
+    margin-top: var(--spacing-lg);
+    display: flex;
+    justify-content: space-around;
+}
+
 
 
 /*================================================================================================

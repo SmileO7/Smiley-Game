@@ -18,25 +18,60 @@
     </header>
     <main class="prestige-main">
         <div class="stats-box prestige-stats">
-            <h3>Verfügbare Prestige-Punkte: <span id="prestige_punkte_verfügbar">0</span></h3>
-            <p>Gesammelte Prestige-Punkte: <span id="gesamt_prestige_punkte">0</span></p>
+            <h3>Prestige Status</h3>
+            <p>Verfügbare Punkte: <span id="prestige_punkte_verfügbar">0</span></p>
+            <p>Gesammelte Punkte: <span id="gesamt_prestige_punkte">0</span></p>
+            <p>Globaler Multiplikator: <span id="globaler_multiplikator_anzeige">x1.00</span></p>
             <hr>
             <p>Aktuelle Smileys: <span id="aktuelle_smileys_prestige">0</span></p>
-            <p>Benötigt für nächsten Punkt: <span id="next_prestige_point">1,000,000</span></p>
+            <p>Nächster Punkt bei: <span id="next_prestige_point">1,000,000</span></p>
         </div>
 
-        <section class="prestige-shop-container">
-            <div class="prestige-info">
-                <h3>Prestige-System</h3>
-                <p>Verdiene Prestige-Punkte durch das Sammeln von Smileys. Je mehr Smileys du sammelst, desto mehr Punkte erhältst du beim Prestige-Reset.</p>
-                <button id="prestige_reset_button" class="btn-prestige">Prestige Reset durchführen</button>
+        <section class="prestige-info">
+            <h3>Prestige-System</h3>
+            <p>Führe einen Prestige-Reset durch, um deine bisher gesammelten Smileys in wertvolle Prestige-Punkte umzuwandeln.</p>
+            <div class="prestige-consequences">
+                <h4>Was passiert beim Reset?</h4>
+                <ul>
+                    <li><span class="pro">+</span> Du erhältst Prestige-Punkte.</li>
+                    <li><span class="con">-</span> Deine Smileys werden auf 0 zurückgesetzt.</li>
+                    <li><span class="con">-</span> Alle deine Gebäude werden auf 0 zurückgesetzt.</li>
+                    <li><span class="con">-</span> Dein Forschungsfortschritt wird zurückgesetzt.</li>
+                </ul>
             </div>
+            <button id="prestige_reset_button" class="btn-prestige">Prestige</button>
+        </section>
 
+        <section class="prestige-shop-container">
             <div class="prestige-grid" id="prestige_upgrades_grid">
-                <!-- Wird dynamisch mit JavaScript gefüllt -->
+                <!-- Prestige Upgrades werden hier dynamisch eingefügt -->
             </div>
         </section>
     </main>
+
+    <!-- Prestige Reset Modal -->
+    <div id="prestige_confirm_modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Prestige Reset bestätigen</h2>
+            <p>Möchtest du wirklich einen Prestige-Reset durchführen?</p>
+            <div class="prestige-consequences">
+                <h4>Du erhältst:</h4>
+                <ul>
+                    <li><span class="pro">+</span> <strong id="prestige_points_to_gain">0</strong> Prestige-Punkte</li>
+                </ul>
+                <h4>Du verlierst:</h4>
+                <ul>
+                    <li><span class="con">-</span> Alle Smileys</li>
+                    <li><span class="con">-</span> Alle Gebäude</li>
+                    <li><span class="con">-</span> Allen Forschungsfortschritt</li>
+                </ul>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirm_prestige_button" class="btn-confirm">Ja, prestigen!</button>
+                <button id="cancel_prestige_button" class="btn-cancel">Nein, abbrechen</button>
+            </div>
+        </div>
+    </div>
     
     <script src="script.js"></script>
 </body>

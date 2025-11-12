@@ -26,67 +26,66 @@ const buildingsData = [
 ];
 
 const researchUpgrades = [
-    { id: 0, cost: 10, description: 'Auto-Klicker Produktion +10%', type: 'building_mult', buildingIndex: 0, value: 0.1 },
-    { id: 1, cost: 50, description: 'Auto-Klicker Produktion +15%', type: 'building_mult', buildingIndex: 0, value: 0.15 },
-    { id: 2, cost: 200, description: 'Auto-Klicker Produktion +25%', type: 'building_mult', buildingIndex: 0, value: 0.25 },
-    { id: 3, cost: 1000, description: 'Auto-Klicker Produktion +50%', type: 'building_mult', buildingIndex: 0, value: 0.5 },
-    { id: 4, cost: 50, description: 'Smiley-Baum Produktion +10%', type: 'building_mult', buildingIndex: 1, value: 0.1 },
-    { id: 5, cost: 250, description: 'Smiley-Baum Produktion +15%', type: 'building_mult', buildingIndex: 1, value: 0.15 },
-    { id: 6, cost: 1000, description: 'Smiley-Baum Produktion +25%', type: 'building_mult', buildingIndex: 1, value: 0.25 },
-    { id: 7, cost: 5000, description: 'Smiley-Baum Produktion +50%', type: 'building_mult', buildingIndex: 1, value: 0.5 },
-    { id: 8, cost: 250, description: 'Smiley-Fabrik Produktion +10%', type: 'building_mult', buildingIndex: 2, value: 0.1 },
-    { id: 9, cost: 1250, description: 'Smiley-Fabrik Produktion +15%', type: 'building_mult', buildingIndex: 2, value: 0.15 },
-    { id: 10, cost: 5000, description: 'Smiley-Fabrik Produktion +25%', type: 'building_mult', buildingIndex: 2, value: 0.25 },
-    { id: 11, cost: 25000, description: 'Smiley-Fabrik Produktion +50%', type: 'building_mult', buildingIndex: 2, value: 0.5 },
-    { id: 12, cost: 1000, description: 'Smiley-Mine Produktion +10%', type: 'building_mult', buildingIndex: 4, value: 0.1 },
-    { id: 13, cost: 5000, description: 'Smiley-Mine Produktion +15%', type: 'building_mult', buildingIndex: 4, value: 0.15 },
-    { id: 14, cost: 20000, description: 'Smiley-Mine Produktion +25%', type: 'building_mult', buildingIndex: 4, value: 0.25 },
-    { id: 15, cost: 100000, description: 'Smiley-Mine Produktion +50%', type: 'building_mult', buildingIndex: 4, value: 0.5 },
-    { id: 16, cost: 5000, description: 'Smiley-Bohrer Produktion +10%', type: 'building_mult', buildingIndex: 5, value: 0.1 },
-    { id: 17, cost: 25000, description: 'Smiley-Bohrer Produktion +15%', type: 'building_mult', buildingIndex: 5, value: 0.15 },
-    { id: 18, cost: 100000, description: 'Smiley-Bohrer Produktion +25%', type: 'building_mult', buildingIndex: 5, value: 0.25 },
-    { id: 19, cost: 500000, description: 'Smiley-Bohrer Produktion +50%', type: 'building_mult', buildingIndex: 5, value: 0.5 },
-    { id: 20, cost: 25000, description: 'Kernkraftwerk Produktion +10%', type: 'building_mult', buildingIndex: 6, value: 0.1 },
-    { id: 21, cost: 125000, description: 'Kernkraftwerk Produktion +15%', type: 'building_mult', buildingIndex: 6, value: 0.15 },
-    { id: 22, cost: 500000, description: 'Kernkraftwerk Produktion +25%', type: 'building_mult', buildingIndex: 6, value: 0.25 },
-    { id: 23, cost: 2500000, description: 'Kernkraftwerk Produktion +50%', type: 'building_mult', buildingIndex: 6, value: 0.5 },
-    { id: 24, cost: 125000, description: 'Galaxie Produktion +10%', type: 'building_mult', buildingIndex: 7, value: 0.1 },
-    { id: 25, cost: 625000, description: 'Galaxie Produktion +15%', type: 'building_mult', buildingIndex: 7, value: 0.15 },
-    { id: 26, cost: 2500000, description: 'Galaxie Produktion +25%', type: 'building_mult', buildingIndex: 7, value: 0.25 },
-    { id: 27, cost: 12500000, description: 'Galaxie Produktion +50%', type: 'building_mult', buildingIndex: 7, value: 0.5 },
-    { id: 28, cost: 625000, description: 'Dimensionsportal Produktion +10%', type: 'building_mult', buildingIndex: 8, value: 0.1 },
-    { id: 29, cost: 3125000, description: 'Dimensionsportal Produktion +15%', type: 'building_mult', buildingIndex: 8, value: 0.15 },
-    { id: 30, cost: 12500000, description: 'Dimensionsportal Produktion +25%', type: 'building_mult', buildingIndex: 8, value: 0.25 },
-    { id: 31, cost: 62500000, description: 'Dimensionsportal Produktion +50%', type: 'building_mult', buildingIndex: 8, value: 0.5 },
-    { id: 32, cost: 3125000, description: 'Zeitmaschine Produktion +10%', type: 'building_mult', buildingIndex: 9, value: 0.1 },
-    { id: 33, cost: 15625000, description: 'Zeitmaschine Produktion +15%', type: 'building_mult', buildingIndex: 9, value: 0.15 },
-    { id: 34, cost: 62500000, description: 'Zeitmaschine Produktion +25%', type: 'building_mult', buildingIndex: 9, value: 0.25 },
-    { id: 35, cost: 312500000, description: 'Zeitmaschine Produktion +50%', type: 'building_mult', buildingIndex: 9, value: 0.5 },
-    { id: 36, cost: 15625000, description: 'Meta-Klicker Produktion +10%', type: 'building_mult', buildingIndex: 10, value: 0.1 },
-    { id: 37, cost: 78125000, description: 'Meta-Klicker Produktion +15%', type: 'building_mult', buildingIndex: 10, value: 0.15 },
-    { id: 38, cost: 312500000, description: 'Meta-Klicker Produktion +25%', type: 'building_mult', buildingIndex: 10, value: 0.25 },
-    { id: 39, cost: 1562500000, description: 'Meta-Klicker Produktion +50%', type: 'building_mult', buildingIndex: 10, value: 0.5 },
-    { id: 40, cost: 78125000, description: 'Quanten-Netzwerk Produktion +10%', type: 'building_mult', buildingIndex: 11, value: 0.1 },
-    { id: 41, cost: 390625000, description: 'Quanten-Netzwerk Produktion +15%', type: 'building_mult', buildingIndex: 11, value: 0.15 },
-    { id: 42, cost: 1562500000, description: 'Quanten-Netzwerk Produktion +25%', type: 'building_mult', buildingIndex: 11, value: 0.25 },
-    { id: 43, cost: 7812500000, description: 'Quanten-Netzwerk Produktion +50%', type: 'building_mult', buildingIndex: 11, value: 0.5 },
-    { id: 44, cost: 390625000, description: 'Endloser Speicher Produktion +10%', type: 'building_mult', buildingIndex: 12, value: 0.1 },
-    { id: 45, cost: 1953125000, description: 'Endloser Speicher Produktion +15%', type: 'building_mult', buildingIndex: 12, value: 0.15 },
-    { id: 46, cost: 7812500000, description: 'Endloser Speicher Produktion +25%', type: 'building_mult', buildingIndex: 12, value: 0.25 },
-    { id: 47, cost: 39062500000, description: 'Endloser Speicher Produktion +50%', type: 'building_mult', buildingIndex: 12, value: 0.5 },
-    { id: 48, cost: 1953125000, description: 'Ursprung Produktion +10%', type: 'building_mult', buildingIndex: 13, value: 0.1 },
-    { id: 49, cost: 9765625000, description: 'Ursprung Produktion +15%', type: 'building_mult', buildingIndex: 13, value: 0.15 },
-    { id: 50, cost: 39062500000, description: 'Ursprung Produktion +25%', type: 'building_mult', buildingIndex: 13, value: 0.25 },
-    { id: 51, cost: 195312500000, description: 'Ursprung Produktion +50%', type: 'building_mult', buildingIndex: 13, value: 0.5 },
-    { id: 52, cost: 9765625000, description: 'Kosmische Einheit Produktion +10%', type: 'building_mult', buildingIndex: 14, value: 0.1 },
-    { id: 53, cost: 48828125000, description: 'Kosmische Einheit Produktion +15%', type: 'building_mult', buildingIndex: 14, value: 0.15 },
-    { id: 54, cost: 195312500000, description: 'Kosmische Einheit Produktion +25%', type: 'building_mult', buildingIndex: 14, value: 0.25 },
-    { id: 55, cost: 976562500000, description: 'Kosmische Einheit Produktion +50%', type: 'building_mult', buildingIndex: 14, value: 0.5 },
-    { id: 56, cost: 48828125000, description: 'Absoluter Schöpfer Produktion +10%', type: 'building_mult', buildingIndex: 15, value: 0.1 },
-    { id: 57, cost: 244140625000, description: 'Absoluter Schöpfer Produktion +15%', type: 'building_mult', buildingIndex: 15, value: 0.15 },
-    { id: 58, cost: 976562500000, description: 'Absoluter Schöpfer Produktion +25%', type: 'building_mult', buildingIndex: 15, value: 0.25 },
-    { id: 59, cost: 4882812500000, description: 'Absoluter Schöpfer Produktion +50%', type: 'building_mult', buildingIndex: 15, value: 0.5 },
-    // Klick-Upgrades
+    { id: 0, cost: 10, description: 'Auto-Klicker Prod. +10%', type: 'building_mult', buildingIndex: 0, value: 0.1 },
+    { id: 1, cost: 50, description: 'Auto-Klicker Prod. +15%', type: 'building_mult', buildingIndex: 0, value: 0.15 },
+    { id: 2, cost: 200, description: 'Auto-Klicker Prod. +25%', type: 'building_mult', buildingIndex: 0, value: 0.25 },
+    { id: 3, cost: 1000, description: 'Auto-Klicker Prod. +50%', type: 'building_mult', buildingIndex: 0, value: 0.5 },
+    { id: 4, cost: 50, description: 'Smiley-Baum Prod. +10%', type: 'building_mult', buildingIndex: 1, value: 0.1 },
+    { id: 5, cost: 250, description: 'Smiley-Baum Prod. +15%', type: 'building_mult', buildingIndex: 1, value: 0.15 },
+    { id: 6, cost: 1000, description: 'Smiley-Baum Prod. +25%', type: 'building_mult', buildingIndex: 1, value: 0.25 },
+    { id: 7, cost: 5000, description: 'Smiley-Baum Prod. +50%', type: 'building_mult', buildingIndex: 1, value: 0.5 },
+    { id: 8, cost: 250, description: 'Smiley-Fabrik Prod. +10%', type: 'building_mult', buildingIndex: 2, value: 0.1 },
+    { id: 9, cost: 1250, description: 'Smiley-Fabrik Prod. +15%', type: 'building_mult', buildingIndex: 2, value: 0.15 },
+    { id: 10, cost: 5000, description: 'Smiley-Fabrik Prod. +25%', type: 'building_mult', buildingIndex: 2, value: 0.25 },
+    { id: 11, cost: 25000, description: 'Smiley-Fabrik Prod. +50%', type: 'building_mult', buildingIndex: 2, value: 0.5 },
+    { id: 12, cost: 1000, description: 'Smiley-Mine Prod. +10%', type: 'building_mult', buildingIndex: 4, value: 0.1 },
+    { id: 13, cost: 5000, description: 'Smiley-Mine Prod. +15%', type: 'building_mult', buildingIndex: 4, value: 0.15 },
+    { id: 14, cost: 20000, description: 'Smiley-Mine Prod. +25%', type: 'building_mult', buildingIndex: 4, value: 0.25 },
+    { id: 15, cost: 100000, description: 'Smiley-Mine Prod. +50%', type: 'building_mult', buildingIndex: 4, value: 0.5 },
+    { id: 16, cost: 5000, description: 'Smiley-Bohrer Prod. +10%', type: 'building_mult', buildingIndex: 5, value: 0.1 },
+    { id: 17, cost: 25000, description: 'Smiley-Bohrer Prod. +15%', type: 'building_mult', buildingIndex: 5, value: 0.15 },
+    { id: 18, cost: 100000, description: 'Smiley-Bohrer Prod. +25%', type: 'building_mult', buildingIndex: 5, value: 0.25 },
+    { id: 19, cost: 500000, description: 'Smiley-Bohrer Prod. +50%', type: 'building_mult', buildingIndex: 5, value: 0.5 },
+    { id: 20, cost: 25000, description: 'Kernkraftwerk Prod. +10%', type: 'building_mult', buildingIndex: 6, value: 0.1 },
+    { id: 21, cost: 125000, description: 'Kernkraftwerk Prod. +15%', type: 'building_mult', buildingIndex: 6, value: 0.15 },
+    { id: 22, cost: 500000, description: 'Kernkraftwerk Prod. +25%', type: 'building_mult', buildingIndex: 6, value: 0.25 },
+    { id: 23, cost: 2500000, description: 'Kernkraftwerk Prod. +50%', type: 'building_mult', buildingIndex: 6, value: 0.5 },
+    { id: 24, cost: 125000, description: 'Galaxie Prod. +10%', type: 'building_mult', buildingIndex: 7, value: 0.1 },
+    { id: 25, cost: 625000, description: 'Galaxie Prod. +15%', type: 'building_mult', buildingIndex: 7, value: 0.15 },
+    { id: 26, cost: 2500000, description: 'Galaxie Prod. +25%', type: 'building_mult', buildingIndex: 7, value: 0.25 },
+    { id: 27, cost: 12500000, description: 'Galaxie Prod. +50%', type: 'building_mult', buildingIndex: 7, value: 0.5 },
+    { id: 28, cost: 625000, description: 'Dimensionsportal Prod. +10%', type: 'building_mult', buildingIndex: 8, value: 0.1 },
+    { id: 29, cost: 3125000, description: 'Dimensionsportal Prod. +15%', type: 'building_mult', buildingIndex: 8, value: 0.15 },
+    { id: 30, cost: 12500000, description: 'Dimensionsportal Prod. +25%', type: 'building_mult', buildingIndex: 8, value: 0.25 },
+    { id: 31, cost: 62500000, description: 'Dimensionsportal Prod. +50%', type: 'building_mult', buildingIndex: 8, value: 0.5 },
+    { id: 32, cost: 3125000, description: 'Zeitmaschine Prod. +10%', type: 'building_mult', buildingIndex: 9, value: 0.1 },
+    { id: 33, cost: 15625000, description: 'Zeitmaschine Prod. +15%', type: 'building_mult', buildingIndex: 9, value: 0.15 },
+    { id: 34, cost: 62500000, description: 'Zeitmaschine Prod. +25%', type: 'building_mult', buildingIndex: 9, value: 0.25 },
+    { id: 35, cost: 312500000, description: 'Zeitmaschine Prod. +50%', type: 'building_mult', buildingIndex: 9, value: 0.5 },
+    { id: 36, cost: 15625000, description: 'Meta-Klicker Prod. +10%', type: 'building_mult', buildingIndex: 10, value: 0.1 },
+    { id: 37, cost: 78125000, description: 'Meta-Klicker Prod. +15%', type: 'building_mult', buildingIndex: 10, value: 0.15 },
+    { id: 38, cost: 312500000, description: 'Meta-Klicker Prod. +25%', type: 'building_mult', buildingIndex: 10, value: 0.25 },
+    { id: 39, cost: 1562500000, description: 'Meta-Klicker Prod. +50%', type: 'building_mult', buildingIndex: 10, value: 0.5 },
+    { id: 40, cost: 78125000, description: 'Quanten-Netzwerk Prod. +10%', type: 'building_mult', buildingIndex: 11, value: 0.1 },
+    { id: 41, cost: 390625000, description: 'Quanten-Netzwerk Prod. +15%', type: 'building_mult', buildingIndex: 11, value: 0.15 },
+    { id: 42, cost: 1562500000, description: 'Quanten-Netzwerk Prod. +25%', type: 'building_mult', buildingIndex: 11, value: 0.25 },
+    { id: 43, cost: 7812500000, description: 'Quanten-Netzwerk Prod. +50%', type: 'building_mult', buildingIndex: 11, value: 0.5 },
+    { id: 44, cost: 390625000, description: 'Endloser Speicher Prod. +10%', type: 'building_mult', buildingIndex: 12, value: 0.1 },
+    { id: 45, cost: 1953125000, description: 'Endloser Speicher Prod. +15%', type: 'building_mult', buildingIndex: 12, value: 0.15 },
+    { id: 46, cost: 7812500000, description: 'Endloser Speicher Prod. +25%', type: 'building_mult', buildingIndex: 12, value: 0.25 },
+    { id: 47, cost: 39062500000, description: 'Endloser Speicher Prod. +50%', type: 'building_mult', buildingIndex: 12, value: 0.5 },
+    { id: 48, cost: 1953125000, description: 'Ursprung Prod. +10%', type: 'building_mult', buildingIndex: 13, value: 0.1 },
+    { id: 49, cost: 9765625000, description: 'Ursprung Prod. +15%', type: 'building_mult', buildingIndex: 13, value: 0.15 },
+    { id: 50, cost: 39062500000, description: 'Ursprung Prod. +25%', type: 'building_mult', buildingIndex: 13, value: 0.25 },
+    { id: 51, cost: 195312500000, description: 'Ursprung Prod. +50%', type: 'building_mult', buildingIndex: 13, value: 0.5 },
+    { id: 52, cost: 9765625000, description: 'Kosmische Einheit Prod. +10%', type: 'building_mult', buildingIndex: 14, value: 0.1 },
+    { id: 53, cost: 48828125000, description: 'Kosmische Einheit Prod. +15%', type: 'building_mult', buildingIndex: 14, value: 0.15 },
+    { id: 54, cost: 195312500000, description: 'Kosmische Einheit Prod. +25%', type: 'building_mult', buildingIndex: 14, value: 0.25 },
+    { id: 55, cost: 976562500000, description: 'Kosmische Einheit Prod. +50%', type: 'building_mult', buildingIndex: 14, value: 0.5 },
+    { id: 56, cost: 48828125000, description: 'Absoluter Schöpfer Prod. +10%', type: 'building_mult', buildingIndex: 15, value: 0.1 },
+    { id: 57, cost: 244140625000, description: 'Absoluter Schöpfer Prod. +15%', type: 'building_mult', buildingIndex: 15, value: 0.15 },
+    { id: 58, cost: 976562500000, description: 'Absoluter Schöpfer Prod. +25%', type: 'building_mult', buildingIndex: 15, value: 0.25 },
+    { id: 59, cost: 4882812500000, description: 'Absoluter Schöpfer Prod. +50%', type: 'building_mult', buildingIndex: 15, value: 0.5 },
     { id: 60, cost: 100, description: 'Globale Klick-Kraft +5%', type: 'click_mult', value: 0.05 },
     { id: 61, cost: 500, description: 'Globale Klick-Kraft +10%', type: 'click_mult', value: 0.1 },
     { id: 62, cost: 2000, description: 'Globale Klick-Kraft +15%', type: 'click_mult', value: 0.15 },
@@ -102,13 +101,15 @@ let gameState = {
     klickKraft: 1,
     totalSPS: 0,
     forschungPunkte: 0,
+    prestige_punkte_verfügbar: 0,
+    gesamt_prestige_punkte: 0,
     globalerPrestigeMultiplikator: 1,
     researchLabPrestigeMulti: 1,
     klickKraftMultiplier: 1,
 };
 
 //================================================================================================================
-//--- 2. Kernfunktionen (Formatierung, Speichern, Laden) ---
+//--- 2. Kernfunktionen ---
 //================================================================================================================
 
 function formatNumber(num) {
@@ -136,9 +137,7 @@ function speichereSpiel() {
         localStorage.setItem('buildingCounts', JSON.stringify(buildingCounts));
         localStorage.setItem('buildingPrices', JSON.stringify(buildingPrices));
         localStorage.setItem('researchStatus', JSON.stringify(researchStatus));
-    } catch (e) {
-        console.error("Fehler beim Speichern: ", e);
-    }
+    } catch (e) {}
 }
 
 function ladeSpiel() {
@@ -159,39 +158,43 @@ function ladeSpiel() {
 
             const savedResearch = JSON.parse(localStorage.getItem('researchStatus'));
             if(savedResearch && savedResearch.length === researchUpgrades.length) {
-                 researchStatus = savedResearch;
+                researchStatus = savedResearch;
             } else {
-                researchStatus = researchUpgrades.map(() => false);
+                researchStatus = researchUpgrades.map(()=>false);
             }
 
-            researchStatus.forEach((bought, id) => {
-                if(bought) {
-                    const upgrade = researchUpgrades.find(u => u.id === id);
-                    if(!upgrade) return;
-
-                    if(upgrade.type === 'building_mult') {
-                         buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
-                    }
-                    else if(upgrade.type === 'click_mult'){
-                        gameState.klickKraftMultiplier += upgrade.value;
-                    }
-                }
-            });
-
+            applyAllResearchBonuses();
         }
     } catch (e) {
-        console.error("Fehler beim Laden: ", e);
         localStorage.clear();
     }
 }
 
+function applyAllResearchBonuses() {
+    buildingsData.forEach(b => { b.prestigeMulti = 1; });
+    gameState.klickKraftMultiplier = 1;
+
+    researchStatus.forEach((bought, id) => {
+        if(bought) {
+            const upgrade = researchUpgrades.find(u => u.id === id);
+            if(upgrade) {
+                if (upgrade.type === 'building_mult') {
+                    buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
+                } else if (upgrade.type === 'click_mult') {
+                    gameState.klickKraftMultiplier += upgrade.value;
+                }
+            }
+        }
+    });
+}
+
 //================================================================================================================
-//--- 3. Spiellogik (Kaufen, Produzieren) ---
+//--- 3. Spiellogik ---
 //================================================================================================================
 
 function klickeSmiley() {
     gameState.aktuelle_smileys += gameState.klickKraft * gameState.klickKraftMultiplier;
-    getById('aktuelle_smileys').innerText = formatNumber(gameState.aktuelle_smileys);
+    updateUI(); 
 }
 
 function produziereSmileys() {
@@ -207,11 +210,19 @@ function produziereSmileys() {
 
 function computeTotalSPS() {
     let sps = 0;
+    // 1. Basis-SPS aus Gebäuden und deren spezifischen Boni (aus Forschung etc.) berechnen
     buildingsData.forEach((item, index) => {
         if (item.isSpecial) return;
-        sps += (buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1) * gameState.globalerPrestigeMultiplikator;
+        // Beachten Sie, dass der globalePrestigeMultiplikator hier NICHT mehr angewendet wird
+        sps += (buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
     });
-    gameState.totalSPS = sps;
+
+    // 2. Globalen Prestige-Bonus berechnen (1% pro gesamt Prestige-Punkt)
+    const prestigeBonus = 1 + (gameState.gesamt_prestige_punkte * 0.01);
+    gameState.globalerPrestigeMultiplikator = prestigeBonus;
+
+    // 3. Finalen SPS-Wert mit globalem Bonus setzen (wobei der Multiplikator nur EINMAL angewendet wird)
+    gameState.totalSPS = sps * prestigeBonus;
 }
 
 function kaufeMehrereGebaeude(index, amount) {
@@ -238,9 +249,7 @@ function kaufeMehrereGebaeude(index, amount) {
 
 function kaufeResearchUpgrade(id) {
     const upgrade = researchUpgrades.find(u => u.id === id);
-    if (!upgrade || researchStatus[id] || gameState.forschungPunkte < upgrade.cost) {
-        return;
-    }
+    if (!upgrade || researchStatus[id] || gameState.forschungPunkte < upgrade.cost) return;
 
     gameState.forschungPunkte -= upgrade.cost;
     researchStatus[id] = true;
@@ -253,9 +262,35 @@ function kaufeResearchUpgrade(id) {
     updateUI();
 }
 
+function prestigeReset() {
+    const prestigePointThreshold = 1000000;
+    const pointsToGain = Math.max(0, Math.floor(Math.log10(gameState.gesammelte_smileys / prestigePointThreshold)) - gameState.gesamt_prestige_punkte);
+
+    if (pointsToGain <= 0) return;
+
+    gameState.aktuelle_smileys = 0;
+    gameState.gesammelte_smileys = 0;
+    gameState.klickKraft = 1;
+    gameState.totalSPS = 0;
+    gameState.forschungPunkte = 0;
+    gameState.klickKraftMultiplier = 1;
+    gameState.prestige_punkte_verfügbar += pointsToGain;
+    gameState.gesamt_prestige_punkte += pointsToGain;
+
+    buildingCounts = buildingsData.map(() => 0);
+    buildingPrices = buildingsData.map(item => item.basePrice);
+    researchStatus = researchUpgrades.map(() => false);
+    
+    applyAllResearchBonuses(); 
+    speichereSpiel();
+    
+    if(document.querySelector('.prestige-main')) {
+        updatePrestigeUI();
+    }
+}
 
 //================================================================================================================
-//--- 4. Rendering & UI Updates (PERFORMANCE-OPTIMIERT) ---
+//--- 4. UI / Rendering ---
 //================================================================================================================
 
 function createBuildingElements() {
@@ -303,10 +338,8 @@ function updateBuildingUI() {
     buildingsData.forEach((building, index) => {
         if (building.isSpecial) return;
         const cost1x = buildingPrices[index];
-        let cost10x = 0; 
-        for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
-        let cost100x = 0;
-        for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
+        let cost10x = 0; for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
+        let cost100x = 0; for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, buildingCounts[index] + i, building.growthRate);
         const buildingSPS = (buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1) * gameState.globalerPrestigeMultiplikator;
         const spsPercentage = gameState.totalSPS > 0 ? (buildingSPS / gameState.totalSPS * 100) : 0;
         getById(`building-count-${index}`).innerText = buildingCounts[index];
@@ -332,15 +365,12 @@ function updateResearchUI() {
     researchUpgrades.forEach(upgrade => {
         const researchItem = document.querySelector(`.research-item[data-id="${upgrade.id}"]`);
         if (!researchItem) return;
-
         if (researchStatus[upgrade.id]) {
             researchItem.style.display = 'none'; 
         } else {
             researchItem.style.display = 'flex'; 
             const btn = researchItem.querySelector('.btn-buy-research');
-            if(btn) {
-                btn.disabled = gameState.forschungPunkte < upgrade.cost;
-            }
+            if(btn) btn.disabled = gameState.forschungPunkte < upgrade.cost;
         }
     });
 }
@@ -373,11 +403,33 @@ function updateUI() {
     }
 }
 
+function updatePrestigeUI() {
+    ladeSpiel(); 
+    const prestigePointThreshold = 1000000;
+    const pointsToGain = Math.max(0, Math.floor(Math.log10(gameState.gesammelte_smileys / prestigePointThreshold)) - gameState.gesamt_prestige_punkte);
+    
+    let nextPointRequirement = prestigePointThreshold * Math.pow(10, gameState.gesamt_prestige_punkte + pointsToGain);
+
+    getById('prestige_punkte_verfügbar').innerText = formatNumber(gameState.prestige_punkte_verfügbar);
+    getById('gesamt_prestige_punkte').innerText = formatNumber(gameState.gesamt_prestige_punkte);
+    getById('aktuelle_smileys_prestige').innerText = formatNumber(gameState.aktuelle_smileys);
+    getById('next_prestige_point').innerText = formatNumber(nextPointRequirement);
+
+    const prestigeButton = getById('prestige_reset_button');
+    if(prestigeButton) {
+        prestigeButton.disabled = pointsToGain <= 0;
+    }
+    const pointsToGainElement = getById('prestige_points_to_gain');
+    if(pointsToGainElement) {
+        pointsToGainElement.innerText = pointsToGain;
+    }
+}
+
 //================================================================================================================
-//--- 5. Initialisierung & Haupt-Schleife ---
+//--- 5. Initialisierung ---
 //================================================================================================================
 
-function setupEventListeners() {
+function setupMainEventListeners() {
     getById('smiley_button')?.addEventListener('click', klickeSmiley);
     getById('forschungslaborButton')?.addEventListener('click', () => kaufeMehrereGebaeude(3, 1));
     getById('building-grid')?.addEventListener('click', (e) => {
@@ -387,9 +439,7 @@ function setupEventListeners() {
         if (!buildingItem) return;
         const index = parseInt(buildingItem.dataset.index, 10);
         const amount = parseInt(button.dataset.amount, 10);
-        if (!isNaN(index) && !isNaN(amount)) {
-            kaufeMehrereGebaeude(index, amount);
-        }
+        if (!isNaN(index) && !isNaN(amount)) kaufeMehrereGebaeude(index, amount);
     });
     getById('research_upgrades_grid')?.addEventListener('click', (e) => {
         const button = e.target.closest('.btn-buy-research');
@@ -397,23 +447,56 @@ function setupEventListeners() {
         const researchItem = button.closest('.research-item');
         if (!researchItem) return;
         const id = parseInt(researchItem.dataset.id, 10);
-        if (!isNaN(id)) {
-            kaufeResearchUpgrade(id);
-        }
+        if (!isNaN(id)) kaufeResearchUpgrade(id);
     });
 }
 
+function setupPrestigeEventListeners() {
+    const modal = getById('prestige_confirm_modal');
+    const openModalButton = getById('prestige_reset_button');
+    const closeModalButton = getById('cancel_prestige_button');
+    const confirmButton = getById('confirm_prestige_button');
+
+    openModalButton?.addEventListener('click', () => {
+        updatePrestigeUI(); // Update values before showing
+        const pointsToGain = Math.max(0, Math.floor(Math.log10(gameState.gesammelte_smileys / 1000000)) - gameState.gesamt_prestige_punkte);
+        if (pointsToGain > 0) {
+            modal.style.display = 'flex';
+        }
+    });
+
+    closeModalButton?.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    confirmButton?.addEventListener('click', () => {
+        prestigeReset();
+        modal.style.display = 'none';
+    });
+}
+
+function initialisiereHauptSpiel() {
+    ladeSpiel();
+    researchUpgrades.sort((a,b) => a.cost - b.cost);
+    createBuildingElements();
+    createResearchElements();
+    setupMainEventListeners();
+    updateUI();
+    setInterval(produziereSmileys, 100);
+    setInterval(updateUI, 500);
+    setInterval(speichereSpiel, 5000);
+}
+
+function initialisierePrestigeSeite() {
+    setupPrestigeEventListeners();
+    updatePrestigeUI();
+    setInterval(updatePrestigeUI, 1000); 
+}
 
 function initialisiereSpiel() {
-    if (getById('building-grid')) {
-        ladeSpiel();
-        researchUpgrades.sort((a,b) => a.cost - b.cost);
-        createBuildingElements();
-        createResearchElements();
-        setupEventListeners();
-        updateUI();
-        setInterval(produziereSmileys, 100);
-        setInterval(updateUI, 500);
-        setInterval(speichereSpiel, 5000);
-    } 
+    if (document.querySelector('.main-layout')) {
+        initialisiereHauptSpiel();
+    } else if (document.querySelector('.prestige-main')) {
+        initialisierePrestigeSeite();
+    }
 }
