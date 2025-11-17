@@ -28,55 +28,77 @@
         </div>
 
         <div class="info-section">
-            <h2>Wie man spielt</h2>
-            <ol>
-                <li>Klicke auf den großen Smiley, um Smileys zu sammeln.</li>
-                <li>Kaufe Gebäude wie Auto-Klicker, um deine Produktion (SPS) zu automatisieren.</li>
-                <li>Schalte Klick-Upgrades frei, um deine manuelle Klick-Leistung zu steigern.</li>
-                <li>Wenn du eine hohe Anzahl an Smileys gesammelt hast, kannst du im Prestige-Shop permanente Boni freischalten.</li>
-            </ol>
-        </div>
-
-        <div class="info-section">
-            <h2>Upgrades im Detail</h2>
-            <p>Jedes Gebäude erhöht deine Smileys pro Sekunde (SPS). Die Kosten für jedes weitere Gebäude steigen exponentiell an.</p>
-            <div class="info-upgrades-container">
-                <div class="info-upgrade-item">
-                    <h3>Auto-Klicker</h3>
-                    <p><strong>Effekt:</strong> Generiert automatisch Smileys für dich.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 20 Smileys.</p>
-                </div>
-                <div class="info-upgrade-item">
-                    <h3>Smiley-Baum</h3>
-                    <p><strong>Effekt:</strong> Generiert 20 Smileys pro Sekunde.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 150 Smileys.</p>
-                </div>
-                <div class="info-upgrade-item">
-                    <h3>Smiley-Fabrik</h3>
-                    <p><strong>Effekt:</strong> Generiert 150 Smileys pro Sekunde.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 2,500 Smileys.</p>
-                </div>
+            <h2>Spielmechaniken im Detail</h2>
+            <div class="info-button-group">
+                <button id="show_buildings_button" class="btn-primary">Gebäude-Übersicht</button>
+                <button id="show_research_button" class="btn-primary">Forschungs-Upgrades</button>
+                <button id="show_prestige_button" class="btn-primary">Prestige-Skill-Tree</button>
+                <button id="show_stats_button" class="btn-primary">Stats-Erklärung</button>
             </div>
         </div>
 
         <div class="info-section">
-            <h2>Strategie-Tipps für den Anfang</h2>
-            <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele Auto-Klicker und Smiley-Bäume wie möglich zu kaufen.</p>
-            <p><strong>Klick-Upgrades nicht vernachlässigen:</strong> Ein paar frühe Klick-Upgrades können dir helfen, die ersten Hürden schneller zu überwinden, aber dein Hauptfokus sollte auf den Gebäuden liegen.</p>
-        </div>
-
-        <div class="info-section">
-            <h2>Das Prestige-System</h2>
-            <p>Sobald du genügend Smileys gesammelt hast, kannst du das Smileyversum "aktivieren" (Prestige). Dadurch wird dein Spiel zurückgesetzt (Smileys, Gebäude, Upgrades), aber du erhältst wertvolle <strong>Prestige-Punkte</strong>. Diese Punkte können im Prestige-Shop für sehr mächtige, permanente Upgrades ausgegeben werden, die jeden neuen Spieldurchlauf beschleunigen.</p>
-        </div>
-
-        <div class="info-section">
-            <h2>Tipps für Fortgeschrittene</h2>
-            <p><strong>Wann sollte man prestigen?</strong> Ein guter Anhaltspunkt ist, dann einen Prestige-Reset durchzuführen, wenn du für deinen nächsten Reset mindestens 5-10 neue Prestige-Punkte erhalten würdest. Ein zu früher Reset bremst dich aus, ein zu später ebenfalls.</p>
-            <p><strong>Synergien nutzen:</strong> Lies dir die Prestige-Upgrades genau durch. Einige verbessern alle Gebäude, während andere spezifische Gebäude stark verbessern. Plane deine Käufe so, dass sie zu deinem Spielstil passen.</p>
+            <h2>Strategie-Tipps</h2>
+            <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele Gebäude wie möglich zu kaufen.</p>
+            <p><strong>Forschungslabor:</strong> Sobald du es dir leisten kannst, kaufe das Forschungslabor. Die Upgrades, die du dort freischaltest, sind entscheidend für deinen Fortschritt.</p>
+            <p><strong>Prestige-Timing:</strong> Führe einen Prestige-Reset durch, wenn du merkst, dass dein Fortschritt deutlich langsamer wird. Ein guter Anhaltspunkt ist, wenn du für den nächsten Reset eine signifikante Menge an neuen Prestige-Punkten erhalten würdest.</p>
              <p><strong>Geduld ist eine Tugend:</strong> Manchmal ist es am besten, das Spiel einfach laufen zu lassen (AFK - away from keyboard), um eine große Menge an Smileys für das nächste große Upgrade oder den nächsten Prestige-Punkt anzusammeln.</p>
         </div>
         
     </main>
+
+    <!-- Buildings Modal -->
+    <div id="buildings_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Gebäude-Übersicht</h2>
+            <div id="info_buildings_container" class="info-upgrades-container">
+                <!-- Gebäude-Infos werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_buildings_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Research Modal -->
+    <div id="research_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Forschungs-Upgrades</h2>
+            <div id="info_research_container" class="info-upgrades-container">
+                <!-- Forschungs-Infos werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_research_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prestige Modal -->
+    <div id="prestige_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Prestige-Skill-Tree</h2>
+            <div id="info_prestige_container" class="prestige-tree-container">
+                <!-- Prestige-Skill-Tree wird hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_prestige_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="stats_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Stats-Erklärung</h2>
+            <div id="info_stats_container" class="info-stats-container">
+                <!-- Stats-Erklärungen werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_stats_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
