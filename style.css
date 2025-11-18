@@ -70,6 +70,12 @@ h1, h2, h3, h4 {
     font-weight: bold;
 }
 
+.navbar a.active {
+    color: var(--color-blue-main);
+    text-decoration: underline;
+}
+
+
 main {
     padding-top: 70px;
     width: 100%;
@@ -85,7 +91,7 @@ main {
     align-items: start;
 }
 
-.prestige-main, .info-main {
+.prestige-main, .info-main, .settings-main {
     max-width: 900px;
     margin: auto;
     padding: var(--spacing-md);
@@ -95,7 +101,7 @@ main {
 // --- 3. CONTAINER & BOX-STYLES ---
 //================================================================================================*/
 
-.left-column, .middle-column, .right-column, .info-section, .prestige-info {
+.left-column, .middle-column, .right-column, .info-section, .prestige-info, .settings-section {
     background: rgba(26, 26, 46, 0.8);
     border: 1px solid var(--color-blue-main);
     padding: var(--spacing-md);
@@ -267,7 +273,7 @@ main {
     display: flex;
     justify-content: center;
     gap: var(--spacing-md);
-    flex-wrap: wrap; /* Buttons umbrechen auf kleinen Bildschirmen */
+    flex-wrap: wrap; 
 }
 
 .info-button-group .btn-primary {
@@ -288,7 +294,7 @@ main {
 #prestige-tree-container, .prestige-tree-container {
     position: relative;
     width: 100%;
-    height: 600px; /* Erhöht für mehr Platz nach unten */
+    height: 600px; 
     margin: 20px auto;
     overflow: visible;
     padding-top: 40px;
@@ -338,7 +344,6 @@ main {
     transition: all 0.3s;
 }
 
-/* Zustände der Knoten */
 .prestige-node.locked .node-icon {
     border-color: #555;
     background-color: #333;
@@ -361,7 +366,6 @@ main {
     box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
 }
 
-/* Tooltip-Styling */
 .node-tooltip {
     visibility: hidden;
     width: 200px;
@@ -397,7 +401,7 @@ main {
 
 
 /*================================================================================================
-// --- PRESTIGE & MODAL STYLES ---
+// --- MODAL & EINSTELLUNGEN STYLES ---
 //================================================================================================*/
 
 .modal {
@@ -460,8 +464,33 @@ main {
     gap: var(--spacing-md);
 }
 
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.save-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+}
+
+#save-data-textarea {
+    width: 100%;
+    height: 100px;
+    background-color: rgba(0,0,0,0.3);
+    border: 1px solid var(--color-neutral-accent);
+    color: var(--color-text-light);
+    border-radius: 4px;
+    padding: var(--spacing-sm);
+}
+
+
 /*================================================================================================
-// --- 8. RESPONSIVE DESIGN ---
+// --- RESPONSIVE DESIGN ---
 //================================================================================================*/
 
 @media (max-width: 1024px) {

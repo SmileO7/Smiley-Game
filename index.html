@@ -15,6 +15,7 @@
             <a href="index.html" class="active">Start & Shop</a> 
             <a href="prestige_shop.html">Prestige Shop</a>
             <a href="info.html">Info & Tipps</a>
+            <a href="#" id="open-settings-button">Einstellungen</a>
         </nav>
     </header>
     
@@ -69,8 +70,37 @@
                 <div class="building-grid" id="building-grid"></div>
             </section>
         </div>
-
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Einstellungen</h2>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="setting-item">
+                    <label for="music-volume">Musik-Lautstärke</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="50">
+                </div>
+                <div class="setting-item">
+                    <label for="sound-volume">Sound-Lautstärke</label>
+                    <input type="range" id="sound-volume" min="0" max="100" value="80">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Spielstand</h3>
+                <p>Hier kannst du deinen Spielstand exportieren oder importieren.</p>
+                <div class="save-actions">
+                    <button id="export-save-button" class="btn-primary">Exportieren</button>
+                    <button id="import-save-button" class="btn-primary">Importieren</button>
+                </div>
+                <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-settings-button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

@@ -9,11 +9,11 @@
 </head>
 <body>
     <header>
-        <h1>Smiley Clicker - Prestige Shop</h1>
         <nav class="navbar">
-            <a href="index.html">Startseite</a>
+            <a href="index.html">Start & Shop</a>
             <a href="prestige_shop.html" class="active">Prestige Shop</a>
             <a href="info.html">Info & Tipps</a>
+            <a href="#" id="open-settings-button">Einstellungen</a>
         </nav>
     </header>
     <main class="prestige-main">
@@ -45,6 +45,36 @@
             </div>
         </section>
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Einstellungen</h2>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="setting-item">
+                    <label for="music-volume">Musik-Lautstärke</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="50">
+                </div>
+                <div class="setting-item">
+                    <label for="sound-volume">Sound-Lautstärke</label>
+                    <input type="range" id="sound-volume" min="0" max="100" value="80">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Spielstand</h3>
+                <p>Hier kannst du deinen Spielstand exportieren oder importieren.</p>
+                <div class="save-actions">
+                    <button id="export-save-button" class="btn-primary">Exportieren</button>
+                    <button id="import-save-button" class="btn-primary">Importieren</button>
+                </div>
+                <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-settings-button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Prestige Reset Modal -->
     <div id="prestige_confirm_modal" class="modal" style="display: none;">

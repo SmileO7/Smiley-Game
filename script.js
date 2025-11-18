@@ -156,55 +156,41 @@ function calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
 
 function speichereSpiel() {
     try {
-        localStorage.setItem('gameState', JSON.stringify(gameState));
-        localStorage.setItem('buildingCounts', JSON.stringify(buildingCounts));
-        localStorage.setItem('buildingPrices', JSON.stringify(buildingPrices));
-        localStorage.setItem('researchStatus', JSON.stringify(researchStatus));
-        localStorage.setItem('prestigeUpgradeStatus', JSON.stringify(prestigeUpgradeStatus));
-    } catch (e) {}
+        const allData = {
+            gameState,
+            buildingCounts,
+            buildingPrices,
+            researchStatus,
+            prestigeUpgradeStatus
+        };
+        const jsonString = JSON.stringify(allData);
+        const encodedData = btoa(jsonString); // Base64 encoding
+        return encodedData;
+    } catch (e) {
+        console.error("Fehler beim Speichern des Spiels:", e);
+        return null;
+    }
 }
 
-function ladeSpiel() {
+function ladeSpiel(encodedData) {
     try {
-        const savedState = localStorage.getItem('gameState');
-        if (savedState) {
-            let loadedGameState = JSON.parse(savedState);
-            const defaultGameState = { prestigeResets: 0, prestigeResetBonus: 0, globalSPSMultiplier: 1, prestigePointMultiplier: 0.01, gesamt_prestige_punkte: 0 };
-            
-            const balanceVersion = localStorage.getItem('balanceVersion');
-            if (loadedGameState.gesamt_prestige_punkte > 10000 && balanceVersion !== '2') {
-                alert("Dein Spielstand wurde aufgrund einer wichtigen Balance-Änderung angepasst. Deine Prestigepunkte und Skill-Tree-Upgrades wurden zurückgesetzt, um das Spiel fair zu halten. Dein restlicher Fortschritt bleibt erhalten.");
-                
-                loadedGameState.gesamt_prestige_punkte = 0;
-                loadedGameState.prestige_punkte_verfügbar = 0;
-                prestigeUpgradeStatus.fill(false);
-                
-                localStorage.setItem('balanceVersion', '2');
-                gameState = { ...defaultGameState, ...loadedGameState };
-                applyAllBoni(); 
-            } else {
-                 gameState = { ...defaultGameState, ...loadedGameState };
-            }
+        if (!encodedData) return false;
+        const jsonString = atob(encodedData); // Base64 decoding
+        const allData = JSON.parse(jsonString);
 
-            const savedCounts = JSON.parse(localStorage.getItem('buildingCounts'));
-            if (savedCounts) buildingCounts = savedCounts;
-            
-            const savedPrices = JSON.parse(localStorage.getItem('buildingPrices'));
-            if(savedPrices) buildingPrices = savedPrices;
+        gameState = allData.gameState;
+        buildingCounts = allData.buildingCounts;
+        buildingPrices = allData.buildingPrices;
+        researchStatus = allData.researchStatus;
+        prestigeUpgradeStatus = allData.prestigeUpgradeStatus;
 
-            const savedResearchRaw = localStorage.getItem('researchStatus');
-            const savedResearch = savedResearchRaw ? JSON.parse(savedResearchRaw) : [];
-            researchStatus = researchUpgrades.map((_, index) => savedResearch[index] || false);
-
-            const savedPrestigeUpgradesRaw = localStorage.getItem('prestigeUpgradeStatus');
-            const savedPrestigeUpgrades = savedPrestigeUpgradesRaw ? JSON.parse(savedPrestigeUpgradesRaw) : [];
-            prestigeUpgradeStatus = prestigeUpgrades.map((_, index) => savedPrestigeUpgrades[index] || false);
-
-            applyAllBoni();
-        }
+        applyAllBoni();
+        updateUI();
+        return true;
     } catch (e) {
         console.error("Fehler beim Laden des Spiels:", e);
-        localStorage.clear();
+        alert("Fehler beim Importieren des Spielstands. Die Daten sind möglicherweise beschädigt.");
+        return false;
     }
 }
 
@@ -822,6 +808,46 @@ function createInfoStatsElements() {
     `;
 }
 
+function setupSettingsModalListeners() {
+    const settingsModal = getById('settings-modal');
+    const openSettingsButton = getById('open-settings-button');
+    const closeSettingsButton = getById('close-settings-button');
+    const exportButton = getById('export-save-button');
+    const importButton = getById('import-save-button');
+    const saveDataTextarea = getById('save-data-textarea');
+
+    openSettingsButton?.addEventListener('click', (e) => {
+        e.preventDefault();
+        settingsModal.style.display = 'flex';
+    });
+
+    closeSettingsButton?.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+
+    exportButton?.addEventListener('click', () => {
+        const saveData = speichereSpiel();
+        if (saveData) {
+            saveDataTextarea.value = saveData;
+            navigator.clipboard.writeText(saveData).then(() => {
+                alert("Spielstand in die Zwischenablage kopiert!");
+            }, () => {
+                alert("Konnte nicht in die Zwischenablage kopieren, bitte manuell kopieren.");
+            });
+        }
+    });
+
+    importButton?.addEventListener('click', () => {
+        const saveData = saveDataTextarea.value.trim();
+        if (saveData && confirm("Möchtest du diesen Spielstand wirklich importieren? Dein aktueller Fortschritt wird überschrieben.")) {
+            if (ladeSpiel(saveData)) {
+                alert("Spielstand erfolgreich importiert!");
+                location.reload();
+            }
+        }
+    });
+}
+
 function initialisiereHauptSpiel() {
     ladeSpiel();
     window.addEventListener('beforeunload', speichereSpiel);
@@ -852,6 +878,7 @@ function initialisiereInfoSeite() {
 }
 
 function initialisiereSpiel() {
+    setupSettingsModalListeners();
     if (document.querySelector('.main-layout')) {
         initialisiereHauptSpiel();
     } else if (document.querySelector('.prestige-main')) {
