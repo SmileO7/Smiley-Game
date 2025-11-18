@@ -165,18 +165,31 @@ function speichereSpiel() {
         };
         const jsonString = JSON.stringify(allData);
         const encodedData = btoa(jsonString); // Base64 encoding
-        return encodedData;
+        localStorage.setItem('smileyGameSave', encodedData);
     } catch (e) {
         console.error("Fehler beim Speichern des Spiels:", e);
-        return null;
     }
 }
 
 function ladeSpiel(encodedData) {
     try {
-        if (!encodedData) return false;
-        const jsonString = atob(encodedData); // Base64 decoding
+        let dataToLoad = encodedData;
+        if (!dataToLoad) {
+            dataToLoad = localStorage.getItem('smileyGameSave');
+        }
+        if (!dataToLoad) return false;
+
+        const jsonString = atob(dataToLoad);
         const allData = JSON.parse(jsonString);
+
+        const balanceVersion = localStorage.getItem('balanceVersion');
+        if (allData.gameState.gesamt_prestige_punkte > 10000 && balanceVersion !== '2') {
+            alert("Dein Spielstand wurde aufgrund einer wichtigen Balance-Änderung angepasst. Deine Prestigepunkte und Skill-Tree-Upgrades wurden zurückgesetzt, um das Spiel fair zu halten. Dein restlicher Fortschritt bleibt erhalten.");
+            allData.gameState.gesamt_prestige_punkte = 0;
+            allData.gameState.prestige_punkte_verfügbar = 0;
+            allData.prestigeUpgradeStatus.fill(false);
+            localStorage.setItem('balanceVersion', '2');
+        }
 
         gameState = allData.gameState;
         buildingCounts = allData.buildingCounts;
@@ -185,11 +198,13 @@ function ladeSpiel(encodedData) {
         prestigeUpgradeStatus = allData.prestigeUpgradeStatus;
 
         applyAllBoni();
-        updateUI();
+        if (document.body.className !== 'settings-page' && typeof updateUI === 'function') {
+            updateUI();
+        }
         return true;
     } catch (e) {
         console.error("Fehler beim Laden des Spiels:", e);
-        alert("Fehler beim Importieren des Spielstands. Die Daten sind möglicherweise beschädigt.");
+        if(encodedData) alert("Fehler beim Importieren des Spielstands. Die Daten sind möglicherweise beschädigt.");
         return false;
     }
 }
@@ -826,7 +841,8 @@ function setupSettingsModalListeners() {
     });
 
     exportButton?.addEventListener('click', () => {
-        const saveData = speichereSpiel();
+        speichereSpiel(); 
+        const saveData = localStorage.getItem('smileyGameSave');
         if (saveData) {
             saveDataTextarea.value = saveData;
             navigator.clipboard.writeText(saveData).then(() => {
@@ -841,7 +857,8 @@ function setupSettingsModalListeners() {
         const saveData = saveDataTextarea.value.trim();
         if (saveData && confirm("Möchtest du diesen Spielstand wirklich importieren? Dein aktueller Fortschritt wird überschrieben.")) {
             if (ladeSpiel(saveData)) {
-                alert("Spielstand erfolgreich importiert!");
+                speichereSpiel(); 
+                alert("Spielstand erfolgreich importiert! Die Seite wird neu geladen.");
                 location.reload();
             }
         }
