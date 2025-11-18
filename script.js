@@ -105,6 +105,10 @@ const prestigeUpgrades = [
     { id: 10, cost: 50, description: 'Schalte das Gilden-System frei.', type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [8, 9] },
 ];
 
+const petsData = [
+    { id: 0, name: "Smiley-Welpe", description: "Klickt alle 10 Sekunden automatisch.", ability_type: 'auto_click', value: 1, interval: 100 } // 100 ticks = 10 Sekunden
+];
+
 let buildingCounts = buildingsData.map(() => 0);
 let buildingPrices = buildingsData.map(item => item.basePrice);
 let researchStatus = researchUpgrades.map(() => false);
@@ -116,6 +120,7 @@ let gameState = {
     klickKraft: 1,
     totalSPS: 0,
     forschungPunkte: 0,
+    diamanten: 0,
     prestige_punkte_verfügbar: 0,
     gesamt_prestige_punkte: 0,
     prestigeResets: 0,
@@ -125,6 +130,8 @@ let gameState = {
     globalSPSMultiplier: 1,
     prestigePointMultiplier: 0.01,
     prestigeResetBonus: 0,
+    petsUnlocked: false,
+    petAutoClickTimer: 0,
 };
 
 function formatNumber(num) {
@@ -177,7 +184,10 @@ function ladeSpiel(encodedData) {
         if (!dataToLoad) {
             dataToLoad = localStorage.getItem('smileyGameSave');
         }
-        if (!dataToLoad) return false;
+        if (!dataToLoad) {
+            applyAllBoni();
+            return false;
+        }
 
         const jsonString = atob(dataToLoad);
         const allData = JSON.parse(jsonString);
@@ -210,14 +220,17 @@ function ladeSpiel(encodedData) {
 }
 
 function applyAllBoni() {
+    // Reset all multipliers to their base values
     gameState.globalSPSMultiplier = 1;
     gameState.researchLabPrestigeMulti = 1;
     gameState.prestigePointMultiplier = 0.01;
     gameState.prestigeResetBonus = 0;
+    gameState.petsUnlocked = false; // Reset pet status
     buildingsData.forEach(b => { b.prestigeMulti = 1; });
     let baseClickMultiplier = 1;
     let prestigeClickMultiplier = 0;
 
+    // Apply research bonuses
     researchStatus.forEach((bought, id) => {
         if(bought) {
             const upgrade = researchUpgrades.find(u => u.id === id);
@@ -229,6 +242,7 @@ function applyAllBoni() {
         }
     });
 
+    // Apply prestige bonuses
     prestigeUpgradeStatus.forEach((bought, id) => {
         if(bought) {
             const upgrade = prestigeUpgrades.find(u => u.id === id);
@@ -239,13 +253,16 @@ function applyAllBoni() {
                     case 'research_lab_mult': gameState.researchLabPrestigeMulti += upgrade.value; break;
                     case 'prestige_point_eff': gameState.prestigePointMultiplier += upgrade.value; break;
                     case 'prestige_reset_bonus': gameState.prestigeResetBonus += upgrade.value; break;
+                    case 'unlock_pets': gameState.petsUnlocked = true; break;
                 }
             }
         }
     });
 
+    // Finalize click multiplier
     gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
 
+    // CORRECT: Finalize the global SPS multiplier here, and only here.
     const prestigeBonus = 1 + (gameState.gesamt_prestige_punkte * gameState.prestigePointMultiplier);
     const resetBonus = 1 + (gameState.prestigeResets * gameState.prestigeResetBonus);
     gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * gameState.globalSPSMultiplier;
@@ -255,7 +272,9 @@ function klickeSmiley() {
     const smileysGeklickt = gameState.klickKraft * gameState.klickKraftMultiplier;
     gameState.aktuelle_smileys += smileysGeklickt;
     gameState.gesammelte_smileys += smileysGeklickt;
-    updateUI(); 
+    if (typeof updateUI === 'function') {
+        updateUI(); 
+    }
 }
 
 function produziereSmileys() {
@@ -267,6 +286,16 @@ function produziereSmileys() {
     if (buildingCounts[3] > 0) {
         gameState.forschungPunkte += 1 * gameState.researchLabPrestigeMulti * timeFactor;
     }
+
+    // Pet-Logik
+    if (gameState.petsUnlocked) {
+        const pet = petsData[0];
+        gameState.petAutoClickTimer += 1;
+        if (gameState.petAutoClickTimer >= pet.interval) {
+            klickeSmiley();
+            gameState.petAutoClickTimer = 0;
+        }
+    }
 }
 
 function computeTotalSPS() {
@@ -276,6 +305,7 @@ function computeTotalSPS() {
         sps += (buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
     });
 
+    // CORRECT: Only apply the pre-calculated multiplier
     gameState.totalSPS = sps * gameState.globalerPrestigeMultiplikator;
 }
 
@@ -639,20 +669,27 @@ function updateUI() {
 function updatePrestigeUI() {
     if(!getById('prestige_punkte_verfügbar')) return;
     
-    ladeSpiel();
+    // CORRECTED: Only read necessary data from a parsed save, don't reload the whole game
+    const savedSaveGame = localStorage.getItem('smileyGameSave');
+    if (savedSaveGame) {
+        try {
+            const allData = JSON.parse(atob(savedSaveGame));
+            gameState.gesammelte_smileys = allData.gameState.gesammelte_smileys;
+        } catch (e) {
+            console.error("Could not parse saved game state for prestige UI update", e);
+        }
+    }
 
     const prestigePointThreshold = 1000000;
     const totalPotentialPoints = Math.floor(Math.pow(gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
     const pointsToGain = Math.max(0, totalPotentialPoints - gameState.gesamt_prestige_punkte);
     
-    const nextPointRequirement = Math.pow(totalPotentialPoints + 1, 3) * prestigePointThreshold;
+    const nextPointRequirement = Math.pow(gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
 
     getById('prestige_punkte_verfügbar').innerText = formatNumber(gameState.prestige_punkte_verfügbar);
     getById('gesamt_prestige_punkte').innerText = formatNumber(gameState.gesamt_prestige_punkte);
     getById('aktuelle_smileys_prestige').innerText = formatNumber(gameState.gesammelte_smileys);
     getById('next_prestige_point').innerText = formatNumber(nextPointRequirement);
-
-    computeTotalSPS();
     getById('globaler_multiplikator_anzeige').innerText = `x${gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
 
     const prestigeButton = getById('prestige_reset_button');
@@ -841,14 +878,22 @@ function setupSettingsModalListeners() {
     });
 
     exportButton?.addEventListener('click', () => {
-        speichereSpiel(); 
+        speichereSpiel();
         const saveData = localStorage.getItem('smileyGameSave');
         if (saveData) {
+            const blob = new Blob([saveData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'smiley-game-save.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+
             saveDataTextarea.value = saveData;
             navigator.clipboard.writeText(saveData).then(() => {
-                alert("Spielstand in die Zwischenablage kopiert!");
+                alert("Spielstand in die Zwischenablage kopiert und als Datei heruntergeladen!");
             }, () => {
-                alert("Konnte nicht in die Zwischenablage kopieren, bitte manuell kopieren.");
+                alert("Spielstand als Datei heruntergeladen! (Kopieren in Zwischenablage fehlgeschlagen)");
             });
         }
     });
