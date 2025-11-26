@@ -1,7 +1,3 @@
-document.addEventListener('DOMContentLoaded', () => {
-    initialisiereSpiel();
-});
-
 //================================================================================================================
 //--- 1. Globale Variablen & Spieldaten ---
 //================================================================================================================
@@ -120,49 +116,64 @@ const petsData = [
     { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', cost: 100, effect: 0.01, effectType: 'prestige_point_eff', description: '+0.01% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0 },
 ];
 
-let gameState = {
-    // --- Währungen ---
-    aktuelle_smileys: 0,
-    gesammelte_smileys: 0, 
-    forschungPunkte: 0,
-    diamanten: 0,
+let gameInstance;
 
-    // --- Prestige & Stats ---
-    prestige_punkte_verfügbar: 0,
-    gesamt_prestige_punkte: 0,
-    prestigeResets: 0,
+class SmileyGame {
+    constructor() {
+        // Der gesamte Inhalt des gelöschten 'let gameState = { ... }' Blocks
+        // wird nun als Eigenschaft der Klasse initialisiert.
+        this.gameState = {
+            // --- Währungen ---
+            aktuelle_smileys: 0,
+            gesammelte_smileys: 0,
+            forschungPunkte: 0,
+            diamanten: 0,
 
-    // --- Basis-Werte & Multiplikatoren ---
-    klickKraft: 1,
-    klickKraftMultiplier: 1,
-    globalerPrestigeMultiplikator: 1,
+            // --- Prestige & Stats ---
+            prestige_punkte_verfügbar: 0,
+            gesamt_prestige_punkte: 0,
+            prestigeResets: 0,
 
-    // --- ZENTRALE ZUSTANDS-ARRAYs (JETZT KORRIGIERT!) ---
-    // Der Key wird direkt verwendet, NICHT gameState.key
-    buildingCounts: buildingsData.map(() => 0),
-    buildingPrices: buildingsData.map(item => item.basePrice),
-    researchStatus: researchUpgrades.map(() => false),
-    prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
-    petStatus: petsData.map(() => false),
-    activePet: null,
+            // --- Basis-Werte & Multiplikatoren ---
+            klickKraft: 1,
+            klickKraftMultiplier: 1,
+            globalerPrestigeMultiplikator: 1,
 
-    // --- Laufzeit-Statistiken & Boni ---
-    totalSPS: 0,
-    researchLabPrestigeMulti: 1,
-    globalSPSMultiplier: 1,
-    prestigePointMultiplier: 0.01,
-    prestigeResetBonus: 0,
+            // --- ZENTRALE ZUSTANDS-ARRAYs ---
+            // Wichtig: Wir müssen hier alle statischen Listen zusammenfügen
+            buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
+            buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
+            researchStatus: researchUpgrades.map(() => false),
+            prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
+            petStatus: petsData.map(() => false),
+            activePet: null,
 
-    // --- Feature-States ---
-    petsUnlocked: false,
-    petAutoClickTimer: 0,
-};
+            // --- Laufzeit-Statistiken & Boni ---
+            totalSPS: 0,
+            researchLabPrestigeMulti: 1,
+            globalSPSMultiplier: 1,
+            prestigePointMultiplier: 0.01,
+            prestigeResetBonus: 0,
+
+            // --- Feature-States ---
+            petsUnlocked: false,
+            petAutoClickTimer: 0,
+        };
+
+        this.productionInterval = null;
+        this.uiInterval = null;
+        this.saveInterval = null;
+
+        // Setup-Funktionen aufrufen (Logik aus der alten initialisiereSpiel)
+        this.setupSettingsModalListeners();
+        this.init();
+    }
 
 //================================================================================================================
 //--- 2. Hilfsfunktionen ---
 //================================================================================================================
 
-function formatNumber(num) {
+formatNumber(num) {
     if (typeof num !== 'number' || isNaN(num)) return '0';
     if (num < 1000) return Math.floor(num).toString();
     const suffixes = ["K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "De"];
@@ -174,19 +185,19 @@ function formatNumber(num) {
     return num.toFixed(2) + (i > 0 ? suffixes[i - 1] : '');
 }
 
-function getById(id) { return document.getElementById(id); }
+getById(id) { return document.getElementById(id); }
 
 /**
  * Berechnet die Kosten für das nächste Gebäude-Level unter Berücksichtigung von Boni.
  */
-function calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
+calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
     let price = Math.floor(basePrice * Math.pow(growthRate, count));
     let costReduction = 0;
 
     // 1. Prestige Cost Reduction
     // Suche nach allen Prestige-Upgrades mit cost_reduction, da diese additiv sein können
     prestigeUpgrades.forEach(upg => {
-        if (upg.type === 'building_cost_reduction' && gameState.prestigeUpgradeStatus[upg.id]) {
+        if (upg.type === 'building_cost_reduction' && this.gameState.prestigeUpgradeStatus[upg.id]) {
             // Prüfe, ob die Reduktion für dieses spezifische Gebäude gilt (wenn buildingIndices definiert sind)
             if (!upg.buildingIndices || upg.buildingIndices.includes(buildingIndex)) {
                 costReduction += upg.value;
@@ -195,7 +206,7 @@ function calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
     });
 
     // 2. Pet Cost Reduction (Ökonom Pet)
-    const petCostReduction = petsData.find(pet => pet.effectType === 'cost_reduction' && gameState.activePet === pet.id);
+    const petCostReduction = petsData.find(pet => pet.effectType === 'cost_reduction' && this.gameState.activePet === pet.id);
     if (petCostReduction) {
         costReduction += petCostReduction.effect;
     }
@@ -212,12 +223,12 @@ function calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
 //--- 3. Speicher- und Ladefunktionen ---
 //================================================================================================================
 
-function speichereSpiel() {
+speichereSpiel() {
     try {
         const allData = {
             // Wir speichern NUR das gameState-Objekt,
             // da es jetzt alle Arrays (buildingCounts, researchStatus etc.) enthält.
-            gameState
+            gameState: this.gameState
         };
         const jsonString = JSON.stringify(allData);
         const encodedData = btoa(jsonString); // Base64 encoding
@@ -227,14 +238,14 @@ function speichereSpiel() {
     }
 }
 
-function ladeSpiel(encodedData) {
+ladeSpiel(encodedData) {
     try {
         let dataToLoad = encodedData;
         if (!dataToLoad) {
             dataToLoad = localStorage.getItem('smileyGameSave');
         }
         if (!dataToLoad) {
-            applyAllBoni();
+            this.applyAllBoni();
             return false;
         }
 
@@ -245,40 +256,40 @@ function ladeSpiel(encodedData) {
         // Wenn alte Saves separate Arrays (z.B. buildingCounts) auf der Top-Ebene haben,
         // verschieben wir diese in das gameState-Objekt, um sie im nächsten Schritt
         // korrekt zu laden.
-        if (allData.buildingCounts) {
+           if (allData.buildingCounts) {
             console.warn("Migration: Alter Spielstand erkannt. Daten werden in gameState verschoben.");
+            // Korrektur: Wir weisen den Wert in allData.gameState zu, nicht allData.this.gameState.
             allData.gameState.buildingCounts = allData.gameState.buildingCounts || allData.buildingCounts;
             allData.gameState.buildingPrices = allData.gameState.buildingPrices || allData.buildingPrices;
             allData.gameState.researchStatus = allData.gameState.researchStatus || allData.researchStatus;
             allData.gameState.prestigeUpgradeStatus = allData.gameState.prestigeUpgradeStatus || allData.prestigeUpgradeStatus;
-            // Die Top-Level Keys werden hier ignoriert, da sie in gameState kopiert wurden
         }
         // --- ENDE MIGRATION ---
 
         // Der sicherste Weg, den State zu laden:
         // Fügt alle geladenen Eigenschaften aus dem Save in den aktuellen gameState ein
         // und behält die Default-Werte, wenn diese im Save fehlen (z.B. neue Features).
-        gameState = {
-            ...gameState, // Behalte alle aktuellen (Standard-)Werte
+        this.gameState = {
+            ...this.gameState, // Behalte alle aktuellen (Standard-)Werte
             ...allData.gameState // Überschreibe mit den Werten aus dem Save
         };
 
         // --- Balance-Version Check (Bleibt erhalten) ---
         const balanceVersion = localStorage.getItem('balanceVersion');
-        if (gameState.gesamt_prestige_punkte > 10000 && balanceVersion !== '2') {
+        if (this.gameState.gesamt_prestige_punkte > 10000 && balanceVersion !== '2') {
              // Der Code für den Reset bei Balance-Änderung... (Hier ausgelassen)
              // WICHTIG: Hier müsste der Reset für die zentralisierten Arrays angepasst werden!
              alert("Dein Spielstand wurde aufgrund einer wichtigen Balance-Änderung angepasst. Deine Prestigepunkte und Skill-Tree-Upgrades wurden zurückgesetzt, um das Spiel fair zu halten. Dein restlicher Fortschritt bleibt erhalten.");
-             gameState.gesamt_prestige_punkte = 0;
-             gameState.prestige_punkte_verfügbar = 0;
-             gameState.prestigeUpgradeStatus.fill(false); // NEU: Zugriff auf zentralisiertes Array
+             this.gameState.gesamt_prestige_punkte = 0;
+             this.gameState.prestige_punkte_verfügbar = 0;
+             this.gameState.prestigeUpgradeStatus.fill(false); // NEU: Zugriff auf zentralisiertes Array
              localStorage.setItem('balanceVersion', '2');
         }
         // --- Ende Balance-Version Check ---
 
-        applyAllBoni();
-        if (document.body.className !== 'settings-page' && typeof updateUI === 'function') {
-            updateUI();
+        this.applyAllBoni(); // Korrekt: this.
+        if (document.body.className !== 'settings-page' && typeof this.updateUI === 'function') {
+            this.updateUI();
         }
         return true;
     } catch (e) {
@@ -295,13 +306,13 @@ function ladeSpiel(encodedData) {
 //--- 4. Boni-Anwendung & Kernlogik ---
 //================================================================================================================
 
-function applyAllBoni() {
+applyAllBoni() {
     // Reset all multipliers to their base values
-    gameState.globalSPSMultiplier = 1;
-    gameState.researchLabPrestigeMulti = 1;
-    gameState.prestigePointMultiplier = 0.01;
-    gameState.prestigeResetBonus = 0;
-    gameState.petsUnlocked = false;
+    this.gameState.globalSPSMultiplier = 1;
+    this.gameState.researchLabPrestigeMulti = 1;
+    this.gameState.prestigePointMultiplier = 0.01;
+    this.gameState.prestigeResetBonus = 0;
+    this.gameState.petsUnlocked = false;
     let baseClickMultiplier = 1;
     let prestigeClickMultiplier = 0;
 
@@ -309,7 +320,7 @@ function applyAllBoni() {
     buildingsData.forEach(b => { b.prestigeMulti = 1; });
 
     // 1. RESEARCH Boni anwenden
-    gameState.researchStatus.forEach((bought, id) => {
+    this.gameState.researchStatus.forEach((bought, id) => {
         if(bought) {
             const upgrade = researchUpgrades.find(u => u.id === id);
             if(!upgrade) return;
@@ -323,17 +334,17 @@ function applyAllBoni() {
     });
 
     // 2. PRESTIGE Boni anwenden
-    gameState.prestigeUpgradeStatus.forEach((bought, id) => {
+    this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
         if(bought) {
             const upgrade = prestigeUpgrades.find(u => u.id === id);
             if(upgrade) {
                 switch(upgrade.type) {
-                    case 'global_sps_mult': gameState.globalSPSMultiplier += upgrade.value; break;
+                    case 'global_sps_mult': this.gameState.globalSPSMultiplier += upgrade.value; break;
                     case 'global_click_mult': prestigeClickMultiplier += upgrade.value; break;
-                    case 'research_lab_mult': gameState.researchLabPrestigeMulti += upgrade.value; break;
-                    case 'prestige_point_eff': gameState.prestigePointMultiplier += upgrade.value; break;
-                    case 'prestige_reset_bonus': gameState.prestigeResetBonus += upgrade.value; break;
-                    case 'unlock_pets': gameState.petsUnlocked = true; break;
+                    case 'research_lab_mult': this.gameState.researchLabPrestigeMulti += upgrade.value; break;
+                    case 'prestige_point_eff': this.gameState.prestigePointMultiplier += upgrade.value; break;
+                    case 'prestige_reset_bonus': this.gameState.prestigeResetBonus += upgrade.value; break;
+                    case 'unlock_pets': this.gameState.petsUnlocked = true; break;
                     // building_cost_reduction wird in calculateNextCost behandelt
                 }
             }
@@ -341,14 +352,14 @@ function applyAllBoni() {
     });
 
     // 3. PET Boni anwenden
-    if (gameState.activePet) {
-        const pet = petsData.find(p => p.id === gameState.activePet);
+    if (this.gameState.activePet) {
+        const pet = petsData.find(p => p.id === this.gameState.activePet);
         if (pet) {
             switch (pet.effectType) {
                 case 'click_mult': prestigeClickMultiplier += pet.effect; break;
-                case 'sps_mult': gameState.globalSPSMultiplier += pet.effect; break;
-                case 'research_mult': gameState.researchLabPrestigeMulti += pet.effect; break;
-                case 'prestige_point_eff': gameState.prestigePointMultiplier += pet.effect; break;
+                case 'sps_mult': this.gameState.globalSPSMultiplier += pet.effect; break;
+                case 'research_mult': this.gameState.researchLabPrestigeMulti += pet.effect; break;
+                case 'prestige_point_eff': this.gameState.prestigePointMultiplier += pet.effect; break;
                 // cost_reduction wird in calculateNextCost behandelt
             }
         }
@@ -357,75 +368,75 @@ function applyAllBoni() {
     // 4. Finalisierung
 
     // Finalize click multiplier
-    gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
+    this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
 
     // Finalize the global SPS multiplier
-    const prestigeBonus = 1 + (gameState.gesamt_prestige_punkte * gameState.prestigePointMultiplier);
-    const resetBonus = 1 + (gameState.prestigeResets * gameState.prestigeResetBonus);
-    gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * gameState.globalSPSMultiplier;
+    const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
+    const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+    this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier;
 
     // Update Research Lab SPS Multi (für produziereSmileys)
-    if (gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
-        uniqueBuildingsData[0].researchMultiplier = gameState.researchLabPrestigeMulti;
+    if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
+        uniqueBuildingsData[0].researchMultiplier = this.gameState.researchLabPrestigeMulti;
     }
 }
 
-function klickeSmiley() {
-    const smileysGeklickt = gameState.klickKraft * gameState.klickKraftMultiplier;
-    gameState.aktuelle_smileys += smileysGeklickt;
-    gameState.gesammelte_smileys += smileysGeklickt;
+this.klickeSmiley() {
+    const smileysGeklickt = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
+    this.gameState.aktuelle_smileys += smileysGeklickt;
+    this.gameState.gesammelte_smileys += smileysGeklickt;
     if (typeof updateUI === 'function') {
-        updateUI();
+        this.updateUI();
     }
 }
 
-function produziereSmileys() {
+produziereSmileys() {
     const timeFactor = 0.1;
-    if (gameState.totalSPS > 0) {
-        gameState.aktuelle_smileys += gameState.totalSPS * timeFactor;
-        gameState.gesammelte_smileys += gameState.totalSPS * timeFactor;
+    if (this.gameState.totalSPS > 0) {
+        this.gameState.aktuelle_smileys += this.gameState.totalSPS * timeFactor;
+        this.gameState.gesammelte_smileys += this.gameState.totalSPS * timeFactor;
     }
 
     // Forschungslabor-Produktion (Research Points)
-    if (gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
+    if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
         // Research Lab base production is 1 RP/s
         const lab = uniqueBuildingsData[0];
-        const researchRate = 1 * gameState.buildingCounts[RESEARCH_LAB_INDEX] * (lab.researchMultiplier || 1);
-        gameState.forschungPunkte += researchRate * timeFactor;
+        const researchRate = 1 * this.gameState.buildingCounts[RESEARCH_LAB_INDEX] * (lab.researchMultiplier || 1);
+        this.gameState.forschungPunkte += researchRate * timeFactor;
     }
 
     // Pet-Logik (Auto-Click)
-    if (gameState.activePet) {
-        const pet = petsData.find(p => p.id === gameState.activePet);
+    if (this.gameState.activePet) {
+        const pet = petsData.find(p => p.id === this.gameState.activePet);
         if (pet && pet.effectType === 'auto_click' && pet.interval > 0) {
-            gameState.petAutoClickTimer += 1;
-            if (gameState.petAutoClickTimer >= pet.interval) {
-                klickeSmiley();
-                gameState.petAutoClickTimer = 0;
+            this.gameState.petAutoClickTimer += 1;
+            if (this.gameState.petAutoClickTimer >= pet.interval) {
+                this.klickeSmiley();
+                this.gameState.petAutoClickTimer = 0;
             }
         }
     }
 
-    speichereSpiel(); // Speichere Spiel alle 100ms
+    this.speichereSpiel(); // Speichere Spiel alle 100ms
 }
 
-function computeTotalSPS() {
+computeTotalSPS() {
     let sps = 0;
 
     // Zähle reguläre Gebäude (Index 0 bis 14)
     buildingsData.forEach((item, index) => {
-        sps += (gameState.buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
+        sps += (this.gameState.buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
     });
 
     // Wende den globalen Multiplikator an (inkl. Prestige, Resets, Pet-Boni)
-    gameState.totalSPS = sps * gameState.globalerPrestigeMultiplikator;
-    return gameState.totalSPS;
+    this.gameState.totalSPS = sps * this.gameState.globalerPrestigeMultiplikator;
+    return this.gameState.totalSPS;
 }
 
 /**
  * Kauflogik für reguläre Gebäude und das Forschungslabor (Unique Building)
  */
-function kaufeMehrereGebaeude(index, amount) {
+kaufeMehrereGebaeude(index, amount) {
     let item;
     let isUnique = index === RESEARCH_LAB_INDEX;
 
@@ -435,115 +446,115 @@ function kaufeMehrereGebaeude(index, amount) {
         item = buildingsData[index];
     }
 
-    if (isUnique && gameState.buildingCounts[index] >= item.maxCount) return;
+    if (isUnique && this.gameState.buildingCounts[index] >= item.maxCount) return;
 
     let totalCost = 0;
     const anzahl = isUnique ? 1 : amount;
 
     // Berechne die Gesamtkosten
     for (let i = 0; i < anzahl; i++) {
-        totalCost += calculateNextCost(item.basePrice, gameState.buildingCounts[index] + i, item.growthRate, index);
+        totalCost += calculateNextCost(item.basePrice, this.gameState.buildingCounts[index] + i, item.growthRate, index);
     }
 
-    if (gameState.aktuelle_smileys >= totalCost) {
-        gameState.aktuelle_smileys -= totalCost;
-        gameState.buildingCounts[index] += anzahl;
+    if (this.gameState.aktuelle_smileys >= totalCost) {
+        this.gameState.aktuelle_smileys -= totalCost;
+        this.gameState.buildingCounts[index] += anzahl;
 
         // Aktualisiere den Preis für den nächsten Kauf
-        const nextCount = gameState.buildingCounts[index];
+        const nextCount = this.gameState.buildingCounts[index];
         buildingPrices[index] = calculateNextCost(item.basePrice, nextCount, item.growthRate, index);
 
         // Bei Kauf des Labors (oder Pet-Bonus) müssen alle Boni neu angewendet werden
-        if (isUnique) applyAllBoni();
+        if (isUnique) this.applyAllBoni();
 
-        updateUI();
+        this.updateUI();
     }
 }
 
-function kaufeResearchUpgrade(id) {
+kaufeResearchUpgrade(id) {
     const upgrade = researchUpgrades.find(u => u.id === id);
-    if (!upgrade || gameState.researchStatus[id] || gameState.forschungPunkte < upgrade.cost) return;
+    if (!upgrade || this.gameState.researchStatus[id] || this.gameState.forschungPunkte < upgrade.cost) return;
 
-    if (gameState.buildingCounts[RESEARCH_LAB_INDEX] === 0) {
+    if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] === 0) {
         console.warn("Forschungslabor wird benötigt, um Upgrades zu kaufen.");
         return;
     }
 
-    gameState.forschungPunkte -= upgrade.cost;
-    gameState.researchStatus[id] = true;
-    applyAllBoni();
-    updateUI();
-    speichereSpiel();
+    this.gameState.forschungPunkte -= upgrade.cost;
+    this.gameState.researchStatus[id] = true;
+    this.applyAllBoni();
+    this.updateUI();
+    this.speichereSpiel();
 }
 
-function kaufePrestigeUpgrade(id) {
+kaufePrestigeUpgrade(id) {
     const upgrade = prestigeUpgrades.find(u => u.id === id);
-    const requirementsMet = upgrade.requirements.every(reqId => gameState.prestigeUpgradeStatus[reqId]);
+    const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
 
-    if (!upgrade || gameState.prestigeUpgradeStatus[id] || gameState.prestige_punkte_verfügbar < upgrade.cost || !requirementsMet) return;
+    if (!upgrade || this.gameState.prestigeUpgradeStatus[id] || this.gameState.prestige_punkte_verfügbar < upgrade.cost || !requirementsMet) return;
 
-    gameState.prestige_punkte_verfügbar -= upgrade.cost;
-    gameState.prestigeUpgradeStatus[id] = true;
+    this.gameState.prestige_punkte_verfügbar -= upgrade.cost;
+    this.gameState.prestigeUpgradeStatus[id] = true;
 
-    applyAllBoni();
-    updatePrestigeUI();
+    this.applyAllBoni();
+    this.updatePRestigeUI();
     if (document.querySelector('.main-layout')) {
-        updateUI();
+        this.updateUI();
     }
-    speichereSpiel();
+    this.speichereSpiel();
 }
 
-function kaufePet(petId) {
-    if (!gameState.petsUnlocked) {
+kaufePet(petId) {
+    if (!this.gameState.petsUnlocked) {
         console.warn("Pet-System nicht freigeschaltet.");
         return;
     }
     const pet = petsData.find(p => p.id === petId);
     const petIndex = petsData.findIndex(p => p.id === petId);
 
-    if (gameState.petStatus[petIndex]) {
+    if (this.gameState.petStatus[petIndex]) {
         console.warn("Pet bereits gekauft.");
         return;
     }
-    if (gameState.prestige_punkte_verfügbar < pet.cost) {
+    if (this.gameState.prestige_punkte_verfügbar < pet.cost) {
         console.warn("Nicht genug Prestige-Punkte.");
         return;
     }
 
-    gameState.prestige_punkte_verfügbar -= pet.cost;
-    gameState.petStatus[petIndex] = true;
+    this.gameState.prestige_punkte_verfügbar -= pet.cost;
+    this.gameState.petStatus[petIndex] = true;
 
     // Aktiviere das Pet sofort nach dem Kauf
-    activatePet(petId);
+    this.activatePet(petId);
 
-    updateUI();
-    speichereSpiel();
+    this.updateUI();
+    this.speichereSpiel();
 }
 
-function activatePet(petId) {
+activatePet(petId) {
     const petIndex = petsData.findIndex(p => p.id === petId);
-    if (!gameState.petStatus[petIndex]) {
+    if (!this.gameState.petStatus[petIndex]) {
         console.warn("Pet nicht gekauft.");
         return;
     }
 
-    if (gameState.activePet === petId) {
-        gameState.activePet = null;
+    if (this.gameState.activePet === petId) {
+        this.gameState.activePet = null;
         console.log(`Pet ${petId} deaktiviert.`);
     } else {
-        gameState.activePet = petId;
+        this.gameState.activePet = petId;
         console.log(`Pet ${petId} aktiviert.`);
     }
 
-    applyAllBoni(); // Wichtig: Boni neu anwenden, um den Effekt zu sehen
-    updateUI();
-    speichereSpiel();
+    this.applyAllBoni(); // Wichtig: Boni neu anwenden, um den Effekt zu sehen
+    this.updateUI();
+    this.speichereSpiel();
 }
 
-function prestigeReset() {
+prestigeReset() {
     const prestigePointThreshold = 1000000;
-    const totalPotentialPoints = Math.floor(Math.pow(gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
-    const pointsToGain = Math.max(0, totalPotentialPoints - gameState.gesamt_prestige_punkte);
+    const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
+    const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
 
     if (pointsToGain <= 0) {
         // Anstelle von alert()
@@ -556,33 +567,33 @@ function prestigeReset() {
         return;
     }
 
-    gameState.aktuelle_smileys = 0;
-    gameState.gesammelte_smileys = 0;
-    gameState.klickKraft = 1;
-    gameState.totalSPS = 0;
-    gameState.forschungPunkte = 0;
-    gameState.prestige_punkte_verfügbar += pointsToGain;
-    gameState.gesamt_prestige_punkte += pointsToGain;
-    gameState.prestigeResets += 1;
+    this.gameState.aktuelle_smileys = 0;
+    this.gameState.gesammelte_smileys = 0;
+    this.gameState.klickKraft = 1;
+    this.gameState.totalSPS = 0;
+    this.gameState.forschungPunkte = 0;
+    this.gameState.prestige_punkte_verfügbar += pointsToGain;
+    this.gameState.gesamt_prestige_punkte += pointsToGain;
+    this.gameState.prestigeResets += 1;
 
     // Setze alle Arrays zurück (reguläre + Unique)
-    gameState.buildingCounts = [...buildingsData, ...uniqueBuildingsData].map(() => 0);
+    this.gameState.buildingCounts = [...buildingsData, ...uniqueBuildingsData].map(() => 0);
     buildingPrices = [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)];
-    gameState.researchStatus = researchUpgrades.map(() => false);
+    this.gameState.researchStatus = researchUpgrades.map(() => false);
 
     // Pet-Status wird NICHT zurückgesetzt (Pet ist Prestige-Upgrade)
 
-    applyAllBoni();
-    speichereSpiel();
+    this.applyAllBoni();
+    this.speichereSpiel();
 
     if(document.querySelector('.prestige-main')) {
-        updatePrestigeUI();
+        this.updatePRestigeUI();
     }
 }
 
-function resetPrestigeUpgrades() {
+resetPrestigeUpgrades() {
     let refundedPoints = 0;
-    gameState.prestigeUpgradeStatus.forEach((bought, id) => {
+    this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
         if (bought) {
             const upgrade = prestigeUpgrades.find(u => u.id === id);
             if (upgrade) {
@@ -597,14 +608,14 @@ function resetPrestigeUpgrades() {
         }
 
         // Zurücksetzen von Pet Status beim Prestige Reset
-        gameState.petStatus.fill(false);
-        gameState.activePet = null;
+        this.gameState.petStatus.fill(false);
+        this.gameState.activePet = null;
 
-        gameState.prestige_punkte_verfügbar += refundedPoints;
-        gameState.prestigeUpgradeStatus.fill(false);
-        applyAllBoni();
-        updatePrestigeUI();
-        speichereSpiel();
+        this.gameState.prestige_punkte_verfügbar += refundedPoints;
+        this.gameState.prestigeUpgradeStatus.fill(false);
+        this.applyAllBoni();
+        this.updatePRestigeUI();
+        this.speichereSpiel();
     }
 }
 
@@ -612,7 +623,7 @@ function resetPrestigeUpgrades() {
 //--- 5. Rendering & UI-Update ---
 //================================================================================================================
 
-function createBuildingElements() {
+createBuildingElements() {
     const buildingGrid = getById('building-grid');
     if (!buildingGrid) return;
     buildingGrid.innerHTML = '';
@@ -636,7 +647,7 @@ function createBuildingElements() {
     });
 }
 
-function renderPetShop() {
+renderPetShop() {
     const petGrid = getById('pet-shop-grid');
     if (!petGrid) return;
     petGrid.innerHTML = '';
@@ -670,19 +681,19 @@ function renderPetShop() {
     });
 }
 
-function updateBuildingUI() {
+updateBuildingUI() {
     buildingsData.forEach((building, index) => {
-        const cost1x = calculateNextCost(building.basePrice, gameState.buildingCounts[index], building.growthRate, index);
-        let cost10x = 0; for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, gameState.buildingCounts[index] + i, building.growthRate, index);
-        let cost100x = 0; for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, gameState.buildingCounts[index] + i, building.growthRate, index);
+        const cost1x = calculateNextCost(building.basePrice, this.gameState.buildingCounts[index], building.growthRate, index);
+        let cost10x = 0; for (let i = 0; i < 10; i++) cost10x += calculateNextCost(building.basePrice, this.gameState.buildingCounts[index] + i, building.growthRate, index);
+        let cost100x = 0; for (let i = 0; i < 100; i++) cost100x += calculateNextCost(building.basePrice, this.gameState.buildingCounts[index] + i, building.growthRate, index);
 
         // Berücksichtige den prestigeMulti (Research Boni)
-        const baseBuildingSPS = (gameState.buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
-        const actualBuildingSPS = baseBuildingSPS * gameState.globalerPrestigeMultiplikator;
-        const spsPercentage = gameState.totalSPS > 0 ? (actualBuildingSPS / gameState.totalSPS * 100) : 0;
+        const baseBuildingSPS = (this.gameState.buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
+        const actualBuildingSPS = baseBuildingSPS * this.gameState.globalerPrestigeMultiplikator;
+        const spsPercentage = this.gameState.totalSPS > 0 ? (actualBuildingSPS / this.gameState.totalSPS * 100) : 0;
 
         const countElement = getById(`building-count-${index}`);
-        if(countElement) countElement.innerText = gameState.buildingCounts[index];
+        if(countElement) countElement.innerText = this.gameState.buildingCounts[index];
         const spsElement = getById(`building-sps-${index}`);
         if(spsElement) spsElement.innerText = formatNumber(actualBuildingSPS);
         const spsPctElement = getById(`building-sps-pct-${index}`);
@@ -691,50 +702,50 @@ function updateBuildingUI() {
         const btn1x = getById(`buy-1-${index}`);
         if(btn1x) {
             btn1x.innerHTML = `1x (${formatNumber(cost1x)})`;
-            btn1x.disabled = gameState.aktuelle_smileys < cost1x;
+            btn1x.disabled = this.gameState.aktuelle_smileys < cost1x;
         }
         const btn10x = getById(`buy-10-${index}`);
         if(btn10x) {
             btn10x.innerHTML = `10x (${formatNumber(cost10x)})`;
-            btn10x.disabled = gameState.aktuelle_smileys < cost10x;
+            btn10x.disabled = this.gameState.aktuelle_smileys < cost10x;
         }
         const btn100x = getById(`buy-100-${index}`);
         if(btn100x) {
             btn100x.innerHTML = `100x (${formatNumber(cost100x)})`;
-            btn100x.disabled = gameState.aktuelle_smileys < cost100x;
+            btn100x.disabled = this.gameState.aktuelle_smileys < cost100x;
         }
     });
 }
 
-function updateResearchUI() {
+updateResearchUI() {
     const labContent = getById('lab-main-content');
     const purchaseContainer = getById('lab-purchase-container');
     if (!labContent || !purchaseContainer) return;
 
-    const labOwned = gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0;
+    const labOwned = this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0;
 
     // UI-Elemente für das Labor ein-/ausblenden
     purchaseContainer.style.display = labOwned ? 'none' : 'block';
     labContent.style.display = labOwned ? 'block' : 'none';
 
     if (labOwned) {
-        getById('forschungspunkte').innerText = formatNumber(gameState.forschungPunkte);
+        getById('forschungspunkte').innerText = formatNumber(this.gameState.forschungPunkte);
         // Forschungsrate für das Lab Label anzeigen
         const labCountElement = getById('forschungslabor_count_anzeige');
-        if(labCountElement) labCountElement.innerText = gameState.buildingCounts[RESEARCH_LAB_INDEX];
+        if(labCountElement) labCountElement.innerText = this.gameState.buildingCounts[RESEARCH_LAB_INDEX];
     } else {
         const labButton = getById('forschungslaborButton');
         if (labButton) {
             const labCost = calculateNextCost(uniqueBuildingsData[0].basePrice, 0, uniqueBuildingsData[0].growthRate, RESEARCH_LAB_INDEX);
             labButton.innerText = `Kaufen (${formatNumber(labCost)})`;
-            labButton.disabled = gameState.aktuelle_smileys < labCost;
+            labButton.disabled = this.gameState.aktuelle_smileys < labCost;
         }
     }
 
     const nextUpgradeContainer = getById('next-research-container');
     if (!nextUpgradeContainer) return;
 
-    const nextUpgrade = researchUpgrades.find(upgrade => !gameState.researchStatus[upgrade.id]);
+    const nextUpgrade = researchUpgrades.find(upgrade => !this.gameState.researchStatus[upgrade.id]);
 
     // UI für nächstes Upgrade rendern
     if (!nextUpgrade) {
@@ -742,7 +753,7 @@ function updateResearchUI() {
         return;
     }
 
-    const canAfford = gameState.forschungPunkte >= nextUpgrade.cost;
+    const canAfford = this.gameState.forschungPunkte >= nextUpgrade.cost;
 
     nextUpgradeContainer.innerHTML = `
         <h4>Nächstes Upgrade:</h4>
@@ -761,7 +772,7 @@ function updateResearchUI() {
     }
 }
 
-function updatePetButtons() {
+updatePetButtons() {
     const petShopModal = getById('pet-shop-modal');
     if (!petShopModal) return;
 
@@ -771,10 +782,10 @@ function updatePetButtons() {
 
     if (openButton) {
         // Pet-Button in der mittleren Spalte nur anzeigen, wenn freigeschaltet
-        openButton.style.display = gameState.petsUnlocked ? 'block' : 'none';
+        openButton.style.display = this.gameState.petsUnlocked ? 'block' : 'none';
     }
 
-    if (!gameState.petsUnlocked) {
+    if (!this.gameState.petsUnlocked) {
         // Modal-Inhalt: Zeige Schloss-Nachricht
         if (lockMessage) lockMessage.style.display = 'block';
         if (petGrid) petGrid.style.display = 'none';
@@ -796,9 +807,9 @@ function updatePetButtons() {
         const petDiv = petGrid.querySelector(`.pet-item[data-id="${pet.id}"]`);
         if (!petDiv) return;
 
-        const isBought = gameState.petStatus[index]; // Angenommen: petStatus ist nun gameState.petStatus
-        const isAffordable = gameState.prestige_punkte_verfügbar >= pet.cost;
-        const isActive = gameState.activePet === pet.id; // Angenommen: activePet ist nun gameState.activePet
+        const isBought = this.gameState.petStatus[index]; // Angenommen: petStatus ist nun this.gameState.petStatus
+        const isAffordable = this.gameState.prestige_punkte_verfügbar >= pet.cost;
+        const isActive = this.gameState.activePet === pet.id; // Angenommen: activePet ist nun this.gameState.activePet
 
         const buyButton = petDiv.querySelector('.btn-pet-buy');
         const activateButton = petDiv.querySelector('.btn-pet-activate');
@@ -834,8 +845,8 @@ function updatePetButtons() {
     // KORREKTUR DER FEHLERHAFTEN ZEILE 833
     const activePetDisplayElement = getById('active_pet_display');
     if (activePetDisplayElement) {
-        if (gameState.activePet) {
-            const pet = petsData.find(p => p.id === gameState.activePet);
+        if (this.gameState.activePet) {
+            const pet = petsData.find(p => p.id === this.gameState.activePet);
             activePetDisplayElement.innerHTML = `
                 <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
                 <span>Aktives Pet: ${pet.name} (${pet.description})</span>
@@ -847,18 +858,18 @@ function updatePetButtons() {
     }
 }
 
-function updateUI() {
-    computeTotalSPS();
-    getById('aktuelle_smileys').innerText = formatNumber(gameState.aktuelle_smileys);
-    getById('smileys_pro_sekunde_anzeige').innerText = formatNumber(gameState.totalSPS);
-    getById('smileys_pro_minute_anzeige').innerText = formatNumber(gameState.totalSPS * 60);
-    getById('smileys_pro_klick_anzeige').innerText = formatNumber(gameState.klickKraft * gameState.klickKraftMultiplier);
+updateUI() {
+    this.computeTotalSPS();
+    getById('aktuelle_smileys').innerText = formatNumber(this.gameState.aktuelle_smileys);
+    getById('smileys_pro_sekunde_anzeige').innerText = formatNumber(this.gameState.totalSPS);
+    getById('smileys_pro_minute_anzeige').innerText = formatNumber(this.gameState.totalSPS * 60);
+    getById('smileys_pro_klick_anzeige').innerText = formatNumber(this.gameState.klickKraft * this.gameState.klickKraftMultiplier);
 
     // Stat Multiplikatoren
     const klickMultiDisplay = getById('klick_multiplikator_anzeige');
-    if (klickMultiDisplay) klickMultiDisplay.innerText = `x${gameState.klickKraftMultiplier.toFixed(2)}`;
+    if (klickMultiDisplay) klickMultiDisplay.innerText = `x${this.gameState.klickKraftMultiplier.toFixed(2)}`;
     const globalMultiDisplay = getById('globaler_multiplikator_anzeige');
-    if (globalMultiDisplay) globalMultiDisplay.innerText = `x${gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
+    if (globalMultiDisplay) globalMultiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
 
     updateBuildingUI();
     updateResearchUI();
@@ -866,11 +877,11 @@ function updateUI() {
 
     // Prestige Progress Bar Update
     const prestigePointThreshold = 1000000;
-    const totalPotentialPoints = Math.floor(Math.pow(gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
-    const pointsToGain = Math.max(0, totalPotentialPoints - gameState.gesamt_prestige_punkte);
+    const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
+    const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
 
-    const nextPointRequirement = Math.pow(gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
-    const lastPointRequirement = Math.pow(gameState.gesamt_prestige_punkte + pointsToGain, 3) * prestigePointThreshold;
+    const nextPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
+    const lastPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain, 3) * prestigePointThreshold;
 
     const progressBar = getById('prestige-progress-bar');
     const progressText = getById('prestige-progress-text');
@@ -880,33 +891,33 @@ function updateUI() {
             progressBar.style.width = '100%';
             progressText.innerText = `+${pointsToGain} Prestige-Punkt${pointsToGain > 1 ? 'e' : ''} verfügbar!`;
         } else {
-            const progress = Math.max(0, gameState.gesammelte_smileys - lastPointRequirement);
+            const progress = Math.max(0, this.gameState.gesammelte_smileys - lastPointRequirement);
             const goal = nextPointRequirement - lastPointRequirement;
             const percentage = goal > 0 ? Math.min(100, (progress / goal) * 100) : 0;
             progressBar.style.width = `${percentage}%`;
-            progressText.innerText = `${formatNumber(gameState.gesammelte_smileys)} / ${formatNumber(nextPointRequirement)}`;
+            progressText.innerText = `${formatNumber(this.gameState.gesammelte_smileys)} / ${formatNumber(nextPointRequirement)}`;
         }
     }
 }
 
-function updatePrestigeUI() {
+updatePrestigeUI() {
     if(!getById('prestige_punkte_verfügbar')) return;
 
     const prestigePointThreshold = 1000000;
-    const totalPotentialPoints = Math.floor(Math.pow(gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
-    const pointsToGain = Math.max(0, totalPotentialPoints - gameState.gesamt_prestige_punkte);
+    const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1/3));
+    const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
 
-    const nextPointRequirement = Math.pow(gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
+    const nextPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
 
-    getById('prestige_punkte_verfügbar').innerText = formatNumber(gameState.prestige_punkte_verfügbar);
-    getById('gesamt_prestige_punkte').innerText = formatNumber(gameState.gesamt_prestige_punkte);
-    getById('aktuelle_smileys_prestige').innerText = formatNumber(gameState.gesammelte_smileys);
+    getById('prestige_punkte_verfügbar').innerText = formatNumber(this.gameState.prestige_punkte_verfügbar);
+    getById('gesamt_prestige_punkte').innerText = formatNumber(this.gameState.gesamt_prestige_punkte);
+    getById('aktuelle_smileys_prestige').innerText = formatNumber(this.gameState.gesammelte_smileys);
     getById('next_prestige_point').innerText = formatNumber(nextPointRequirement);
 
     // Globaler Multiplikator auf der Prestige Seite anzeigen
     const globalMultiDisplay = getById('globaler_multiplikator_anzeige_prestige');
     if (globalMultiDisplay) {
-         globalMultiDisplay.innerText = `x${gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
+         globalMultiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
     }
 
 
@@ -925,9 +936,9 @@ function updatePrestigeUI() {
             const node = document.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
             if (!node) return;
 
-            const requirementsMet = upgrade.requirements.every(reqId => gameState.prestigeUpgradeStatus[reqId]);
-            const canAfford = gameState.prestige_punkte_verfügbar >= upgrade.cost;
-            const isPurchased = gameState.prestigeUpgradeStatus[upgrade.id];
+            const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+            const canAfford = this.gameState.prestige_punkte_verfügbar >= upgrade.cost;
+            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
 
             node.classList.remove('purchased', 'available', 'locked');
 
@@ -948,13 +959,14 @@ function updatePrestigeUI() {
 //--- 6. Event Listener Setup ---
 //================================================================================================================
 
-function setupMainEventListeners() {
-    getById('smiley_button')?.addEventListener('click', klickeSmiley);
+setupMainEventListeners() {
+    // KORREKTUR: Muss in eine anonyme Funktion, um 'this' zu erhalten
+    getById('smiley_button')?.addEventListener('click', () => this.klickeSmiley());
 
-    // Unique Building (Forschungslabor) Kauf
-    getById('forschungslaborButton')?.addEventListener('click', () => kaufeMehrereGebaeude(RESEARCH_LAB_INDEX, 1));
+    // KORREKTUR: Muss in eine anonyme Funktion, um 'this' zu erhalten
+    getById('forschungslaborButton')?.addEventListener('click', () => this.kaufeMehrereGebaeude(RESEARCH_LAB_INDEX, 1));
 
-    // Building Grid Event Listener
+    // Building Grid Event Listener (Bereits ein Pfeilfunktion, aber Aufruf muss korrigiert werden)
     getById('building-grid')?.addEventListener('click', (e) => {
         const button = e.target.closest('.btn-buy');
         if (!button) return;
@@ -962,20 +974,20 @@ function setupMainEventListeners() {
         if (!buildingItem) return;
         const index = parseInt(buildingItem.dataset.index, 10);
         const amount = parseInt(button.dataset.amount, 10);
-        if (!isNaN(index) && !isNaN(amount)) kaufeMehrereGebaeude(index, amount);
+        // KORREKTUR: Aufruf muss this. verwenden
+        if (!isNaN(index) && !isNaN(amount)) this.kaufeMehrereGebaeude(index, amount);
     });
 
     // Research Quick Buy Button Event Listener
     getById('next-research-container')?.addEventListener('click', (e) => {
         const buyButton = e.target.closest('.btn-buy-research');
         if (!buyButton) return;
-
         const researchItem = buyButton.closest('.research-item');
         if (!researchItem) return;
-
         const id = parseInt(researchItem.dataset.id, 10);
+        // KORREKTUR: Aufruf muss this. verwenden
         if (!isNaN(id)) {
-            kaufeResearchUpgrade(id);
+            this.kaufeResearchUpgrade(id);
         }
     });
 
@@ -985,10 +997,11 @@ function setupMainEventListeners() {
         if (!button) return;
         const petId = button.dataset.id;
 
+        // KORREKTUR: Aufrufe müssen this. verwenden
         if (button.classList.contains('btn-pet-buy')) {
-            kaufePet(petId);
+            this.kaufePet(petId);
         } else if (button.classList.contains('btn-pet-activate')) {
-            activatePet(petId);
+            this.activatePet(petId);
         }
     });
 
@@ -1011,7 +1024,7 @@ function setupMainEventListeners() {
     }
 }
 
-function setupPrestigeEventListeners() {
+setupPrestigeEventListeners() {
     const prestigeModal = getById('prestige_confirm_modal');
     const openPrestigeModalButton = getById('prestige_reset_button');
     const closePrestigeModalButton = getById('cancel_prestige_button');
@@ -1019,9 +1032,9 @@ function setupPrestigeEventListeners() {
 
     // Prestige Reset Button Logic (opens modal)
     openPrestigeModalButton?.addEventListener('click', () => {
-        updatePrestigeUI();
-        const totalPotentialPoints = Math.floor(Math.pow(gameState.gesammelte_smileys / 1000000, 1/3));
-        const pointsToGain = Math.max(0, totalPotentialPoints - gameState.gesamt_prestige_punkte);
+        this.updatePRestigeUI();
+        const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / 1000000, 1/3));
+        const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
 
         if (pointsToGain > 0) {
             const pointsToGainElement = getById('prestige_points_to_gain');
@@ -1031,8 +1044,7 @@ function setupPrestigeEventListeners() {
     });
 
     closePrestigeModalButton?.addEventListener('click', () => { if(prestigeModal) prestigeModal.style.display = 'none'; });
-    confirmPrestigeButton?.addEventListener('click', () => {
-        prestigeReset(); // Reset wird hier direkt ausgelöst
+    confirmPrestigeButton?.addEventListener('click', () => { this.prestigeReset();// Reset wird hier direkt ausgelöst
         if(prestigeModal) prestigeModal.style.display = 'none';
     });
 
@@ -1043,7 +1055,7 @@ function setupPrestigeEventListeners() {
 
     openSkillTreeButton?.addEventListener('click', () => {
         createPrestigeUpgradeElements(); // Rendere den Baum
-        updatePrestigeUI(); // UI-Elemente im Baum aktualisieren
+        this.updatePRestigeUI(); // UI-Elemente im Baum aktualisieren
         if(skillTreeModal) skillTreeModal.style.display = 'flex';
     });
     closeSkillTreeButton?.addEventListener('click', () => { if(skillTreeModal) skillTreeModal.style.display = 'none'; });
@@ -1052,14 +1064,13 @@ function setupPrestigeEventListeners() {
         const node = e.target.closest('.prestige-node');
         if (!node) return;
         const id = parseInt(node.dataset.id, 10);
-        if (!isNaN(id)) kaufePrestigeUpgrade(id);
+        if (!isNaN(id)) this.kaufePrestigeUpgrade(id);
     });
 
     const resetPrestigeUpgradesButton = getById('reset_prestige_upgrades_button');
-    resetPrestigeUpgradesButton?.addEventListener('click', resetPrestigeUpgrades);
-}
+    resetPrestigeUpgradesButton?.addEventListener('click', () => this.resetPrestigeUpgrades());
 
-function setupInfoPageEventListeners() {
+setupInfoPageEventListeners() {
     // Info Modals (Buildings, Research, Prestige, Stats)
 
     const buildingsModal = getById('buildings_info_modal');
@@ -1099,7 +1110,7 @@ function setupInfoPageEventListeners() {
     closeStatsButton?.addEventListener('click', () => {if(statsModal) statsModal.style.display = 'none';});
 }
 
-function setupSettingsModalListeners() {
+setupSettingsModalListeners() {
     const settingsModal = getById('settings-modal');
     const openSettingsButton = getById('open-settings-button');
     const closeSettingsButton = getById('close-settings-button');
@@ -1110,7 +1121,7 @@ function setupSettingsModalListeners() {
     openSettingsButton?.addEventListener('click', (e) => {
         e.preventDefault();
         // Generiert den Code für den Export, bevor das Modal geöffnet wird
-        speichereSpiel();
+        this.speichereSpiel();
         const savedData = localStorage.getItem('smileyGameSave');
         if (saveDataTextarea) {
              saveDataTextarea.value = savedData || '';
@@ -1123,7 +1134,7 @@ function setupSettingsModalListeners() {
     });
 
     exportButton?.addEventListener('click', () => {
-        speichereSpiel();
+        this.speichereSpiel();
         const saveData = localStorage.getItem('smileyGameSave');
         if (saveData && saveDataTextarea) {
             saveDataTextarea.value = saveData;
@@ -1153,7 +1164,7 @@ function setupSettingsModalListeners() {
         const saveData = saveDataTextarea?.value.trim();
         if (saveData && confirm("Möchtest du diesen Spielstand wirklich importieren? Dein aktueller Fortschritt wird überschrieben.")) {
             if (ladeSpiel(saveData)) {
-                speichereSpiel();
+                this.speichereSpiel();
                 // Ein Neuladen ist notwendig, um die UI korrekt zu resetten
                 // alert("Spielstand erfolgreich importiert! Die Seite wird neu geladen.");
                 location.reload();
@@ -1168,54 +1179,13 @@ function setupSettingsModalListeners() {
 //--- 7. Initialisierung der Seiten ---
 //================================================================================================================
 
-function initialisiereHauptSpiel() {
-    // 1. UI-Elemente erstellen (Muss VOR ladeSpiel passieren, um Fehler zu vermeiden)
-    createBuildingElements();
-    renderPetShop(); // Pets müssen hier auch gerendert werden
 
-    // 2. Spiel laden (ruft updateUI auf, aber jetzt existieren die Elemente)
-    ladeSpiel();
-
-    // 3. Events und Loops starten
-    window.addEventListener('beforeunload', speichereSpiel);
-    setupMainEventListeners();
-    updateUI(); // Erneuter Aufruf, um sicherzugehen
-    setInterval(produziereSmileys, 100);
-    setInterval(updateUI, 1000);
-}
-
-function initialisierePrestigeSeite() {
-    ladeSpiel();
-    createPrestigeUpgradeElements();
-    setupPrestigeEventListeners();
-    updatePrestigeUI();
-    setInterval(updatePrestigeUI, 1000);
-}
-
-function initialisiereInfoSeite() {
-    ladeSpiel();
-    // Die Rendering-Funktionen werden jetzt von den Event-Listenern beim Öffnen des Modals aufgerufen.
-    setupInfoPageEventListeners();
-}
-
-function initialisiereSpiel() {
-    setupSettingsModalListeners();
-
-    // Unterscheiden, auf welcher Seite wir sind
-    if (document.querySelector('.main-layout')) {
-        initialisiereHauptSpiel();
-    } else if (document.querySelector('.prestige-main')) {
-        initialisierePrestigeSeite();
-    } else if (document.body.classList.contains('info-page')) {
-        initialisiereInfoSeite();
-    }
-}
 
 //================================================================================================================
 //--- 8. Info Seite Hilfsfunktionen (Rendering) ---
 //================================================================================================================
 
-function createBuildingInfoElements() {
+createBuildingInfoElements() {
     const container = getById('info_buildings_container');
     if (!container) return;
     container.innerHTML = '';
@@ -1236,7 +1206,7 @@ function createBuildingInfoElements() {
     container.appendChild(labItem);
 }
 
-function createResearchInfoElements() {
+createResearchInfoElements() {
     const container = getById('info_research_container');
     if (!container) return;
     container.innerHTML = '';
@@ -1248,7 +1218,7 @@ function createResearchInfoElements() {
     });
 }
 
-function createInfoStatsElements() {
+createInfoStatsElements() {
     const container = getById('info_stats_container');
     if (!container) return;
     container.innerHTML = '';
@@ -1274,7 +1244,7 @@ function createInfoStatsElements() {
 }
 
 
-function createPrestigeUpgradeElements() {
+createPrestigeUpgradeElements() {
     // Funktioniert als Renderer für den Prestige-Shop und für den Info-Baum
     const container = getById('prestige-tree-container');
     const infoContainer = getById('info_prestige_container');
@@ -1336,13 +1306,13 @@ function createPrestigeUpgradeElements() {
     });
 }
 
-function createPrestigeInfoTree() {
+createPrestigeInfoTree() {
     // Rendert den Prestige-Baum im Info-Modal
     createPrestigeUpgradeElements();
     updatePrestigeInfoTree();
 }
 
-function updatePrestigeInfoTree() {
+updatePrestigeInfoTree() {
     const treeContainer = getById('info_prestige_container');
     if (!treeContainer) return;
 
@@ -1350,19 +1320,19 @@ function updatePrestigeInfoTree() {
     prestigeUpgrades.forEach(upgrade => {
         const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
         if (!node) return;
-        const isPurchased = gameState.prestigeUpgradeStatus[upgrade.id];
+        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
 
         node.classList.toggle('purchased', isPurchased);
 
         // Linienstatus
-        const requirementsMet = upgrade.requirements.every(reqId => gameState.prestigeUpgradeStatus[reqId]);
+        const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
         const svg = getById('prestige-lines-info');
         if (svg) {
             svg.querySelectorAll('line').forEach(line => {
                 const fromId = parseInt(line.dataset.from, 10);
                 const toId = parseInt(line.dataset.to, 10);
                 // Linie aktiv, wenn Start- und Endpunkt gekauft sind
-                if (gameState.prestigeUpgradeStatus[fromId] && gameState.prestigeUpgradeStatus[toId]) {
+                if (this.gameState.prestigeUpgradeStatus[fromId] && this.gameState.prestigeUpgradeStatus[toId]) {
                     line.classList.add('active');
                 } else {
                     line.classList.remove('active');
@@ -1371,3 +1341,5 @@ function updatePrestigeInfoTree() {
         }
     });
 }
+document.addEventListener('DOMContentLoaded', () => {
+        gameInstance = new SmileyGame();
