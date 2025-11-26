@@ -51,6 +51,11 @@ const prestigeUpgradesData = [
     { id: 'kostenreduktion_2', name: 'Eiserne Sparsamkeit', description: 'Reduziert die Kosten aller Gebäude um weitere 10%.', cost: 150, bonus: 0.10, type: 'cost_reduction', dependencies: ['kostenreduktion_1'] },
     { id: 'mega_forschung_boost', name: 'Uraltes Wissen', description: 'Erhöht die Produktionsrate deines Forschungslabors um 50%.', cost: 200, bonus: 0.50, type: 'research_multi', dependencies: ['forschungslabor_effizienz_2'] }
 ];
+// Neue, noch in Arbeit befindliche Prestige-Punkte (Work in Progress)
+prestigeUpgradesData.push(
+    { id: 'systemepet_unlock', name: 'Tierischer Freund', description: 'Schaltet das Pet/Gefährten System frei.', cost: 50, bonus: 0, type: 'system_unlock', dependencies: ['globaler_multiplikator_1'], wip: true },
+    { id: 'systemekristall_unlock', name: 'Kristall-Erforschung', description: 'Schaltet die Kristall Mine und die damit verbundenen Ressourcen frei.', cost: 100, bonus: 0, type: 'system_unlock', dependencies: ['kostenreduktion_1'], wip: true }
+);
 const prestige_kosten = 100000;
 //================================================================================================================
 //--- 1.1 SPIEL-ZUSTAND
@@ -679,7 +684,12 @@ function renderPrestigeUpgrades(){
     container.classList.add('prestige-map');
     container.style.position = 'relative';
 
-    // Central universe smiley
+    // Create inner wrapper that we can pan/zoom
+    const inner = document.createElement('div');
+    inner.className = 'prestige-map-inner';
+    container.appendChild(inner);
+
+    // Central universe smiley (append to inner)
     const center = document.createElement('div');
     center.className = 'prestige-center';
     center.innerHTML = `
@@ -688,25 +698,58 @@ function renderPrestigeUpgrades(){
             <div class="prestige-center-label">Universum</div>
         </div>
     `;
-    container.appendChild(center);
+    inner.appendChild(center);
 
-    // Category mapping: map upgrade.type to one of three sections
+    // create SVG connection layer under nodes (appended to inner so it scales together)
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('prestige-connections');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.style.position = 'absolute';
+    svg.style.left = '0';
+    svg.style.top = '0';
+    svg.style.zIndex = '2'; // behind nodes (nodes have z-index 6)
+    // create defs: gradient for strokes
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    grad.setAttribute('id', 'prestigeGradient');
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '0%');
+    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', '#d7b973');
+    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', '#40a9ff');
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+    inner.appendChild(svg);
+    // Category mapping: map upgrade.type to one of four sections (Generelle, Gebäude, Klick, QoL)
     const categoryMap = {
         generelle: ['global_multi', 'global_sps_multi', 'cost_reduction', 'research_multi'],
         gebaeude: ['auto_clicker_multi', 'smiley_tree_multi', 'smiley_factory_multi'],
-        klick: ['klick_boost_per_pp']
+        klick: ['klick_boost_per_pp'],
+        qol: ['system_unlock']
     };
 
+    // Four sectors (90° each) so QoL gets its own quadrant
+    const sectorSize = (2 * Math.PI) / 4;
     const sectors = [
         { name: 'generelle', start: -Math.PI / 2 },
-        { name: 'gebaeude', start: -Math.PI / 2 + (2 * Math.PI) / 3 },
-        { name: 'klick', start: -Math.PI / 2 + (4 * Math.PI) / 3 }
+        { name: 'gebaeude', start: -Math.PI / 2 + sectorSize },
+        { name: 'klick', start: -Math.PI / 2 + sectorSize * 2 },
+        { name: 'qol', start: -Math.PI / 2 + sectorSize * 3 }
     ];
-    const sectorSize = (2 * Math.PI) / 3;
     const radius = 38; // percent radius from center
 
     // Group upgrades by category
-    const groups = { generelle: [], gebaeude: [], klick: [] };
+    const groups = { generelle: [], gebaeude: [], klick: [], qol: [] };
+    // counter used to stagger entrance animations for nodes
+    let nodeIndex = 0;
     prestigeUpgradesData.forEach(u => {
         let placed = false;
         for (const cat in categoryMap) {
@@ -735,40 +778,190 @@ function renderPrestigeUpgrades(){
         label.style.position = 'absolute';
         label.style.left = `${labelX}%`;
         label.style.top = `${labelY}%`;
-        label.style.transform = 'translate(-50%, -50%)';
-        container.appendChild(label);
+    label.style.transform = 'translate(-50%, -50%)';
+            inner.appendChild(node);
 
     // place nodes in a sequence along the sector's mid-angle (radial line)
         const startRadius = 18; // percent from center for first node
         const stepRadius = 8;   // percent increment per node
 
         items.forEach((upgrade, idx) => {
-            const r = startRadius + idx * stepRadius;
-            const angle = midAngle; // all nodes in this sector share the mid-angle
-            const x = 50 + r * Math.cos(angle);
+    // draw SVG connections between center and nodes and between chained nodes
+    // use a small timeout to ensure DOM layout completed
+    setTimeout(()=> drawConnections(inner), 50);
+    // redraw connections on window resize to keep paths accurate
+    window.addEventListener('resize', ()=> drawConnections(inner));
             const y = 50 + r * Math.sin(angle);
 
+function clearSvg(svg){
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+}
+
+function drawConnections(inner){
+    const svg = inner.querySelector('svg.prestige-connections');
+    if(!svg) return;
+    clearSvg(svg);
+
+    const innerRect = inner.getBoundingClientRect();
+    // find center point (use center img)
+    const centerEl = inner.querySelector('.prestige-center');
+    if(!centerEl) return;
+    const centerRect = centerEl.getBoundingClientRect();
+    const cx = centerRect.left + centerRect.width/2 - innerRect.left;
+    const cy = centerRect.top + centerRect.height/2 - innerRect.top;
+
+    // For each group we'll map a set of upgrade ids we expect to render in that sector.
+    const groups = {
+        generelle: prestigeUpgradesData.filter(u=>['global_multi','global_sps_multi','cost_reduction','research_multi'].includes(u.type)).map(u=>u.id.toString()),
+        gebaeude: prestigeUpgradesData.filter(u=>['auto_clicker_multi','smiley_tree_multi','smiley_factory_multi'].includes(u.type)).map(u=>u.id.toString()),
+        klick: prestigeUpgradesData.filter(u=>['klick_boost_per_pp'].includes(u.type)).map(u=>u.id.toString()),
+        qol: prestigeUpgradesData.filter(u=>u.type==='system_unlock').map(u=>u.id.toString())
+    };
+
+    Object.values(groups).forEach((orderedIds, groupIdx) => {
+        // start index per group so groups animate in sequence
+        let pathIndex = groupIdx * 4;
+        if(!orderedIds || orderedIds.length===0) return;
+        const groupNodes = orderedIds.map(id => inner.querySelector(`.prestige-node[data-id="${id}"]`)).filter(Boolean);
+        if(groupNodes.length===0) return;
+
+    // draw path from center to first node
+    const first = groupNodes[0];
+    const fr = first.getBoundingClientRect();
+    const fx = fr.left + fr.width/2 - innerRect.left;
+    const fy = fr.top + fr.height/2 - innerRect.top;
+        drawCurve(svg, cx, cy, fx, fy, 'center', first.getAttribute('data-id'), pathIndex++);
+
+        // draw curves between consecutive nodes
+        for(let i=0;i<groupNodes.length-1;i++){
+            const a = groupNodes[i].getBoundingClientRect();
+            const b = groupNodes[i+1].getBoundingClientRect();
+            const ax = a.left + a.width/2 - innerRect.left;
+            const ay = a.top + a.height/2 - innerRect.top;
+            const bx = b.left + b.width/2 - innerRect.left;
+            const by = b.top + b.height/2 - innerRect.top;
+            drawCurve(svg, ax, ay, bx, by, groupNodes[i].getAttribute('data-id'), groupNodes[i+1].getAttribute('data-id'), pathIndex++);
+        }
+    });
+    // attach hover listeners so hovering nodes highlights connected paths
+    attachNodeHoverListeners(inner);
+}
+
+function drawCurve(svg, x1, y1, x2, y2, idFrom, idTo, idx){
+    // create a smooth cubic Bezier path between two points
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx*dx+dy*dy) || 1;
+    const normX = dx/dist;
+    const normY = dy/dist;
+    // control points located along and slightly perpendicular to the line
+    const cpDist = Math.min(120, dist*0.45);
+    const cx1 = x1 + normX* (dist*0.25) - normY* (cpDist*0.3);
+    const cy1 = y1 + normY* (dist*0.25) + normX* (cpDist*0.3);
+    const cx2 = x1 + normX* (dist*0.75) + normY* (cpDist*0.3);
+    const cy2 = y1 + normY* (dist*0.75) - normX* (cpDist*0.3);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill','none');
+    // use the gradient defined in defs for a nicer look
+    path.setAttribute('stroke','url(#prestigeGradient)');
+    path.setAttribute('stroke-width','2');
+    path.setAttribute('stroke-linecap','round');
+    path.setAttribute('stroke-linejoin','round');
+    path.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))';
+    if(idFrom) path.dataset.from = idFrom;
+    if(idTo) path.dataset.to = idTo;
+    svg.appendChild(path);
+    // prepare draw animation using stroke-dasharray
+    try{
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+        // ensure the CSS animation class is applied so the keyframes run
+        path.classList.add('drawn');
+        if(typeof idx === 'number'){
+            path.style.animationDelay = `${idx * 100}ms`;
+        }
+    }catch(e){
+        // some browsers may throw if path not in DOM yet; ignore
+    }
+    path.classList.add('prestige-connection');
+    // endpoint glow: add a small circle at the target end that pulses
+    try{
+        const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        circle.setAttribute('cx', x2);
+        circle.setAttribute('cy', y2);
+        circle.setAttribute('r', 4);
+        circle.setAttribute('fill', '#fff');
+        circle.classList.add('endpoint');
+        if(typeof idx === 'number') circle.style.animationDelay = `${idx * 100 + 120}ms`;
+        svg.appendChild(circle);
+    }catch(e){}
+}
+
+function attachNodeHoverListeners(inner){
+    const svg = inner.querySelector('svg.prestige-connections');
+    if(!svg) return;
+    const paths = Array.from(svg.querySelectorAll('path'));
+    const nodes = Array.from(inner.querySelectorAll('.prestige-node'));
+    const center = inner.querySelector('.prestige-center');
+
+    function highlightForId(id){
+        paths.forEach(p=>{
+            const from = p.dataset.from || '';
+            const to = p.dataset.to || '';
+            if(from===id || to===id){
+                p.classList.add('highlight');
+            } else {
+                p.classList.remove('highlight');
+            }
+        });
+    }
+
+    nodes.forEach(n=>{
+        n.addEventListener('mouseenter', ()=> highlightForId(n.getAttribute('data-id')));
+        n.addEventListener('mouseleave', ()=> paths.forEach(p=>p.classList.remove('highlight')));
+    });
+    if(center){
+        center.addEventListener('mouseenter', ()=> highlightForId('center'));
+        center.addEventListener('mouseleave', ()=> paths.forEach(p=>p.classList.remove('highlight')));
+    }
+}
             const node = document.createElement('div');
             node.className = 'prestige-node';
             node.setAttribute('data-id', upgrade.id);
             node.style.position = 'absolute';
-            node.style.left = `${x}%`;
+            node.style.left = `${offsetX + upgrade.coords.x * SCALE - (upgradeDiv.clientWidth / 2)}px`;;
             node.style.top = `${y}%`;
             node.style.transform = 'translate(-50%, -50%)';
 
             const icon = upgrade.icon || 'favicon.svg';
+            const wipBadge = upgrade.wip ? `<span class="wip-badge">WIP</span>` : '';
+            const disabledAttr = upgrade.wip ? 'disabled' : '';
+            const innerClass = upgrade.wip ? 'node-inner wip' : 'node-inner';
             node.innerHTML = `
-                <div class="node-inner">
+                <div class="${innerClass}">
+                    ${wipBadge}
                     <div class="node-icon"><img src="${icon}" alt="${upgrade.name}"></div>
                     <div class="node-name">${upgrade.name}</div>
                     <div class="node-cost">${formatNumber(upgrade.cost)} PP</div>
-                    <button class="prestige-buy-button" data-id="${upgrade.id}">Kaufen</button>
+                    <button class="prestige-buy-button" data-id="${upgrade.id}" ${disabledAttr}>${upgrade.wip ? 'Work in Progress' : 'Kaufen'}</button>
                 </div>
             `;
 
-            container.appendChild(node);
+            // entrance animation (staggered)
+            node.classList.add('enter');
+            node.style.animationDelay = `${nodeIndex * 80}ms`;
+            nodeIndex++;
+
+            inner.appendChild(node);
         });
     });
+
+    // enable pan & zoom behavior on the container (applies to inner wrapper)
+    enablePanAndZoom(container);
 }
 /**
  * Erstellt die HTML-Elemente für alle FOrschungs-Upgrades einmalig beim laden.
@@ -836,6 +1029,72 @@ function updateResearchButtons(){
         if (costSpan) {
             costSpan.style.color = isAffordable ? 'var(--color-blue-main)' : 'var(--color-red-main)';
         }
+    });
+}
+/**
+ * Enable simple pan and zoom on the prestige map container.
+ * Uses a child element `.prestige-map-inner` which will be transformed.
+ */
+function enablePanAndZoom(container) {
+    const inner = container.querySelector('.prestige-map-inner');
+    if (!inner) return;
+
+    // Store state on the inner element to avoid duplicate listeners
+    if (inner._panZoomInitialized) return;
+    inner._panZoomInitialized = true;
+
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    function applyTransform() {
+        inner.style.transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+
+    // Wheel to zoom (around pointer)
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = inner.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const delta = -e.deltaY;
+        const zoomFactor = delta > 0 ? 1.08 : 0.92;
+        const newScale = Math.max(0.4, Math.min(2.5, scale * zoomFactor));
+
+        // adjust pan so zoom is centered to mouse position
+        panX = (panX - (mouseX - rect.width / 2)) * (newScale / scale) + (mouseX - rect.width / 2);
+        panY = (panY - (mouseY - rect.height / 2)) * (newScale / scale) + (mouseY - rect.height / 2);
+
+        scale = newScale;
+        applyTransform();
+    }, { passive: false });
+
+    // Pointer events for panning
+    container.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        container.classList.add('dragging');
+        container.setPointerCapture(e.pointerId);
+    });
+    container.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyTransform();
+    });
+    container.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        container.classList.remove('dragging');
+        try { container.releasePointerCapture(e.pointerId); } catch (err) {}
+    });
+    container.addEventListener('pointercancel', () => {
+        isDragging = false;
+        container.classList.remove('dragging');
     });
 }
 

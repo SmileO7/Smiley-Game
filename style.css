@@ -514,14 +514,26 @@ main {
 }
 
 /* Prestige map: radial layout with central Smiley */
+
 #prestige_upgrades_grid {
     position: relative;
     width: 100%;
-    max-width: 1100px;
-    height: 680px; /* visual area for radial map */
+    max-width: 1400px;
+    height: 1200px; /* larger visual area for expansive skill-tree style map */
     margin: 0 auto;
     display: block; /* switched from grid to map */
     background: radial-gradient(ellipse at center, rgba(64,169,255,0.02) 0%, transparent 40%);
+    overflow: hidden;
+    touch-action: none; /* we'll handle touch/pan/zoom in JS */
+}
+
+.prestige-map-inner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: 50% 50%;
+    transform: translate(-50%, -50%) scale(1) translate(0px, 0px);
+    will-change: transform;
 }
 
 .prestige-map { /* helper class applied by JS */
@@ -536,8 +548,8 @@ main {
     z-index: 5;
 }
 .prestige-center-inner img {
-    width: 160px;
-    height: 160px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
     box-shadow: 0 0 40px rgba(64,169,255,0.35), 0 0 8px rgba(233,69,96,0.2);
     border: 6px solid rgba(255,255,255,0.06);
@@ -550,9 +562,94 @@ main {
 }
 
 .prestige-node {
-    width: 160px;
+    width: 180px;
     height: auto;
     z-index: 6;
+    pointer-events: auto;
+}
+
+/* SVG connection layer inside the map. It sits beneath nodes but scales with the inner wrapper */
+.prestige-connections {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.prestige-connections path{
+    stroke: rgba(215,185,115,0.95);
+    stroke-width: 2.4;
+    opacity: 0.95;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+
+/* Draw animation: stroke is hidden by dashoffset then animated to visible */
+.prestige-connections path.drawn{
+    animation: draw-path 700ms ease forwards;
+}
+@keyframes draw-path{
+    to { stroke-dashoffset: 0; }
+}
+
+.prestige-connections path.highlight{
+    stroke: #40a9ff !important;
+    stroke-width: 3.2 !important;
+    filter: drop-shadow(0 0 10px rgba(64,169,255,0.9)) !important;
+    transition: stroke 180ms ease, stroke-width 180ms ease, filter 180ms ease;
+}
+
+/* endpoint pulse */
+.prestige-connections .endpoint{
+    transform-origin: center;
+    opacity: 0.0;
+    filter: drop-shadow(0 0 8px rgba(215,185,115,0.9));
+    animation: endpoint-pulse 900ms ease forwards;
+}
+@keyframes endpoint-pulse{
+    0% { transform: scale(0.2); opacity: 0; }
+    30% { transform: scale(1.05); opacity: 1; }
+    70% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 0.85; }
+}
+
+/* Node entrance animation (staggered by inline animation-delay) */
+.prestige-node.enter{
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+    animation: node-enter 420ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes node-enter{
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Hover / focus polish for nodes */
+.prestige-node .node-inner{
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.prestige-node .node-inner:hover{
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(64,169,255,0.18), 0 4px 10px rgba(0,0,0,0.6);
+    border-color: rgba(64,169,255,0.16);
+}
+
+/* Center Smiley subtle pulse */
+.prestige-center-inner img{
+    transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.prestige-center-inner:hover img{
+    transform: scale(1.03);
+    box-shadow: 0 0 40px rgba(64,169,255,0.28), 0 0 8px rgba(215,185,115,0.12);
+}
+@keyframes center-pulse{
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+.prestige-center.pulse .prestige-center-inner img{
+    animation: center-pulse 2.6s ease-in-out infinite;
 }
 .prestige-node .node-inner {
     background: rgba(1,22,56,0.85);
@@ -564,8 +661,8 @@ main {
     box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 }
 .node-icon img {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     display: block;
     margin: 0 auto 6px auto;
@@ -602,6 +699,36 @@ main {
     box-shadow: 0 6px 18px rgba(0,0,0,0.45);
     z-index: 7;
 }
+
+/* WIP badge and disabled styling */
+.wip-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(180deg, #f39c12, #d35400);
+    color: #111;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    z-index: 10;
+}
+
+.node-inner.wip {
+    opacity: 0.95;
+    border: 1px dashed rgba(255,255,255,0.06);
+}
+
+.prestige-buy-button[disabled] {
+    background: linear-gradient(180deg, #777, #555);
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+/* cursor states for panning */
+.prestige-map.dragging { cursor: grabbing; }
+.prestige-map { cursor: grab; }
 
 /* Responsive: fallback to simple grid on very small screens */
 @media (max-width: 760px) {
