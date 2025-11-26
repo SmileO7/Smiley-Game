@@ -433,6 +433,7 @@ main {
     }
 }
 
+
 @media (max-width: 900px) {
     .main-layout {
         grid-template-columns: 1fr;

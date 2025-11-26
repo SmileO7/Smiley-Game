@@ -12,19 +12,19 @@ const RESEARCH_LAB_INDEX = 15; // Index des Forschungslabors im State-Array (15 
 const buildingsData = [
     { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, baseSPS: 2, prestigeMulti: 1},
     { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, baseSPS: 20, prestigeMulti: 1},
-    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, baseSPS: 150, prestigeMulti: 1},
-    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, baseSPS: 1000, prestigeMulti: 1},
+    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, baseSPS: 250, prestigeMulti: 1}, // <--- NEU
+    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, baseSPS: 1800, prestigeMulti: 1}, // <--- NEU
     { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, baseSPS: 5000, prestigeMulti: 1},
     { name: "Smiley-Kernkraftwerk", basePrice: 250000, growthRate: 1.35, baseSPS: 25000, prestigeMulti: 1},
     { name: "Smiley-Galaxie", basePrice: 1250000, growthRate: 1.40, baseSPS: 125000, prestigeMulti: 1},
     { name: "Dimensionsportal", basePrice: 6250000, growthRate: 1.45, baseSPS: 625000, prestigeMulti: 1},
-    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, baseSPS: 3125000, prestigeMulti: 1},
+    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, baseSPS: 5000000, prestigeMulti: 1}, // <--- NEU
     { name: "Meta-Klicker", basePrice: 156250000, growthRate: 1.55, baseSPS: 15625000, prestigeMulti: 1},
     { name: "Quanten-Netzwerk", basePrice: 781250000, growthRate: 1.60, baseSPS: 78125000, prestigeMulti: 1},
     { name: "Endloser Speicher", basePrice: 3906250000, growthRate: 1.65, baseSPS: 390625000, prestigeMulti: 1},
     { name: "Ursprung", basePrice: 19531250000, growthRate: 1.70, baseSPS: 1953125000, prestigeMulti: 1},
     { name: "Kosmische Einheit", basePrice: 97656250000, growthRate: 1.75, baseSPS: 9765625000, prestigeMulti: 1},
-    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, baseSPS: 48828125000, prestigeMulti: 1},
+    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, baseSPS: 70000000000, prestigeMulti: 1}, // <--- NEU
 ];
 
 // NOTE: Die buildingIndex Werte für Research-Upgrades sind jetzt 0-14 (da das Labor Index 3 wegfiel)
