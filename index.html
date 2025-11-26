@@ -14,7 +14,8 @@
         <nav class="navbar">
             <a href="index.html" class="active">Start & Shop</a> 
             <a href="prestige_shop.html">Prestige Shop</a>
-            <a href="info.html">Info</a>
+            <a href="info.html">Info & Tipps</a>
+            <a href="#" id="open-settings-button">Einstellungen</a>
         </nav>
     </header>
     
@@ -29,41 +30,35 @@
 
             <div class="stats-box">
                 <h3>Aktuelle Smileys: <span id="aktuelle_smileys">0</span></h3>
-                <p>Klickkraft: <span id="smileys_pro_klick_anzeige">1</span></p>
+                <p>Smiley Per Click: <span id="smileys_pro_klick_anzeige">1</span></p>
+                <p>Klick-Multiplikator: <span id="klick_multiplikator_anzeige">x1.00</span></p>
+                <p>Globaler Multiplikator: <span id="globaler_multiplikator_anzeige">x1.00</span></p>
                 <hr>
                 <p>SPS: <span id="smileys_pro_sekunde_anzeige">0</span></p>
                 <p>SPM: <span id="smileys_pro_minute_anzeige">0</span></p>
+            </div>
+
+            <div class="progress-section">
+                <h4>Fortschritt zum nächsten Prestige-Punkt</h4>
+                <div class="progress-bar-container">
+                    <div id="prestige-progress-bar" class="progress-bar"></div>
+                </div>
+                <p id="prestige-progress-text">0 / 1.000.000</p>
             </div>
         </div>
 
         <!-- Mittlere Spalte: Upgrades und Forschung -->
         <div class="middle-column">
-            <!-- Upgrades -->
-            <div class="upgrade-section">
-                <h2>Upgrades</h2>
-                <div class="upgrade-grid" id="upgrade-grid"></div>
-                <div id="prestige_upgrades_grid" style="display:none;"></div>
+             <div id="lab-purchase-container">
+                <h3>Forschungslabor freischalten</h3>
+                <p>Einmaliger Kauf zur Freischaltung von Forschungspunkten und -upgrades.</p>
+                <button id="forschungslaborButton" class="btn-buy">Kaufen</button>
             </div>
-
-            <!-- Forschungslabor -->
-            <div class="research-lab-container">
-                <div id="research-upgrade-panel" style="display:none;">
-                    <h3 id="forschungsUpgradeName"></h3>
-                    <p id="forschungsUpgradeDescription"></p>
-                    <button id="forschungUpgradeButton">Upgrade kaufen</button>
-                </div>
-                <div id="research_upgrades_grid"></div>
-                <h3>Forschungslabor (<span id="forschungslabor_count_anzeige">0</span>)</h3>
-                <p>Generiert Forschungspunkte pro Sekunde.</p>
+            <div id="lab-main-content" style="display:none;">
+                <h3>Forschungslabor</h3>
                 <p>Forschungspunkte: <span id="forschungspunkte">0</span></p>
-                <div class="forschung-balken-container">
-                    <div id="forschung_fortschritt" class="forschung-fortschritt"></div>
-                </div>
-                <p class="progress-text"><span id="fortschritt-text">Forschungslabor nicht gekauft.</span></p>
-                
-                <div class="research-buttons">
-                    <button id="forschungslaborButton" class="btn-buy">Kaufen (5,000 Smileys)</button>
-                    <button id="forschungUpgradeButton" class="btn-buy">Forschungs-Upgrade kaufen</button>
+                <div id="next-research-container">
+                    <!-- Das nächste Upgrade wird hier dynamisch angezeigt -->
                 </div>
             </div>
         </div>
@@ -75,9 +70,37 @@
                 <div class="building-grid" id="building-grid"></div>
             </section>
         </div>
-            
-        </div>
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Einstellungen</h2>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="setting-item">
+                    <label for="music-volume">Musik-Lautstärke</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="50">
+                </div>
+                <div class="setting-item">
+                    <label for="sound-volume">Sound-Lautstärke</label>
+                    <input type="range" id="sound-volume" min="0" max="100" value="80">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Spielstand</h3>
+                <p>Hier kannst du deinen Spielstand exportieren oder importieren.</p>
+                <div class="save-actions">
+                    <button id="export-save-button" class="btn-primary">Exportieren</button>
+                    <button id="import-save-button" class="btn-primary">Importieren</button>
+                </div>
+                <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-settings-button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

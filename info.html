@@ -6,66 +6,130 @@
     <title>Info & Tipps</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="info-page">
     <header>
         <nav class="navbar">
-            <a href="index.html">Startseite</a>
+            <a href="index.html">Start & Shop</a>
             <a href="prestige_shop.html">Prestige Shop</a>
             <a href="info.html" class="active">Info & Tipps</a>
-            
+            <a href="#" id="open-settings-button">Einstellungen</a>
         </nav>
     </header>
 
-    <main class="main-container">
-        <div class="content-box">
-            <h1 class="text-3xl font-bold mb-4 text-center">Info & Tipps</h1>
+    <main class="info-main">
+        <h1>Info & Tipps</h1>
 
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Das Spiel</h2>
-                <p>Smiley Clicker ist ein simples, aber süchtig machendes Spiel. Das Hauptziel ist es, so viele Smileys wie möglich zu sammeln, um Upgrades zu kaufen und deine Produktion zu automatisieren.</p>
-            </div>
-
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Wie man spielt</h2>
-                <ol class="list-decimal pl-5">
-                    <li>Klicke auf den großen Smiley, um Smileys zu sammeln.</li>
-                    <li>Wechsle zum Tab "Upgrades", um Gebäude wie Auto-Klicker und Smiley-Bäume zu kaufen, die deine Produktion automatisieren.</li>
-                    <li>Kaufe Multiplikator-Upgrades, um mehr Smileys pro Klick zu erhalten.</li>
-                    <li>Wenn du eine hohe Anzahl an Smileys gesammelt hast, kannst du im Prestige-Shop permanenten Boni freischalten, um dein Spiel noch schneller voranzutreiben.</li>
-                </ol>
-            </div>
-
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Upgrades im Detail</h2>
-                <p>Jedes Gebäude erhöht deine Smileys pro Sekunde (SPS). Die Kosten für jedes weitere Gebäude steigen exponentiell an.</p>
-                <div class="upgrade-list-item">
-                    <h3>Auto-Klicker</h3>
-                    <p><strong>Effekt:</strong> Generiert automatisch Smileys für dich.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 20 Smileys.</p>
-                </div>
-                <div class="upgrade-list-item">
-                    <h3>Smiley-Baum</h3>
-                    <p><strong>Effekt:</strong> Generiert 20 Smileys pro Sekunde.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 150 Smileys.</p>
-                </div>
-                <div class="upgrade-list-item">
-                    <h3>Smiley-Fabrik</h3>
-                    <p><strong>Effekt:</strong> Generiert 150 Smileys pro Sekunde.</p>
-                    <p><strong>Kosten:</strong> Beginnt bei 2,500 Smileys.</p>
-                </div>
-            </div>
-
-            <div class="content-box">
-                <h2 class="text-xl font-bold">Prestige-System</h2>
-                <p>Sobald du genügend Smileys gesammelt hast, kannst du das Smileyversum "aktivieren" (Prestige). Dadurch verlierst du alle deine aktuellen Smileys und Gebäude, erhältst aber wertvolle "Smileyvers-Punkte". Diese Punkte können im Prestige-Shop für permanente Upgrades ausgegeben werden, die dein Spiel beschleunigen.</p>
-            </div>
-            
+        <div class="info-section">
+            <h2>Das Spiel</h2>
+            <p>Smiley Clicker ist ein simples, aber süchtig machendes Spiel. Das Hauptziel ist es, so viele Smileys wie möglich zu sammeln, um Upgrades zu kaufen und deine Produktion zu automatisieren.</p>
         </div>
+
+        <div class="info-section">
+            <h2>Spielmechaniken im Detail</h2>
+            <div class="info-button-group">
+                <button id="show_buildings_button" class="btn-primary">Gebäude-Übersicht</button>
+                <button id="show_research_button" class="btn-primary">Forschungs-Upgrades</button>
+                <button id="show_prestige_button" class="btn-primary">Prestige-Skill-Tree</button>
+                <button id="show_stats_button" class="btn-primary">Stats-Erklärung</button>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>Strategie-Tipps</h2>
+            <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele Gebäude wie möglich zu kaufen.</p>
+            <p><strong>Forschungslabor:</strong> Sobald du es dir leisten kannst, kaufe das Forschungslabor. Die Upgrades, die du dort freischaltest, sind entscheidend für deinen Fortschritt.</p>
+            <p><strong>Prestige-Timing:</strong> Führe einen Prestige-Reset durch, wenn du merkst, dass dein Fortschritt deutlich langsamer wird. Ein guter Anhaltspunkt ist, wenn du für den nächsten Reset eine signifikante Menge an neuen Prestige-Punkten erhalten würdest.</p>
+             <p><strong>Geduld ist eine Tugend:</strong> Manchmal ist es am besten, das Spiel einfach laufen zu lassen (AFK - away from keyboard), um eine große Menge an Smileys für das nächste große Upgrade oder den nächsten Prestige-Punkt anzusammeln.</p>
+        </div>
+        
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Einstellungen</h2>
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="setting-item">
+                    <label for="music-volume">Musik-Lautstärke</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="50">
+                </div>
+                <div class="setting-item">
+                    <label for="sound-volume">Sound-Lautstärke</label>
+                    <input type="range" id="sound-volume" min="0" max="100" value="80">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Spielstand</h3>
+                <p>Hier kannst du deinen Spielstand exportieren oder importieren.</p>
+                <div class="save-actions">
+                    <button id="export-save-button" class="btn-primary">Exportieren</button>
+                    <button id="import-save-button" class="btn-primary">Importieren</button>
+                </div>
+                <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-settings-button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buildings Modal -->
+    <div id="buildings_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Gebäude-Übersicht</h2>
+            <div id="info_buildings_container" class="info-upgrades-container">
+                <!-- Gebäude-Infos werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_buildings_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Research Modal -->
+    <div id="research_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Forschungs-Upgrades</h2>
+            <div id="info_research_container" class="info-upgrades-container">
+                <!-- Forschungs-Infos werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_research_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prestige Modal -->
+    <div id="prestige_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Prestige-Skill-Tree</h2>
+            <div id="info_prestige_container" class="prestige-tree-container">
+                <!-- Prestige-Skill-Tree wird hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_prestige_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="stats_info_modal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <h2>Stats-Erklärung</h2>
+            <div id="info_stats_container" class="info-stats-container">
+                <!-- Stats-Erklärungen werden hier dynamisch generiert -->
+            </div>
+            <div class="modal-buttons">
+                <button id="close_stats_info_button" class="btn-cancel">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
