@@ -1,37 +1,31 @@
-Smileyvers Clicker
-A simple yet addictive Cookie Clicker clone developed using pure HTML, CSS, and JavaScript. Collect smileys, buy upgrades, and try to reach the highest score possible!
+# 😄 Smiley Clicker: Das Endlose Idle-Abenteuer
 
-Features
-Simple Gameplay: Click on a smiley to collect smileys.
+[![Status](https://img.shields.io/badge/Status-Live%20(Alpha%20Testing)-green.svg?style=flat-square)](https://smileo7.github.io/Smiley-Game/)
+[![Live-Spiel](https://img.shields.io/badge/SPIELEN!-Live%20Build%20auf%20GitHub%20Pages-blue.svg?style=for-the-badge)](https://smileo7.github.io/Smiley-Game/)
 
-Upgrades: Spend your collected smileys to purchase upgrades.
+---
 
-Multiplier: Increase the number of smileys you get per click.
+### 🕹️ Jetzt spielen!
 
-Auto-Clicker: Earn smileys passively without having to click yourself.
+Die aktuelle Version des **Smiley Clicker** ist permanent online und spielbar unter:
+👉 **[https://smileo7.github.io/Smiley-Game/](https://smileo7.github.io/Smiley-Game/)**
 
-Smiley Tree & Factory: Increase your automatic production.
+---
 
-Economic Booster: Enhance your total smiley production.
+### ✅ Implementierte Kern-Features
 
-Prestige System: Spend your collected smileys to earn Smileyvers Points, which grant permanent bonuses.
+Das Spiel bietet bereits ein vollständiges Grundgerüst für dein Idle-Erlebnis:
 
-Save Function: Your progress is automatically saved in the browser, so you can continue playing at any time.
+* **Grundproduktion & Upgrades:** Das Bau- und Upgrade-System ist implementiert und ermöglicht dir, die Smiley-Produktion zu automatisieren.
+* **Prestige-System (V1):** Der **Prestige Shop** ist funktionsfähig. Du kannst durch das Erreichen von Meilensteinen "Smiley Points" verdienen und in dauerhafte globale Buffs investieren.
+* **UI Standardisierung:** Das Interface folgt bereits einem Standard-Design und Farbschema, um Übersichtlichkeit und Lesbarkeit zu gewährleisten.
+* **Basis-Klicken:** Die primäre Methode, um Smileys zu verdienen.
 
-Responsive Design: The game is optimized for different screen sizes.
+### 🚧 Nächste große Schritte (Roadmap)
 
-How to Play
-Open index.html in your web browser.
+Der aktuelle Fokus liegt auf der Erweiterung und Vertiefung des bestehenden Gameplays, um die Langzeit-Motivation zu steigern:
 
-Click on the smiley to collect smileys.
-
-Switch to the "Upgrades" tab to buy new Auto-Clickers or other improvements that increase your production.
-
-Once you have enough smileys, you can activate Prestige in the main menu to permanently boost your production.
-
-Development Stack
-HTML: For the structure of the user interface.
-
-CSS: For the styling.
-
-JavaScript: For all the game logic, data saving, and interactivity.
+* **Pet-System:** Freischaltung und Implementierung von 3-5 Gefährten, die basierend auf ihrem Level unterschiedliche Boni gewähren.
+* **Kristall Mine:** Entwicklung eines neuen "Side-Grind"-Systems zur Beschaffung seltener Ressourcen für spezielle Upgrades.
+* **Balancierung:** Detailliertes Balancing des Spiels, insbesondere nach Einführung des Prestige Shops und der permanenten Buffs.
+* **Events & Zeitboni:** Einführung von zeitbasierten Boni und spezifischen Events (Weihnachten, Ostern etc.).
