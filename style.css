@@ -3,32 +3,34 @@
 //================================================================================================*/
 
 :root {
-    /* Dein Farbschema */
-    --color-background-dark: #1a1a2e;
-    --color-red-main: #e94560;
-    --color-blue-main: #40a9ff;
-    --color-neutral-accent: #4a5568;
+    /* Dein gespeichertes Farbschema: 011638 (Dunkelblau) - 6B0504 (Dunkelrot) - 009FFD (Akzentblau) - 3E5641 (Olivgrün) */
+    --color-primary-dark: #011638;      /* Haupt-Hintergrund & Box-Hintergrund */
+    --color-secondary-red: #6B0504;     /* Rot-Akzent, Gefahr, Prestige */
+    --color-accent-blue: #009FFD;       /* Helles Cyan-Blau, Interaktion, Status */
+    --color-neutral-olive: #3E5641;     /* Neutraler Akzent / Deaktiviert / Grau */
 
-    /* Text Farben */
+    /* Text Farben (Basierend auf Akzentfarben) */
     --color-text-primary: #ffffff;
     --color-text-secondary: #b3b3b3;
-    --color-text-accent: #40a9ff;
+    --color-text-accent: var(--color-accent-blue); /* Haupt-Akzentfarbe für Zahlen und Hervorhebungen */
     --color-text-light: #f0f0f0;
+
+    /* Container & Overlay Backgrounds */
+    --container-bg: rgba(255, 255, 255, 0.05);
+    --color-dark-overlay: rgba(0, 0, 0, 0.4);
+    --color-modal-bg: rgba(0, 0, 0, 0.8);
+
+    /* Zuweisungen für bestehenden Code */
+    --color-background-dark: var(--color-primary-dark);
+    --color-red-main: var(--color-secondary-red);
+    --color-blue-main: var(--color-accent-blue);
+    --color-neutral-accent: var(--color-neutral-olive);
+    --color-box-background: var(--color-primary-dark);
 
     /* Layout Spacings */
     --spacing-sm: 10px;
     --spacing-md: 20px;
     --spacing-lg: 30px;
-
-    /* Container & Overlay Backgrounds */
-    --container-bg: rgba(255, 255, 255, 0.05);
-    --container-bg-hover: rgba(255, 255, 255, 0.08);
-    --color-dark-overlay: rgba(0, 0, 0, 0.4);
-    --color-semi-dark: #2c3e50;
-    --color-modal-bg: rgba(0, 0, 0, 0.8);
-
-    /* Hintergrundfarbe für Spielbereiche (Dunkelblau, nicht schwarz) */
-    --color-box-background: #011638;
 }
 
 *, *::before, *::after {
@@ -43,12 +45,16 @@ body, html {
     height: 100%;
     transition: background-color 0.5s ease;
     background-color: var(--color-background-dark);
-    display: flex;
-    flex-direction: column;
     font-size: 16px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* KORREKTUR: Display-Layout nur in Body festlegen */
+body {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Typografie */
@@ -99,32 +105,38 @@ p {
 
 body.home-page {
     background-color: var(--color-background-dark);
-    background-image: radial-gradient(circle at top left, rgba(0,159,253,0.1) 0%, transparent 50%),
-                      radial-gradient(circle at bottom right, rgba(107, 5,4,0.1) 0%, transparent 50%),
+    /* Verwende konsistente Variablen für die Farbverläufe */
+    background-image: radial-gradient(circle at top left, var(--color-accent-blue) 0.1, transparent 50%),
+                      radial-gradient(circle at bottom right, var(--color-red-main) 0.1, transparent 50%),
                       linear-gradient(135deg, var(--color-background-dark), #24243e);
     background-size: 100% 100%;
     background-attachment: fixed;
 }
 
-/* KORRIGIERT: Dunkler, ruhiger Hintergrund für Prestige-Seite */
+/* KORRIGIERT: Prestige-Seite und Info-Seite nutzen nun auch die korrigierten Variablen */
 body.prestige-page {
     background-color: var(--color-background-dark);
-    background-image: radial-gradient(circle at top, #1a3863 0%, var(--color-background-dark) 80%);
+    background-image: radial-gradient(circle at top, #1a3863 0%, var(--color-background-dark) 80%); /* Kann vereinfacht werden */
 }
 
-/* KORRIGIERT: Info-Seite nutzt ebenfalls den dunklen Hintergrund */
-body.info-page {
+body.info-page{
     background-color: var(--color-background-dark);
+    background-image: radiant-gradient(circle at top left, var(--color-accent-blue) 0.1, transparent 50%),
+                      radiant-gradient(circle at bottom right, var(--color-red-main) 0.1, transparent 50%),
+                      linear-gradient(135deg, var(--color-background-dark), #24243e);
+    background.size: 100% 100%;
+    background-attachment: fixed;
 }
+
 
 /*================================================================================================
 // --- 2. LAYOUT & NAVIGATION ---
 //================================================================================================*/
 .navbar {
-    background-color: rgba(25, 25, 25, 0.8);
+    background-color: rgba(1, 22, 56, 0.95);
     padding: 8px 0;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 10px var (--color-shadow);
     position: fixed;
     top: 0;
     width: 100%;
@@ -155,12 +167,28 @@ body.info-page {
     margin: 20px auto;
     min-height: calc(100vh - 100px);
     align-items: start;
+    width: 100%; /* Hinzugefügt, um sicherzustellen, dass es die maximale Breite nutzt */
+}
+
+.info-page-layout{
+    max-width: 900px;
+    margin: 40px auto;
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    background-color: var(--color-box-background);
+    border: 2px solid var(--color-blue-main);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 main {
     padding-top: 70px;
     width: 100%;
+    flex-grow: 1; /* Hinzugefügt, um den verfügbaren Platz im Body Flex-Layout zu füllen */
 }
+
 
 /*================================================================================================
 // --- 3. CONTAINER & KLICKER-BEREICH ---
@@ -168,12 +196,11 @@ main {
 
 .left-column, .middle-column, .right-column, .stats-box.prestige-stats {
     padding: 30px;
-    /* Korrigierte Hintergrundfarbe: Weniger schwarz, mehr dunkelblau */
     background-color: var(--color-box-background);
     border: 2px solid var(--color-blue-main);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(10px); - Entfernt, da es Performance kosten kann und nicht überall sichtbar ist */
 }
 
 .left-column {
@@ -194,52 +221,6 @@ main {
     max-height: calc(100vh - 120px);
 }
 
-/* Aktives Pet Display */
-#active_pet_display {
-    text-align: center;
-    background: rgba(64, 169, 255, 0.1);
-    border: 1px solid var(--color-red-main);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 1rem;
-}
-
-.active-pet-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid var(--color-red-main);
-    box-shadow: 0 0 5px var(--color-red-main);
-}
-
-/* Smiley Button */
-#smiley_button {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background-color: transparent;
-    border: 5px solid var(--color-blue-main);
-    cursor: pointer;
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
-    transition: transform 0.1s;
-}
-
-#smiley_image {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    display: block;
-}
-
-#smiley_button:active {
-    transform: scale(0.95);
-}
-
 /* Stat-Anzeige-Box */
 .stats-box {
     background: var(--color-dark-overlay);
@@ -249,31 +230,14 @@ main {
     text-align: left;
     margin-bottom: 20px;
 }
-.stats-box.prestige-stats {
-    background: var(--color-box-background);
-}
-
-.building-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-md);
-    padding: 0;
-}
-
-.building-item {
-    background-color: rgba(0,0,0,0.2);
-    padding: 15px;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-}
 
 /* Forschungslabor Hervorhebung */
 #lab-main-content {
     border: 2px solid var(--color-red-main);
     border-radius: 16px;
     padding: 20px;
-    background-color: rgba(233, 69, 96, 0.05);
+    /* KORREKTUR: Einheitliche Hintergrundfarbe, aber leichter Rot-Farbton */
+    background-color: rgba(107, 5, 4, 0.2);
 }
 
 
@@ -287,13 +251,29 @@ main {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s; /* Transform für besseres Feedback hinzugefügt */
     text-align: center;
+    min-height: 48px; /* Gute Klickbarkeit */
 }
 
 .btn-buy, .btn-primary {
     background-color: var(--color-blue-main);
     color: var(--color-background-dark);
+}
+
+
+.btn-buy:hover:not(:disabled), .btn-primary:hover:not(:disabled) {
+    /* Nutze die Akzent-Blau-Farbe für ein lebendiges Feedback */
+    background-color: var(--color-accent-blue);
+    transform: translateY(-1px); /* Subtiler Effekt */
+    box-shadow: 0 4px 10px rgba(0, 159, 253, 0.4);
+}
+
+.btn-prestige:hover:not(:disabled), .btn-danger:hover:not(:disabled), .btn-confirm:hover:not(:disabled) {
+    /* Nutze die Rot-Farbe für intensives Feedback */
+    background-color: rgba(107, 5, 4, 0.85); /* Etwas dunkleres Rot */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(107, 5, 4, 0.4);
 }
 
 .btn-prestige, .btn-danger, .btn-confirm {
@@ -306,20 +286,18 @@ main {
     color: white;
 }
 
-.btn-buy:disabled, .btn-primary:disabled, .btn-danger:disabled {
-    background-color: var(--color-neutral-accent);
-    opacity: 0.7;
+.btn-buy:disabled, .btn-primary:disabled, .btn-danger:disabled, .btn-prestige:disabled, .btn-cancel:disabled {
+    background-color: var(--color-neutral-olive); /* Neutrales Olivgrün/Grau */
+    color: var(--color-text-secondary);
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
-.button-group {
-    display: flex;
-    gap: 5px;
-    margin-top: 15px;
-}
-.button-group button {
-    flex-grow: 1;
-    font-size: 0.9em;
+.btn-buy:focus, .navbar a:focus, #smiley_button:focus {
+    outline: 3px solid var(--color-accent-blue);
+    outline-offset: 2px;
 }
 
 /*================================================================================================
@@ -334,45 +312,31 @@ main {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.7);
-    display: flex;
+    display: flex; /* Muss vorhanden sein, damit es zentriert */
     justify-content: center;
     align-items: center;
     padding: 20px;
+    transition: opacity 0.3s;
 }
 
-.modal-content {
-    background: var(--color-background-dark);
-    padding: var(--spacing-lg);
-    border-radius: 8px;
-    border: 1px solid var(--color-blue-main);
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
+/* Neue Regel: Sichtbar machen, wenn die Klasse "active" oder das Inline-Style (display: flex) gesetzt wird */
+.modal.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content{
     max-height: 90vh;
     overflow-y: auto;
 }
 
 .modal-content.large {
-    max-width: 800px;
-}
-
-.modal-buttons {
-    margin-top: var(--spacing-lg);
-    display: flex;
-    justify-content: space-around;
-    gap: var(--spacing-md);
+    max-width: 900px;
 }
 
 /*================================================================================================
 // --- 6. PET SHOP STYLING ---
 //================================================================================================*/
-
-.pet-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
-}
 
 .pet-item {
     background: rgba(1, 22, 56, 0.7);
@@ -382,31 +346,10 @@ main {
     text-align: center;
     transition: all 0.2s ease;
 }
-.pet-item:hover {
-    transform: scale(1.02);
-}
 
 .pet-img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin-bottom: 10px;
-    border: 3px solid var(--color-text-primary);
-}
-
-.pet-item.bought {
-    border-color: var(--color-blue-main);
-}
-.pet-item.active {
-    border-color: var(--color-red-main);
-    box-shadow: 0 0 10px var(--color-red-main);
-}
-
-.btn-pet-buy, .btn-pet-activate {
-    padding: 8px 12px;
-    font-size: 0.9em;
-    width: 100%;
-    margin-top: 5px;
+    /* Konsistenz: Smiley-Rahmen Farbe verwenden */
+    border: 3px solid var(--color-accent-blue);
 }
 
 .btn-pet-active {
@@ -423,31 +366,40 @@ main {
 
 @media (max-width: 1400px) {
     .main-layout {
+        /* Hier bleibt die Spaltenbreite gleich */
         grid-template-columns: 1fr 1fr;
     }
+}
+/*================================================================================================
+// --- 8. INFO SEITE / MODAL STYLING (EINHEITLICHE KARTENGRÖSSEN) ---
+//================================================================================================*/
 
-    .left-column {
-        grid-column: 1 / -1;
-        max-width: 600px;
-        margin: 0 auto;
-    }
+.info-upgrade-item {
+    background-color: var(--color-box-background);
+    border: 1px solid var(--color-neutral-accent);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: var(--spacing-md);
+    text-align: left; /* Text linksbündig */
 }
 
+/* 1. Titelschriftgröße (Forschung, Gebäude, Stats) reduzieren */
+.info-upgrade-item h3 {
+    font-size: 1rem; /* Kompakte Größe für die Karten-Titel */
+    margin-bottom: 5px;
+    text-align: left;
+    color: var(--color-text-primary); /* Setze Titelfarbe auf Weiß */
+}
 
-@media (max-width: 900px) {
-    .main-layout {
-        grid-template-columns: 1fr;
-        padding: var(--spacing-sm);
-    }
+/* 2. Normale Textgröße (Kosten, Produktion, Beschreibung) reduzieren */
+.info-upgrade-item p {
+    font-size: 0.9rem; /* Kleinere, lesbare Größe */
+    color: var(--color-text-secondary);
+    margin-bottom: 0.3rem;
+    line-height: 1.3; /* Zeilenabstand etwas verringern */
+}
 
-    .left-column, .middle-column, .right-column {
-        grid-column: 1;
-        width: 100%;
-        max-width: none;
-        margin: 0 auto;
-    }
-
-    .building-grid, .pet-grid {
-        grid-template-columns: 1fr;
-    }
+/* 3. Hervorhebung der Werte (z.B. Start-Kosten) */
+.info-upgrade-item strong {
+    color: var(--color-text-accent); /* Akzentfarbe für die Werte */
 }
