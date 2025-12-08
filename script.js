@@ -176,6 +176,8 @@ class SmileyGame {
         this.renderPetShop();
         this.createPrestigeUpgradeElements();
 
+        this.ladeAudioEinstellungen();
+
         this.setupMainEventListeners();
         this.setupPrestigeEventListeners();
         this.setupInfoPageEventListeners();
@@ -1187,6 +1189,21 @@ setupSettingsModalListeners() {
     const importButton = this.getById('import-save-button');
     const saveDataTextarea = this.getById('save-data-textarea');
 
+    const musicVolumeSlider = this.getById('music-volume');
+    const soundVolumeSlider = this.getById('sound-volume');
+
+    if (musicVolumeSlider){
+        musicVolumeSlider.addEventListener('input', (e) => {
+        localStorage.setItem('musicVolume', e.target.value);
+    });
+    }
+
+    if (soundVolumeSlider){
+        soundVolumeSlider.addEventListener('input', (e) => {
+        localStorage.setItem('soundVolume', e.target.value);
+    });
+    }
+
     openSettingsButton?.addEventListener('click', (e) => {
         e.preventDefault();
         // Generiert den Code für den Export, bevor das Modal geöffnet wird
@@ -1243,6 +1260,22 @@ setupSettingsModalListeners() {
             }
         }
     });
+}
+
+ladeAudioEinstellungen(){
+    const musicVolume = localStorage.getItem('musicVolume');
+    const soundVolume = localStorage.getItem('soundVolume');
+
+    const musicVolumeSlider = this.getById('music-volume');
+    const soundVolumeSlider = this.getById('sound-volume');
+
+    if (musicVolumeSlider && musicVolume !== null) {
+        musicVolumeSlider.value = musicVolume;
+    }
+
+    if (soundVolumeSlider && soundVolume !== null) {
+        soundVolumeSlider.value = soundVolume;
+    }
 }
 
 //================================================================================================================

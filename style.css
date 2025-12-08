@@ -263,7 +263,7 @@ main {
     display: block;
 
     border-radius: 50%;
-    pbject-fit: cover;
+    object-fit: cover;
 }
 
 /* Die vorhandene Fokus-Regel kann bleiben, aber die Farben müssen angepasst werden */
