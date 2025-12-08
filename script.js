@@ -177,6 +177,12 @@ class SmileyGame {
         this.createPrestigeUpgradeElements();
 
         this.ladeAudioEinstellungen();
+        const musicPlayer = this.getById('backgroudn-music');
+        if (musicPlayer) {
+            musicPlayer.play().catch(e =>{
+            console.log("Hintergrundmusik wartet auf Bentuzerinteraktion(Error:", e, ").");
+            });
+        }
 
         this.setupMainEventListeners();
         this.setupPrestigeEventListeners();
@@ -187,12 +193,28 @@ class SmileyGame {
         this.updateUI();
     }
 
-   startIntervals(){
+startIntervals() {
+    // 1. Production (Alle 100ms ist gut für ein schnelles Gefühl)
     this.productionInterval = setInterval(() => this.produziereSmileys(), 100);
+
+    // 2. UI Update (Aktualisiert die Anzeige, z.B. alle Sekunde)
+    // HINWEIS: Prüfe, ob this.updateUI() auch hier gebraucht wird,
+    // oder ob es nur nach Events (Kauf, Klick) notwendig ist.
     this.uiInterval = setInterval(() => this.updateUI(), 1000);
-    this.saveInterval = setInterval(() => this.speichereSpiel(), 5000);
-    window.addEventListener('beforunload', () => this.speichereSpiel());
-   }
+
+    // 3. SPS (Erhöht die Smileys basierend auf SPS, einmal pro Sekunde)
+    this.spsInterval = setInterval(() => {
+        this.addSmileysPerSecond();
+    }, 1000);
+
+    // 4. Automatische Speicherung (Effizient speichern alle 5 Sekunden)
+    this.saveInterval = setInterval(() => {
+        this.speichereSpiel();
+    }, 5000);
+
+    // 5. Speichern beim Schließen des Tabs (Critical Save)
+    window.addEventListener('beforeunload', () => this.speichereSpiel());
+}
 
 //================================================================================================================
 //--- 2. Hilfsfunktionen ---
@@ -396,9 +418,21 @@ klickeSmiley() {
     const smileysGeklickt = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
     this.gameState.aktuelle_smileys += smileysGeklickt;
     this.gameState.gesammelte_smileys += smileysGeklickt;
-    if (typeof updateUI === 'function') {
+
+   const clickSound = this.getById('click-sound');
+   if (clickSound){
+    clickSound.currentTime = 0;
+
+    clickSound.play().catch(e =>{
+
+        const musicPlayer = this.getById('background-music');
+        if (musicPlayer) musicPlayer.play().catch(()=> {});
+        });
+}
+    if(typeof updateUI ==='function'){
         this.updateUI();
     }
+
 }
 
 produziereSmileys() {
