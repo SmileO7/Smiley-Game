@@ -194,25 +194,15 @@ class SmileyGame {
     }
 
 startIntervals() {
-    // 1. Production (Alle 100ms ist gut für ein schnelles Gefühl)
-    this.productionInterval = setInterval(() => this.produziereSmileys(), 100);
+    // 1. Zentrale Produktion (SPS, RP, UI-Update) läuft einmal pro Sekunde (1000ms)
+    this.productionInterval = setInterval(() => this.produzierePassiveErträge(), 1000);
 
-    // 2. UI Update (Aktualisiert die Anzeige, z.B. alle Sekunde)
-    // HINWEIS: Prüfe, ob this.updateUI() auch hier gebraucht wird,
-    // oder ob es nur nach Events (Kauf, Klick) notwendig ist.
-    this.uiInterval = setInterval(() => this.updateUI(), 1000);
-
-    // 3. SPS (Erhöht die Smileys basierend auf SPS, einmal pro Sekunde)
-    this.spsInterval = setInterval(() => {
-        this.addSmileysPerSecond();
-    }, 1000);
-
-    // 4. Automatische Speicherung (Effizient speichern alle 5 Sekunden)
+    // 2. Automatische Speicherung (Effizient speichern alle 5 Sekunden)
     this.saveInterval = setInterval(() => {
         this.speichereSpiel();
     }, 5000);
 
-    // 5. Speichern beim Schließen des Tabs (Critical Save)
+    // 3. Speichern beim Schließen des Tabs (Critical Save)
     window.addEventListener('beforeunload', () => this.speichereSpiel());
 }
 
@@ -435,46 +425,56 @@ klickeSmiley() {
 
 }
 
-produziereSmileys() {
-    const timeFactor = 0.1;
-    if (this.gameState.totalSPS > 0) {
-        this.gameState.aktuelle_smileys += this.gameState.totalSPS * timeFactor;
-        this.gameState.gesammelte_smileys += this.gameState.totalSPS * timeFactor;
+produzierePassiveErträge(){
+    // 1. SMILEY-PRODUKTION
+    const baseSPS = this.getSmileysPerSecond(); // <-- Ruft die Methode auf, die wir gerade erstellt haben
+    const actualSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
+
+    if(actualSPS > 0) {
+        this.gameState.aktuelle_smileys += actualSPS;
+        this.gameState.gesammelte_smileys += actualSPS;
     }
 
-    // Forschungslabor-Produktion (Research Points)
-    if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
-        // Research Lab base production is 1 RP/s
+    // 2. FORSCHUNGSPUNKTE-PRODUKTION (RP)
+    const RESEARCH_LAB_INDEX = 15;
+
+    if(this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0){
         const lab = uniqueBuildingsData[0];
-        const researchRate = 1 * this.gameState.buildingCounts[RESEARCH_LAB_INDEX] * (lab.researchMultiplier || 1);
-        this.gameState.forschungPunkte += researchRate * timeFactor;
+        // KORREKTUR: this.gameState.buildingCounts (ohne 's' nach building)
+        const researchRate = 1 * this.gameState.buildingCounts[RESEARCH_LAB_INDEX] * (this.gameState.researchLabPrestigeMulti || 1);
+        this.gameState.forschungPunkte += researchRate;
+    }
+    this.updateUI();
+}
+
+getSmileysPerSecond() {
+    let baseSPS = 0;
+
+    // Zähle die Basis-SPS aus allen regulären Gebäuden (Index 0 bis 14)
+    buildingsData.forEach((item, index) => {
+        // Basis-SPS * Anzahl * Gebäude-spezifischer Prestige/Research-Multi
+        const buildingSPS = (item.baseSPS || 0) * (this.gameState.buildingCounts[index] || 0) * (item.prestigeMulti || 1);
+        baseSPS += buildingSPS;
+    });
+
+    // Zähle das Forschungslabor (Unique Building, Index 15)
+    const labIndex = RESEARCH_LAB_INDEX;
+    const labDefinition = uniqueBuildingsData[0];
+    if (this.gameState.buildingCounts[labIndex] > 0) {
+        // Das Labor gibt 5 Basis-SPS (gemäß Definition) * Anzahl * (Research Multi)
+        const labSPS = labDefinition.baseSPS * (this.gameState.buildingCounts[labIndex] || 0) * (labDefinition.researchMultiplier || 1);
+        baseSPS += labSPS;
     }
 
-    // Pet-Logik (Auto-Click)
-    if (this.gameState.activePet) {
-        const pet = petsData.find(p => p.id === this.gameState.activePet);
-        if (pet && pet.effectType === 'auto_click' && pet.interval > 0) {
-            this.gameState.petAutoClickTimer += 1;
-            if (this.gameState.petAutoClickTimer >= pet.interval) {
-                this.klickeSmiley();
-                this.gameState.petAutoClickTimer = 0;
-            }
-        }
-    }
-
-    this.speichereSpiel(); // Speichere Spiel alle 100ms
+    return baseSPS;
 }
 
 computeTotalSPS() {
-    let sps = 0;
-
-    // Zähle reguläre Gebäude (Index 0 bis 14)
-    buildingsData.forEach((item, index) => {
-        sps += (this.gameState.buildingCounts[index] || 0) * (item.baseSPS || 0) * (item.prestigeMulti || 1);
-    });
+    // Ruft die neue Methode auf, um die Basis-SPS zu erhalten
+    let baseSPS = this.getSmileysPerSecond();
 
     // Wende den globalen Multiplikator an (inkl. Prestige, Resets, Pet-Boni)
-    this.gameState.totalSPS = sps * this.gameState.globalerPrestigeMultiplikator;
+    this.gameState.totalSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
     return this.gameState.totalSPS;
 }
 
