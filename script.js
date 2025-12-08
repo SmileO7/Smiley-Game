@@ -298,9 +298,9 @@ ladeSpiel(encodedData) {
         }
 
         this.applyAllBoni(); // Korrekt: this.
-        if (document.body.className !== 'settings-page' && typeof this.updateUI === 'function') {
-            this.updateUI();
-        }
+
+        this.updateUI();
+
         return true;
     } catch (e) {
         console.error("Fehler beim Laden des Spiels:", e);

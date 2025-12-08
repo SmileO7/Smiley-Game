@@ -240,6 +240,44 @@ main {
     background-color: rgba(107, 5, 4, 0.2);
 }
 
+/* NEU HINZUGEFÜGT: Definiert die Größe des Klick-Buttons */
+#smiley_button {
+    width: 200px; /* Oder Deine gewünschte Standardbreite */
+    height: 200px;
+    padding: 0;
+    border-radius: 50%;
+    margin: 20px auto;
+    display: block;
+    /* Optional: Füge hier Deine Farbschemata (Rot, Schwarz, Blau) ein */
+    background-color: #009ffd; /* Blau als Basis für den Button */
+    border: 5px solid #011638; /* Dunkelblau/Schwarz Rahmen */
+    cursor: pointer;
+    box-shadow: 0 4px #011638;
+    transition: all 0.1s;
+}
+
+/* NEU HINZUGEFÜGT: Sorgt dafür, dass das Bild passt */
+#smiley_image {
+    width: 100%;
+    height: 100%;
+    display: block;
+
+    border-radius: 50%;
+    pbject-fit: cover;
+}
+
+/* Die vorhandene Fokus-Regel kann bleiben, aber die Farben müssen angepasst werden */
+#smiley_button:focus,
+#smiley_button:hover {
+    transform: translateY(-2px); /* Hebt Button leicht an */
+    box-shadow: 0 6px #011638;
+}
+
+/* Stil für den Klick-Effekt */
+#smiley_button:active {
+    transform: translateY(2px); /* Simuliert das Drücken */
+    box-shadow: none;
+}
 
 /*================================================================================================
 // --- 4. BUTTONS & INTERAKTION ---
@@ -295,7 +333,7 @@ main {
     box-shadow: none;
 }
 
-.btn-buy:focus, .navbar a:focus, #smiley_button:focus {
+.btn-buy:focus, .navbar a:focus{
     outline: 3px solid var(--color-accent-blue);
     outline-offset: 2px;
 }
