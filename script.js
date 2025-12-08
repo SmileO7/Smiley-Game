@@ -141,8 +141,8 @@ class SmileyGame {
 
             // --- ZENTRALE ZUSTANDS-ARRAYs ---
             // Wichtig: Wir müssen hier alle statischen Listen zusammenfügen
-            buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
-            buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
+            buildingCounts: [],
+            buildingPrices: [],
             researchStatus: researchUpgrades.map(() => false),
             prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
             petStatus: petsData.map(() => false),
