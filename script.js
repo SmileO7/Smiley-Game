@@ -1195,12 +1195,14 @@ setupSettingsModalListeners() {
     if (musicVolumeSlider){
         musicVolumeSlider.addEventListener('input', (e) => {
         localStorage.setItem('musicVolume', e.target.value);
+        this.setzeLautstaerke();
     });
     }
 
     if (soundVolumeSlider){
         soundVolumeSlider.addEventListener('input', (e) => {
         localStorage.setItem('soundVolume', e.target.value);
+        this.setzeLautstaerke();
     });
     }
 
@@ -1276,6 +1278,25 @@ ladeAudioEinstellungen(){
     if (soundVolumeSlider && soundVolume !== null) {
         soundVolumeSlider.value = soundVolume;
     }
+    this.setzeLautstaerke();
+}
+
+setzeLautstaerke(){
+
+    const musicVolume = parseFloat(localStorage.getItem('musicVolume') || 100) /100;
+    const soundVolume = parseFloat(localStorage.getItem('soundVolume') || 100) /100;
+
+    const musicPlayer = this.getById('background-music');
+    if (musicPlayer){
+        musicPlayer.volume = musicVolume;
+    }
+
+    const clickSound = this.getById('click-sound');
+
+    if (clickSound){
+        clickSound.volume = soundVolume;
+    }
+
 }
 
 //================================================================================================================
