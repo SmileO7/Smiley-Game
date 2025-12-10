@@ -1035,7 +1035,52 @@ updatePrestigeUI() {
     }
 }
 
+zeigePrestigeDetails(nodeElement){
+    const tooltip = this.getById('prestige-tooltip-modal');
+    if (!tooltip) return;
 
+    const description = nodeElement.dataset.description;
+    const cost = nodeElement.dataset.cost;
+    const id = parseInt(nodeElement.dataset.id, 10);
+
+    const isPurchased = nodeElement.classList.contains('purchased');
+    const isAvailable = nodeElement.classList.contains('available');
+
+    let statusText;
+    if (isPurchased){
+        statusText = 'Gekauft';
+    } else if(isAvailable){
+        statusText = 'Bereit zum Kauf'; // "Available" zu Deutsch korrigiert
+    } else {
+        statusText = 'Nicht verfügbar';
+    }
+
+    // --- KORRIGIERT: Nutzung von Template Strings (Backticks) und korrekte Zuweisung ---
+
+    // Zuweisung 1 (Titel/Beschreibung)
+    this.getById('tooltip-title').innerText = description;
+
+    // Zuweisung 2 (Kosten) - KORRIGIERT: Verwendung von Backticks
+    this.getById('tooltip-cost').innerText = `Kosten: ${cost} PP`;
+
+    // Zuweisung 3 (Status) - KORRIGIERT: Korrekter Abschluss
+    this.getById('tooltip-status').innerText = `Status: ${statusText}`;
+
+    // -----------------------------------------------------------------------------------
+
+    tooltip.style.display = 'flex';
+
+    const closeListener = (e) => {
+        if(!tooltip.contains(e.target) && !nodeElement.contains(e.target)){
+            tooltip.style.display = 'none';
+            document.removeEventListener('click', closeListener);
+        }
+    };
+
+    setTimeout(() => {
+        document.addEventListener('click', closeListener);
+    }, 50);
+}
 //================================================================================================================
 //--- 6. Event Listener Setup ---
 //================================================================================================================
@@ -1137,11 +1182,22 @@ setupPrestigeEventListeners() {
     });
     closeSkillTreeButton?.addEventListener('click', () => { skillTreeModal.style.display = 'none'; });
 
-    this.getById('prestige-tree-container')?.addEventListener('click', (e) => {
+this.getById('prestige-tree-container')?.addEventListener('click', (e) => {
         const node = e.target.closest('.prestige-node');
         if (!node) return;
-        const id = parseInt(node.dataset.id, 10);
-        if (!isNaN(id)) this.kaufePrestigeUpgrade(id);
+
+        this.zeigePrestigeDetails(node);
+
+        const isPurchased = node.classList.contains('purchased');
+        const isAvailable = node.classList.contains('available');
+
+        if (!isPurchased && isAvailable) {
+            const id = parseInt(node.dataset.id, 10);
+            if (!isNaN(id)) {
+                this.kaufePrestigeUpgrade(id);
+            }
+        }
+
     });
 
     const resetPrestigeUpgradesButton = this.getById('reset_prestige_upgrades_button');
@@ -1334,13 +1390,7 @@ setzeLautstaerke(){
 }
 
 //================================================================================================================
-//--- 7. Initialisierung der Seiten ---
-//================================================================================================================
-
-
-
-//================================================================================================================
-//--- 8. Info Seite Hilfsfunktionen (Rendering) ---
+//--- 7. Info Seite Hilfsfunktionen (Rendering) ---
 //================================================================================================================
 
 createBuildingInfoElements() {
@@ -1368,6 +1418,8 @@ createResearchInfoElements() {
     const container = this.getById('info_research_container');
     if (!container) return;
     container.innerHTML = '';
+
+    // Geht alle Upgrades durch und rendert sie
     researchUpgrades.forEach(upgrade => {
         const item = document.createElement('div');
         item.className = 'info-upgrade-item';
@@ -1403,11 +1455,13 @@ createInfoStatsElements() {
 
 
 createPrestigeUpgradeElements() {
-    // Funktioniert als Renderer für den Prestige-Shop und für den Info-Baum
     const container = this.getById('prestige-tree-container');
     const infoContainer = this.getById('info_prestige_container');
 
-    // Definiere die Zielcontainer
+    const CONTAINER_WIDTH = 600;
+    const centerX = CONTAINER_WIDTH / 2;
+    const nodeOffset = 20;
+
     const containers = [];
     if (container) containers.push({element: container, isInfo: false});
     if (infoContainer) containers.push({element: infoContainer, isInfo: true});
@@ -1416,43 +1470,67 @@ createPrestigeUpgradeElements() {
         if (!element) return;
         element.innerHTML = '';
 
-        // Code zum Erstellen der SVG-Linien und Prestige-Knoten
+        // Den Container auf relative Positionierung setzen (wichtig für die Knoten)
+        element.style.position = 'relative';
+
+        // SVG-Viewbox muss definiert werden, damit die Linien sichtbar sind (z.B. 1000x1000)
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.id = isInfo ? 'prestige-lines-info' : 'prestige-lines';
+        // Definiere die Größe der SVG basierend auf der maximalen Position + Rändern
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
         element.appendChild(svg);
+
+        // HINWEIS: Die SVG-Elemente müssen im HTML/CSS korrekt positioniert sein (z-index beachten)
 
         prestigeUpgrades.forEach(upgrade => {
             const upgradeDiv = document.createElement('div');
             upgradeDiv.className = `prestige-node ${isInfo ? 'info-node' : ''}`;
             upgradeDiv.dataset.id = upgrade.id;
-            // Nutze die festen x/y Koordinaten in den Daten
+
+            // Die Knotenpositionierung bleibt gut mit calc(50% + ...)
             upgradeDiv.style.left = `calc(50% + ${upgrade.x}px)`;
             upgradeDiv.style.top = `${upgrade.y}px`;
 
+            upgradeDiv.dataset.description = upgrade.description;
+            upgradeDiv.dataset.cost = this.formatNumber(upgrade.cost);
+
             const buyButton = isInfo ? '' : `<button class="prestige-buy-button" data-id="${upgrade.id}">Kaufen (${this.formatNumber(upgrade.cost)} PP)</button>`;
 
-            // Simpler Node-Inhalt
-            upgradeDiv.innerHTML = `
-                <div class="node-inner">
-                    <div class="node-icon"></div>
-                    <div class="node-name">${upgrade.description}</div>
-                    <div class="node-cost">Kosten: ${this.formatNumber(upgrade.cost)} PP</div>
-                    ${buyButton}
-                </div>
-            `;
+            const buyButtonHtml = isInfo
+               ? ''
+               : `<button class="prestige-buy-button" data-id="${upgrade.id}" style="display:none;"></button>`;
+
+           upgradeDiv.innerHTML = `
+               <div class="node-icon"></div>
+               ${buyButtonHtml}
+           `;
             element.appendChild(upgradeDiv);
 
             // Verbindungen zeichnen
-            if (upgrade.requirements) { // KORREKTUR 1: Prüfen, ob 'requirements' existiert
+            if (upgrade.requirements) {
                 upgrade.requirements.forEach(reqId => {
                     const reqUpgrade = prestigeUpgrades.find(u => u.id === reqId);
                     if(reqUpgrade) {
                         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        // Platzhalter für Linien (die exakte SVG-Pfad-Logik ist komplex)
-                        line.setAttribute('x1', `calc(50% + ${reqUpgrade.x}px + 20px)`);
-                        line.setAttribute('y1', `${reqUpgrade.y + 20}px`);
-                        line.setAttribute('x2', `calc(50% + ${upgrade.x}px + 20px)`);
-                        line.setAttribute('y2', `${upgrade.y + 20}px`);
+
+                        // KORREKTUR: Verwenden von reinen Pixelwerten relativ zum SVG-Element.
+                        // Wir müssen die '50%' Offset hier manuell einrechnen, wenn wir die CSS-Positionierung beibehalten.
+
+                        // Annahme: Dein CSS zentriert den Baum um 50%.
+                        // Wir verwenden die x/y Werte und addieren einen festen Offset (z.B. 500 für die Mitte des SVGs + 20px für die Knotenmitte)
+
+                        // Dies ist eine Näherungslösung, da wir das CSS nicht kennen, aber es behebt den calc() Fehler in der SVG:
+                        line.setAttribute('x1', `${reqUpgrade.x + centerX + nodeOffset}`);
+                        line.setAttribute('y1', `${reqUpgrade.y + nodeOffset}`);
+                        line.setAttribute('x2', `${upgrade.x + centerX + nodeOffset}`);
+                        line.setAttribute('y2', `${upgrade.y + nodeOffset}`);
+
+                        line.setAttribute('stroke', '#009ffd');
+                        line.setAttribute('stroke-width', '3');
                         line.setAttribute('class', 'prestige-line');
                         line.dataset.from = reqId;
                         line.dataset.to = upgrade.id;
@@ -1462,7 +1540,7 @@ createPrestigeUpgradeElements() {
             }
         });
 
-        if (isInfo) this.updatePrestigeInfoTree(); // KORREKTUR 2: 'this' hinzugefügt
+        if (isInfo) this.updatePrestigeInfoTree();
     });
 }
 
@@ -1476,34 +1554,46 @@ updatePrestigeInfoTree() {
     const treeContainer = this.getById('info_prestige_container');
     if (!treeContainer) return;
 
-    // Status aktualisieren (gekaufte, verfügbare)
+    // 1. KNOTEN-STATUS AKTUALISIEREN
     prestigeUpgrades.forEach(upgrade => {
         const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
         if (!node) return;
+
         const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
-
-        node.classList.toggle('purchased', isPurchased);
-
-        // Linienstatus
         const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-        const svg = this.getById('prestige-lines-info');
-        if (svg) {
-svg.querySelectorAll('line').forEach(line => {
-                const fromId = parseInt(line.dataset.from, 10);
-                const toId = parseInt(line.dataset.to, 10);
-                // ... Logik ...
-                if (this.gameState.prestigeUpgradeStatus[fromId] && this.gameState.prestigeUpgradeStatus[toId]) {
-                    line.classList.add('active');
-                } else {
-                    line.classList.remove('active');
-                }
-            }); // <--- DIESE KLAMMER FEHLTE FÜR DIE forEach(line)
-        }
-    }); // Schließt die prestigeUpgrades.forEach
-} // <--- DIESE KLAMMER SCHLIESST updatePrestigeInfoTree()
 
-// HIER MUSS DIE KLAMMER DER KLASSE FOLGEN:
-} // <--- [WICHTIG] DIESE KLAMMER SCHLIESST DIE GESAMTE KLASSE SmileyGame
+        // Fügt die Klassen 'purchased', 'available', 'locked' basierend auf dem Status hinzu
+        node.classList.remove('purchased', 'available', 'locked');
+
+        if (isPurchased) {
+            node.classList.add('purchased');
+        } else if (requirementsMet) {
+            // Hier nutzen wir nur requirementsMet, da die Kosten auf der Info-Seite nicht relevant sind.
+            node.classList.add('available');
+        } else {
+            node.classList.add('locked');
+        }
+    });
+
+    // 2. LINIEN-STATUS AKTUALISIEREN (MUSSTE AUS DER obigen Schleife HERAUSGESCHOBEN WERDEN)
+    const svg = this.getById('prestige-lines-info');
+    if (svg) {
+        svg.querySelectorAll('line').forEach(line => {
+            const fromId = parseInt(line.dataset.from, 10);
+            const toId = parseInt(line.dataset.to, 10);
+
+            // Die Linie ist aktiv, wenn SOWOHL der Startknoten ALS AUCH der Endknoten gekauft sind
+            // (oder wenn der Endknoten verfügbar ist, aber das ist komplizierter.)
+            // Die sauberste Logik: Zeige die Verbindung, wenn sie freigeschaltet ist (fromId gekauft).
+            const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
+
+            // Wir setzen die Linie aktiv, wenn der Startpunkt gekauft ist.
+            line.classList.toggle('active', isFromPurchased);
+        });
+    }
+}
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     gameInstance = new SmileyGame();

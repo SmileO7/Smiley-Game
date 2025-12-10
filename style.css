@@ -189,6 +189,31 @@ main {
     flex-grow: 1; /* Hinzugefügt, um den verfügbaren Platz im Body Flex-Layout zu füllen */
 }
 
+/* Container für den Prestige Skill-Tree (wichtig für die relative Positionierung) */
+#prestige-tree-container {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    margin: 20px auto; /* Zentriert den Container */
+}
+
+/* Der SVG-Container, der die Linien enthält */
+#prestige-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Stellt sicher, dass die Linien unter den Knoten liegen, damit man klicken kann */
+    z-index: 1;
+}
+
+/* Die Knoten selbst */
+.prestige-node {
+    position: absolute;
+    z-index: 2; /* Liegt über den Linien */
+    /* Füge hier Dein Styling für die Knoten hinzu */
+}
 
 /*================================================================================================
 // --- 3. CONTAINER & KLICKER-BEREICH ---
@@ -440,4 +465,93 @@ main {
 /* 3. Hervorhebung der Werte (z.B. Start-Kosten) */
 .info-upgrade-item strong {
     color: var(--color-text-accent); /* Akzentfarbe für die Werte */
+}
+/*================================================================================================
+// --- 9. PRESTIGE SKILL-TREE STYLING ---
+//================================================================================================*/
+
+/* Styling für den neuen runden Knopf-Stil (muss in style.css) */
+.prestige-node {
+    /* WICHTIG: Die Größe des Knotens definieren */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Macht den Knoten rund */
+
+    /* Farben (aus Deinem Schema: Blau/Schwarz/Rot) */
+    background-color: var(--color-primary-dark); /* Dunkelblau als Basis */
+    border: 3px solid var(--color-secondary-red); /* Rot als Rand */
+    cursor: pointer;
+    box-sizing: border-box; /* Stellt sicher, dass die Border zur 40x40 Größe gehört */
+
+    /* Inhalte verstecken, falls doch noch etwas da ist */
+    overflow: hidden;
+    padding: 0;
+
+    /* Zentrierung für den Kauf-Button */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Animation */
+    transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
+}
+
+/* Stil für gekaufte Knoten (Status: purchased) */
+.prestige-node.purchased {
+    background-color: var(--color-accent-blue); /* Blau, wenn gekauft */
+    border-color: var(--color-text-light);
+}
+
+/* Stil für verfügbare Knoten (Status: available) */
+.prestige-node.available {
+    background-color: var(--color-neutral-olive); /* Olivgrün, wenn verfügbar */
+    border-color: var(--color-accent-blue);
+}
+
+/* Stil für gesperrte Knoten (Status: locked) */
+.prestige-node.locked {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-neutral-olive);
+    opacity: 0.7;
+}
+
+/* Hover-Effekt (Feedback beim Überfahren) */
+.prestige-node:hover:not(.purchased) {
+    transform: scale(1.15); /* Wird etwas größer */
+    border-color: var(--color-accent-blue); /* Blauer Rand beim Hovern */
+}
+
+/* Klick-Interaktion beim Halten */
+.prestige-node:active {
+    transform: scale(1.05);
+}
+
+
+/* Styling für das Tooltip Modal (MUSS ÜBER DEM BAUM LIEGEN) */
+.modal-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--color-primary-dark);
+    color: var(--color-text-primary);
+    padding: 15px;
+    border: 2px solid var(--color-accent-blue);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+    z-index: 3000; /* Sehr hohe Z-Index, um alles zu überlagern */
+    max-width: 300px;
+    text-align: left;
+}
+
+.modal-content-tooltip p {
+    font-size: 1em;
+    margin: 5px 0;
+    color: var(--color-text-light);
+}
+
+.modal-content-tooltip h4 {
+    color: var(--color-accent-blue);
+    margin-bottom: 8px;
+    font-size: 1.2em;
 }
