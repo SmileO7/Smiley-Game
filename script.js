@@ -175,6 +175,7 @@ init(){
         this.createBuildingElements();
         this.renderPetShop();
         this.createPrestigeUpgradeElements(); // <-- ERSTELLT BAUM
+        this.createResearchUpgradeElements();
 
         // NEU HINZUGEFÜGT: Stellt sicher, dass die Prestige-Klassen (available/locked) gesetzt sind
         this.updatePrestigeUI(); // <--- HIER EINFÜGEN!
@@ -341,12 +342,12 @@ applyAllBoni() {
     this.gameState.researchStatus.forEach((bought, id) => {
         if(bought) {
             const upgrade = researchUpgrades.find(u => u.id === id);
-            if(!upgrade) return;
+            // ...
 
             if(upgrade.type === 'building_mult') {
                 buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
             } else if (upgrade.type === 'click_mult') {
-                baseClickMultiplier += upgrade.value;
+                baseClickMultiplier += upgrade.value; // <--- HIER WIRD ES ZUR BASIS HINZUADDIERT
             }
         }
     });
@@ -403,6 +404,11 @@ klickeSmiley() {
     const smileysGeklickt = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
     this.gameState.aktuelle_smileys += smileysGeklickt;
     this.gameState.gesammelte_smileys += smileysGeklickt;
+
+    const baseClick = this.gameState.klickKraft;
+    const totalMulti = this.gameState.klickKraftMultiplier;
+
+    console.log(`[KLICK] Basis: ${baseClick} | Multiplikator: x${totalMulti.toFixed(2)} | Gewinn: ${this.formatNumber(smileysGeklickt)}`);
 
    const clickSound = this.getById('click-sound');
    if (clickSound){
@@ -550,7 +556,7 @@ kaufeResearchUpgrade(id) {
 
     this.gameState.forschungPunkte -= upgrade.cost;
     this.gameState.researchStatus[id] = true;
-    this.applyAllBoni();
+    this.applyAllBoni(); // <-- Der Bonus wird neu berechnet
     this.updateUI();
     this.speichereSpiel();
 }
@@ -767,6 +773,36 @@ renderPetShop() {
     });
 }
 
+createResearchUpgradeElements() {
+    const gridContainer = this.getById('research-upgrade-grid');
+    if (!gridContainer) return;
+    gridContainer.innerHTML = '';
+
+    researchUpgrades.forEach(upgrade => {
+        const upgradeDiv = document.createElement('div');
+        upgradeDiv.className = 'research-item';
+        upgradeDiv.dataset.id = upgrade.id;
+
+        // Bestimme den Upgrade-Typ für visuelle Unterscheidung
+        let typeIcon = '';
+        if (upgrade.type === 'click_mult') {
+            typeIcon = '🖱️'; // Klick-Upgrade
+        } else if (upgrade.type === 'building_mult') {
+            typeIcon = '🏭'; // Gebäude-Upgrade
+        }
+
+        upgradeDiv.innerHTML = `
+            <h4>${typeIcon} ${upgrade.description}</h4>
+            <p>Kosten: <span id="research-cost-${upgrade.id}"></span> RP</p>
+            <button id="buy-research-${upgrade.id}" class="btn-buy-research" data-id="${upgrade.id}">
+                Forschen
+            </button>
+        `;
+        gridContainer.appendChild(upgradeDiv);
+    });
+}
+
+
 updateBuildingUI() {
     buildingsData.forEach((building, index) => {
         const cost1x = this.calculateNextCost(building.basePrice, this.gameState.buildingCounts[index], building.growthRate, index);
@@ -807,7 +843,9 @@ updateBuildingUI() {
 updateResearchUI() {
     const labContent = this.getById('lab-main-content');
     const purchaseContainer = this.getById('lab-purchase-container');
-    if (!labContent || !purchaseContainer) return;
+    const gridContainer = this.getById('research-upgrade-grid'); // NEU: Zugriff auf das Grid
+
+    if (!labContent || !purchaseContainer || !gridContainer) return;
 
     const labOwned = this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0;
 
@@ -815,55 +853,55 @@ updateResearchUI() {
     purchaseContainer.style.display = labOwned ? 'none' : 'block';
     labContent.style.display = labOwned ? 'block' : 'none';
 
-    if (labOwned) {
+    // Anzeige der RP-Zahl
+    const forschungspunkteElement = this.getById('forschungspunkte');
+    if (forschungspunkteElement) {
+        forschungspunkteElement.innerText = this.formatNumber(this.gameState.forschungPunkte);
+    }
 
-        const forschungspunkteElement = this.getById('forschungspunkte');
-
-        if (forschungspunkteElement) { // Nur aktualisieren, wenn es existiert
-            forschungspunkteElement.innerText = this.formatNumber(this.gameState.forschungPunkte);
-        }
-
-        const labCountElement = this.getById('forschungslabor_count_anzeige');
-        if(labCountElement) labCountElement.innerText = this.gameState.buildingCounts[RESEARCH_LAB_INDEX];
-
-    } else {
+    // Wenn das Labor nicht existiert, kann nichts gekauft werden
+    if (!labOwned) {
         const labButton = this.getById('forschungslaborButton');
-    if (labButton) {
-        // KORREKTUR: Muss this. verwenden
-        const labCost = this.calculateNextCost(uniqueBuildingsData[0].basePrice, 0, uniqueBuildingsData[0].growthRate, RESEARCH_LAB_INDEX);
-        labButton.innerText = `Kaufen (${this.formatNumber(labCost)})`;
-        labButton.disabled = this.gameState.aktuelle_smileys < labCost;
+        if (labButton) {
+            const labCost = this.calculateNextCost(uniqueBuildingsData[0].basePrice, 0, uniqueBuildingsData[0].growthRate, RESEARCH_LAB_INDEX);
+            labButton.innerText = `Kaufen (${this.formatNumber(labCost)})`;
+            labButton.disabled = this.gameState.aktuelle_smileys < labCost;
+        }
+        return; // Stoppt hier, wenn Lab nicht gekauft ist
     }
 
-    const nextUpgradeContainer = this.getById('next-research-container');
-    if (!nextUpgradeContainer) return;
+    // **********************************************
+    // NEU: Update des RESEARCH UPGRADE GRIDS
+    // **********************************************
+    researchUpgrades.forEach(upgrade => {
+        const node = gridContainer.querySelector(`.research-item[data-id="${upgrade.id}"]`);
+        if (!node) return;
 
-    const nextUpgrade = researchUpgrades.find(upgrade => !this.gameState.researchStatus[upgrade.id]);
+        const isPurchased = this.gameState.researchStatus[upgrade.id];
+        const canAfford = this.gameState.forschungPunkte >= upgrade.cost;
 
-    // UI für nächstes Upgrade rendern
-    if (!nextUpgrade) {
-        nextUpgradeContainer.innerHTML = '<h4>Alle Forschungen abgeschlossen!</h4>';
-        return;
-    }
+        const costElement = node.querySelector(`#research-cost-${upgrade.id}`);
+        if (costElement) costElement.innerText = this.formatNumber(upgrade.cost);
 
-    const canAfford = this.gameState.forschungPunkte >= nextUpgrade.cost;
+        const btn = node.querySelector('.btn-buy-research');
 
-    nextUpgradeContainer.innerHTML = `
-        <h4>Nächstes Upgrade:</h4>
-        <div class="research-item" data-id="${nextUpgrade.id}">
-            <p>${nextUpgrade.description}</p>
-            <p>Kosten: ${this.formatNumber(nextUpgrade.cost)} RP</p>
-            <button class="btn-buy-research" id="buy-research-${nextUpgrade.id}">
-                Forschen
-            </button>
-        </div>
-    `;
+        node.classList.remove('purchased', 'available', 'locked');
 
-    const btn = nextUpgradeContainer.querySelector('.btn-buy-research');
-    if (btn) {
-        btn.disabled = !canAfford || !labOwned;
-    }
-}}
+        if (isPurchased) {
+            node.classList.add('purchased');
+            btn.disabled = true;
+            btn.innerText = 'Gekauft';
+        } else if (canAfford) {
+            node.classList.add('available');
+            btn.disabled = false;
+            btn.innerText = 'Forschen';
+        } else {
+            node.classList.add('locked');
+            btn.disabled = true;
+            btn.innerText = 'Forschen';
+        }
+    });
+}
 
 updatePetButtons() {
     const petShopModal = this.getById('pet-shop-modal');
@@ -1165,6 +1203,16 @@ setupMainEventListeners() {
         const amount = parseInt(button.dataset.amount, 10);
         // KORREKTUR: Aufruf muss this. verwenden
         if (!isNaN(index) && !isNaN(amount)) this.kaufeMehrereGebaeude(index, amount);
+    });
+
+    this.getById('research-upgrade-grid')?.addEventListener('click', (e) => {
+        const buyButton = e.target.closest('.btn-buy-research');
+        if (!buyButton) return;
+        const id = parseInt(buyButton.dataset.id, 10); // Holt ID direkt vom Button
+
+        if (!isNaN(id)) {
+            this.kaufeResearchUpgrade(id);
+        }
     });
 
     // Research Quick Buy Button Event Listener
