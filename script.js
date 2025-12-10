@@ -169,12 +169,15 @@ class SmileyGame {
         this.init();
     }
 
-   init(){
+init(){
         this.ladeSpiel();
 
         this.createBuildingElements();
         this.renderPetShop();
-        this.createPrestigeUpgradeElements();
+        this.createPrestigeUpgradeElements(); // <-- ERSTELLT BAUM
+
+        // NEU HINZUGEFÜGT: Stellt sicher, dass die Prestige-Klassen (available/locked) gesetzt sind
+        this.updatePrestigeUI(); // <--- HIER EINFÜGEN!
 
         this.ladeAudioEinstellungen();
         const musicPlayer = this.getById('backgroudn-music');
@@ -189,6 +192,7 @@ class SmileyGame {
         this.setupInfoPageEventListeners();
 
         this.startIntervals();
+        this.updatePetInterval();
 
         this.updateUI();
     }
@@ -282,38 +286,30 @@ ladeSpiel(encodedData) {
             dataToLoad = localStorage.getItem('smileyGameSave');
         }
         if (!dataToLoad) {
-            this.applyAllBoni();
+            this.applyAllBoni(); // Nur Boni anwenden, wenn kein Save da ist
             return false;
         }
 
         const jsonString = atob(dataToLoad);
         let allData = JSON.parse(jsonString);
 
-           if (allData.buildingCounts) {
-            console.warn("Migration: Alter Spielstand erkannt. Daten werden in gameState verschoben.");
-            allData.gameState.buildingCounts = allData.gameState.buildingCounts || allData.buildingCounts;
-            allData.gameState.buildingPrices = allData.gameState.buildingPrices || allData.buildingPrices;
-            allData.gameState.researchStatus = allData.gameState.researchStatus || allData.researchStatus;
-            allData.gameState.prestigeUpgradeStatus = allData.gameState.prestigeUpgradeStatus || allData.prestigeUpgradeStatus;
-        }
+        // ... (Migration Logic) ...
 
         this.gameState = {
             ...this.gameState,
             ...allData.gameState
-};
+        };
 
         const balanceVersion = localStorage.getItem('balanceVersion');
         if (this.gameState.gesamt_prestige_punkte > 10000 && balanceVersion !== '2') {
              alert("Dein Spielstand wurde aufgrund einer wichtigen Balance-Änderung angepasst. Deine Prestigepunkte und Skill-Tree-Upgrades wurden zurückgesetzt, um das Spiel fair zu halten. Dein restlicher Fortschritt bleibt erhalten.");
              this.gameState.gesamt_prestige_punkte = 0;
              this.gameState.prestige_punkte_verfügbar = 0;
-             this.gameState.prestigeUpgradeStatus.fill(false); // NEU: Zugriff auf zentralisiertes Array
+             this.gameState.prestigeUpgradeStatus.fill(false);
              localStorage.setItem('balanceVersion', '2');
         }
 
-        this.applyAllBoni(); // Korrekt: this.
-
-        this.updateUI();
+        this.applyAllBoni(); // Wichtig: Boni auf Basis des geladenen Zustands anwenden
 
         return true;
     } catch (e) {
@@ -324,7 +320,6 @@ ladeSpiel(encodedData) {
         return false;
     }
 }
-
 //================================================================================================================
 //--- 4. Boni-Anwendung & Kernlogik ---
 //================================================================================================================
@@ -474,7 +469,35 @@ computeTotalSPS() {
     let baseSPS = this.getSmileysPerSecond();
 
     // Wende den globalen Multiplikator an (inkl. Prestige, Resets, Pet-Boni)
+    const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
+    const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+
+    // Gesamt-Global-Multiplikator berechnen
+    // (prestigeBonus * resetBonus) * globalSPSMultiplier (von Prestige Upgrades und Pet Cat)
+    this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier;
+
+    // Finalisierung der totalen SPS
     this.gameState.totalSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
+
+    // *** NEU: CONSOLE LOG ZUR VERFOLGUNG DER BERECHNUNG ***
+    console.log("--- SPS BERECHNUNG ---");
+    console.log(`Basis SPS (Gebäude): ${this.formatNumber(baseSPS)}`);
+    console.log(`Punkte-Bonus (PP * Eff.): x${prestigeBonus.toFixed(3)}`);
+
+    // Nur loggen, wenn Resets stattgefunden haben
+    if (this.gameState.prestigeResets > 0) {
+        console.log(`Reset-Bonus (${this.gameState.prestigeResets} Resets): x${resetBonus.toFixed(3)}`);
+    }
+
+    // Nur loggen, wenn globale Boni vorhanden sind (Pet Cat, Prestige Upgrade)
+    if (this.gameState.globalSPSMultiplier > 1) {
+        console.log(`Globaler SPS Upgrade/Pet Bonus: x${this.gameState.globalSPSMultiplier.toFixed(3)}`);
+    }
+
+    console.log(`Gesamt-Multiplikator: x${this.gameState.globalerPrestigeMultiplikator.toFixed(3)}`);
+    console.log(`Finale SPS: ${this.formatNumber(this.gameState.totalSPS)}`);
+    // ----------------------------------------------------
+
     return this.gameState.totalSPS;
 }
 
@@ -595,7 +618,8 @@ activatePet(petId) {
         console.log(`Pet ${petId} aktiviert.`);
     }
 
-    this.applyAllBoni(); // Wichtig: Boni neu anwenden, um den Effekt zu sehen
+    this.applyAllBoni(); // Wichtig: Boni ZUERST neu anwenden
+    this.updatePetInterval(); // <--- Pet Timer MUSS HIER stehen!
     this.updateUI();
     this.speichereSpiel();
 }
@@ -712,13 +736,21 @@ renderPetShop() {
         petDiv.dataset.id = pet.id;
 
         let bonusText;
-        switch (pet.effectType) {
-            case 'click_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% Klickkraft`; break;
-            case 'sps_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% globale SPS`; break;
-            case 'research_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% Forschungsrate`; break;
-            case 'cost_reduction': bonusText = `-${(pet.effect * 100).toFixed(0)}% Kostenreduktion`; break;
-            case 'auto_click': bonusText = `Auto-Klick alle ${pet.interval / 10} Sek.`; break;
-            default: bonusText = 'Unbekannter Bonus';
+
+        // **KORREKTUR:** Separate Logik für Auto-Klick (pet_dog)
+        if (pet.interval > 0) {
+            // Der Pet Dog hat Auto-Klick und Klickkraft-Bonus
+            bonusText = `Auto-Klick alle ${pet.interval}ms (zusätzlich +${(pet.effect * 100).toFixed(0)}% Klickkraft)`;
+        } else {
+            // Logik für alle passiven Boni
+            switch (pet.effectType) {
+                case 'click_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% Klickkraft`; break;
+                case 'sps_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% globale SPS`; break;
+                case 'research_mult': bonusText = `+${(pet.effect * 100).toFixed(0)}% Forschungsrate`; break;
+                case 'cost_reduction': bonusText = `-${(pet.effect * 100).toFixed(0)}% Kostenreduktion`; break;
+                case 'prestige_point_eff': bonusText = `+${(pet.effect * 100).toFixed(2)}% PP-Effektivität`; break; // **NEU: Pet Chameleon**
+                default: bonusText = 'Unbekannter Bonus';
+            }
         }
 
         petDiv.innerHTML = `
@@ -1018,14 +1050,14 @@ updatePrestigeUI() {
             if (!node) return;
 
             const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-            const canAfford = this.gameState.prestige_punkte_verfügbar >= upgrade.cost;
+            const canAfford = this.gameState.prestige_punkte_verfügbar >= upgrade.cost; // <--- WICHTIGE VARIABLE
             const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
 
             node.classList.remove('purchased', 'available', 'locked');
 
             if (isPurchased) {
                 node.classList.add('purchased');
-            } else if (requirementsMet && canAfford) {
+            } else if (requirementsMet && canAfford) { // <--- KAUF NUR, WENN VORAUSSETZUNGEN UND GELD DA SIND
                 node.classList.add('available');
             } else {
                 node.classList.add('locked');
@@ -1035,7 +1067,7 @@ updatePrestigeUI() {
     }
 }
 
-zeigePrestigeDetails(nodeElement){
+zeigePrestigeDetails(nodeElement, isHover = false){
     const tooltip = this.getById('prestige-tooltip-modal');
     if (!tooltip) return;
 
@@ -1081,8 +1113,39 @@ zeigePrestigeDetails(nodeElement){
         document.addEventListener('click', closeListener);
     }, 50);
 }
+
 //================================================================================================================
-//--- 6. Event Listener Setup ---
+//--- 6. Pets ---
+//================================================================================================================
+ updatePetInterval(){
+     // 1. Intervall stoppen, falls aktiv
+     if (this.petAutoClickTimer !== null) {
+         clearInterval(this.petAutoClickTimer);
+         this.petAutoClickTimer = null;
+     }
+
+     // 2. Prüfen, ob Auto-Click Pet aktiv ist
+     if (this.gameState.activePet){
+         const petDetails = petsData.find(p => p.id === this.gameState.activePet);
+
+         // Wir prüfen hier nur auf den 'pet_dog', der den Auto-Click auslösen soll.
+         if(petDetails && petDetails.id === 'pet_dog') {
+             const clicksPerInterval = 1;
+             const intervalDuration = 1000;
+
+             this.petAutoClickTimer = setInterval(() => {
+                     this.klickeSmiley();
+
+             }, intervalDuration);
+
+             // KORREKTUR: Korrekte Verwendung von Backticks (`)
+             console.log(`Auto-Click Pet-Intervall gestartet: ${clicksPerInterval} Klicks/Sekunde.`);
+         }
+     }
+ }
+
+//================================================================================================================
+//--- 7. Event Listener Setup ---
 //================================================================================================================
 
 setupMainEventListeners() {
@@ -1125,9 +1188,9 @@ setupMainEventListeners() {
 
         // KORREKTUR: Aufrufe müssen this. verwenden
         if (button.classList.contains('btn-pet-buy')) {
-            this.kaufePet(petId);
-        } else if (button.classList.contains('btn-pet-activate')) {
-            this.activatePet(petId);
+                this.kaufePet(petId);
+            } else if (button.classList.contains('btn-pet-activate')) {
+                this.activatePet(petId);
         }
     });
 
@@ -1176,18 +1239,26 @@ setupPrestigeEventListeners() {
     const openSkillTreeButton = this.getById('open_skill_tree_button');
     const closeSkillTreeButton = this.getById('close_skill_tree_button');
 
+    // Listener für das Öffnen des Skill-Trees
     openSkillTreeButton?.addEventListener('click', () => {
-        this.createPrestigeUpgradeElements(); // KORREKTUR
+        this.createPrestigeUpgradeElements();
+        this.updatePrestigeUI(); // WICHTIGE KORREKTUR: Setzt den Status (.available)
         skillTreeModal.style.display = 'flex';
     });
     closeSkillTreeButton?.addEventListener('click', () => { skillTreeModal.style.display = 'none'; });
 
-this.getById('prestige-tree-container')?.addEventListener('click', (e) => {
+    // --- ZENTRALER LISTENER FÜR KLICK (KAUF) ---
+    const prestigeTreeContainer = this.getById('prestige-tree-container');
+    const tooltip = this.getById('prestige-tooltip-modal'); // Notwendig für Hover-Logik
+
+    prestigeTreeContainer?.addEventListener('click', (e) => {
         const node = e.target.closest('.prestige-node');
         if (!node) return;
 
-        this.zeigePrestigeDetails(node);
+        // Zeigt Details an (isHover=false -> Schließ-Logik aktiv)
+        this.zeigePrestigeDetails(node, false);
 
+        // Kauflogik
         const isPurchased = node.classList.contains('purchased');
         const isAvailable = node.classList.contains('available');
 
@@ -1197,8 +1268,30 @@ this.getById('prestige-tree-container')?.addEventListener('click', (e) => {
                 this.kaufePrestigeUpgrade(id);
             }
         }
-
     });
+
+    // --- HOVER LISTENER (DETAILS ANZEIGEN/VERSTECKEN) ---
+    if (prestigeTreeContainer && tooltip) {
+
+        // MOUSE ENTER (HOVER START)
+        prestigeTreeContainer.addEventListener('mouseover', (e) => {
+            const node = e.target.closest('.prestige-node');
+            if (!node || node.dataset.id === undefined) return;
+
+            // Zeigt Details an (isHover=true -> KEINE Schließ-Logik aktiv)
+            this.zeigePrestigeDetails(node, true);
+        });
+
+        // MOUSE LEAVE (HOVER ENDE)
+        prestigeTreeContainer.addEventListener('mouseout', (e) => {
+            const node = e.target.closest('.prestige-node');
+            if (!node) return;
+
+            // Versteckt das Tooltip-Modal
+            tooltip.style.display = 'none';
+        });
+    }
+
 
     const resetPrestigeUpgradesButton = this.getById('reset_prestige_upgrades_button');
     resetPrestigeUpgradesButton?.addEventListener('click', () => {
@@ -1238,7 +1331,7 @@ setupInfoPageEventListeners() {
     });
     closePrestigeButton?.addEventListener('click', () => { if (prestigeModal) prestigeModal.style.display = 'none'; });
 
-    const statsModal = this.getById('stats_info_modal');
+const statsModal = this.getById('stats_info_modal');
     const openStatsButton = this.getById('show_stats_button');
     const closeStatsButton = this.getById('close_stats_info_button');
     openStatsButton?.addEventListener('click', () => {
@@ -1247,6 +1340,20 @@ setupInfoPageEventListeners() {
      if (statsModal) statsModal.style.display = 'flex';
       });
     closeStatsButton?.addEventListener('click', () => { if (statsModal) statsModal.style.display = 'none'; });
+
+    // Pet Info Modal Listener
+    const petInfoModal = this.getById('pets_info_modal'); // Annahme: ID des Modal-Containers
+    const openPetsButton = this.getById('show_pets_button'); // Annahme: ID des Buttons
+    const closePetsButton = this.getById('close_pets_info_button');
+
+    openPetsButton?.addEventListener('click', () => {
+        this.createInfoPetsElements();
+        if (petInfoModal) petInfoModal.style.display = 'flex';
+    });
+    // KORREKTUR DER SCHLIESSENDEN KLAMMER
+    closePetsButton?.addEventListener('click', () => {
+        if (petInfoModal) petInfoModal.style.display = 'none';
+    });
 }
 
 updatePrestigeInfoTree() {
@@ -1592,9 +1699,55 @@ updatePrestigeInfoTree() {
         });
     }
 }
+
+
+createInfoPetsElements() {
+    const container = this.getById('info_pets_container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    container.innerHTML += `
+        <div class="info-upgrade-item special">
+            <h3>Tier-System (Pets)</h3>
+            <p>Pets werden im Prestige Skill-Tree freigeschaltet und können mit Prestige-Punkten gekauft werden. Es kann immer nur ein Pet aktiv sein.</p>
+        </div>
+    `;
+
+    petsData.forEach(pet => {
+        let effectDetails;
+        switch (pet.effectType) {
+            case 'click_mult':
+                effectDetails = `Erhöht die globale Klickkraft um ${(pet.effect * 100).toFixed(0)}%.`;
+                if (pet.interval > 0) {
+                    effectDetails += ` Zusätzlich: Automatischer Klick alle ${pet.interval}ms.`;
+                }
+                break;
+            case 'sps_mult':
+                effectDetails = `Erhöht die gesamte SPS-Produktion um ${(pet.effect * 100).toFixed(0)}%.`;
+                break;
+            case 'research_mult':
+                effectDetails = `Erhöht die Forschungsrate um ${(pet.effect * 100).toFixed(0)}%.`;
+                break;
+            case 'cost_reduction':
+                effectDetails = `Reduziert die Gebäudekosten um ${(pet.effect * 100).toFixed(0)}%.`;
+                break;
+            case 'prestige_point_eff':
+                effectDetails = `Erhöht die Effektivität von Prestige-Punkten um ${(pet.effect * 100).toFixed(2)}% (additiv).`;
+                break;
+            default: effectDetails = 'Unbekannter Effekt.';
+        }
+
+        const item = document.createElement('div');
+        item.className = 'info-upgrade-item';
+        item.innerHTML = `
+            <h3>${pet.name} (Kosten: ${this.formatNumber(pet.cost)} PP)</h3>
+            <p><strong>Beschreibung:</strong> ${pet.description}</p>
+            <p><strong>Effekt:</strong> ${effectDetails}</p>
+        `;
+        container.appendChild(item);
+    });
 }
-
-
+}
 document.addEventListener('DOMContentLoaded', () => {
     gameInstance = new SmileyGame();
 });

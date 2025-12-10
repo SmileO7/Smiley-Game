@@ -411,10 +411,29 @@ main {
 }
 
 .pet-img {
-    /* Konsistenz: Smiley-Rahmen Farbe verwenden */
+    /* *** START: NEUE/KORRIGIERTE REGELN *** */
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%; /* Macht das Bild rund */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin-bottom: 10px;
+    /* *** ENDE: NEUE/KORRIGIERTE REGELN *** */
+
+    /* Bestehende Regel behalten */
     border: 3px solid var(--color-accent-blue);
 }
 
+/* NEU: Für das kleine Pet-Bild in der linken Statusspalte */
+.active-pet-img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 2px solid var(--color-red-main); /* Hebt das aktive Pet hervor */
+}
+
+/* Restliche Pet-Regeln */
 .btn-pet-active {
     background-color: var(--color-red-main);
 }
