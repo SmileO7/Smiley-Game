@@ -5,9 +5,10 @@
 const uniqueBuildingsData = [
     // Index 15 (RESEARCH_LAB_INDEX). Note: Index 0-14 sind reguläre Gebäude.
     { name: "Forschungslabor", basePrice: 5000000, growthRate: 1.3, isSpecial: true, maxCount: 1, baseSPS: 5, prestigeMulti: 1, researchMultiplier: 1},
+    { id: 'diamond_mine', name: "Diamanten-Mine", basePrice: 100000000, growthRate: 1.5, isSpecial: true, maxCount: 1, baseDPS: 1, diamondMultiplier: 1},
 ];
 const RESEARCH_LAB_INDEX = 15; // Index des Forschungslabors im State-Array (15 reguläre = Index 0-14. Lab ist Index 15)
-
+const DIAMOND_MINE_INDEX = 16; // Index des Smiley-Mines im State-Array
 
 const buildingsData = [
     { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, baseSPS: 2, prestigeMulti: 1},
@@ -445,6 +446,16 @@ produzierePassiveErträge(){
         const researchRate = 1 * this.gameState.buildingCounts[RESEARCH_LAB_INDEX] * (this.gameState.researchLabPrestigeMulti || 1);
         this.gameState.forschungPunkte += researchRate;
     }
+
+    const MINE_INDEX = DIAMOND_MINE_INDEX;
+
+    if (this.gameState.buildingCounts[MINE_INDEX] > 0) {
+        const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+        if (mine) {
+            const diamondRate = mine.baseDPS * mine.diamondMultiplier;
+            this.gameState.diamanten *= diamondRate;
+        }
+    }
     this.updateUI();
 }
 
@@ -731,6 +742,38 @@ createBuildingElements() {
     });
 }
 
+renderDiamondMineContent() {
+    const container = this.getById('diamond-mine-content');
+    if (!container) return;
+
+    const MINE_INDEX = DIAMOND_MINE_INDEX;
+    const mineDefinition = uniqueBuildingData.find(u => u.id === 'diamond_mine');
+    if (!mineDefinition) return;
+
+    const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+    const isOwned = mineCount > 0;
+
+    if (isOwned) {
+        container.innerHTML = `
+            <h3>${mineDefinition.name} (Aktiv)</h3>
+            <p>Diamantenproduktion: <span id="diamond-rate-display">0</span> DPS</p>
+            <div id="minigame-placeholder">Hier kommt das Minispiel hin!</div>
+        `;
+    } else {
+        const mineCost = this.calculateNextCost(mineDefinition.basePrice, 0, mineDefinition.growthRate, MINE_INDEX);
+        const canAfford = this.gameState.aktuelle_smileys >= mineCost;
+
+        container.innerHTML = `
+            <h3>Schalte die ${mineDefinition.name} frei</h3>
+            <p>Die Mine wird benötigt, um das Diamanten-Minispiel zu starten.</p>
+            <p>Kosten: ${this.formatNumber(mineCost)} Smileys</p>
+            <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'}>
+                Mine Kaufen
+            </button>
+        `;
+    }
+}
+
 renderPetShop() {
     const petGrid = this.getById('pet-shop-grid');
     if (!petGrid) return;
@@ -838,6 +881,20 @@ updateBuildingUI() {
             btn100x.disabled = this.gameState.aktuelle_smileys < cost100x;
         }
     });
+        this.updateDiamondMineStatus();
+}
+
+updateDiamondMineStatus(){
+    const mineUpgradePurchased = this.gameState.prestigeUpgradeStatus[9];
+    const mineButton = this.getById('open_diamond_mine_button');
+
+    if (mineButton){
+        mineButton.style.display = mineUpgradePurchased ? 'block' : 'none'; // KORRIGIERT
+    }
+
+    if (mineUpgradePurchased) {
+        this.renderDiamondMineContent();
+    }
 }
 
 updateResearchUI() {
@@ -991,6 +1048,11 @@ updatePetButtons() {
 
 updateUI() {
     this.computeTotalSPS();
+
+    const diamantenEl = this.getById('diamanten_anzeige');
+    if (diamantenEl) {
+        diamantenEl.innerText = this.formatNumber(this.gameState.diamanten);
+    }
 
     // KORREKTUR: Null-Checks für alle UI-Elemente hinzufügen
     const aktuelleSmileysEl = this.getById('aktuelle_smileys');
@@ -1259,7 +1321,18 @@ setupMainEventListeners() {
             petModal.style.display = 'none';
         });
     }
-}
+    this.getById('diamond-mine-content')?.addEventListener('click', (e) => {
+            const buyButton = e.target.closest('#buy-diamond-mine-button');
+            if (!buyButton) return;
+
+            const index = parseInt(buyButton.dataset.index, 10);
+            if (index === DIAMOND_MINE_INDEX) {
+                // Mine ist einzigartig, kaufe nur 1 Stück.
+                this.kaufeMehrereGebaeude(index, 1);
+            }
+        });
+    }
+
 
 setupPrestigeEventListeners() {
     const prestigeModal = this.getById('prestige_confirm_modal');
