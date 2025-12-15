@@ -1,11 +1,11 @@
 const uniqueBuildingsData = [
     // Index 15
-    { name: "Forschungslabor", basePrice: 5000000, growthRate: 1.3, isSpecial: true, maxCount: 1, baseSPS: 5, prestigeMulti: 1, researchMultiplier: 1},
-    // NEU: Index 16
+//    { name: "Forschungslabor", basePrice: 5000000, growthRate: 1.3, isSpecial: true, maxCount: 1, baseSPS: 5, prestigeMulti: 1, researchMultiplier: 1},
+    // NEU: Index 15
     { id: 'diamond_mine', name: "Diamanten-Mine", basePrice: 100000000, growthRate: 1.5, isSpecial: true, maxCount: 1, baseDPS: 1, diamondMultiplier: 1},
 ];
-const RESEARCH_LAB_INDEX = 15; // Index des Forschungslabors im State-Array
-const DIAMOND_MINE_INDEX = 16; // Index der Diamanten-Mine im State-Array
+const RESEARCH_LAB_INDEX = -1; // Index des Forschungslabors im State-Array
+const DIAMOND_MINE_INDEX = 15; // Index der Diamanten-Mine im State-Array
 const buildingsData = [
     { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, baseSPS: 2, prestigeMulti: 1},
     { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, baseSPS: 20, prestigeMulti: 1},
@@ -94,23 +94,31 @@ const researchUpgrades = [
 const prestigeUpgrades = [
     { id: 0, cost: 1, description: 'Starte mit einem permanenten +10% SPS-Bonus', type: 'global_sps_mult', value: 0.1, x: 0, y: 0, requirements: [] },
     { id: 1, cost: 2, description: 'Permanenter globaler Klick-Multiplikator +25%', type: 'global_click_mult', value: 0.25, x: -100, y: 100, requirements: [0] },
-    { id: 2, cost: 2, description: 'Erhöhe den Forschungs-Output um 50%', type: 'research_lab_mult', value: 0.5, x: 100, y: 100, requirements: [0] },
-    { id: 3, cost: 5, description: 'Erhöhe die Effektivität von Prestige-Punkten um 0.1% (additiv)', type: 'prestige_point_eff', value: 0.001, x: 0, y: 200, requirements: [1, 2] },
-    { id: 4, cost: 3, description: 'Auto-Klicker & Smiley-Bäume sind 50% günstiger', type: 'building_cost_reduction', buildingIndices: [0, 1], value: 0.5, x: -200, y: 200, requirements: [1] },
-    { id: 5, cost: 3, description: 'Schalte einen neuen globalen Bonus frei: +1% SPS pro Prestige-Reset', type: 'prestige_reset_bonus', value: 0.01, x: 200, y: 200, requirements: [2] },
-    { id: 6, cost: 10, description: 'Verbessere den globalen Klick-Multiplikator um weitere 50%', type: 'global_click_mult', value: 0.5, x: -100, y: 300, requirements: [3, 4] },
-    { id: 7, cost: 10, description: 'Der Bonus pro Prestige-Reset wird verdoppelt', type: 'prestige_reset_bonus', value: 0.01, x: 100, y: 300, requirements: [3, 5] },
-    { id: 8, cost: 50, description: 'Schalte das Pet-System frei.', type: 'unlock_pets', value: 0, x: -200, y: 400, requirements: [6] }, // Geändert von 15 auf 50 (für Pets)
-    { id: 9, cost: 15, description: 'Schalte die Diamanten-Mine frei.', type: 'unlock_mine', value: 0, x: 200, y: 400, requirements: [7] },
-    { id: 10, cost: 50, description: 'Schalte das Gilden-System frei.', type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [8, 9] },
+    { id: 2, cost: 5, description: 'Erhöhe die Effektivität von Prestige-Punkten um 0.1% (additiv)', type: 'prestige_point_eff', value: 0.001, x: 0, y: 200, requirements: [1, 2] },
+    { id: 3, cost: 3, description: 'Auto-Klicker & Smiley-Bäume sind 50% günstiger', type: 'building_cost_reduction', buildingIndices: [0, 1], value: 0.5, x: -200, y: 200, requirements: [1] },
+    { id: 4, cost: 3, description: 'Schalte einen neuen globalen Bonus frei: +1% SPS pro Prestige-Reset', type: 'prestige_reset_bonus', value: 0.01, x: 200, y: 200, requirements: [2] },
+    { id: 5, cost: 10, description: 'Verbessere den globalen Klick-Multiplikator um weitere 50%', type: 'global_click_mult', value: 0.5, x: -100, y: 300, requirements: [3, 4] },
+    { id: 6, cost: 10, description: 'Der Bonus pro Prestige-Reset wird verdoppelt', type: 'prestige_reset_bonus', value: 0.01, x: 100, y: 300, requirements: [3, 5] },
+    { id: 7, cost: 50, description: 'Schalte das Pet-System frei.', type: 'unlock_pets', value: 0, x: -200, y: 400, requirements: [6] }, // Geändert von 15 auf 50 (für Pets)
+    { id: 8, cost: 15, description: 'Schalte die Diamanten-Mine frei.', type: 'unlock_mine', value: 0, x: 200, y: 400, requirements: [7] },
+    { id: 9, cost: 50, description: 'Schalte das Gilden-System frei.', type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [8, 9] },
 ];
 
 const petsData = [
-    { id: 'pet_dog', name: 'Fluffy der Klick-Hund', cost: 10, effect: 0.05, effectType: 'click_mult', description: '+5% Klickkraft.', img: 'pet_dog.png.png', interval: 100 },
-    { id: 'pet_cat', name: 'Miau der SPS-Booster', cost: 20, effect: 0.10, effectType: 'sps_mult', description: '+10% SPS-Rate.', img: 'pet_cat.png.png', interval: 0 },
-    { id: 'pet_owl', name: 'Hoot der Forscher', cost: 30, effect: 0.25, effectType: 'research_mult', description: '+25% Forschungsrate.', img: 'pet_owl.png.png', interval: 0 },
-    { id: 'pet_fish', name: 'Finny der Ökonom', cost: 50, effect: 0.05, effectType: 'cost_reduction', description: '5% Kostenreduktion aller Gebäude.', img: 'pet_fish.png.png', interval: 0 },
-    { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', cost: 100, effect: 0.01, effectType: 'prestige_point_eff', description: '+0.01% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0 },
+    // 1. Pet Dog: KLICK-KRAFT
+    { id: 'pet_dog', name: 'Fluffy der Klick-Hund', baseEffect: 0.05, effectType: 'click_mult', description: '+% Klickkraft.', img: 'pet_dog.png.png', interval: 100, levelCost: 10, costGrowth: 1.5, maxLevel: 100 },
+
+    // 2. Pet Cat: SPS-BOOSTER
+    { id: 'pet_cat', name: 'Miau der SPS-Booster', baseEffect: 0.10, effectType: 'sps_mult', description: '+% SPS-Rate.', img: 'pet_cat.png.png', interval: 0, levelCost: 20, costGrowth: 1.5, maxLevel: 100 },
+
+    // 3. Pet Owl: KOSTENREDUKTION UPGRADES (ehemals Forschung/Global Upgrades)
+    { id: 'pet_owl', name: 'Hoot der Taktiker', baseEffect: 0.05, effectType: 'cost_reduction_upgrades', description: '-% Upgrade-Kosten.', img: 'pet_owl.png.png', interval: 0, levelCost: 30, costGrowth: 1.5, maxLevel: 100 },
+
+    // 4. Pet Fish: KOSTENREDUKTION GEBÄUDE
+    { id: 'pet_fish', name: 'Finny der Ökonom', baseEffect: 0.05, effectType: 'cost_reduction_buildings', description: '-% Gebäudekosten.', img: 'pet_fish.png.png', interval: 0, levelCost: 50, costGrowth: 1.5, maxLevel: 100 },
+
+    // 5. Pet Chameleon: PRESTIGE-EFFEKTIVITÄT (bleibt gleich)
+    { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', baseEffect: 0.01, effectType: 'prestige_point_eff', description: '+% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0, levelCost: 100, costGrowth: 1.5, maxLevel: 100 },
 ];
 
 const guildUpgrades = [

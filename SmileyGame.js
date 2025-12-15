@@ -12,7 +12,7 @@ class SmileyGame {
             // --- Währungen ---
             aktuelle_smileys: 0,
             gesammelte_smileys: 0,
-            forschungPunkte: 0,
+         // forschungPunkte: 0,
             diamanten: 0,
 
             // --- Prestige & Stats ---
@@ -28,14 +28,15 @@ class SmileyGame {
             // --- ZENTRALE ZUSTANDS-ARRAYs ---
             buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
             buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
-            researchStatus: researchUpgrades.map(() => false),
+
+            researchStatus: researchUpgrades.map(() => false), // <--- JETZT KORREKT HINZUFÜGEN!
             prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
-            petStatus: petsData.map(() => false),
+
+            petLevels: petsData.map(() => 0), // NEU BEHALTEN
             activePet: null,
 
             // --- Laufzeit-Statistiken & Boni ---
             totalSPS: 0,
-            researchLabPrestigeMulti: 1,
             globalSPSMultiplier: 1,
             prestigePointMultiplier: 0.01,
             prestigeResetBonus: 0,
@@ -70,7 +71,6 @@ class SmileyGame {
         this.createBuildingElements();
         this.renderPetShop();
         this.createPrestigeUpgradeElements();
-        this.createResearchUpgradeElements();
 
         this.updatePrestigeUI();
 
@@ -114,14 +114,7 @@ class SmileyGame {
             this.gameState.gesammelte_smileys += actualSPS;
         }
 
-        // 2. FORSCHUNGSPUNKTE-PRODUKTION (RP)
-        if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
-            const lab = uniqueBuildingsData[0];
-            const researchRate = 1 * this.gameState.buildingCounts[RESEARCH_LAB_INDEX] * (this.gameState.researchLabPrestigeMulti || 1);
-            this.gameState.forschungPunkte += researchRate;
-        }
-
-        // 3. DIAMANTEN-PRODUKTION (DPS)
+        // 2. DIAMANTEN-PRODUKTION (DPS)
         const MINE_INDEX = DIAMOND_MINE_INDEX;
         if (this.gameState.buildingCounts[MINE_INDEX] > 0) {
             const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
@@ -154,13 +147,6 @@ class SmileyGame {
             const buildingSPS = (item.baseSPS || 0) * (this.gameState.buildingCounts[index] || 0) * (item.prestigeMulti || 1);
             baseSPS += buildingSPS;
         });
-
-        const labIndex = RESEARCH_LAB_INDEX;
-        const labDefinition = uniqueBuildingsData[0];
-        if (this.gameState.buildingCounts[labIndex] > 0) {
-            const labSPS = labDefinition.baseSPS * (this.gameState.buildingCounts[labIndex] || 0) * (labDefinition.researchMultiplier || 1);
-            baseSPS += labSPS;
-        }
 
         return baseSPS;
     }
@@ -260,6 +246,7 @@ class SmileyGame {
         let price = Math.floor(basePrice * Math.pow(growthRate, count));
         let costReduction = 0;
 
+        // 1. Prestige Cost Reduction (bleibt gleich)
         prestigeUpgrades.forEach(upg => {
             if (upg.type === 'building_cost_reduction' && this.gameState.prestigeUpgradeStatus[upg.id]) {
                 if (!upg.buildingIndices || upg.buildingIndices.includes(buildingIndex)) {
@@ -268,22 +255,77 @@ class SmileyGame {
             }
         });
 
-        const petCostReduction = petsData.find(pet => pet.effectType === 'cost_reduction' && this.gameState.activePet === pet.id);
-        if (petCostReduction) {
-            costReduction += petCostReduction.effect;
+        // 2. Pet Cost Reduction (Gebäude-Pet)
+        const activePetIndex = petsData.findIndex(pet => pet.effectType === 'cost_reduction_buildings' && this.gameState.activePet === pet.id);
+        if (activePetIndex !== -1) {
+            // WICHTIG: Die Level-Logik muss hier funktionieren
+            const pet = petsData[activePetIndex];
+            const petLevel = this.gameState.petLevels[activePetIndex];
+            const petStats = this.calculatePetStat(pet, petLevel);
+
+            costReduction += petStats.currentEffect; // NUTZT DEN SKALIERTEN EFFEKT
         }
 
+        // --- WICHTIGE KORREKTUR: Die Reduktion anwenden! ---
         if (costReduction > 0) {
             price *= (1 - costReduction);
         }
+        // ----------------------------------------------------
 
         return Math.floor(price);
+    }
+
+    // Ausschnitt aus SmileyGame.js (Abschnitt 2. SPEICHERUNG & HILFSFUNKTIONEN)
+
+    /**
+     * Berechnet die Kosten für Upgrades (ehemals Research, jetzt Global Upgrades)
+     * unter Berücksichtigung von Pet-Boni (Upgrade Cost Reduction).
+     */
+    calculateUpgradeCost(baseCost) {
+        let costReduction = 0;
+
+        // 1. Pet Cost Reduction (Upgrade-Pet)
+        // Wir verwenden this.gameState.activePet, da nur das aktive Pet zählt.
+        const activePetIndex = petsData.findIndex(pet => pet.effectType === 'cost_reduction_upgrades' && this.gameState.activePet === pet.id);
+        if (activePetIndex !== -1) {
+            const pet = petsData[activePetIndex];
+            const petLevel = this.gameState.petLevels[activePetIndex];
+            const petStats = this.calculatePetStat(pet, petLevel);
+            costReduction += petStats.currentEffect;
+        }
+
+        if (costReduction > 0) {
+            return Math.floor(baseCost * (1 - costReduction));
+        }
+        return baseCost;
+    }
+
+    /**
+     * Berechnet die Kosten für das nächste Pet-Level und den aktuellen Effekt.
+     */
+    calculatePetStat(pet, currentLevel) {
+        const nextLevel = currentLevel + 1;
+        const baseCost = pet.levelCost;
+        const growth = pet.costGrowth;
+
+        let nextCost = 0;
+        if (nextLevel <= pet.maxLevel) {
+            nextCost = Math.floor(baseCost * Math.pow(growth, currentLevel));
+        }
+
+        // Effekt: Basiswert * (1 + aktuelles Level * 0.1) - Skalierung
+        const currentEffect = pet.baseEffect * (1 + currentLevel * 0.1);
+
+        return {
+            nextCost: nextCost,
+            currentEffect: currentEffect,
+            isMaxLevel: currentLevel >= pet.maxLevel
+        };
     }
 
     applyAllBoni() {
         // Reset Multipliers
         this.gameState.globalSPSMultiplier = 1;
-        this.gameState.researchLabPrestigeMulti = 1;
         this.gameState.prestigePointMultiplier = 0.01;
         this.gameState.prestigeResetBonus = 0;
         this.gameState.guildSPSMultiplier = 0;
@@ -299,19 +341,6 @@ class SmileyGame {
             b.prestigeMulti = 1;
         });
 
-        // 1. RESEARCH Boni
-        this.gameState.researchStatus.forEach((bought, id) => {
-            if (bought) {
-                const upgrade = researchUpgrades.find(u => u.id === id);
-                if (!upgrade) return;
-                if (upgrade.type === 'building_mult') {
-                    buildingsData[upgrade.buildingIndex].prestigeMulti += upgrade.value;
-                } else if (upgrade.type === 'click_mult') {
-                    baseClickMultiplier += upgrade.value;
-                }
-            }
-        });
-
         // 2. PRESTIGE Boni
         this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
             if (bought) {
@@ -323,9 +352,6 @@ class SmileyGame {
                             break;
                         case 'global_click_mult':
                             prestigeClickMultiplier += upgrade.value;
-                            break;
-                        case 'research_lab_mult':
-                            this.gameState.researchLabPrestigeMulti += upgrade.value;
                             break;
                         case 'prestige_point_eff':
                             this.gameState.prestigePointMultiplier += upgrade.value;
@@ -358,9 +384,6 @@ class SmileyGame {
                     case 'sps_mult':
                         this.gameState.globalSPSMultiplier += pet.effect;
                         break;
-                    case 'research_mult':
-                        this.gameState.researchLabPrestigeMulti += pet.effect;
-                        break;
                     case 'prestige_point_eff':
                         this.gameState.prestigePointMultiplier += pet.effect;
                         break;
@@ -368,7 +391,6 @@ class SmileyGame {
             }
         }
 
-        // 4. GILDEN BONI
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
             if (bought) {
                 const upgrade = guildUpgrades.find(u => u.id === id);
@@ -384,11 +406,8 @@ class SmileyGame {
         const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
 
         this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
-
-        if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0) {
-            uniqueBuildingsData[0].researchMultiplier = this.gameState.researchLabPrestigeMulti;
         }
-    }
+
 
 
     // ================================================================================================================
@@ -420,10 +439,10 @@ class SmileyGame {
 
     kaufeMehrereGebaeude(index, amount) {
         let item;
-        let isUnique = index === RESEARCH_LAB_INDEX || index === DIAMOND_MINE_INDEX;
+        let isUnique =  index === DIAMOND_MINE_INDEX;
 
         if (isUnique) {
-            item = uniqueBuildingsData.find(u => (index === RESEARCH_LAB_INDEX && u.name === 'Forschungslabor') || (index === DIAMOND_MINE_INDEX && u.id === 'diamond_mine'));
+            item = uniqueBuildingsData.find(u =>  (index === DIAMOND_MINE_INDEX && u.id === 'diamond_mine'));
         } else {
             item = buildingsData[index];
         }
@@ -448,22 +467,6 @@ class SmileyGame {
 
             this.updateUI();
         }
-    }
-
-    kaufeResearchUpgrade(id) {
-        const upgrade = researchUpgrades.find(u => u.id === id);
-        if (!upgrade || this.gameState.researchStatus[id] || this.gameState.forschungPunkte < upgrade.cost) return;
-
-        if (this.gameState.buildingCounts[RESEARCH_LAB_INDEX] === 0) {
-            console.warn("Forschungslabor wird benötigt, um Upgrades zu kaufen.");
-            return;
-        }
-
-        this.gameState.forschungPunkte -= upgrade.cost;
-        this.gameState.researchStatus[id] = true;
-        this.applyAllBoni();
-        this.updateUI();
-        this.speichereSpiel();
     }
 
     kaufePrestigeUpgrade(id) {
@@ -512,7 +515,8 @@ class SmileyGame {
 
         this.gameState.buildingCounts = [...buildingsData, ...uniqueBuildingsData].map(() => 0);
         this.gameState.buildingPrices = [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)];
-        this.gameState.researchStatus = researchUpgrades.map(() => false);
+
+
 
         this.applyAllBoni();
         this.speichereSpiel();
@@ -553,35 +557,47 @@ class SmileyGame {
     // 4. PETS LOGIK
     // ================================================================================================================
 
-    kaufePet(petId) {
+    levelUpPet(petId) {
         if (!this.gameState.petsUnlocked) {
             console.warn("Pet-System nicht freigeschaltet.");
             return;
         }
-        const pet = petsData.find(p => p.id === petId);
         const petIndex = petsData.findIndex(p => p.id === petId);
+        const pet = petsData[petIndex];
+        const currentLevel = this.gameState.petLevels[petIndex];
+        // Wichtig: Wir nutzen die Funktion, die wir in Abschnitt 2 erstellt haben
+        const stats = this.calculatePetStat(pet, currentLevel);
 
-        if (this.gameState.petStatus[petIndex]) {
-            console.warn("Pet bereits gekauft.");
+        if (stats.isMaxLevel) {
+            console.warn(`Pet ${petId} hat das maximale Level erreicht.`);
             return;
         }
-        if (this.gameState.prestige_punkte_verfügbar < pet.cost) {
-            console.warn("Nicht genug Prestige-Punkte.");
+
+        // PETS KOSTEN DIAMANTEN ZUM LEVELN
+        if (this.gameState.diamanten < stats.nextCost) {
+            console.warn(`Nicht genug Diamanten (${this.formatNumber(stats.nextCost)} 💎 benötigt).`);
             return;
         }
 
-        this.gameState.prestige_punkte_verfügbar -= pet.cost;
-        this.gameState.petStatus[petIndex] = true;
+        // Kosten abziehen und Level erhöhen
+        this.gameState.diamanten -= stats.nextCost;
+        this.gameState.petLevels[petIndex] = currentLevel + 1;
 
-        this.activatePet(petId);
+        // Wenn das Pet zum ersten Mal gekauft wird (Level 0 -> 1), aktiviere es
+        if (currentLevel === 0) {
+            this.activatePet(petId);
+        }
 
+        this.applyAllBoni();
         this.updateUI();
         this.speichereSpiel();
     }
 
+    // activatePet anpassen (Prüfung auf petLevels statt petStatus)
     activatePet(petId) {
         const petIndex = petsData.findIndex(p => p.id === petId);
-        if (!this.gameState.petStatus[petIndex]) {
+        // PRÜFUNG: Muss Level > 0 sein
+        if (this.gameState.petLevels[petIndex] <= 0) {
             console.warn("Pet nicht gekauft.");
             return;
         }
@@ -599,7 +615,6 @@ class SmileyGame {
         this.updateUI();
         this.speichereSpiel();
     }
-
     // ================================================================================================================
     // 5. DIAMANTEN MINE LOGIK
     // ================================================================================================================
@@ -727,7 +742,6 @@ class SmileyGame {
         }
 
         this.updateBuildingUI();
-        this.updateResearchUI();
         this.updatePetButtons();
         this.updateDiamondMineStatus();
         this.updateGuildsButton(); // NEU HINZUGEFÜGT
@@ -846,140 +860,71 @@ class SmileyGame {
         });
     }
 
-    updateResearchUI() {
-        const labContent = this.getById('lab-main-content');
-        const purchaseContainer = this.getById('lab-purchase-container');
-        const gridContainer = this.getById('research-upgrade-grid');
-
-        if (!labContent || !purchaseContainer || !gridContainer) return;
-
-        const labOwned = this.gameState.buildingCounts[RESEARCH_LAB_INDEX] > 0;
-
-        purchaseContainer.style.display = labOwned ? 'none' : 'block';
-        labContent.style.display = labOwned ? 'block' : 'none';
-
-        const forschungspunkteElement = this.getById('forschungspunkte');
-        if (forschungspunkteElement) {
-            forschungspunkteElement.innerText = this.formatNumber(this.gameState.forschungPunkte);
-        }
-
-        if (!labOwned) {
-            const labButton = this.getById('forschungslaborButton');
-            if (labButton) {
-                const labCost = this.calculateNextCost(uniqueBuildingsData[0].basePrice, 0, uniqueBuildingsData[0].growthRate, RESEARCH_LAB_INDEX);
-                labButton.innerText = `Kaufen (${this.formatNumber(labCost)})`;
-                labButton.disabled = this.gameState.aktuelle_smileys < labCost;
-            }
-            return;
-        }
-
-        researchUpgrades.forEach(upgrade => {
-            const node = gridContainer.querySelector(`.research-item[data-id="${upgrade.id}"]`);
-            if (!node) return;
-
-            const isPurchased = this.gameState.researchStatus[upgrade.id];
-            const canAfford = this.gameState.forschungPunkte >= upgrade.cost;
-
-            const costElement = node.querySelector(`#research-cost-${upgrade.id}`);
-            if (costElement) costElement.innerText = this.formatNumber(upgrade.cost);
-
-            const btn = node.querySelector('.btn-buy-research');
-
-            node.classList.remove('purchased', 'available', 'locked');
-
-            if (isPurchased) {
-                node.classList.add('purchased');
-                btn.disabled = true;
-                btn.innerText = 'Gekauft';
-            } else if (canAfford) {
-                node.classList.add('available');
-                btn.disabled = false;
-                btn.innerText = 'Forschen';
-            } else {
-                node.classList.add('locked');
-                btn.disabled = true;
-                btn.innerText = 'Forschen';
-            }
-        });
-    }
-
     updatePetButtons() {
-        const petShopModal = this.getById('pet-shop-modal');
-        if (!petShopModal) return;
+            const petShopModal = this.getById('pet-shop-modal');
+            if (!petShopModal) return;
 
-        const petGrid = this.getById('pet-shop-grid');
-        const lockMessage = this.getById('pet-lock-message');
-        const openButton = this.getById('open-pet-shop-button');
+            const openButton = this.getById('open-pet-shop-button');
+            const petGrid = this.getById('pet-shop-grid');
+            const lockMessage = this.getById('pet-lock-message');
 
-        if (openButton) {
-            openButton.style.display = this.gameState.petsUnlocked ? 'block' : 'none';
-        }
-
-        if (!this.gameState.petsUnlocked) {
-            if (lockMessage) lockMessage.style.display = 'block';
-            if (petGrid) petGrid.style.display = 'none';
-
-            if (lockMessage) {
-                lockMessage.innerHTML = `<p>Schalte Pets im Prestige Shop (Upgrade ID 8) frei!</p>`;
+            if (openButton) {
+                openButton.style.display = this.gameState.petsUnlocked ? 'block' : 'none';
             }
-            return;
-        }
 
-        if (lockMessage) lockMessage.style.display = 'none';
-        if (petGrid) petGrid.style.display = 'grid';
-
-        petsData.forEach((pet, index) => {
-            const petDiv = petGrid.querySelector(`.pet-item[data-id="${pet.id}"]`);
-            if (!petDiv) return;
-
-            const isBought = this.gameState.petStatus[index];
-            const isAffordable = this.gameState.prestige_punkte_verfügbar >= pet.cost;
-            const isActive = this.gameState.activePet === pet.id;
-
-            const buyButton = petDiv.querySelector('.btn-pet-buy');
-            const activateButton = petDiv.querySelector('.btn-pet-activate');
-
-            petDiv.classList.toggle('bought', isBought);
-            petDiv.classList.toggle('active', isActive);
-
-            if (isBought) {
-                if (buyButton) {
-                    buyButton.disabled = true;
-                    buyButton.innerText = 'Gekauft';
+            if (!this.gameState.petsUnlocked) {
+                if (lockMessage) lockMessage.style.display = 'block';
+                if (petGrid) petGrid.style.display = 'none';
+                if (lockMessage) {
+                    lockMessage.innerHTML = `<p>Schalte Pets im Prestige Shop (Upgrade ID 8) frei!</p>`;
                 }
+                return;
+            }
+
+            if (lockMessage) lockMessage.style.display = 'none';
+            if (petGrid) petGrid.style.display = 'grid';
+
+            // Logik für Aktivierungstoggles
+            petsData.forEach((pet, index) => {
+                const petDiv = petGrid.querySelector(`.pet-item[data-id="${pet.id}"]`);
+                if (!petDiv) return;
+
+                const currentLevel = this.gameState.petLevels[index]; // <-- KORREKTE PRÜFUNG
+                const isActive = this.gameState.activePet === pet.id;
+                const activateButton = petDiv.querySelector('.btn-pet-activate');
+
+                petDiv.classList.toggle('active', isActive);
+                petDiv.classList.toggle('bought', currentLevel > 0); // <-- KORREKTE PRÜFUNG
+
                 if (activateButton) {
-                    activateButton.disabled = false;
-                    activateButton.innerText = isActive ? 'Deaktivieren' : 'Aktivieren';
-                    activateButton.classList.toggle('btn-pet-active', isActive);
-                    activateButton.classList.toggle('btn-pet-inactive', !isActive);
+                    if (currentLevel > 0) {
+                        activateButton.disabled = false;
+                        activateButton.innerText = isActive ? 'Deaktivieren' : 'Aktivieren';
+                        activateButton.classList.toggle('btn-pet-active', isActive);
+                        activateButton.classList.toggle('btn-pet-inactive', !isActive);
+                    } else {
+                        activateButton.disabled = true;
+                        activateButton.innerText = 'Aktivieren';
+                        activateButton.classList.remove('btn-pet-active', 'btn-pet-inactive');
+                    }
                 }
-            } else {
-                if (buyButton) {
-                    buyButton.disabled = !isAffordable;
-                    buyButton.innerText = `Kaufen (${this.formatNumber(pet.cost)} PP)`;
-                }
-                if (activateButton) {
-                    activateButton.disabled = true;
-                    activateButton.innerText = 'Aktivieren';
-                    activateButton.classList.remove('btn-pet-active', 'btn-pet-inactive');
-                }
-            }
-        });
+            });
 
-        const activePetDisplayElement = this.getById('active_pet_display');
-        if (activePetDisplayElement) {
-            if (this.gameState.activePet) {
-                const pet = petsData.find(p => p.id === this.gameState.activePet);
-                activePetDisplayElement.innerHTML = `
-                    <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
-                    <span>Aktives Pet: ${pet.name} (${pet.description})</span>
-                `;
-                activePetDisplayElement.style.display = 'flex';
-            } else {
-                activePetDisplayElement.style.display = 'none';
+            // Update Active Pet Display (Bleibt gleich)
+            const activePetDisplayElement = this.getById('active_pet_display');
+            if (activePetDisplayElement) {
+                if (this.gameState.activePet) {
+                    const pet = petsData.find(p => p.id === this.gameState.activePet);
+                    activePetDisplayElement.innerHTML = `
+                        <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
+                        <span>Aktives Pet: ${pet.name} (${pet.description})</span>
+                    `;
+                    activePetDisplayElement.style.display = 'flex';
+                } else {
+                    activePetDisplayElement.style.display = 'none';
+                }
             }
         }
-    }
 
     updateDiamondMineStatus() {
         const mineUpgradePurchased = this.gameState.diamondMineUnlocked;
@@ -1006,52 +951,57 @@ class SmileyGame {
     // 8. CONTENT RENDERING
     // ================================================================================================================
 
+    // Ausschnitt aus SmileyGame.js (Abschnitt 8. CONTENT RENDERING)
+
     renderPetShop() {
         const petGrid = this.getById('pet-shop-grid');
         if (!petGrid) return;
         petGrid.innerHTML = '';
 
-        petsData.forEach(pet => {
+        petsData.forEach((pet, index) => {
             const petDiv = document.createElement('div');
             petDiv.className = 'pet-item';
             petDiv.dataset.id = pet.id;
 
-            let bonusText;
+            const currentLevel = this.gameState.petLevels[index];
+            const stats = this.calculatePetStat(pet, currentLevel);
 
-            if (pet.interval > 0) {
-                bonusText = `Auto-Klick alle ${pet.interval}ms (zusätzlich +${(pet.effect * 100).toFixed(0)}% Klickkraft)`;
+            let buyButtonHtml = '';
+            let statusText;
+            let buttonClass = 'btn-buy-pet'; // Neue Klasse für Level-Up
+
+            if (currentLevel === pet.maxLevel) {
+                statusText = `Max Level (${pet.maxLevel})`;
+                buyButtonHtml = `<button class="btn-confirm" disabled>Max Level</button>`;
             } else {
-                switch (pet.effectType) {
-                    case 'click_mult':
-                        bonusText = `+${(pet.effect * 100).toFixed(0)}% Klickkraft`;
-                        break;
-                    case 'sps_mult':
-                        bonusText = `+${(pet.effect * 100).toFixed(0)}% globale SPS`;
-                        break;
-                    case 'research_mult':
-                        bonusText = `+${(pet.effect * 100).toFixed(0)}% Forschungsrate`;
-                        break;
-                    case 'cost_reduction':
-                        bonusText = `-${(pet.effect * 100).toFixed(0)}% Kostenreduktion`;
-                        break;
-                    case 'prestige_point_eff':
-                        bonusText = `+${(pet.effect * 100).toFixed(2)}% PP-Effektivität`;
-                        break;
-                    default:
-                        bonusText = 'Unbekannter Bonus';
-                }
+                // Level 0 ist der "Kauf"
+                const canAfford = this.gameState.diamanten >= stats.nextCost;
+                statusText = `Level ${currentLevel} -> ${currentLevel + 1}`;
+
+                buyButtonHtml = `
+                    <button class="${buttonClass}" data-id="${pet.id}" ${canAfford ? '' : 'disabled'}>
+                        ${currentLevel === 0 ? 'Kaufen' : 'Level Up'} (${this.formatNumber(stats.nextCost)} 💎)
+                    </button>
+                `;
             }
 
+            // Anzeige des aktuellen Effekts (formatiert)
+            const currentEffectDisplay = (stats.currentEffect * 100).toFixed(currentLevel >= 10 ? 1 : 0);
+            let bonusDescription = pet.description.replace('%', currentEffectDisplay);
+
             petDiv.innerHTML = `
-            <img src="${pet.img}" alt="${pet.name}" class="pet-img">
-            <h3>${pet.name}</h3>
-            <p class="pet-description">${pet.description}</p>
-            <p class="pet-bonus">Bonus: ${bonusText}</p>
-            <div class="pet-actions">
-                <button class="btn-pet-buy" data-id="${pet.id}">Kaufen (${this.formatNumber(pet.cost)} PP)</button>
-                <button class="btn-pet-activate btn-pet-inactive" data-id="${pet.id}">Aktivieren</button>
-            </div>
-        `;
+                <img src="${pet.img}" alt="${pet.name}" class="pet-img">
+                <h3>${pet.name} (Lv. ${currentLevel})</h3>
+                <p class="pet-description">Bonus: ${bonusDescription}</p>
+                <p class="pet-status">Nächste Stufe: ${statusText}</p>
+                <div class="pet-actions">
+                    ${buyButtonHtml}
+                    <button class="btn-pet-activate btn-pet-inactive" data-id="${pet.id}"
+                            ${currentLevel === 0 ? 'disabled' : ''}>
+                        Aktivieren
+                    </button>
+                </div>
+            `;
             petGrid.appendChild(petDiv);
         });
     }
@@ -1086,6 +1036,17 @@ class SmileyGame {
                 Mine Kaufen
             </button>
         `;
+        }
+    }
+
+    renderDiamondMinigame() {
+        // Platzhalter: Die eigentliche Logik des Minispiels kommt hier später hin.
+        const container = this.getById('minigame-placeholder');
+        if (container) {
+            container.innerHTML = `
+                <p>Minispiel-Modul (noch in Entwicklung):</p>
+                <button id="start-minigame-button" class="btn-primary" style="background-color: #6b0504;">Schürfen starten!</button>
+            `;
         }
     }
 
@@ -1182,34 +1143,6 @@ class SmileyGame {
         });
     }
 
-    createResearchUpgradeElements() {
-        const gridContainer = this.getById('research-upgrade-grid');
-        if (!gridContainer) return;
-        gridContainer.innerHTML = '';
-
-        researchUpgrades.forEach(upgrade => {
-            const upgradeDiv = document.createElement('div');
-            upgradeDiv.className = 'research-item';
-            upgradeDiv.dataset.id = upgrade.id;
-
-            let typeIcon = '';
-            if (upgrade.type === 'click_mult') {
-                typeIcon = '🖱️';
-            } else if (upgrade.type === 'building_mult') {
-                typeIcon = '🏭';
-            }
-
-            upgradeDiv.innerHTML = `
-            <h4>${typeIcon} ${upgrade.description}</h4>
-            <p>Kosten: <span id="research-cost-${upgrade.id}"></span> RP</p>
-            <button id="buy-research-${upgrade.id}" class="btn-buy-research" data-id="${upgrade.id}">
-                Forschen
-            </button>
-        `;
-            gridContainer.appendChild(upgradeDiv);
-        });
-    }
-
     createPrestigeUpgradeElements() {
         const container = this.getById('prestige-tree-container');
         const infoContainer = this.getById('info_prestige_container');
@@ -1299,7 +1232,6 @@ class SmileyGame {
 
     setupMainEventListeners() {
         this.getById('smiley_button')?.addEventListener('click', () => this.klickeSmiley());
-        this.getById('forschungslaborButton')?.addEventListener('click', () => this.kaufeMehrereGebaeude(RESEARCH_LAB_INDEX, 1));
 
         this.getById('building-grid')?.addEventListener('click', (e) => {
             const button = e.target.closest('.btn-buy');
@@ -1311,38 +1243,17 @@ class SmileyGame {
             if (!isNaN(index) && !isNaN(amount)) this.kaufeMehrereGebaeude(index, amount);
         });
 
-        this.getById('research-upgrade-grid')?.addEventListener('click', (e) => {
-            const buyButton = e.target.closest('.btn-buy-research');
-            if (!buyButton) return;
-            const id = parseInt(buyButton.dataset.id, 10);
-
-            if (!isNaN(id)) {
-                this.kaufeResearchUpgrade(id);
-            }
-        });
-
-        this.getById('next-research-container')?.addEventListener('click', (e) => {
-            const buyButton = e.target.closest('.btn-buy-research');
-            if (!buyButton) return;
-            const researchItem = buyButton.closest('.research-item');
-            if (!researchItem) return;
-            const id = parseInt(researchItem.dataset.id, 10);
-            if (!isNaN(id)) {
-                this.kaufeResearchUpgrade(id);
-            }
-        });
-
         this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            const petId = button.dataset.id;
+                const button = e.target.closest('button');
+                if (!button) return;
+                const petId = button.dataset.id;
 
-            if (button.classList.contains('btn-pet-buy')) {
-                this.kaufePet(petId);
-            } else if (button.classList.contains('btn-pet-activate')) {
-                this.activatePet(petId);
-            }
-        });
+                if (button.classList.contains('btn-buy-pet')) { // Prüft auf Level Up Button (Klasse von renderPetShop)
+                    this.levelUpPet(petId); // Level Up Logik
+                } else if (button.classList.contains('btn-pet-activate')) {
+                    this.activatePet(petId);
+                }
+            });
 
         const petModal = this.getById('pet-shop-modal');
         const openPetButton = this.getById('open-pet-shop-button');
@@ -1499,18 +1410,6 @@ class SmileyGame {
             if (buildingsModal) buildingsModal.style.display = 'none';
         });
 
-        const researchModal = this.getById('research_info_modal');
-        const openResearchButton = this.getById('show_research_button');
-        const closeResearchButton = this.getById('close_research_info_button');
-        openResearchButton?.addEventListener('click', () => {
-
-            this.createResearchInfoElements();
-            if (researchModal) researchModal.style.display = 'flex';
-        });
-        closeResearchButton?.addEventListener('click', () => {
-            if (researchModal) researchModal.style.display = 'none';
-        });
-
         const prestigeModal = this.getById('prestige_info_modal');
         const openPrestigeButton = this.getById('show_prestige_button');
         const closePrestigeButton = this.getById('close_prestige_info_button');
@@ -1624,89 +1523,80 @@ class SmileyGame {
         });
     }
 
-    // ================================================================================================================
-    // 10. INFO SEITEN RENDERING
-    // ================================================================================================================
+// ================================================================================================================
+// 10. INFO SEITEN RENDERING
+// ================================================================================================================
 
-    createBuildingInfoElements() {
-        const container = this.getById('info_buildings_container');
-        if (!container) return;
-        container.innerHTML = '';
+createBuildingInfoElements() {
+    const container = this.getById('info_buildings_container');
+    if (!container) return;
+    container.innerHTML = '';
 
-        buildingsData.forEach(building => {
-            const item = document.createElement('div');
-            item.className = 'info-upgrade-item';
-            item.innerHTML = `<h3>${building.name}</h3><p><strong>Start-Produktion:</strong> ${this.formatNumber(building.baseSPS || 0)} SPS</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(building.basePrice)} Smileys</p><p><strong>Wachstumsrate:</strong> x${building.growthRate.toFixed(2)} pro Kauf</p>`;
-            container.appendChild(item);
-        });
+    // Reguläre Gebäude
+    buildingsData.forEach(building => {
+        const item = document.createElement('div');
+        item.className = 'info-upgrade-item';
+        item.innerHTML = `<h3>${building.name}</h3><p><strong>Start-Produktion:</strong> ${this.formatNumber(building.baseSPS || 0)} SPS</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(building.basePrice)} Smileys</p><p><strong>Wachstumsrate:</strong> x${building.growthRate.toFixed(2)} pro Kauf</p>`;
+        container.appendChild(item);
+    });
 
-        const lab = uniqueBuildingsData[0];
-        const labItem = document.createElement('div');
-        labItem.className = 'info-upgrade-item special';
-        labItem.innerHTML = `<h3>${lab.name} (Spezial)</h3><p><strong>Effekt:</strong> Generiert Forschungspunkte (RP) zur Freischaltung von Upgrades.</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(lab.basePrice)} Smileys</p><p><strong>Maximal:</strong> ${lab.maxCount} Kauf</p>`;
-        container.appendChild(labItem);
+    // NEU: Nur die Mine anzeigen (UNIQUE BUILDING)
+    const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+    if (mineDefinition) {
+        const mineItem = document.createElement('div');
+        mineItem.className = 'info-upgrade-item special';
+        mineItem.innerHTML = `<h3>${mineDefinition.name} (Spezial)</h3><p><strong>Effekt:</strong> Passive Diamantenproduktion und Freischaltung Minigame.</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(mineDefinition.basePrice)} Smileys</p><p><strong>Maximal:</strong> ${mineDefinition.maxCount} Kauf</p>`;
+        container.appendChild(mineItem);
     }
+}
 
-    createResearchInfoElements() {
-        const container = this.getById('info_research_container');
-        if (!container) return;
-        container.innerHTML = '';
+createInfoStatsElements() {
+    const container = this.getById('info_stats_container');
+    if (!container) return;
+    container.innerHTML = '';
 
-        researchUpgrades.forEach(upgrade => {
-            const item = document.createElement('div');
-            item.className = 'info-upgrade-item';
-            item.innerHTML = `<h3>${upgrade.description}</h3><p><strong>Kosten:</strong> ${this.formatNumber(upgrade.cost)} Forschungspunkte</p>`;
-            container.appendChild(item);
-        });
-    }
+    container.innerHTML = `
+        <div class="info-upgrade-item">
+            <h3>Smileys pro Sekunde (SPS)</h3>
+            <p>Dies ist der wichtigste Wert im Spiel. Er gibt an, wie viele Smileys deine Gebäude automatisch pro Sekunde für dich generieren.</p>
+        </div>
+        <div class="info-upgrade-item">
+            <h3>Smiley pro Klick (SPC)</h3>
+            <p>Gibt an, wie viele Smileys du mit einem einzigen, manuellen Klick auf den großen Smiley erhältst. Dieser Wert wird durch Klick-Upgrades und bestimmte Prestige-Boni erhöht.</p>
+        </div>
+        <div class="info-upgrade-item">
+            <h3>Klick-Multiplikator</h3>
+            <p>Ein Bonus, der direkt deine "Smiley pro Klick" erhöht. Du kannst ihn durch Forschung und Prestige-Upgrades steigern.</p>
+        </div>
+        <div class="info-upgrade-item">
+            <h3>Globaler Multiplikator</h3>
+            <p>Dies ist der mächtigste Bonus im Spiel. Er wird durch deine gesammelten Prestige-Punkte und bestimmte Prestige-Upgrades berechnet und erhöht deine gesamte Smiley-Produktion (SPS) drastisch.</p>
+        </div>
+    `;
+}
 
-    createInfoStatsElements() {
-        const container = this.getById('info_stats_container');
-        if (!container) return;
-        container.innerHTML = '';
+updatePrestigeInfoTree() {
+    const treeContainer = this.getById('info_prestige_container');
+    if (!treeContainer) return;
 
-        container.innerHTML = `
-            <div class="info-upgrade-item">
-                <h3>Smileys pro Sekunde (SPS)</h3>
-                <p>Dies ist der wichtigste Wert im Spiel. Er gibt an, wie viele Smileys deine Gebäude automatisch pro Sekunde für dich generieren.</p>
-            </div>
-            <div class="info-upgrade-item">
-                <h3>Smiley pro Klick (SPC)</h3>
-                <p>Gibt an, wie viele Smileys du mit einem einzigen, manuellen Klick auf den großen Smiley erhältst. Dieser Wert wird durch Klick-Upgrades und bestimmte Prestige-Boni erhöht.</p>
-            </div>
-            <div class="info-upgrade-item">
-                <h3>Klick-Multiplikator</h3>
-                <p>Ein Bonus, der direkt deine "Smiley pro Klick" erhöht. Du kannst ihn durch Forschung und Prestige-Upgrades steigern.</p>
-            </div>
-            <div class="info-upgrade-item">
-                <h3>Globaler Multiplikator</h3>
-                <p>Dies ist der mächtigste Bonus im Spiel. Er wird durch deine gesammelten Prestige-Punkte und bestimmte Prestige-Upgrades berechnet und erhöht deine gesamte Smiley-Produktion (SPS) drastisch.</p>
-            </div>
-        `;
-    }
+    prestigeUpgrades.forEach(upgrade => {
+        const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
+        if (!node) return;
+        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
 
-    updatePrestigeInfoTree() {
-        const treeContainer = this.getById('info_prestige_container');
-        if (!treeContainer) return;
+        node.classList.toggle('purchased', isPurchased);
 
-        prestigeUpgrades.forEach(upgrade => {
-            const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
-            if (!node) return;
-            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
-
-            node.classList.toggle('purchased', isPurchased);
-
-            const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-            const svg = this.getById('prestige-lines-info');
-            if (svg) {
-                svg.querySelectorAll('line').forEach(line => {
-                    const fromId = parseInt(line.dataset.from, 10);
-                    const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
-                    line.classList.toggle('active', isFromPurchased);
-                });
-            }
-        });
-    }
+        const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+        const svg = this.getById('prestige-lines-info');
+        if (svg) {
+            svg.querySelectorAll('line').forEach(line => {
+                const fromId = parseInt(line.dataset.from, 10);
+                const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
+                line.classList.toggle('active', isFromPurchased);
+            });
+        }
+    });
+}
 
     // ================================================================================================================
     // 11. EINSTELLUNGEN
