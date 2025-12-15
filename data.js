@@ -112,3 +112,10 @@ const petsData = [
     { id: 'pet_fish', name: 'Finny der Ökonom', cost: 50, effect: 0.05, effectType: 'cost_reduction', description: '5% Kostenreduktion aller Gebäude.', img: 'pet_fish.png.png', interval: 0 },
     { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', cost: 100, effect: 0.01, effectType: 'prestige_point_eff', description: '+0.01% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0 },
 ];
+
+const guildUpgrades = [
+    { id: 0, name: "Gilden-Macht I", cost: 10000000000, effect: 0.05, effectType: 'global_sps_mult', description: "Globale SPS +5%" },
+    { id: 1, name: "Gilden-Macht II", cost: 50000000000, effect: 0.10, effectType: 'global_sps_mult', description: "Globale SPS +10%" },
+    { id: 2, name: "Gilden-Macht III", cost: 250000000000, effect: 0.15, effectType: 'global_sps_mult', description: "Globale SPS +15%" },
+    // Weitere Upgrades können hier später hinzugefügt werden
+];
