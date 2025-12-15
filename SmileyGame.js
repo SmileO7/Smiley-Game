@@ -375,21 +375,31 @@ class SmileyGame {
 
         // 3. PET Boni
         if (this.gameState.activePet) {
-            const pet = petsData.find(p => p.id === this.gameState.activePet);
-            if (pet) {
-                switch (pet.effectType) {
-                    case 'click_mult':
-                        prestigeClickMultiplier += pet.effect;
-                        break;
-                    case 'sps_mult':
-                        this.gameState.globalSPSMultiplier += pet.effect;
-                        break;
-                    case 'prestige_point_eff':
-                        this.gameState.prestigePointMultiplier += pet.effect;
-                        break;
+                    const petIndex = petsData.findIndex(p => p.id === this.gameState.activePet);
+                    const pet = petsData[petIndex];
+
+                    // WICHTIG: Hole den skalierten Effekt basierend auf dem aktuellen Level
+                    const currentLevel = this.gameState.petLevels[petIndex];
+
+                    // Wenn das Pet noch Level 0 ist (kann bei geladenen alten Spielständen passieren), überspringen wir.
+                    if (currentLevel > 0) {
+                        const stats = this.calculatePetStat(pet, currentLevel);
+                        const scaledEffect = stats.currentEffect;
+
+                        switch (pet.effectType) {
+                            case 'click_mult':
+                                prestigeClickMultiplier += scaledEffect;
+                                break;
+                            case 'sps_mult':
+                                this.gameState.globalSPSMultiplier += scaledEffect;
+                                break;
+                            case 'prestige_point_eff':
+                                this.gameState.prestigePointMultiplier += scaledEffect;
+                                break;
+                            // cost_reduction_buildings und cost_reduction_upgrades werden in calculateNextCost/calculateUpgradeCost behandelt.
+                        }
+                    }
                 }
-            }
-        }
 
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
             if (bought) {
@@ -527,31 +537,33 @@ class SmileyGame {
     }
 
     resetPrestigeUpgrades() {
-        let refundedPoints = 0;
-        this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
-            if (bought) {
-                const upgrade = prestigeUpgrades.find(u => u.id === id);
-                if (upgrade) {
-                    refundedPoints += upgrade.cost;
+            let refundedPoints = 0;
+            this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
+                if (bought) {
+                    const upgrade = prestigeUpgrades.find(u => u.id === id);
+                    if (upgrade) {
+                        refundedPoints += upgrade.cost;
+                    }
                 }
+            });
+
+            if (refundedPoints > 0) {
+                if (!confirm("Möchtest du wirklich alle investierten Prestige-Punkte zurücksetzen? Dieser Schritt kann nicht rückgängig gemacht werden.")) {
+                    return;
+                }
+
+                // NEU: Pet-Level werden als permanenter Fortschritt NICHT zurückgesetzt.
+                // Wir müssen aber das aktive Pet deaktivieren.
+                this.gameState.activePet = null;
+
+                this.gameState.prestige_punkte_verfügbar += refundedPoints;
+                this.gameState.prestigeUpgradeStatus.fill(false);
+
+                this.applyAllBoni();
+                this.updatePrestigeUI();
+                this.speichereSpiel();
             }
-        });
-
-        if (refundedPoints > 0) {
-            if (!confirm("Möchtest du wirklich alle investierten Prestige-Punkte zurücksetzen? Dieser Schritt kann nicht rückgängig gemacht werden.")) {
-                return;
-            }
-
-            this.gameState.petStatus.fill(false);
-            this.gameState.activePet = null;
-
-            this.gameState.prestige_punkte_verfügbar += refundedPoints;
-            this.gameState.prestigeUpgradeStatus.fill(false);
-            this.applyAllBoni();
-            this.updatePrestigeUI();
-            this.speichereSpiel();
         }
-    }
 
     // ================================================================================================================
     // 4. PETS LOGIK
@@ -620,19 +632,28 @@ class SmileyGame {
     // ================================================================================================================
 
     startDiamondMinigame() {
+        const MINE_INDEX = DIAMOND_MINE_INDEX;
+        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+        const BONUS_DIAMOND = 5 * mineCount; // Bonus skaliert mit der Mine
         const DURATION = 5000;
-        const BONUS_DIAMOND = 5;
 
-        if (this.gameState.diamondMinigameRunning) return;
+        if (this.gameState.diamondMinigameRunning || mineCount === 0) return;
 
         this.gameState.diamondMinigameRunning = true;
-        this.updateUI();
+        this.updateUI(); // UI aktualisieren, um Button zu sperren
 
         const progressBar = this.getById('minigame-bar');
         const resultText = this.getById('minigame-result');
 
-        if (progressBar) progressBar.style.width = '100%';
         if (resultText) resultText.innerText = 'Schürfe läuft...';
+
+        // Animation der Progress Bar starten
+        if (progressBar) {
+            // Setze den Übergang für die Dauer
+            progressBar.style.transition = `width ${DURATION}ms linear`;
+            // Starte die Animation von 100% auf 0%
+            progressBar.style.width = '0%';
+        }
 
         this.gameState.diamondMinigameTimer = setTimeout(() => {
 
@@ -640,7 +661,12 @@ class SmileyGame {
             this.gameState.diamondMinigameRunning = false;
 
             if (resultText) resultText.innerText = `Erfolgreich! +${BONUS_DIAMOND} Diamanten erhalten.`;
-            if (progressBar) progressBar.style.width = '0%';
+
+            // Reset Progress Bar für den nächsten Start
+            if (progressBar) {
+                 progressBar.style.transition = `width 0s`;
+                 progressBar.style.width = '100%';
+            }
 
             this.updateUI();
             this.speichereSpiel();
@@ -1040,15 +1066,42 @@ class SmileyGame {
     }
 
     renderDiamondMinigame() {
-        // Platzhalter: Die eigentliche Logik des Minispiels kommt hier später hin.
         const container = this.getById('minigame-placeholder');
-        if (container) {
-            container.innerHTML = `
-                <p>Minispiel-Modul (noch in Entwicklung):</p>
-                <button id="start-minigame-button" class="btn-primary" style="background-color: #6b0504;">Schürfen starten!</button>
-            `;
+        if (!container) return;
+
+        const MINE_INDEX = DIAMOND_MINE_INDEX;
+        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+        const BONUS_DIAMOND = 5 * mineCount; // Bonus skaliert mit der Anzahl der Minen
+        const DURATION = 5000; // 5 Sekunden
+
+        container.innerHTML = `
+            <h3>Minispiel: Aktive Schürfung</h3>
+            <p>Ertrag pro erfolgreicher Schürfung: ${BONUS_DIAMOND} 💎</p>
+
+            <div class="minigame-progress-container">
+                <div id="minigame-bar" class="progress-bar" style="width: 0%; transition: width 0s;"></div>
+            </div>
+            <p id="minigame-result" class="info-section">Bereit zum Starten.</p>
+
+            <button id="start-minigame-button" class="btn-confirm" ${this.gameState.diamondMinigameRunning ? 'disabled' : ''}>
+                ${this.gameState.diamondMinigameRunning ? 'Schürfe läuft...' : 'Schürfen starten!'}
+            </button>
+        `;
+
+        // Wenn das Spiel läuft, muss die Bar korrekt animiert werden
+        if (this.gameState.diamondMinigameRunning) {
+            const progressBar = this.getById('minigame-bar');
+            if (progressBar) {
+                // Um die Animation zu simulieren, setzen wir die Breite sofort auf 100% und fügen eine Transition hinzu,
+                // wenn es gestartet wird. Hier setzen wir den Startzustand, falls wir die Seite neu laden.
+                // Die eigentliche Animation wird in startDiamondMinigame() durchgeführt.
+                progressBar.style.width = '100%';
+                this.getById('minigame-result').innerText = 'Schürfe läuft...';
+            }
         }
     }
+
+
 
     renderGuildsContent() {
         const container = this.getById('guilds-content');

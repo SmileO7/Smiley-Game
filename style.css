@@ -574,3 +574,22 @@ main {
     margin-bottom: 8px;
     font-size: 1.2em;
 }
+
+/* Ausschnitt aus style.css */
+
+.minigame-progress-container {
+    width: 100%;
+    background: #444; /* Dunkler Hintergrund */
+    border-radius: 4px;
+    height: 20px;
+    margin: 15px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 100%;
+    background: #009ffd; /* Blaue Füllung */
+    border-radius: 4px;
+    /* transition: width 0s; <-- Wird im JS manipuliert */
+}
