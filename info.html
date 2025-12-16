@@ -20,34 +20,37 @@
     </nav>
 </header>
 <div class="info-page-layout">
-<main class="info-main">
-    <h1>Info & Tipps</h1>
+    <main class="info-main">
+        <h1>Info & Tipps</h1>
 
-    <div class="info-section box-style">
-        <h2>Das Spiel</h2>
-        <p>Smiley Clicker ist ein simples, aber süchtig machendes Spiel. Das Hauptziel ist es, so viele Smileys wie möglich zu sammeln, um Upgrades zu kaufen und deine Produktion zu automatisieren.</p>
-    </div>
-
-    <div class="info-section box-style">
-        <h2>Spielmechaniken im Detail</h2>
-        <div class="info-button-group">
-            <button id="show_buildings_button" class="btn-primary">Gebäude-Übersicht</button>
-            <button id="show_prestige_button" class="btn-primary">Prestige-Skill-Tree</button>
-            <button id="show_stats_button" class="btn-primary">Stats-Erklärung</button>
+        <div class="info-section box-style">
+            <h2>Das Spiel</h2>
+            <p>Smiley Clicker ist ein simpler, doch sehr spaßiger Idle Clicker wie man das Spiel Prinzip von Spielen wie Cookie Clicker kennt mit gewissen Unterschiede.</p>
         </div>
-    </div>
 
-    <div class="info-section box-style">
-        <h2>Strategie-Tipps</h2>
-        <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele Gebäude wie möglich zu kaufen.</p>
-        <p><strong>Forschungslabor:</strong> Sobald du es dir leisten kannst, kaufe das Forschungslabor. Die Upgrades, die du dort freischaltest, sind entscheidend für deinen Fortschritt.</p>
-        <p><strong>Prestige-Timing:</strong> Führe einen Prestige-Reset durch, wenn du merkst, dass dein Fortschritt deutlich langsamer wird. Ein guter Anhaltspunkt ist, wenn du für den nächsten Reset eine signifikante Menge an neuen Prestige-Punkten erhalten würdest.</p>
-        <p><strong>Geduld ist eine Tugend:</strong> Manchmal ist es am besten, das Spiel einfach laufen zu lassen (AFK - away from keyboard), um eine große Menge an Smileys für das nächste große Upgrade oder den nächsten Prestige-Punkt anzusammeln.</p>
-    </div>
+        <div class="info-section box-style">
+            <h2>Spielmechaniken im Detail</h2>
+            <div class="info-button-group">
+                <button id="show_buildings_button" class="btn-primary">Gebäude-Übersicht</button>
+                <button id="show_global_upgrades_button" class="btn-primary">⚙️ Gekaufte Upgrades</button>
+                <button id="show_prestige_button" class="btn-primary">Prestige-Skill-Tree</button>
+                <button id="show_stats_button" class="btn-primary">Stats-Erklärung</button>
+                <button id="show_pets_button" class="btn-primary">🐶 Pet-Infos</button>
+            </div>
+        </div>
 
-</main>
+        <div class="info-section box-style">
+            <h2>Strategie-Tipps</h2>
+            <p><strong>Fokus auf SPS:</strong> Am Anfang ist es am wichtigsten, deine passive Smiley-Produktion (SPS) zu steigern. Konzentriere dich darauf, so viele hochwertige Gebäude wie möglich zu kaufen. Denn die bringen den meisten Ertrag an Smiley Per Sekunde (SPS) auch am anfang des Spiels.</p>
+            <p><strong>Upgrades:</strong> Sobald du es dir leisten kannst, kaufe die Global Upgrades. Diese Boni sind entscheidend für deinen Fortschritt.</p>
+            <p><strong>Prestige-Timing:</strong> Führe einen Prestige-Reset durch, wenn du merkst, dass dein Fortschritt deutlich langsamer wird. Ein guter Anhaltspunkt ist, wenn du für den nächsten Reset eine signifikante Menge an neuen Prestige-Punkten erhalten würdest.</p>
+            <p><strong>Planung ist Alles:</strong> Schaue gerne dich gerne hier etwas um Insbesondere in den Tabs Gebäude-Übersicht und Prestige-Skill-Tree genauso auch bei den Stats Erklärung dort bekommst du alles wichtige gezeigt.</p>
+            <p><strong>Geduld ist eine Tugend:</strong> Manchmal ist es am besten, das Spiel einfach laufen zu lassen (AFK - away from keyboard), um eine große Menge an Smileys für das nächste große Upgrade oder den nächsten Prestige-Punkt anzusammeln.</p>
+        </div>
 
-<!-- Settings Modal -->
+    </main>
+</div>
+
 <div id="settings-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <h2>Einstellungen</h2>
@@ -64,7 +67,7 @@
         </div>
         <div class="settings-section">
             <h3>Spielstand</h3>
-            <p>Hier kannst du deinen Spielstand exportieren oder importieren.</p>
+            <p>Hier kannst du deinen Spielstand dir als Text Datei herunterladen um ihn garnicht zu verlieren oder einen anderen Spielstand von wem anderes zu spielen.</p>
             <div class="save-actions">
                 <button id="export-save-button" class="btn-primary">Exportieren</button>
                 <button id="import-save-button" class="btn-primary">Importieren</button>
@@ -72,50 +75,69 @@
             <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
         </div>
         <div class="modal-buttons">
-            <button id="close-settings-button" class="btn-cancel">Schließen</button>
+            <button id="close-settings-button" class="btn-cancel">Close</button>
         </div>
     </div>
 </div>
 
-<!-- Buildings Modal -->
 <div id="buildings_info_modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>Gebäude-Übersicht</h2>
-        <div id="info_buildings_container" class="info-upgrades-container">
-            <!-- Gebäude-Infos werden hier dynamisch generiert -->
+        <div id="info_buildings_container" class="info-upgrades-container info-grid">
         </div>
         <div class="modal-buttons">
-            <button id="close_buildings_info_button" class="btn-cancel">Schließen</button>
+            <button id="close_buildings_info_button" class="btn-cancel">Close</button>
         </div>
     </div>
 </div>
 
-<!-- Prestige Modal -->
+<div id="global_upgrades_info_modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <h2>⚙️ Global Upgrades</h2>
+        <p>Du hast es zu den Globalen upgrades geschafft, hier siehst du alle Upgrades die du auf Kaufen kannst mit Smileys. Ich bin gespannt wie weit du es schaffst. :)</p>
+        <div id="info_global_upgrades_container" class="info-upgrades-container info-grid">
+        </div>
+        <div class="modal-buttons">
+            <button id="close_global_upgrades_info_button" class="btn-cancel">Close</button>
+        </div>
+    </div>
+</div>
+
+
 <div id="prestige_info_modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>Prestige-Skill-Tree</h2>
+        <p>Was du bist schon soweit das du dir die Prestige Upgrades anguckst Respekt.</p>
         <div id="info_prestige_container" class="prestige-tree-container">
-            <!-- Prestige-Skill-Tree wird hier dynamisch generiert -->
         </div>
         <div class="modal-buttons">
-            <button id="close_prestige_info_button" class="btn-cancel">Schließen</button>
+            <button id="close_prestige_info_button" class="btn-cancel">Close</button>
         </div>
     </div>
 </div>
 
-<!-- Stats Modal -->
 <div id="stats_info_modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>Stats-Erklärung</h2>
-        <div id="info_stats_container" class="info-stats-container">
-            <!-- Stats-Erklärungen werden hier dynamisch generiert -->
+        <div id="info_stats_container" class="info-stats-container info-grid">
         </div>
         <div class="modal-buttons">
-            <button id="close_stats_info_button" class="btn-cancel">Schließen</button>
+            <button id="close_stats_info_button" class="btn-cancel">Close</button>
         </div>
     </div>
 </div>
+
+<div id="pets_info_modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <h2>🐶 Pet-Infos (Level & Boni)</h2>
+        <div id="info_pets_container" class="info-stats-container info-grid">
+        </div>
+        <div class="modal-buttons">
+            <button id="close_pets_info_button" class="btn-cancel">Close</button>
+        </div>
+    </div>
 </div>
+
 
 <audio id="background-music" loop>
 </audio>

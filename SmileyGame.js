@@ -29,10 +29,10 @@ class SmileyGame {
             buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
             buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
 
-            researchStatus: researchUpgrades.map(() => false), // <--- JETZT KORREKT HINZUFÜGEN!
+            researchStatus: globalUpgrades.map(() => false), // <--- JETZT KORREKT HINZUFÜGEN!
             prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
 
-            petLevels: petsData.map(() => 0), // NEU BEHALTEN
+            petLevels: {}, // NEU BEHALTEN
             activePet: null,
 
             // --- Laufzeit-Statistiken & Boni ---
@@ -71,6 +71,8 @@ class SmileyGame {
         this.createBuildingElements();
         this.renderPetShop();
         this.createPrestigeUpgradeElements();
+
+        this.updateGlobalUpgradeUI();
 
         this.updatePrestigeUI();
 
@@ -479,6 +481,30 @@ class SmileyGame {
         }
     }
 
+    // Ausschnitt aus SmileyGame.js (Abschnitt 3. KERNLOGIK)
+
+    kaufeGlobalUpgrade(id) {
+        const upgrade = globalUpgrades.find(u => u.id === id); // Nutzt NEUE Variable
+
+        // Annahme: researchStatus speichert den Kaufstatus für Global Upgrades
+        if (!upgrade || this.gameState.researchStatus[id]) return;
+
+        // Kostenberechnung unter Berücksichtigung des aktiven Pets (Owl)
+        const finalCost = this.calculateUpgradeCost(upgrade.cost);
+
+        if (this.gameState.aktuelle_smileys < finalCost) return;
+
+        // Kostenabzug von Smileys
+        this.gameState.aktuelle_smileys -= finalCost;
+        this.gameState.researchStatus[id] = true; // Speichert den Kaufstatus
+
+        // Wende alle Boni erneut an, da sich Multiplikatoren oder Gebäudeboni geändert haben könnten
+        this.applyAllBoni();
+        this.updateGlobalUpgradeUI(); // NUR die Global Upgrades aktualisieren
+        this.updateUI(); // Gesamtes UI aktualisieren, um neue Multiplikatoren zu zeigen
+        this.speichereSpiel();
+    }
+
     kaufePrestigeUpgrade(id) {
         const upgrade = prestigeUpgrades.find(u => u.id === id);
         if (!upgrade) return;
@@ -883,6 +909,57 @@ class SmileyGame {
                 btn100x.innerHTML = `100x (${this.formatNumber(cost100x)})`;
                 btn100x.disabled = this.gameState.aktuelle_smileys < cost100x;
             }
+        });
+    }
+
+    // Ausschnitt aus SmileyGame.js (Abschnitt 7. RENDERING & UI-UPDATES)
+
+    updateGlobalUpgradeUI() {
+        const container = this.getById('global-upgrades-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        let nextUpgradeFound = false; // Flag, um nur das nächste ungekaufte Upgrade zu zeigen.
+
+        globalUpgrades.forEach(upgrade => {
+            const isPurchased = this.gameState.researchStatus[upgrade.id];
+
+            // NEUE LOGIK: Wenn bereits gekauft, überspringen und NICHT rendern.
+            if (isPurchased) {
+                return;
+            }
+
+            // Logik, um nur das nächste *ungekaufte* anzuzeigen:
+            // Wenn wir bereits das nächste ungekaufte Upgrade gefunden haben, überspringen wir alle weiteren.
+            if (nextUpgradeFound) {
+                return;
+            }
+
+            const upgradeDiv = document.createElement('div');
+            upgradeDiv.className = 'research-item';
+            upgradeDiv.dataset.id = upgrade.id;
+
+            // Berechne die finalen Kosten
+            const finalCost = this.calculateUpgradeCost(upgrade.cost);
+            const canAfford = this.gameState.aktuelle_smileys >= finalCost;
+
+            let typeIcon = upgrade.type === 'click_mult' ? '🖱️' : '🏭';
+
+            upgradeDiv.innerHTML = `
+                <h4>${typeIcon} ${upgrade.description}</h4>
+                <p>Kosten: ${this.formatNumber(finalCost)} Smileys</p>
+                <button class="btn-buy-research" data-id="${upgrade.id}" ${!canAfford ? 'disabled' : ''}>
+                    Kaufen
+                </button>
+            `;
+
+            // Die 'purchased' Klasse ist nun unnötig, da wir es nicht mehr anzeigen.
+            upgradeDiv.classList.toggle('affordable', canAfford);
+
+            container.appendChild(upgradeDiv);
+
+            // Markiere, dass wir dieses Upgrade (das Erste Ungekaufte) gefunden/angezeigt haben.
+            nextUpgradeFound = true;
         });
     }
 
@@ -1296,6 +1373,19 @@ class SmileyGame {
             if (!isNaN(index) && !isNaN(amount)) this.kaufeMehrereGebaeude(index, amount);
         });
 
+        this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
+                const button = e.target.closest('.btn-buy-research'); // Button muss die Klasse haben
+                if (!button) return;
+
+                const researchItem = button.closest('.research-item');
+                if (!researchItem) return;
+
+                const id = parseInt(researchItem.dataset.id, 10);
+                if (!isNaN(id)) {
+                    this.kaufeGlobalUpgrade(id); // NEU: Korrekter Methodenname
+                }
+            })
+
         this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
@@ -1463,6 +1553,20 @@ class SmileyGame {
             if (buildingsModal) buildingsModal.style.display = 'none';
         });
 
+        const globalUpgradesModal = this.getById('global_upgrades_info_modal');
+                const openGlobalUpgradesButton = this.getById('show_global_upgrades_button');
+                const closeGlobalUpgradesButton = this.getById('close_global_upgrades_info_button'); // DIESE ID PRÜFEN!
+
+                openGlobalUpgradesButton?.addEventListener('click', () => {
+                    this.createInfoGlobalUpgradeElements();
+                    if (globalUpgradesModal) globalUpgradesModal.style.display = 'flex';
+                });
+
+                // HIER DER WICHTIGE LISTENER:
+                closeGlobalUpgradesButton?.addEventListener('click', () => {
+                    if (globalUpgradesModal) globalUpgradesModal.style.display = 'none';
+                });
+
         const prestigeModal = this.getById('prestige_info_modal');
         const openPrestigeButton = this.getById('show_prestige_button');
         const closePrestigeButton = this.getById('close_prestige_info_button');
@@ -1603,6 +1707,62 @@ createBuildingInfoElements() {
     }
 }
 
+createInfoGlobalUpgradeElements() {
+    const container = this.getById('info_global_upgrades_container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    let boughtUpgradesCount = 0;
+
+    globalUpgrades.forEach((upgrade, index) => {
+        if (this.gameState.researchStatus[index]) {
+            boughtUpgradesCount++;
+
+            // Icon basierend auf dem Typ
+            let typeIcon = upgrade.type === 'click_mult' ? '🖱️' : '🏭';
+            let effectType = upgrade.type === 'click_mult' ? 'Klickkraft' : 'Gebäudeproduktion';
+
+            const item = document.createElement('div');
+            item.className = 'info-upgrade-item bought-upgrade';
+            item.innerHTML = `
+                <h3>${typeIcon} ${upgrade.description}</h3>
+                <p>
+                    <strong>Effekt:</strong> +${(upgrade.value * 100).toFixed(0)}% auf ${effectType}
+                    ${upgrade.buildingIndex !== undefined ? ` (Geb. #${upgrade.buildingIndex})` : '(Global)'}
+                </p>
+                `;
+            container.appendChild(item);
+        }
+    });
+
+    if (boughtUpgradesCount === 0) {
+        container.innerHTML = '<p>Bisher wurden keine Global Upgrades gekauft.</p>';
+    }
+}
+
+updatePrestigeInfoTree() {
+    const treeContainer = this.getById('info_prestige_container');
+    if (!treeContainer) return;
+
+    prestigeUpgrades.forEach(upgrade => {
+        const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
+        if (!node) return;
+        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+
+        node.classList.toggle('purchased', isPurchased);
+
+        const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+        const svg = this.getById('prestige-lines-info');
+        if (svg) {
+            svg.querySelectorAll('line').forEach(line => {
+                const fromId = parseInt(line.dataset.from, 10);
+                const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
+                line.classList.toggle('active', isFromPurchased);
+            });
+        }
+    });
+}
+
 createInfoStatsElements() {
     const container = this.getById('info_stats_container');
     if (!container) return;
@@ -1628,26 +1788,55 @@ createInfoStatsElements() {
     `;
 }
 
-updatePrestigeInfoTree() {
-    const treeContainer = this.getById('info_prestige_container');
-    if (!treeContainer) return;
+createInfoPetsElements() {
+    const container = this.getById('info_pets_container');
+    if (!container) return;
+    container.innerHTML = '';
 
-    prestigeUpgrades.forEach(upgrade => {
-        const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
-        if (!node) return;
-        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+    petsData.forEach((pet) => { // KEIN 'index' mehr nötig
+        // NEU: Holt den Level-Status anhand der Pet-ID (z.B. 'pet_dog')
+        // Wenn noch nicht initialisiert, ist der Status 0.
+        const petStatus = this.gameState.petLevels[pet.id] || 0;
 
-        node.classList.toggle('purchased', isPurchased);
+        // Berechnung des aktuellen Bonus und der Kosten (wie zuvor)
+        const currentBonusValue = pet.baseEffect + (petStatus * 0.05);
+        // Kostenformel ist nun korrekt, da petStatus korrekt ist.
+        const costFormula = pet.levelCost * Math.pow(pet.costGrowth, petStatus);
 
-        const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-        const svg = this.getById('prestige-lines-info');
-        if (svg) {
-            svg.querySelectorAll('line').forEach(line => {
-                const fromId = parseInt(line.dataset.from, 10);
-                const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
-                line.classList.toggle('active', isFromPurchased);
-            });
+        let bonusText = '';
+
+        // ... (Rest des Switch-Blocks bleibt gleich) ...
+        switch (pet.effectType) {
+            case 'click_mult':
+                bonusText = `Erhöht die Klick-Stärke um ${(currentBonusValue * 100).toFixed(1)}%`;
+                break;
+            case 'sps_mult':
+                bonusText = `Erhöht die SPS-Rate um ${(currentBonusValue * 100).toFixed(1)}%`;
+                break;
+            case 'cost_reduction_upgrades':
+                bonusText = `Reduziert Kosten für Global Upgrades um ${(currentBonusValue * 100).toFixed(1)}%`;
+                break;
+            case 'cost_reduction_buildings':
+                bonusText = `Reduziert Gebäudekosten um ${(currentBonusValue * 100).toFixed(1)}%`;
+                break;
+            case 'prestige_point_eff':
+                bonusText = `Erhöht die Prestige-Punkt-Effektivität um ${(currentBonusValue * 100).toFixed(1)}%`;
+                break;
+            default:
+                bonusText = 'Unbekannter Bonus';
         }
+
+        const item = document.createElement('div');
+        item.className = 'info-stats-item pet-info-item';
+        item.innerHTML = `
+            <h3>🐶 ${pet.name} (Level ${petStatus})</h3>
+            <p><strong>Typ:</strong> ${pet.description}</p>
+            <p><strong>Aktueller Effekt:</strong> ${bonusText}</p>
+            <p>
+                <strong>Nächstes Level:</strong> Kostet ${this.formatNumber(costFormula)} Smileys.
+            </p>
+        `;
+        container.appendChild(item);
     });
 }
 

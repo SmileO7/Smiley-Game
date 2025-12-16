@@ -25,7 +25,7 @@ const buildingsData = [
 ];
 
 // NOTE: Die buildingIndex Werte für Research-Upgrades sind jetzt 0-14 (da das Labor Index 3 wegfiel)
-const researchUpgrades = [
+const globalUpgrades = [
     { id: 0, cost: 10, description: 'Auto-Klicker Prod. +10%', type: 'building_mult', buildingIndex: 0, value: 0.1 },
     { id: 1, cost: 50, description: 'Auto-Klicker Prod. +15%', type: 'building_mult', buildingIndex: 0, value: 0.15 },
     { id: 2, cost: 200, description: 'Auto-Klicker Prod. +25%', type: 'building_mult', buildingIndex: 0, value: 0.25 },
