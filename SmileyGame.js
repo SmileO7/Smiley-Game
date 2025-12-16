@@ -429,26 +429,17 @@ class SmileyGame {
     // ================================================================================================================
 
     klickeSmiley() {
-        const smileysGeklickt = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
-        this.gameState.aktuelle_smileys += smileysGeklickt;
-        this.gameState.gesammelte_smileys += smileysGeklickt;
+        // 1. Klickkraft berechnen
+        const actualClickPower = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
 
-        const baseClick = this.gameState.klickKraft;
-        const totalMulti = this.gameState.klickKraftMultiplier;
+        // 2. Smileys erhöhen
+        this.gameState.aktuelle_smileys += actualClickPower;
+        this.gameState.gesammelte_smileys += actualClickPower;
 
-        console.log(`[KLICK] Basis: ${baseClick} | Multiplikator: x${totalMulti.toFixed(2)} | Gewinn: ${this.formatNumber(smileysGeklickt)}`);
+        // Keine Klick-Feedback- oder Debug-Logik mehr.
 
-        const clickSound = this.getById('click-sound');
-        if (clickSound) {
-            clickSound.currentTime = 0;
-            clickSound.play().catch(e => {
-                const musicPlayer = this.getById('background-music');
-                if (musicPlayer) musicPlayer.play().catch(() => {});
-            });
-        }
-
+        // 3. UI aktualisieren
         this.updateUI();
-
     }
 
     kaufeMehrereGebaeude(index, amount) {
@@ -810,71 +801,88 @@ class SmileyGame {
     // ================================================================================================================
 
     updateUI() {
-        this.computeTotalSPS();
+            this.computeTotalSPS();
 
-        const diamantenEl = this.getById('diamanten_anzeige');
-        if (diamantenEl) {
-            diamantenEl.innerText = this.formatNumber(this.gameState.diamanten);
-        }
+            // ... (Anzeigen für Währungen und SPS/Klick bleiben gleich) ...
+            const diamantenEl = this.getById('diamanten_anzeige');
+            if (diamantenEl) {
+                diamantenEl.innerText = this.formatNumber(this.gameState.diamanten);
+            }
 
-        const aktuelleSmileysEl = this.getById('aktuelle_smileys');
-        if (aktuelleSmileysEl) {
-            aktuelleSmileysEl.innerText = this.formatNumber(this.gameState.aktuelle_smileys);
-        }
+            const aktuelleSmileysEl = this.getById('aktuelle_smileys');
+            if (aktuelleSmileysEl) {
+                aktuelleSmileysEl.innerText = this.formatNumber(this.gameState.aktuelle_smileys);
+            }
 
-        const smileysProKlickEl = this.getById('smileys_pro_klick_anzeige');
-        if (smileysProKlickEl) {
-            smileysProKlickEl.innerText = this.formatNumber(this.gameState.klickKraft * this.gameState.klickKraftMultiplier);
-        }
+            const smileysProKlickEl = this.getById('smileys_pro_klick_anzeige');
+            if (smileysProKlickEl) {
+                smileysProKlickEl.innerText = this.formatNumber(this.gameState.klickKraft * this.gameState.klickKraftMultiplier);
+            }
 
-        const smileysProSekundeEl = this.getById('smileys_pro_sekunde_anzeige');
-        if (smileysProSekundeEl) {
-            smileysProSekundeEl.innerText = this.formatNumber(this.gameState.totalSPS);
-        }
+            const smileysProSekundeEl = this.getById('smileys_pro_sekunde_anzeige');
+            if (smileysProSekundeEl) {
+                smileysProSekundeEl.innerText = this.formatNumber(this.gameState.totalSPS);
+            }
 
-        const smileysProMinuteEl = this.getById('smileys_pro_minute_anzeige');
-        if (smileysProMinuteEl) {
-            smileysProMinuteEl.innerText = this.formatNumber(this.gameState.totalSPS * 60);
-        }
+            const smileysProMinuteEl = this.getById('smileys_pro_minute_anzeige');
+            if (smileysProMinuteEl) {
+                smileysProMinuteEl.innerText = this.formatNumber(this.gameState.totalSPS * 60);
+            }
 
-        const klickMultiDisplay = this.getById('klick_multiplikator_anzeige');
-        if (klickMultiDisplay) {
-            klickMultiDisplay.innerText = `x${this.gameState.klickKraftMultiplier.toFixed(2)}`;
-        }
+            const klickMultiDisplay = this.getById('klick_multiplikator_anzeige');
+            if (klickMultiDisplay) {
+                klickMultiDisplay.innerText = `x${this.gameState.klickKraftMultiplier.toFixed(2)}`;
+            }
 
-        const globalMultiDisplay = this.getById('globaler_multiplikator_anzeige');
-        if (globalMultiDisplay) {
-            globalMultiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
-        }
+            const globalMultiDisplay = this.getById('globaler_multiplikator_anzeige');
+            if (globalMultiDisplay) {
+                globalMultiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
 
-        this.updateBuildingUI();
-        this.updatePetButtons();
-        this.updateDiamondMineStatus();
-        this.updateGuildsButton(); // NEU HINZUGEFÜGT
+                // --- NEUE UX: Detaillierte Multiplikator-Aufschlüsselung ---
+                const prestigeFactor = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
+                const resetFactor = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+                const upgradeFactor = this.gameState.globalSPSMultiplier;
+                const guildFactor = 1 + this.gameState.guildSPSMultiplier;
 
-        const prestigePointThreshold = 1000000;
-        const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1 / 3));
-        const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
+                const tooltipText = `
+                    Prestige Punkte: x${prestigeFactor.toFixed(2)}
+                    Resets Bonus: x${resetFactor.toFixed(2)}
+                    Upgrades/Pets: x${upgradeFactor.toFixed(2)}
+                    Gilden Bonus: x${guildFactor.toFixed(2)}
+                `.trim().replace(/\s{2,}/g, ' ');
 
-        const nextPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
-        const lastPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain, 3) * prestigePointThreshold;
+                globalMultiDisplay.title = tooltipText;
+                // -------------------------------------------------------------
+            }
 
-        const progressBar = this.getById('prestige-progress-bar');
-        const progressText = this.getById('prestige-progress-text');
+            this.updateBuildingUI();
+            this.updatePetButtons();
+            this.updateDiamondMineStatus();
+            this.updateGuildsButton();
 
-        if (progressBar && progressText) {
-            if (pointsToGain > 0) {
-                progressBar.style.width = '100%';
-                progressText.innerText = `+${pointsToGain} Prestige-Punkt${pointsToGain > 1 ? 'e' : ''} verfügbar!`;
-            } else {
-                const progress = Math.max(0, this.gameState.gesammelte_smileys - lastPointRequirement);
-                const goal = nextPointRequirement - lastPointRequirement;
-                const percentage = goal > 0 ? Math.min(100, (progress / goal) * 100) : 0;
-                progressBar.style.width = `${percentage}%`;
-                progressText.innerText = `${this.formatNumber(this.gameState.gesammelte_smileys)} / ${this.formatNumber(nextPointRequirement)}`;
+            const prestigePointThreshold = 1000000;
+            const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1 / 3));
+            const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
+
+            const nextPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
+            const lastPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain, 3) * prestigePointThreshold;
+
+            const progressBar = this.getById('prestige-progress-bar');
+            const progressText = this.getById('prestige-progress-text');
+
+            if (progressBar && progressText) {
+                if (pointsToGain > 0) {
+                    progressBar.style.width = '100%';
+                    progressText.innerText = `+${pointsToGain} Prestige-Punkt${pointsToGain > 1 ? 'e' : ''} verfügbar!`;
+                } else {
+                    const progress = Math.max(0, this.gameState.gesammelte_smileys - lastPointRequirement);
+                    const goal = nextPointRequirement - lastPointRequirement;
+                    const percentage = goal > 0 ? Math.min(100, (progress / goal) * 100) : 0;
+                    progressBar.style.width = `${percentage}%`;
+                    progressText.innerText = `${this.formatNumber(this.gameState.gesammelte_smileys)} / ${this.formatNumber(nextPointRequirement)}`;
+                }
             }
         }
-    }
 
     updateBuildingUI() {
             // HIER WIRD AUF DIE KORREKTE METHODE UMGESTELLT: getBuildingCost
@@ -1047,16 +1055,19 @@ class SmileyGame {
             if (petGrid) petGrid.style.display = 'grid';
 
             // Logik für Aktivierungstoggles
-            petsData.forEach((pet, index) => {
+            petsData.forEach((pet) => {
                 const petDiv = petGrid.querySelector(`.pet-item[data-id="${pet.id}"]`);
                 if (!petDiv) return;
 
-                const currentLevel = this.gameState.petLevels[index]; // <-- KORREKTE PRÜFUNG
+                // --- KORREKTUR: currentLevel verwendet Pet-ID (String) ---
+                const currentLevel = this.gameState.petLevels[pet.id] || 0;
+                // --------------------------------------------------------
+
                 const isActive = this.gameState.activePet === pet.id;
                 const activateButton = petDiv.querySelector('.btn-pet-activate');
 
                 petDiv.classList.toggle('active', isActive);
-                petDiv.classList.toggle('bought', currentLevel > 0); // <-- KORREKTE PRÜFUNG
+                petDiv.classList.toggle('bought', currentLevel > 0);
 
                 if (activateButton) {
                     if (currentLevel > 0) {
@@ -1072,14 +1083,22 @@ class SmileyGame {
                 }
             });
 
-            // Update Active Pet Display (Bleibt gleich)
+            // Update Active Pet Display
             const activePetDisplayElement = this.getById('active_pet_display');
             if (activePetDisplayElement) {
                 if (this.gameState.activePet) {
                     const pet = petsData.find(p => p.id === this.gameState.activePet);
+                    // Hole Level für die Anzeige
+                    const currentLevel = this.gameState.petLevels[this.gameState.activePet] || 0;
+
+                    // Berechne den aktuellen Effekt
+                    const stats = this.calculatePetStat(pet, currentLevel);
+                    const currentEffectDisplay = (stats.currentEffect * 100).toFixed(1);
+
                     activePetDisplayElement.innerHTML = `
                         <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
-                        <span>Aktives Pet: ${pet.name} (${pet.description})</span>
+                        <span>Aktives Pet: ${pet.name} (Lv. ${currentLevel})</span>
+                        <span class="pet-tooltip" title="${pet.description.replace('%', currentEffectDisplay)}">ℹ️</span>
                     `;
                     activePetDisplayElement.style.display = 'flex';
                 } else {
@@ -1764,22 +1783,38 @@ createBuildingInfoElements() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Reguläre Gebäude
-    buildingsData.forEach(building => {
+    // Kombiniere beide Datensätze
+    const allBuildings = [...buildingsData, ...uniqueBuildingsData];
+
+    // Hole den aktuellen globalen Multiplikator
+    const globalMulti = this.gameState.globalerPrestigeMultiplikator;
+
+    allBuildings.forEach((building, index) => {
+        // Diamanten-Mine (Index 14) überspringen
+        if (index === DIAMOND_MINE_INDEX) {
+            return;
+        }
+
         const item = document.createElement('div');
-        item.className = 'info-upgrade-item';
-        item.innerHTML = `<h3>${building.name}</h3><p><strong>Start-Produktion:</strong> ${this.formatNumber(building.baseSPS || 0)} SPS</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(building.basePrice)} Smileys</p><p><strong>Wachstumsrate:</strong> x${building.growthRate.toFixed(2)} pro Kauf</p>`;
+        item.className = 'info-stats-item building-info-item';
+
+        // 1. Basis SPS pro Stück (enthält nur den Prestige-Upgrade-Multi)
+        const baseSPSPerUnit = building.baseSPS * (building.prestigeMulti || 1);
+
+        // 2. Skalierte SPS für EINE Einheit (mit globalMulti)
+        const scaledSPSPerUnit = baseSPSPerUnit * globalMulti;
+
+        let icon = '🏠';
+
+        item.innerHTML = `
+            <h3>${icon} ${building.name}</h3>
+            <p><strong>Basis SPS pro Stück:</strong> ${this.formatNumber(baseSPSPerUnit)}</p>
+            <p><strong>Aktuelle SPS pro Stück (mit Boni):</strong> ${this.formatNumber(scaledSPSPerUnit)}</p>
+            <p class="small-text">(Beinhaltet Prestige, Pets und Gilden Boni)</p>
+        `;
+
         container.appendChild(item);
     });
-
-    // NEU: Nur die Mine anzeigen (UNIQUE BUILDING)
-    const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-    if (mineDefinition) {
-        const mineItem = document.createElement('div');
-        mineItem.className = 'info-upgrade-item special';
-        mineItem.innerHTML = `<h3>${mineDefinition.name} (Spezial)</h3><p><strong>Effekt:</strong> Passive Diamantenproduktion und Freischaltung Minigame.</p><p><strong>Start-Kosten:</strong> ${this.formatNumber(mineDefinition.basePrice)} Smileys</p><p><strong>Maximal:</strong> ${mineDefinition.maxCount} Kauf</p>`;
-        container.appendChild(mineItem);
-    }
 }
 
 createInfoGlobalUpgradeElements() {
@@ -1787,32 +1822,86 @@ createInfoGlobalUpgradeElements() {
     if (!container) return;
     container.innerHTML = '';
 
-    let boughtUpgradesCount = 0;
+    // Gruppiert die Upgrades nach Gebäude-Index (0-14) oder Global (-1/undefined)
+    const groupedUpgrades = {};
 
     globalUpgrades.forEach((upgrade, index) => {
-        if (this.gameState.researchStatus[index]) {
-            boughtUpgradesCount++;
+        const buildingIndex = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
 
-            // Icon basierend auf dem Typ
-            let typeIcon = upgrade.type === 'click_mult' ? '🖱️' : '🏭';
-            let effectType = upgrade.type === 'click_mult' ? 'Klickkraft' : 'Gebäudeproduktion';
-
-            const item = document.createElement('div');
-            item.className = 'info-upgrade-item bought-upgrade';
-            item.innerHTML = `
-                <h3>${typeIcon} ${upgrade.description}</h3>
-                <p>
-                    <strong>Effekt:</strong> +${(upgrade.value * 100).toFixed(0)}% auf ${effectType}
-                    ${upgrade.buildingIndex !== undefined ? ` (Geb. #${upgrade.buildingIndex})` : '(Global)'}
-                </p>
-                `;
-            container.appendChild(item);
+        if (!groupedUpgrades[buildingIndex]) {
+            groupedUpgrades[buildingIndex] = [];
         }
+
+        // Fügt den Kaufstatus hinzu
+        groupedUpgrades[buildingIndex].push({
+            ...upgrade,
+            isPurchased: this.gameState.researchStatus[index]
+        });
     });
 
-    if (boughtUpgradesCount === 0) {
-        container.innerHTML = '<p>Bisher wurden keine Global Upgrades gekauft.</p>';
-    }
+    let htmlContent = '';
+    const buildingNames = [...buildingsData, ...uniqueBuildingsData].map(b => b.name);
+
+    // Iteriere durch die Gruppen (Global Upgrades zuerst)
+    Object.keys(groupedUpgrades).sort((a, b) => parseInt(a) - parseInt(b)).forEach(key => {
+        const buildingIndex = parseInt(key, 10);
+        const upgrades = groupedUpgrades[key];
+
+        // Titel setzen (Global oder Gebäude-Name)
+        const title = buildingIndex === -1 ?
+            'Global (Klickkraft)' :
+            `${buildingNames[buildingIndex]} (Gebäude ${buildingIndex + 1})`;
+
+        // Status zusammenfassen
+        const totalUpgrades = upgrades.length;
+        const boughtCount = upgrades.filter(u => u.isPurchased).length;
+
+        htmlContent += `
+            <div class="info-group-header">
+                <h3>${title}</h3>
+                <p>Status: ${boughtCount} / ${totalUpgrades} Upgrades gekauft</p>
+            </div>
+            <div class="info-upgrade-grid">
+        `;
+
+        upgrades.forEach(upgrade => {
+            let effectText;
+            let effectValue = (upgrade.value * 100).toFixed(0);
+            let icon = '✨';
+
+            switch (upgrade.type) {
+                case 'click_mult':
+                    effectText = `Erhöht Klickkraft um ${effectValue}%`;
+                    icon = '🖱️';
+                    break;
+                case 'building_mult':
+                    effectText = `Erhöht Produktion um ${effectValue}%`;
+                    icon = '📈';
+                    break;
+                case 'cost_reduction_buildings':
+                    effectText = `Reduziert Gebäudekosten um ${effectValue}%`;
+                    icon = '💸';
+                    break;
+                default:
+                    effectText = 'Unbekannter Effekt';
+            }
+
+            const purchasedClass = upgrade.isPurchased ? 'bought-upgrade' : 'locked-upgrade';
+
+            htmlContent += `
+                <div class="info-upgrade-item ${purchasedClass}">
+                    <h4>${icon} Upgrade ID ${upgrade.id}</h4>
+                    <p><strong>Effekt:</strong> ${effectText}</p>
+                    <p>${upgrade.description}</p>
+                    <p>Kosten: ${this.formatNumber(upgrade.cost)} Smileys</p>
+                </div>
+            `;
+        });
+
+        htmlContent += `</div>`; // Ende info-upgrade-grid
+    });
+
+    container.innerHTML = htmlContent;
 }
 
 updatePrestigeInfoTree() {
@@ -1868,47 +1957,55 @@ createInfoPetsElements() {
     if (!container) return;
     container.innerHTML = '';
 
-    petsData.forEach((pet) => { // KEIN 'index' mehr nötig
-        // NEU: Holt den Level-Status anhand der Pet-ID (z.B. 'pet_dog')
-        // Wenn noch nicht initialisiert, ist der Status 0.
+    petsData.forEach((pet) => {
+        // Holt den Level-Status anhand der Pet-ID
         const petStatus = this.gameState.petLevels[pet.id] || 0;
 
-        // Berechnung des aktuellen Bonus und der Kosten (wie zuvor)
-        const currentBonusValue = pet.baseEffect + (petStatus * 0.05);
-        // Kostenformel ist nun korrekt, da petStatus korrekt ist.
-        const costFormula = pet.levelCost * Math.pow(pet.costGrowth, petStatus);
+        // Berechnung des aktuellen Bonus und der Kosten
+        const stats = this.calculatePetStat(pet, petStatus);
+        const currentBonusValue = stats.currentEffect;
 
         let bonusText = '';
+        let icon = '';
 
-        // ... (Rest des Switch-Blocks bleibt gleich) ...
         switch (pet.effectType) {
             case 'click_mult':
-                bonusText = `Erhöht die Klick-Stärke um ${(currentBonusValue * 100).toFixed(1)}%`;
+                bonusText = `Erhöht die Klick-Stärke um ${(currentBonusValue * 100).toFixed(1)}% (Global)`;
+                icon = '🖱️';
                 break;
             case 'sps_mult':
-                bonusText = `Erhöht die SPS-Rate um ${(currentBonusValue * 100).toFixed(1)}%`;
+                bonusText = `Erhöht die SPS-Rate um ${(currentBonusValue * 100).toFixed(1)}% (Global)`;
+                icon = '🏭';
                 break;
             case 'cost_reduction_upgrades':
-                bonusText = `Reduziert Kosten für Global Upgrades um ${(currentBonusValue * 100).toFixed(1)}%`;
+                bonusText = `Reduziert Kosten für Global Upgrades um ${(currentBonusValue * 100).toFixed(1)}% (Global)`;
+                icon = '🦉'; // Pet Owl
                 break;
             case 'cost_reduction_buildings':
-                bonusText = `Reduziert Gebäudekosten um ${(currentBonusValue * 100).toFixed(1)}%`;
+                bonusText = `Reduziert Gebäudekosten um ${(currentBonusValue * 100).toFixed(1)}% (Global)`;
+                icon = '🐟'; // Pet Fish
                 break;
             case 'prestige_point_eff':
-                bonusText = `Erhöht die Prestige-Punkt-Effektivität um ${(currentBonusValue * 100).toFixed(1)}%`;
+                // Wird für Prestige-Punkte ODER Diamant-Minigame-Ertrag verwendet (Fox)
+                bonusText = `Erhöht die Prestige-Punkt-Effektivität ODER den Minigame-Diamant-Ertrag um ${(currentBonusValue * 100).toFixed(1)}%`;
+                icon = '🦊'; // Pet Fox
                 break;
             default:
                 bonusText = 'Unbekannter Bonus';
+                icon = '❓';
         }
 
         const item = document.createElement('div');
         item.className = 'info-stats-item pet-info-item';
         item.innerHTML = `
-            <h3>🐶 ${pet.name} (Level ${petStatus})</h3>
+            <h3>${icon} ${pet.name} (Level ${petStatus}/${pet.maxLevel})</h3>
             <p><strong>Typ:</strong> ${pet.description}</p>
             <p><strong>Aktueller Effekt:</strong> ${bonusText}</p>
             <p>
-                <strong>Nächstes Level:</strong> Kostet ${this.formatNumber(costFormula)} Smileys.
+                ${petStatus < pet.maxLevel ?
+                    `<strong>Nächstes Level:</strong> Kostet ${this.formatNumber(stats.nextCost)} 💎.` :
+                    `<strong>Status:</strong> Maximales Level erreicht.`
+                }
             </p>
         `;
         container.appendChild(item);
