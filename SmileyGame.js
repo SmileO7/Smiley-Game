@@ -43,6 +43,7 @@ class SmileyGame {
 
             // --- Feature-States (Freischaltung) ---
             petsUnlocked: false,
+            diamondShopPurchases: [],
             diamondMineUnlocked: false, // Prio 6
             guildsUnlocked: false,      // Prio 8
             petAutoClickTimer: 0,
@@ -118,15 +119,17 @@ class SmileyGame {
 
         // 2. DIAMANTEN-PRODUKTION (DPS)
         const MINE_INDEX = DIAMOND_MINE_INDEX;
-        if (this.gameState.buildingCounts[MINE_INDEX] > 0) {
-            const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-            if (mine) {
-                const diamondRate = mine.baseDPS * mine.diamondMultiplier;
-                this.gameState.diamanten += diamondRate;
-            }
+                // Bedingung: Prüft auf Unlock UND Minen-Count > 0
+                if (this.gameState.autoDiamondMineUnlocked && this.gameState.buildingCounts[MINE_INDEX] > 0) {
+                    const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+                    if (mine) {
+                        // Logik: Fügt 10% der Basis-DPS hinzu
+                        const autoDiamondRate = mine.baseDPS * mine.diamondMultiplier * 0.1;
+                        this.gameState.diamanten += autoDiamondRate;
+                    }
+                }
+            this.updateUI();
         }
-        this.updateUI();
-    }
 
     computeTotalSPS() {
         let baseSPS = this.getSmileysPerSecond();
@@ -332,6 +335,10 @@ class SmileyGame {
         this.gameState.prestigeResetBonus = 0;
         this.gameState.guildSPSMultiplier = 0;
 
+        let diamondSPSMultiplier = 1;
+        let diamondClickMultiplier = 1;
+        this.gameState.autoDiamondMineUnlocked = false;
+
         // Reset Feature States
         this.gameState.petsUnlocked = false;
         this.gameState.diamondMineUnlocked = false;
@@ -445,7 +452,6 @@ class SmileyGame {
 
         // Keine Klick-Feedback- oder Debug-Logik mehr.
 
-        // 3. UI aktualisieren
         this.updateUI();
     }
 
@@ -530,27 +536,41 @@ class SmileyGame {
         return multiplier;
     }
 
-    kaufeGlobalUpgrade(id) {
-        const upgrade = globalUpgrades.find(u => u.id === id); // Nutzt NEUE Variable
+    kaufeGlobalUpgrade(id, amount = 1) {
+            let purchasedCount = 0;
+            let totalCost = 0;
 
-        // Annahme: researchStatus speichert den Kaufstatus für Global Upgrades
-        if (!upgrade || this.gameState.researchStatus[id]) return;
+            for (let i = 0; i < amount; i++) {
+                const upgrade = globalUpgrades.find(u => u.id === id + i); // Prüft den nächsten in der Serie
+                if (!upgrade || this.gameState.researchStatus[upgrade.id]) break; // Wenn gekauft oder Ende der Serie
 
-        // Kostenberechnung unter Berücksichtigung des aktiven Pets (Owl)
-        const finalCost = this.calculateUpgradeCost(upgrade.cost);
+                const finalCost = this.calculateUpgradeCost(upgrade.cost);
 
-        if (this.gameState.aktuelle_smileys < finalCost) return;
+                if (this.gameState.aktuelle_smileys >= finalCost) {
+                    this.gameState.aktuelle_smileys -= finalCost;
+                    this.gameState.researchStatus[upgrade.id] = true;
+                    purchasedCount++;
+                    totalCost += finalCost;
 
-        // Kostenabzug von Smileys
-        this.gameState.aktuelle_smileys -= finalCost;
-        this.gameState.researchStatus[id] = true; // Speichert den Kaufstatus
+                    // Wenn es ein Gebäudespezifisches Upgrade ist, muss die Schleife danach abbrechen.
+                    // Ansonsten wird nur das gekaufte Upgrade bestätigt und die Schleife fortgesetzt.
+                    if (upgrade.buildingIndex !== undefined && upgrade.buildingIndex !== -1) {
+                        break;
+                    }
+                } else {
+                    break; // Nicht mehr leisten können
+                }
+            }
 
-        // Wende alle Boni erneut an, da sich Multiplikatoren oder Gebäudeboni geändert haben könnten
-        this.applyAllBoni();
-        this.updateGlobalUpgradeUI(); // NUR die Global Upgrades aktualisieren
-        this.updateUI(); // Gesamtes UI aktualisieren, um neue Multiplikatoren zu zeigen
-        this.speichereSpiel();
-    }
+            if (purchasedCount > 0) {
+                this.applyAllBoni();
+                this.updateGlobalUpgradeUI();
+                this.updateUI();
+                this.speichereSpiel();
+                return true;
+            }
+            return false;
+        }
 
     kaufePrestigeUpgrade(id) {
         const upgrade = prestigeUpgrades.find(u => u.id === id);
@@ -637,6 +657,42 @@ class SmileyGame {
                 this.speichereSpiel();
             }
         }
+
+        buyDiamondShopUpgrade(id) {
+                const upgrade = diamondShopUpgrades.find(u => u.id === id);
+
+                if (!upgrade) return;
+
+                // KRITISCHE KORREKTUR: Sicherstellen, dass der Zähler mindestens 0 ist
+                const currentCount = this.gameState.diamondShopPurchases[id] || 0;
+
+                // Prüfung auf Maximalkäufe
+                if (upgrade.maxPurchases && currentCount >= upgrade.maxPurchases) {
+                    console.warn("Upgrade bereits maximal gekauft.");
+                    return;
+                }
+
+                // --- KRITISCHE PRÜFUNG: Währung ---
+                if (this.gameState.diamanten < upgrade.cost) {
+                    console.warn("Nicht genug Diamanten.");
+                    return;
+                }
+
+                // Kaufen
+                this.gameState.diamanten -= upgrade.cost;
+                this.gameState.diamondShopPurchases[id] = currentCount + 1; // Jetzt: 0 + 1 = 1 (Zahl!)
+
+                // Spezielle Logik für Freischaltungen
+                if (upgrade.type === "auto_diamond_mine") {
+                    this.gameState.autoDiamondMineUnlocked = true;
+                }
+
+                // Preise und Multiplikatoren aktualisieren
+                this.applyAllBoni();
+                this.updateUI();
+                this.renderDiamondMineContent();
+                this.speichereSpiel();
+            }
 
     // ================================================================================================================
     // 4. PETS LOGIK
@@ -937,53 +993,104 @@ class SmileyGame {
         // Ausschnitt aus SmileyGame.js (Abschnitt 7. RENDERING & UI-UPDATES)
 
         updateGlobalUpgradeUI() {
-            const container = this.getById('global-upgrades-container');
-            if (!container) return;
-            container.innerHTML = '';
+                const container = this.getById('global-upgrades-container');
+                if (!container) return;
+                container.innerHTML = '';
 
-            let nextUpgradeFound = false; // Flag, um nur das nächste ungekaufte Upgrade zu zeigen.
+                let nextUpgradeFound = false;
+                let currentGroupIndex = null;
+                let upgradeGroup = [];
+                const MAX_GROUP_RENDER = 4; // Zeigt maximal 4 Upgrades pro Gruppe
 
-            globalUpgrades.forEach(upgrade => {
-                const isPurchased = this.gameState.researchStatus[upgrade.id];
+                // 1. Gruppierung der Upgrades (für Multi-Kauf Logik)
+                globalUpgrades.forEach(upgrade => {
+                    const isPurchased = this.gameState.researchStatus[upgrade.id];
+                    const buildingIndex = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
 
-                // NEUE LOGIK: Wenn bereits gekauft, überspringen und NICHT rendern.
-                if (isPurchased) {
-                    return;
+                    if (isPurchased) return;
+
+                    // Definiere die aktuelle Gruppe
+                    if (currentGroupIndex === null) {
+                        currentGroupIndex = buildingIndex;
+                    }
+
+                    // Wenn die Gruppe wechselt oder die maximale Anzahl erreicht ist, beende die Schleife.
+                    if (buildingIndex !== currentGroupIndex || upgradeGroup.length >= MAX_GROUP_RENDER) {
+                         if (nextUpgradeFound) return; // Wenn wir die nächste Gruppe bereits gefunden haben, abbrechen.
+                    }
+
+                    if (buildingIndex === currentGroupIndex) {
+                         if (!nextUpgradeFound) {
+                            upgradeGroup.push(upgrade);
+                            nextUpgradeFound = true;
+                         }
+                    }
+                });
+
+                // 2. Rendering des ersten ungekauften Upgrades (mit Multi-Kauf)
+                if (upgradeGroup.length > 0) {
+                    const firstUpgrade = upgradeGroup[0];
+                    const finalCost1x = this.calculateUpgradeCost(firstUpgrade.cost);
+                    const canAfford1x = this.gameState.aktuelle_smileys >= finalCost1x;
+
+                    // Berechne Kosten für 10er und 100er Kauf
+                    let cost10x = 0;
+                    let purchasable10x = 0;
+                    for (let i = 0; i < 10 && (firstUpgrade.id + i) < globalUpgrades.length; i++) {
+                        const nextUpgrade = globalUpgrades[firstUpgrade.id + i];
+                        // Wichtig: Nur Upgrades der gleichen Gruppe zählen!
+                        if (nextUpgrade.buildingIndex !== firstUpgrade.buildingIndex) break;
+                        if (this.gameState.researchStatus[nextUpgrade.id]) continue; // Überspringe bereits gekaufte
+
+                        const cost = this.calculateUpgradeCost(nextUpgrade.cost);
+                        if (this.gameState.aktuelle_smileys >= (cost10x + cost)) {
+                             cost10x += cost;
+                             purchasable10x++;
+                        } else {
+                             break;
+                        }
+                    }
+
+                    let cost100x = 0;
+                    let purchasable100x = 0;
+                    for (let i = 0; i < 100 && (firstUpgrade.id + i) < globalUpgrades.length; i++) {
+                         const nextUpgrade = globalUpgrades[firstUpgrade.id + i];
+                         if (nextUpgrade.buildingIndex !== firstUpgrade.buildingIndex) break;
+                         if (this.gameState.researchStatus[nextUpgrade.id]) continue;
+
+                         const cost = this.calculateUpgradeCost(nextUpgrade.cost);
+                         if (this.gameState.aktuelle_smileys >= (cost100x + cost)) {
+                             cost100x += cost;
+                             purchasable100x++;
+                         } else {
+                             break;
+                         }
+                    }
+
+                    const typeIcon = firstUpgrade.type === 'click_mult' ? '🖱️' : '🏭';
+
+                    const upgradeDiv = document.createElement('div');
+                    upgradeDiv.className = 'research-item research-group';
+                    upgradeDiv.dataset.id = firstUpgrade.id;
+
+                    upgradeDiv.innerHTML = `
+                        <h4>${typeIcon} ${firstUpgrade.description}</h4>
+                        <p>Nächstes Upgrade kostet: ${this.formatNumber(finalCost1x)} Smileys</p>
+                        <div class="button-group-upgrade">
+                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="1" ${!canAfford1x ? 'disabled' : ''}>
+                                1x Kaufen
+                            </button>
+                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="${purchasable10x}" ${purchasable10x === 0 ? 'disabled' : ''}>
+                                ${purchasable10x}x (${this.formatNumber(cost10x)})
+                            </button>
+                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="${purchasable100x}" ${purchasable100x === 0 ? 'disabled' : ''}>
+                                ${purchasable100x}x (${this.formatNumber(cost100x)})
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(upgradeDiv);
                 }
-
-                // Logik, um nur das nächste *ungekaufte* anzuzeigen:
-                // Wenn wir bereits das nächste ungekaufte Upgrade gefunden haben, überspringen wir alle weiteren.
-                if (nextUpgradeFound) {
-                    return;
-                }
-
-                const upgradeDiv = document.createElement('div');
-                upgradeDiv.className = 'research-item';
-                upgradeDiv.dataset.id = upgrade.id;
-
-                // Berechne die finalen Kosten
-                const finalCost = this.calculateUpgradeCost(upgrade.cost);
-                const canAfford = this.gameState.aktuelle_smileys >= finalCost;
-
-                let typeIcon = upgrade.type === 'click_mult' ? '🖱️' : '🏭';
-
-                upgradeDiv.innerHTML = `
-                    <h4>${typeIcon} ${upgrade.description}</h4>
-                    <p>Kosten: ${this.formatNumber(finalCost)} Smileys</p>
-                    <button class="btn-buy-research" data-id="${upgrade.id}" ${!canAfford ? 'disabled' : ''}>
-                        Kaufen
-                    </button>
-                `;
-
-                // Die 'purchased' Klasse ist nun unnötig, da wir es nicht mehr anzeigen.
-                upgradeDiv.classList.toggle('affordable', canAfford);
-
-                container.appendChild(upgradeDiv);
-
-                // Markiere, dass wir dieses Upgrade (das Erste Ungekaufte) gefunden/angezeigt haben.
-                nextUpgradeFound = true;
-            });
-        }
+            }
 
     updatePrestigeUI() {
         if (!this.getById('prestige_punkte_verfügbar')) return;
@@ -1197,89 +1304,180 @@ class SmileyGame {
             });
         }
 
+    diamondMineView = 'mine';
+
     renderDiamondMineContent() {
-        const container = this.getById('diamond-mine-content');
-        if (!container) return;
-
-        const MINE_INDEX = DIAMOND_MINE_INDEX;
-        const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-        if (!mineDefinition) return;
-
-        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-        const isOwned = mineCount > 0;
-
-        if (isOwned) {
-            container.innerHTML = `
-            <h3>${mineDefinition.name} (Aktiv)</h3>
-            <p>Diamantenproduktion: <span id="diamond-rate-display">0</span> DPS</p>
-            <div id="minigame-placeholder">Hier kommt das Minispiel hin!</div>
-        `;
-            this.renderDiamondMinigame();
-        } else {
-            const mineCost = this.calculateNextCost(mineDefinition.basePrice, 0, mineDefinition.growthRate, MINE_INDEX);
-            const canAfford = this.gameState.aktuelle_smileys >= mineCost;
-
-            container.innerHTML = `
-            <h3>Schalte die ${mineDefinition.name} frei</h3>
-            <p>Die Mine wird benötigt, um das Diamanten-Minispiel zu starten.</p>
-            <p>Kosten: ${this.formatNumber(mineCost)} Smileys</p>
-            <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'}>
-                Mine Kaufen
-            </button>
-        `;
-        }
-    }
-
-    renderDiamondMinigame() {
-            const container = this.getById('minigame-placeholder');
+            const container = this.getById('diamond-mine-content');
             if (!container) return;
 
+            // Stellt sicher, dass das Modal den Shop/Mine-Titel trägt
+            const modalTitle = container.closest('.modal-content').querySelector('h2');
+            if (modalTitle) modalTitle.innerHTML = `💎 Diamanten-Mine & Shop`;
+
             const MINE_INDEX = DIAMOND_MINE_INDEX;
+            const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+            if (!mineDefinition) return;
             const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-            const DURATION = 5000; // 5 Sekunden
 
-            // --- Dynamischen Bonus berechnen (Logik aus startDiamondMinigame kopiert) ---
-            let BONUS_DIAMOND = 5 * mineCount;
+            // Wenn Mine nicht gekauft: Nur Kauf-Ansicht zeigen
+            if (mineCount === 0) {
+                const mineCost = this.getBuildingCost(MINE_INDEX, 0);
+                const canAfford = this.gameState.aktuelle_smileys >= mineCost;
 
-            if (this.gameState.activePet) {
-                const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
-                if (pet) {
-                    const currentLevel = this.gameState.petLevels[pet.id] || 0;
-                    if (currentLevel > 0) {
-                        const stats = this.calculatePetStat(pet, currentLevel);
-                        BONUS_DIAMOND *= (1 + stats.currentEffect);
+                container.innerHTML = `
+                    <h3>Schalte die ${mineDefinition.name} frei</h3>
+                    <p>Die Mine wird benötigt, um Diamanten zu sammeln und den Shop freizuschalten.</p>
+                    <p>Kosten: ${this.formatNumber(mineCost)} Smileys</p>
+                    <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'}>
+                        Mine Kaufen
+                    </button>
+                `;
+                return;
+            }
+
+            // --- HAUPTANSICHT: TAB-NAVIGATION ---
+            container.innerHTML = `
+                <div class="mine-nav" style="margin-bottom: 20px;">
+                    <button id="mine-tab-mine" class="btn-primary ${this.diamondMineView === 'mine' ? 'active' : 'btn-cancel'}">Minispiel</button>
+                    <button id="mine-tab-shop" class="btn-primary ${this.diamondMineView === 'shop' ? 'active' : 'btn-cancel'}">Diamanten Shop</button>
+                </div>
+                <div id="mine-dynamic-content"></div>
+                <p style="text-align: center; margin-top: 10px;">Deine Diamanten: <strong id="shop-diamanten-anzeige">${this.formatNumber(this.gameState.diamanten)}</strong> 💎</p>
+            `;
+
+            // Event Listener für Tab-Wechsel
+            this.getById('mine-tab-mine')?.addEventListener('click', () => {
+                this.diamondMineView = 'mine';
+                this.renderDiamondMineContent();
+            });
+            this.getById('mine-tab-shop')?.addEventListener('click', () => {
+                this.diamondMineView = 'shop';
+                this.renderDiamondMineContent();
+            });
+
+            // Rendere den Inhalt basierend auf dem aktiven Tab
+            const dynamicContent = this.getById('mine-dynamic-content');
+            if (dynamicContent) {
+                if (this.diamondMineView === 'mine') {
+                    this.renderDiamondMinigame(dynamicContent);
+                } else if (this.diamondMineView === 'shop') {
+                    this.renderDiamondShopContent(dynamicContent);
+                }
+            }
+        }
+
+    renderDiamondMinigame(targetContainer) {
+                const container = targetContainer || this.getById('minigame-placeholder');
+                if (!container) return;
+
+                const MINE_INDEX = DIAMOND_MINE_INDEX;
+                const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+                const DURATION = 5000; // 5 Sekunden
+
+                // --- Dynamischen Bonus berechnen ---
+                let BONUS_DIAMOND = 5 * mineCount;
+
+                // BONUS durch Prestige/Pets
+                if (this.gameState.activePet) {
+                    const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
+                    if (pet) {
+                        const currentLevel = this.gameState.petLevels[pet.id] || 0;
+                        if (currentLevel > 0) {
+                            const stats = this.calculatePetStat(pet, currentLevel);
+                            BONUS_DIAMOND *= (1 + stats.currentEffect);
+                        }
+                    }
+                }
+                BONUS_DIAMOND = Math.floor(BONUS_DIAMOND);
+                // --------------------------------------------------------------------------
+
+                container.innerHTML = `
+                    <h3>Minispiel: Aktive Schürfung</h3>
+                    <p>Ertrag pro erfolgreicher Schürfung: <strong>${BONUS_DIAMOND} 💎</strong></p>
+
+                    <div class="minigame-progress-container">
+                        <div id="minigame-bar" class="progress-bar" style="width: 100%; transition: width 0s;"></div>
+                    </div>
+                    <p id="minigame-result" class="info-section">Bereit zum Starten.</p>
+
+                    <button id="start-minigame-button" class="btn-confirm" ${this.gameState.diamondMinigameRunning ? 'disabled' : ''}>
+                        ${this.gameState.diamondMinigameRunning ? 'Schürfe läuft...' : 'Schürfen starten!'}
+                    </button>
+                `;
+
+                // Event Listener für Start Button
+                this.getById('start-minigame-button')?.addEventListener('click', () => {
+                    this.startDiamondMinigame();
+                });
+
+                // Bar-Zustand beim Neu-Rendern (falls Minigame gerade läuft)
+                if (this.gameState.diamondMinigameRunning) {
+                    const progressBar = this.getById('minigame-bar');
+                    if (progressBar) {
+                         // Setzt die Bar optisch auf den laufenden Zustand zurück (wird durch startDiamondMinigame neu animiert)
+                        progressBar.style.width = '100%';
+                        this.getById('minigame-result').innerText = 'Schürfe läuft...';
                     }
                 }
             }
-            BONUS_DIAMOND = Math.floor(BONUS_DIAMOND);
-            // --------------------------------------------------------------------------
 
-            container.innerHTML = `
-                <h3>Minispiel: Aktive Schürfung</h3>
-                <p>Ertrag pro erfolgreicher Schürfung: <strong>${BONUS_DIAMOND} 💎</strong></p>
+    renderDiamondShopContent(targetContainer) {
+            // Wir verwenden den übergebenen Container.
+            const container = targetContainer;
+            if (!container) return;
 
-                <div class="minigame-progress-container">
-                    <div id="minigame-bar" class="progress-bar" style="width: 100%; transition: width 0s;"></div>
-                </div>
-                <p id="minigame-result" class="info-section">Bereit zum Starten.</p>
+            // Aktualisiere Diamanten-Anzeige oben im Modal
+            const diamondDisplay = this.getById('shop-diamanten-anzeige');
+            if (diamondDisplay) diamondDisplay.innerText = this.formatNumber(this.gameState.diamanten);
 
-                <button id="start-minigame-button" class="btn-confirm" ${this.gameState.diamondMinigameRunning ? 'disabled' : ''}>
-                    ${this.gameState.diamondMinigameRunning ? 'Schürfe läuft...' : 'Schürfen starten!'}
-                </button>
-            `;
+            // 1. Erstelle das HTML mit dem inneren Grid-Container
+            container.innerHTML = `<div class="info-grid" id="diamond-shop-grid-inner"></div>`;
+            const innerGrid = this.getById('diamond-shop-grid-inner');
 
-            // Bar-Zustand beim Neu-Rendern (falls Minigame gerade läuft)
-            if (this.gameState.diamondMinigameRunning) {
-                const progressBar = this.getById('minigame-bar');
-                if (progressBar) {
-                     // Setzt die Bar optisch auf den laufenden Zustand zurück (wird durch startDiamondMinigame neu animiert)
-                    progressBar.style.width = '100%';
-                    this.getById('minigame-result').innerText = 'Schürfe läuft...';
-                }
+            if (!innerGrid) { // Sicherheits-Check
+                console.error("Fehler: innerGrid konnte nicht im DOM gefunden werden.");
+                return;
             }
+
+            let shopHtml = '';
+
+            // 2. HTML für Upgrades generieren
+            // HINWEIS: diamondShopUpgrades muss hier verfügbar sein.
+            diamondShopUpgrades.forEach((upgrade, index) => {
+                const count = this.gameState.diamondShopPurchases[index] || 0;
+                const isPurchased = count > 0;
+                const isMaxed = upgrade.maxPurchases && count >= upgrade.maxPurchases;
+
+                const canAfford = this.gameState.diamanten >= upgrade.cost;
+
+                const stateClass = isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked');
+                const buttonText = isMaxed ? 'Gekauft' : `Kaufen (${this.formatNumber(upgrade.cost)} 💎)`;
+
+                shopHtml += `
+                    <div class="info-upgrade-item ${stateClass}" data-id="${upgrade.id}">
+                        <h4>${upgrade.name}</h4>
+                        <p>${upgrade.description}</p>
+                        <p>Status: ${isMaxed ? 'Permanent' : 'Verfügbar'}</p>
+                        <button class="btn-buy-diamond" data-id="${upgrade.id}" ${isMaxed || !canAfford ? 'disabled' : ''}>
+                            ${buttonText}
+                        </button>
+                    </div>
+                `;
+            });
+
+            // 3. HTML in das Grid einfügen
+            innerGrid.innerHTML = shopHtml;
+
+            // 4. Listener NUR auf die NEU ERSTELLTEN Buttons anwenden
+            innerGrid.querySelectorAll('.btn-buy-diamond').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id, 10);
+                    this.buyDiamondShopUpgrade(id);
+                    // Optional: Kurzer Log zur Bestätigung
+                    console.log(`[Shop] Klick auf Upgrade ID: ${id}`);
+                });
+            });
         }
-
-
 
     renderGuildsContent() {
             const container = this.getById('guilds-content');
@@ -1497,17 +1695,18 @@ class SmileyGame {
         });
 
         this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
-                const button = e.target.closest('.btn-buy-research'); // Button muss die Klasse haben
-                if (!button) return;
+                        const button = e.target.closest('.btn-buy-research');
+                        if (!button) return;
 
-                const researchItem = button.closest('.research-item');
-                if (!researchItem) return;
+                        // Lese ID und AMOUND aus
+                        const id = parseInt(button.dataset.id, 10);
+                        const amount = parseInt(button.dataset.amount, 10);
 
-                const id = parseInt(researchItem.dataset.id, 10);
-                if (!isNaN(id)) {
-                    this.kaufeGlobalUpgrade(id); // NEU: Korrekter Methodenname
-                }
-            })
+                        if (!isNaN(id) && !isNaN(amount) && amount > 0) {
+                            // NEUER AUFRUF MIT AMOUNT!
+                            this.kaufeGlobalUpgrade(id, amount);
+                        }
+                    })
 
         this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
                 const button = e.target.closest('button');

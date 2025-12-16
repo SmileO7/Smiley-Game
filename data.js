@@ -199,6 +199,45 @@ const petsData = [
     { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', baseEffect: 0.01, effectType: 'prestige_point_eff', description: '+% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0, levelCost: 100, costGrowth: 1.5, maxLevel: 100 },
 ];
 
+const diamondShopUpgrades = [
+    {
+        id: 0,
+        name: "Diamant-Hände (x10 Klick)",
+        description: "Permanent 10x mehr Klickkraft. Das ist spürbar!",
+        cost: 250, // 250 Diamanten
+        effect: 10,
+        type: "click_mult", // Wird zu klickKraftMultiplier addiert
+        maxPurchases: 1
+    },
+    {
+        id: 1,
+        name: "SPS-Kompressor (x2 SPS)",
+        description: "Verdoppelt die gesamte SPS permanent.",
+        cost: 500, // 500 Diamanten
+        effect: 2,
+        type: "sps_mult", // Wird zu globalSPSMultiplier multipliziert
+        maxPurchases: 1
+    },
+    {
+        id: 2,
+        name: "Prestige-Beschleuniger",
+        description: "Erhöht die Effektivität von Prestige-Punkten um weitere 0.5%.",
+        cost: 1000, // 1000 Diamanten
+        effect: 0.005, // 0.5%
+        type: "prestige_point_eff",
+        maxPurchases: 1
+    },
+    {
+        id: 3,
+        name: "Automatisierte Diamanten-Mine",
+        description: "Schaltet die automatische Diamantenproduktion frei (entsprechend der Minenanzahl, ohne Minispiel).",
+        cost: 2500, // 2500 Diamanten
+        effect: 1, // Wird als Flag genutzt
+        type: "auto_diamond_mine",
+        maxPurchases: 1
+    }
+];
+
 const guildUpgradesData = [
     {
         id: 0,
