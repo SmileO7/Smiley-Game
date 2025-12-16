@@ -199,9 +199,38 @@ const petsData = [
     { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', baseEffect: 0.01, effectType: 'prestige_point_eff', description: '+% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0, levelCost: 100, costGrowth: 1.5, maxLevel: 100 },
 ];
 
-const guildUpgrades = [
-    { id: 0, name: "Gilden-Macht I", cost: 10000000000, effect: 0.05, effectType: 'global_sps_mult', description: "Globale SPS +5%" },
-    { id: 1, name: "Gilden-Macht II", cost: 50000000000, effect: 0.10, effectType: 'global_sps_mult', description: "Globale SPS +10%" },
-    { id: 2, name: "Gilden-Macht III", cost: 250000000000, effect: 0.15, effectType: 'global_sps_mult', description: "Globale SPS +15%" },
-    // Weitere Upgrades können hier später hinzugefügt werden
+const guildUpgradesData = [
+    {
+        id: 0,
+        name: "Erster Lehrling (x1.1 SPS)",
+        description: "Ein unmotivierter Lehrling, der 10% zur SPS beiträgt.",
+        baseCost: 1e5, // 100 Tausend Smileys
+        costMultiplier: 2.0,
+        spsMultiplier: 1.1, // 10% mehr SPS
+    },
+    {
+        id: 1,
+        name: "Erfahrener Sammler (x1.5 SPS)",
+        description: "Dein erster richtiger Produktionsschub. Ein Muss.",
+        baseCost: 1e8, // 100 Millionen Smileys
+        costMultiplier: 2.2,
+        spsMultiplier: 1.5
+    },
+    {
+        id: 2,
+        name: "Gildenmeister (x2.0 Klick)",
+        description: "Der Gildenmeister verdoppelt deine Klickkraft.",
+        baseCost: 1e12, // 1 Billion Smileys
+        costMultiplier: 3.0,
+        spsMultiplier: 2.0,
+        isClickMultiplier: true // Flag, um SPS vs. Klick zu unterscheiden
+    },
+    {
+        id: 3,
+        name: "Kontinentales Abkommen (x5.0 SPS)",
+        description: "Erweiterung der Reichweite über Kontinente.",
+        baseCost: 1e16, // 10 Billiarden Smileys
+        costMultiplier: 3.0,
+        spsMultiplier: 5.0
+    },
 ];

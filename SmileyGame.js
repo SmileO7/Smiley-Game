@@ -49,7 +49,7 @@ class SmileyGame {
 
             // --- GILDEN ZUSTAND (Prio 9) ---
             guildName: null,
-            guildUpgradeStatus: guildUpgrades.map(() => false),
+            guildUpgradeStatus: guildUpgradesData.map(() => false),
             guildSPSMultiplier: 0,
 
             // -- Minigame Status
@@ -406,13 +406,20 @@ class SmileyGame {
         }
 
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
-            if (bought) {
-                const upgrade = guildUpgrades.find(u => u.id === id);
-                if (upgrade && upgrade.effectType === 'global_sps_mult') {
-                    this.gameState.guildSPSMultiplier += upgrade.effect;
-                }
-            }
-        });
+                    if (bought) {
+                        // KORREKTUR: Nutze den neuen Namen guildUpgradesData
+                        const upgrade = guildUpgradesData.find(u => u.id === id);
+                        if (upgrade) {
+                            if (upgrade.isClickMultiplier) {
+                                // NEU: Füge Klick-Multiplikatoren hinzu
+                                prestigeClickMultiplier += upgrade.spsMultiplier - 1;
+                            } else {
+                                // SPS Multiplikatoren
+                                this.gameState.guildSPSMultiplier += upgrade.spsMultiplier - 1;
+                            }
+                        }
+                    }
+                });
 
         // 5. Finalisierung
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
@@ -773,7 +780,7 @@ class SmileyGame {
     }
 
     buyGuildUpgrade(id) {
-        const upgrade = guildUpgrades.find(u => u.id === id);
+        const upgrade = guildUpgradesData.find(u => u.id === id);
         if (!upgrade || this.gameState.guildUpgradeStatus[id]) return;
 
         if (!this.gameState.guildName) {
@@ -1275,73 +1282,95 @@ class SmileyGame {
 
 
     renderGuildsContent() {
-        const container = this.getById('guilds-content');
-        if (!container) return;
+            const container = this.getById('guilds-content');
+            if (!container) return;
 
-        if (!this.gameState.guildName) {
-            // --- GRÜNDUNGS-ANSICHT (Kostet Smileys) ---
-            const COST = 500000000;
-            const canAfford = this.gameState.aktuelle_smileys >= COST;
+            if (!this.gameState.guildName) {
+                // --- GRÜNDUNGS-ANSICHT (Kostet Smileys) ---
+                const COST = 500000000;
+                const canAfford = this.gameState.aktuelle_smileys >= COST;
 
-            container.innerHTML = `
-                <h3>Gilde Gründen</h3>
-                <p>Gründe Deine eigene Gilde, um dauerhafte globale Boni freizuschalten.</p>
-                <p><strong>Kosten:</strong> ${this.formatNumber(COST)} Smileys</p>
-                <input type="text" id="guild-name-input" placeholder="Gildenname eingeben" maxlength="20">
-                <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'}>
-                    Gilde Gründen
-                </button>
-                <p id="guild-error" style="color: red; margin-top: 10px;"></p>
-            `;
+                container.innerHTML = `
+                    <h3>Gilde Gründen</h3>
+                    <p>Gründe Deine eigene Gilde, um dauerhafte globale Boni freizuschalten.</p>
+                    <p><strong>Kosten:</strong> ${this.formatNumber(COST)} Smileys</p>
+                    <input type="text" id="guild-name-input" placeholder="Gildenname eingeben" maxlength="20">
+                    <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'}>
+                        Gilde Gründen
+                    </button>
+                    <p id="guild-error" style="color: red; margin-top: 10px;"></p>
+                `;
 
-            this.getById('found-guild-button')?.addEventListener('click', () => {
-                const nameInput = this.getById('guild-name-input');
-                const name = nameInput ? nameInput.value.trim() : '';
-                if (name.length < 3) {
-                    this.getById('guild-error').innerText = "Gildenname muss mindestens 3 Zeichen lang sein.";
-                    return;
-                }
-                this.foundGuild(name);
-            });
+                this.getById('found-guild-button')?.addEventListener('click', () => {
+                    const nameInput = this.getById('guild-name-input');
+                    const name = nameInput ? nameInput.value.trim() : '';
+                    if (name.length < 3) {
+                        this.getById('guild-error').innerText = "Gildenname muss mindestens 3 Zeichen lang sein.";
+                        return;
+                    }
+                    this.foundGuild(name);
+                });
 
-        } else {
-            // --- UPGRADE-ANSICHT: ZEIGT SMILEYS ---
-            let upgradesHtml = '';
+            } else {
+                // --- UPGRADE-ANSICHT: ZEIGT UPGRADES ---
+                let upgradesHtml = '';
+                let clickBonus = 0;
+                let spsBonus = 0;
 
-            guildUpgrades.forEach((upgrade, index) => {
-                const isBought = this.gameState.guildUpgradeStatus[index];
-                // Prüfe gegen Smileys
-                const canAfford = this.gameState.aktuelle_smileys >= upgrade.cost;
+                // NEU: Iteriere über die korrekten Daten
+                guildUpgradesData.forEach((upgrade, index) => {
+                    const isBought = this.gameState.guildUpgradeStatus[index];
 
-                upgradesHtml += `
-                    <div class="guild-upgrade-item ${isBought ? 'purchased' : (canAfford ? 'available' : 'locked')}">
-                        <h4>${upgrade.name}</h4>
-                        <p>${upgrade.description}</p>
-                        <p>Kosten: ${this.formatNumber(upgrade.cost)} Smileys</p>
-                        <button class="btn-buy-guild" data-id="${upgrade.id}" ${isBought || !canAfford ? 'disabled' : ''}>
-                            ${isBought ? 'Gekauft' : 'Kaufen'}
-                        </button>
+                    // Berechne den Gesamtkosten-Multiplikator für skalierende Upgrades (falls wir sie später skalieren wollten)
+                    const costMultiplier = upgrade.costMultiplier || 1.0;
+                    // Für diese Prio verwenden wir nur die Basis-Kosten (baseCost)
+                    const cost = upgrade.baseCost;
+
+                    const canAfford = this.gameState.aktuelle_smileys >= cost;
+
+                    const icon = upgrade.isClickMultiplier ? '🖱️' : '🏭';
+                    const effectText = upgrade.isClickMultiplier ?
+                                       `Klickkraft x${upgrade.spsMultiplier.toFixed(1)}` :
+                                       `SPS x${upgrade.spsMultiplier.toFixed(1)}`;
+
+                    if (isBought) {
+                        if (upgrade.isClickMultiplier) {
+                            clickBonus += upgrade.spsMultiplier - 1;
+                        } else {
+                            spsBonus += upgrade.spsMultiplier - 1;
+                        }
+                    }
+
+                    upgradesHtml += `
+                        <div class="guild-upgrade-item ${isBought ? 'purchased' : (canAfford ? 'available' : 'locked')}" data-id="${upgrade.id}">
+                            <h4>${icon} ${upgrade.name}</h4>
+                            <p>Effekt: <strong>${effectText}</strong></p>
+                            <p>Kosten: ${this.formatNumber(cost)} Smileys</p>
+                            <button class="btn-buy-guild" data-id="${upgrade.id}" ${isBought || !canAfford ? 'disabled' : ''}>
+                                ${isBought ? 'Gekauft' : 'Kaufen'}
+                            </button>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = `
+                    <h3>Willkommen in Gilde: ${this.gameState.guildName}</h3>
+                    <p>Globaler SPS-Gildenbonus: x${(1 + spsBonus).toFixed(2)}</p>
+                    <p>Globaler Klick-Gildenbonus: x${(1 + clickBonus).toFixed(2)}</p>
+                    <p>Guthaben: ${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys</p>
+                    <div class="info-grid">
+                        ${upgradesHtml}
                     </div>
                 `;
-            });
 
-            container.innerHTML = `
-                <h3>Willkommen in Gilde: ${this.gameState.guildName}</h3>
-                <p>Dein Gilden-Bonus: x${(1 + this.gameState.guildSPSMultiplier).toFixed(2)}</p>
-                <p>Guthaben: ${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys</p>
-                <div class="guild-upgrades-grid">
-                    ${upgradesHtml}
-                </div>
-            `;
-
-            container.querySelectorAll('.btn-buy-guild').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.dataset.id, 10);
-                    this.buyGuildUpgrade(id);
+                container.querySelectorAll('.btn-buy-guild').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = parseInt(e.target.dataset.id, 10);
+                        this.buyGuildUpgrade(id);
+                    });
                 });
-            });
+            }
         }
-    }
 
 
     createBuildingElements() {
