@@ -377,31 +377,33 @@ class SmileyGame {
 
         // 3. PET Boni
         if (this.gameState.activePet) {
-                    const petIndex = petsData.findIndex(p => p.id === this.gameState.activePet);
-                    const pet = petsData[petIndex];
+                    // Findet das Pet-Objekt
+                    const pet = petsData.find(p => p.id === this.gameState.activePet);
 
-                    // WICHTIG: Hole den skalierten Effekt basierend auf dem aktuellen Level
-                    const currentLevel = this.gameState.petLevels[petIndex];
+                    if (pet) {
+                        // WICHTIG: Hole den skalierten Effekt basierend auf der STRING ID
+                        const currentLevel = this.gameState.petLevels[pet.id] || 0;
 
-                    // Wenn das Pet noch Level 0 ist (kann bei geladenen alten Spielständen passieren), überspringen wir.
-                    if (currentLevel > 0) {
-                        const stats = this.calculatePetStat(pet, currentLevel);
-                        const scaledEffect = stats.currentEffect;
+                        // Wenn das Pet noch Level 0 ist (oder nicht existiert), überspringen wir.
+                        if (currentLevel > 0) {
+                            const stats = this.calculatePetStat(pet, currentLevel);
+                            const scaledEffect = stats.currentEffect;
 
-                        switch (pet.effectType) {
-                            case 'click_mult':
-                                prestigeClickMultiplier += scaledEffect;
-                                break;
-                            case 'sps_mult':
-                                this.gameState.globalSPSMultiplier += scaledEffect;
-                                break;
-                            case 'prestige_point_eff':
-                                this.gameState.prestigePointMultiplier += scaledEffect;
-                                break;
-                            // cost_reduction_buildings und cost_reduction_upgrades werden in calculateNextCost/calculateUpgradeCost behandelt.
+                            switch (pet.effectType) {
+                                case 'click_mult':
+                                    prestigeClickMultiplier += scaledEffect;
+                                    break;
+                                case 'sps_mult':
+                                    this.gameState.globalSPSMultiplier += scaledEffect;
+                                    break;
+                                case 'prestige_point_eff':
+                                    this.gameState.prestigePointMultiplier += scaledEffect;
+                                    break;
+                                // cost_reduction_buildings und cost_reduction_upgrades werden in den Cost-Methoden behandelt.
+                            }
                         }
                     }
-                }
+        }
 
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
             if (bought) {
@@ -418,7 +420,7 @@ class SmileyGame {
         const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
 
         this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
-        }
+    }
 
 
 
@@ -481,7 +483,54 @@ class SmileyGame {
         }
     }
 
-    // Ausschnitt aus SmileyGame.js (Abschnitt 3. KERNLOGIK)
+    getBuildingCost(index, count) {
+        const buildingData = [...buildingsData, ...uniqueBuildingsData][index];
+        if (!buildingData) return Infinity;
+
+        const currentCount = count !== undefined ? count : this.gameState.buildingCounts[index];
+        const basePrice = buildingData.basePrice;
+        const growthRate = buildingData.growthRate;
+
+        let cost = basePrice * Math.pow(growthRate, currentCount);
+
+        // Wende den akkumulierten Kostenreduktions-Multiplikator an (Global Upgrades + Pet Boni)
+        const costMultiplier = this.getBuildingCostMultiplier(index);
+        cost *= costMultiplier;
+
+        return Math.floor(cost); // Wichtig: Kosten müssen immer ganzzahlig sein
+    }
+
+    getBuildingCostMultiplier(buildingIndex) {
+        let multiplier = 1;
+
+        // 1. RABATTE DURCH GLOBAL UPGRADES
+        globalUpgrades.forEach((upgrade, index) => {
+            if (this.gameState.researchStatus[index] === true) {
+
+                // Prüfen, ob es eine Kostenreduktion für DIESES Gebäude ist
+                if (upgrade.type === 'cost_reduction_buildings' && upgrade.buildingIndex === buildingIndex) {
+                    multiplier *= (1 - upgrade.value);
+                }
+            }
+        });
+
+        // 2. RABATTE DURCH AKTIVES PET (Pet Fish)
+        if (this.gameState.activePet) {
+            const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'cost_reduction_buildings');
+
+            if (pet) {
+                const currentLevel = this.gameState.petLevels[pet.id] || 0;
+                if (currentLevel > 0) {
+                    const stats = this.calculatePetStat(pet, currentLevel);
+                    // Der Pet-Rabatt wird als ADDITION angewendet (z.B. 0.05 für 5%)
+                    // Multiplikator = Multiplikator * (1 - Pet-Rabatt)
+                    multiplier *= (1 - stats.currentEffect);
+                }
+            }
+        }
+
+        return multiplier;
+    }
 
     kaufeGlobalUpgrade(id) {
         const upgrade = globalUpgrades.find(u => u.id === id); // Nutzt NEUE Variable
@@ -602,7 +651,7 @@ class SmileyGame {
         }
         const petIndex = petsData.findIndex(p => p.id === petId);
         const pet = petsData[petIndex];
-        const currentLevel = this.gameState.petLevels[petIndex];
+        const currentLevel = this.gameState.petLevels[petId] || 0;
         // Wichtig: Wir nutzen die Funktion, die wir in Abschnitt 2 erstellt haben
         const stats = this.calculatePetStat(pet, currentLevel);
 
@@ -635,7 +684,7 @@ class SmileyGame {
     activatePet(petId) {
         const petIndex = petsData.findIndex(p => p.id === petId);
         // PRÜFUNG: Muss Level > 0 sein
-        if (this.gameState.petLevels[petIndex] <= 0) {
+        if (this.gameState.petLevels[petId] <= 0) {
             console.warn("Pet nicht gekauft.");
             return;
         }
