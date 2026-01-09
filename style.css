@@ -1313,3 +1313,37 @@ main {
          grid-template-columns: 1fr 1fr;
      }
  }
+
+ /* --- Toast Notifications --- */
+ #toast-container {
+     position: fixed;
+     top: 20px;
+     left: 50%;
+     transform: translateX(-50%);
+     z-index: 10000;
+     pointer-events: none; /* Klicks gehen durch */
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+ }
+
+ .toast {
+     background: rgba(0, 0, 0, 0.9); /* Schwarz, leicht transparent */
+     color: #fff;
+     padding: 12px 24px;
+     border-radius: 8px;
+     border-left: 5px solid var(--color-accent-blue); /* Blauer Akzent */
+     font-family: 'Segoe UI', sans-serif;
+     font-size: 1rem;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+     opacity: 0;
+     transform: translateY(-20px);
+     transition: all 0.3s ease-out;
+     min-width: 300px;
+     text-align: center;
+ }
+
+ .toast.show {
+     opacity: 1;
+     transform: translateY(0);
+ }

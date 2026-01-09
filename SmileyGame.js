@@ -541,44 +541,42 @@ class SmileyGame {
    kaufeGlobalUpgrade(id, amount = 1) {
        let purchasedCount = 0;
 
-       // Wir merken uns die Gruppe des ersten Upgrades, damit wir nicht aus Versehen
-       // Upgrades eines anderen Gebäudes mitkaufen.
        const startUpgrade = globalUpgrades.find(u => u.id === id);
        if (!startUpgrade) return;
        const targetBuildingIndex = startUpgrade.buildingIndex;
 
        for (let i = 0; i < amount; i++) {
-           // Prüfe das nächste Upgrade in der Reihe
            const nextId = id + i;
            const upgrade = globalUpgrades.find(u => u.id === nextId);
 
-           // Abbruch-Bedingungen:
-           // 1. Upgrade existiert nicht
-           // 2. Upgrade gehört zu einem anderen Gebäude/Gruppe
-           // 3. Upgrade ist schon gekauft
            if (!upgrade) break;
            if (upgrade.buildingIndex !== targetBuildingIndex) break;
-           if (this.gameState.researchStatus[upgrade.id]) continue; // Überspringen, falls schon gekauft (Sicherheit)
+           if (this.gameState.researchStatus[upgrade.id]) continue;
 
-           const finalCost = this.calculateUpgradeCost(upgrade.cost);
+           // WICHTIG: Auch hier Math.ceil nutzen, damit es zur UI passt
+           const finalCost = Math.ceil(this.calculateUpgradeCost(upgrade.cost));
 
            if (this.gameState.aktuelle_smileys >= finalCost) {
                this.gameState.aktuelle_smileys -= finalCost;
                this.gameState.researchStatus[upgrade.id] = true;
                purchasedCount++;
+
+               // --- HIER IST DAS NEUE VISUELLE FEEDBACK ---
+               // Wir rufen die Toast-Nachricht auf:
+               this.showNotification(`Upgrade gekauft: ${upgrade.description}`, 'success');
+               // -------------------------------------------
+
            } else {
-               break; // Nicht mehr genug Geld für das nächste in der Liste
+               break;
            }
        }
 
+       // UI aktualisieren, wenn etwas gekauft wurde
        if (purchasedCount > 0) {
-           this.applyAllBoni();
-           this.updateGlobalUpgradeUI(); // UI sofort aktualisieren
            this.updateUI();
-           this.speichereSpiel();
-           return true;
+           // Falls du eine spezielle Funktion für Upgrades hast:
+           if (this.updateGlobalUpgradeUI) this.updateGlobalUpgradeUI();
        }
-       return false;
    }
 
     kaufePrestigeUpgrade(id) {
@@ -1118,6 +1116,35 @@ class SmileyGame {
                 }
             });
         }
+    }
+
+    showNotification(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+
+        // Optional: Unterschiedliche Farben für verschiedene Events
+        if (type === 'success') toast.style.borderLeftColor = '#4CAF50'; // Grün
+        if (type === 'error') toast.style.borderLeftColor = '#f44336';   // Rot
+
+        toast.innerText = message;
+        container.appendChild(toast);
+
+        // Animation starten (kurze Verzögerung für CSS-Transition)
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+
+        // Nach 3 Sekunden entfernen
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // Warten bis die Ausblend-Animation fertig ist, dann löschen
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
     }
 
     updatePetButtons() {
