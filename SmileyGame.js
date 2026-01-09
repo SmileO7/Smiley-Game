@@ -46,6 +46,8 @@ class SmileyGame {
             diamondMineUnlocked: false, // Prio 6
             guildsUnlocked: false,      // Prio 8
             petAutoClickTimer: 0,
+            achievementsUnlocked: achievementsData.map(() => false),
+            totalClicksLifetime: 0,
 
             // --- GILDEN ZUSTAND (Prio 9) ---
             guildName: null,
@@ -507,6 +509,28 @@ class SmileyGame {
                     }
                 });
 
+        // In applyAllBoni()
+        achievementsData.forEach((achievement, index) => {
+            if (this.gameState.achievementsUnlocked[index]) {
+                const bonus = achievement.bonus;
+                switch (bonus.type) {
+                    case 'sps_mult':
+                        this.gameState.globalSPSMultiplier += bonus.value;
+                        break;
+                    case 'click_mult':
+                        this.gameState.klickKraftMultiplier += bonus.value;
+                        break;
+                    case 'prestige_efficiency':
+                        this.gameState.prestigePointMultiplier += bonus.value;
+                        break;
+                    case 'global_mult':
+                        this.gameState.globalSPSMultiplier += bonus.value;
+                        this.gameState.klickKraftMultiplier += bonus.value;
+                        break;
+                }
+            }
+        });
+
         // 5. Finalisierung
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
         const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
@@ -528,6 +552,8 @@ class SmileyGame {
 
         // WICHTIG: lifetime_smileys nutzen, damit Prestige steigt!
         this.gameState.lifetime_smileys += actualClickPower;
+
+        this.checkAchievements();
 
         // UI Update
         this.updateUI();
@@ -579,6 +605,7 @@ class SmileyGame {
 
             if (isUnique) this.applyAllBoni();
 
+            this.checkAchievements();
             this.updateUI();
         }
     }
@@ -832,6 +859,38 @@ class SmileyGame {
                 this.renderDiamondMineContent();
                 this.speichereSpiel();
             }
+
+    checkAchievements() {
+        achievementsData.forEach((achievement, index) => {
+            // Falls schon freigeschaltet, überspringen
+            if (this.gameState.achievementsUnlocked[index]) return;
+
+            let isMet = false;
+            const req = achievement.requirement;
+
+            switch (req.type) {
+                case 'building_count':
+                    if (this.gameState.buildingCounts[req.target] >= req.value) isMet = true;
+                    break;
+                case 'total_clicks':
+                    if (this.gameState.totalClicksLifetime >= req.value) isMet = true;
+                    break;
+                case 'lifetime_smileys':
+                    if (this.gameState.lifetime_smileys >= req.value) isMet = true;
+                    break;
+                case 'guild_joined':
+                    if (this.gameState.guildName !== null) isMet = true;
+                    break;
+            }
+
+            if (isMet) {
+                this.gameState.achievementsUnlocked[index] = true;
+                this.showNotification(`🏆 Meilenstein erreicht: ${achievement.name}`, 'success');
+                this.applyAllBoni(); // Boni neu berechnen
+                this.speichereSpiel();
+            }
+        });
+    }
 
     // ================================================================================================================
     // 4. PETS LOGIK
@@ -2369,6 +2428,18 @@ class SmileyGame {
         closePetsButton?.addEventListener('click', () => {
             if (petInfoModal) petInfoModal.style.display = 'none';
         });
+        const achievementsModal = this.getById('achievements_info_modal');
+        const openAchievementsButton = this.getById('show_achievements_button');
+        const closeAchievementsButton = this.getById('close_achievements_info_button');
+
+        openAchievementsButton?.addEventListener('click', () => {
+            this.createInfoAchievementElements(); // Befüllt die Liste
+            if (achievementsModal) achievementsModal.style.display = 'flex';
+        });
+
+        closeAchievementsButton?.addEventListener('click', () => {
+            if (achievementsModal) achievementsModal.style.display = 'none';
+        });
     }
 
     setupSettingsModalListeners() {
@@ -2685,6 +2756,41 @@ createInfoPetsElements() {
         container.appendChild(item);
     });
 }
+
+    createInfoAchievementElements() {
+        const container = this.getById('info_achievements_container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        achievementsData.forEach((achiev, index) => {
+            const isUnlocked = this.gameState.achievementsUnlocked[index];
+            const item = document.createElement('div');
+
+            // Nutzt deine Farben: Blau für geschafft, Dunkel für gesperrt
+            item.className = `info-upgrade-item ${isUnlocked ? 'bought-upgrade' : 'locked-upgrade'}`;
+            item.style.borderColor = isUnlocked ? achiev.color : 'var(--color-neutral-olive)';
+
+            item.innerHTML = `
+                <h3>${isUnlocked ? '🏆' : '🔒'} ${achiev.name}</h3>
+                <p>${achiev.description}</p>
+                <p style="font-size: 0.8em; color: ${isUnlocked ? 'var(--color-accent-blue)' : '#777'};">
+                    ${isUnlocked ? 'ERLEDIGT: ' + this.getAchievementBonusText(achiev.bonus) : 'Noch gesperrt'}
+                </p>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    // Hilfsfunktion für die Bonustexte
+    getAchievementBonusText(bonus) {
+        switch (bonus.type) {
+            case 'sps_mult': return `+${(bonus.value * 100)}% SPS`;
+            case 'click_mult': return `+${(bonus.value * 100)}% Klickkraft`;
+            case 'global_mult': return `+${(bonus.value * 100)}% auf Alles`;
+            case 'prestige_efficiency': return `+${(bonus.value * 100)}% Prestige-Effekt`;
+            default: return "Permanenter Bonus";
+        }
+    }
 
     // ================================================================================================================
     // 11. EINSTELLUNGEN
