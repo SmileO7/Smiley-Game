@@ -625,13 +625,9 @@ main {
 }
 
 #skill_tree_modal .modal-content.large {
-    width: 95%;
-    max-width: 900px;
     max-height: 85vh; /* Maximal 85% der Bildschirmhöhe */
-    overflow-y: auto; /* Vertikaler Scrollbalken, wenn nötig */
-    padding: 25px;
-    background: #111;
-    border: 2px solid #FFD700; /* Goldener Rand für den Prestige-Tree */
+    overflow-y: auto; /* Vertikales Scrollen aktivieren */
+    padding-bottom: 50px; /* Platz am Ende für bessere Sichtbarkeit */
 }
 
 /* Optional: Verschönert den Scrollbalken für den Dark-Mode Look */
@@ -1252,10 +1248,15 @@ main {
  }
 
  #prestige-tree-container {
-     height: 600px;
-     margin: var(--spacing-md) auto;
      position: relative;
-     width: 600px;
+     width: 100%;
+     /* Erhöhe die feste Höhe auf mindestens 1100px */
+     height: 1100px;
+     background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
+     border-radius: 12px;
+     margin-top: 20px;
+     /* WICHTIG: Kein Scrollen im Container selbst, sondern im Modal-Content */
+     overflow: hidden;
  }
 
  /* PRESTIGE NODES (Knoten) */
