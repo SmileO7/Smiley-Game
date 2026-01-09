@@ -568,10 +568,16 @@ main {
 }
 
 #prestige-tree-container {
-    height: 600px;
-    margin: var(--spacing-md) auto;
     position: relative;
-    width: 600px;
+    width: 100%;
+    /* Wir erhöhen die innere Höhe auf 1100px für ID 13 & 14 */
+    height: 1100px;
+    background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
+    border-radius: 12px;
+    margin-top: 20px;
+    border: 1px solid #333;
+    /* Linien sollen innerhalb bleiben */
+    overflow: hidden;
 }
 
 /* PRESTIGE NODES (Knoten) */
@@ -618,33 +624,54 @@ main {
     border-color: var(--color-text-light);
 }
 
+#skill_tree_modal .modal-content.large {
+    width: 95%;
+    max-width: 900px;
+    max-height: 85vh; /* Maximal 85% der Bildschirmhöhe */
+    overflow-y: auto; /* Vertikaler Scrollbalken, wenn nötig */
+    padding: 25px;
+    background: #111;
+    border: 2px solid #FFD700; /* Goldener Rand für den Prestige-Tree */
+}
+
+/* Optional: Verschönert den Scrollbalken für den Dark-Mode Look */
+#skill_tree_modal .modal-content.large::-webkit-scrollbar {
+    width: 8px;
+}
+#skill_tree_modal .modal-content.large::-webkit-scrollbar-thumb {
+    background: #FFD700;
+    border-radius: 4px;
+}
+
 /* TOOLTIP MODAL */
 .modal-tooltip {
-    background-color: var(--color-primary-dark);
-    border: 2px solid var(--color-accent-blue);
+    position: absolute;
+    background: rgba(10, 10, 20, 0.95);
+    border: 1px solid #FFD700;
+    padding: 12px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
-    color: var(--color-text-primary);
-    left: 50%;
-    max-width: 300px;
-    padding: 15px;
-    position: fixed;
-    text-align: left;
-    top: 50%;
-    transform: translate(-50%, -50%);
     z-index: 3000;
+    pointer-events: none; /* Wichtig: Maus geht durch den Tooltip */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    max-width: 250px;
 }
 
 .modal-content-tooltip h4 {
-    color: var(--color-accent-blue);
-    font-size: 1.2em;
-    margin-bottom: 8px;
+    margin: 0 0 5px 0;
+    color: #FFD700;
+    font-size: 1.1em;
 }
 
 .modal-content-tooltip p {
-    color: var(--color-text-light);
-    font-size: 1em;
-    margin: 5px 0;
+    margin: 3px 0;
+    font-size: 0.9em;
+    color: #eee;
+    white-space: pre-line; /* Erlaubt Zeilenumbrüche */
+}
+
+#tooltip-cost {
+    font-weight: bold;
+    color: #aaa;
 }
 
 /* ======================================================= */

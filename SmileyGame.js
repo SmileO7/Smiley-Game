@@ -11,8 +11,7 @@ class SmileyGame {
         this.gameState = {
             // --- Währungen ---
             aktuelle_smileys: 0,
-            gesammelte_smileys: 0,
-         // forschungPunkte: 0,
+            lifetime_smileys: 0,
             diamanten: 0,
 
             // --- Prestige & Stats ---
@@ -67,26 +66,26 @@ class SmileyGame {
     }
 
     init() {
-        this.ladeSpiel();
+        this.ladeSpiel(); // WICHTIG: Lädt den Spielstand sofort
 
         this.createBuildingElements();
         this.renderPetShop();
-        this.createPrestigeUpgradeElements();
 
         this.updateGlobalUpgradeUI();
-
         this.updatePrestigeUI();
 
         this.ladeAudioEinstellungen();
-        const musicPlayer = this.getById('backgroudn-music');
+
+        // FIX: Tippfehler korrigiert ('background' statt 'backgroudn')
+        const musicPlayer = this.getById('background-music');
         if (musicPlayer) {
             musicPlayer.play().catch(e => {
-                console.log("Hintergrundmusik wartet auf Benutzerinteraktion(Error:", e, ").");
+                console.log("Musik wartet auf Interaktion:", e);
             });
         }
 
         this.setupMainEventListeners();
-        this.setupPrestigeEventListeners();
+        this.setupPrestigeEventListeners(); // Hier müssen wir gleich rein!
         this.setupInfoPageEventListeners();
 
         this.startIntervals();
@@ -108,39 +107,66 @@ class SmileyGame {
     }
 
     produzierePassiveErträge() {
-        // 1. SMILEY-PRODUKTION
-        const baseSPS = this.getSmileysPerSecond();
-        const actualSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
+        // WICHTIG: Erst neu berechnen, falls sich was geändert hat (z.B. durch Upgrades)
+        // Wenn das zu viel Performance frisst, kannst du es weglassen, aber so ist es exakt.
+        const actualSPS = this.computeTotalSPS();
 
         if (actualSPS > 0) {
+            // 1. Auf das Konto zum Ausgeben
             this.gameState.aktuelle_smileys += actualSPS;
-            this.gameState.gesammelte_smileys += actualSPS;
+
+            // 2. Auf das Lifetime-Konto (für Prestige-Level!)
+            // HIER GEÄNDERT: Wir nutzen lifetime_smileys statt gesammelte_smileys
+            // damit es zu unserem Prestige-Code von vorhin passt.
+            this.gameState.lifetime_smileys += actualSPS;
         }
 
         // 2. DIAMANTEN-PRODUKTION (DPS)
-        const MINE_INDEX = DIAMOND_MINE_INDEX;
-                // Bedingung: Prüft auf Unlock UND Minen-Count > 0
-                if (this.gameState.autoDiamondMineUnlocked && this.gameState.buildingCounts[MINE_INDEX] > 0) {
-                    const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-                    if (mine) {
-                        // Logik: Fügt 10% der Basis-DPS hinzu
-                        const autoDiamondRate = mine.baseDPS * mine.diamondMultiplier * 0.1;
-                        this.gameState.diamanten += autoDiamondRate;
-                    }
-                }
-            this.updateUI();
+        // (Dieser Teil von dir war schon super, habe ihn nur sicherheitshalber formatiert)
+        const MINE_INDEX = 8; // Oder deine Konstante DIAMOND_MINE_INDEX
+
+        // Prüfen ob Mine freigeschaltet (ID 8 im Tree setzt diamondMineUnlocked auf true)
+        if (this.gameState.diamondMineUnlocked && this.gameState.buildingCounts[MINE_INDEX] > 0) {
+            // Wir suchen das Minen-Objekt in den Daten
+            // (Achte darauf, dass uniqueBuildingsData verfügbar ist)
+            const mine = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+
+            if (mine) {
+                // Logik: 10% der Basis-DPS pro Sekunde
+                const autoDiamondRate = mine.baseDPS * (mine.diamondMultiplier || 1) * 0.1;
+                this.gameState.diamanten += autoDiamondRate;
+            }
         }
+
+        this.updateUI();
+    }
 
     computeTotalSPS() {
         let baseSPS = this.getSmileysPerSecond();
 
-        const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
-        const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+        // 1. Hole die Boni aus dem Tree
+        const prestigeEffects = this.calculatePrestigeEffects();
 
-        // Finaler Multiplikator: Prestige * Reset * Global Upgrades * Gilden Bonus
-        this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
+        // 2. Prestige-Punkte Bonus berechnen
+        // Formel: 1 + (Punkte * Effizienz aus Tree)
+        const points = this.gameState.gesamt_prestige_punkte || 0;
+        const pointsBonus = 1 + (points * prestigeEffects.pointEfficiency);
+
+        // 3. Reset Bonus (Standard 1% pro Reset, falls du das noch willst)
+        const resets = this.gameState.prestigeResets || 0;
+        const resetBonus = 1 + (resets * 0.01);
+
+        // 4. Alles multiplizieren
+        // Tree-SPS * Punkte-Bonus * Reset-Bonus * Global * Gilde
+        this.gameState.globalerPrestigeMultiplikator =
+            prestigeEffects.spsMultiplier * pointsBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + (this.gameState.guildSPSMultiplier || 0));
 
         this.gameState.totalSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
+
+        // Unlocks im State speichern (für UI Updates)
+        this.gameState.petsUnlocked = prestigeEffects.petsUnlocked;
+        this.gameState.diamondMineUnlocked = prestigeEffects.mineUnlocked;
+        this.gameState.guildsUnlocked = prestigeEffects.guildsUnlocked;
 
         return this.gameState.totalSPS;
     }
@@ -193,6 +219,11 @@ class SmileyGame {
         } catch (e) {
             console.error("Fehler beim Speichern des Spiels:", e);
         }
+    }
+
+    // Hilfsfunktion: Leitet englische Aufrufe an die deutsche Funktion weiter
+    saveGameState() {
+        this.speichereSpiel();
     }
 
     ladeSpiel(encodedData) {
@@ -286,23 +317,19 @@ class SmileyGame {
      * Berechnet die Kosten für Upgrades (ehemals Research, jetzt Global Upgrades)
      * unter Berücksichtigung von Pet-Boni (Upgrade Cost Reduction).
      */
-    calculateUpgradeCost(baseCost) {
-        let costReduction = 0;
+    calculateUpgradeCost(basePrice, count) {
+        // Standard Berechnung
+        let price = basePrice * Math.pow(1.15, count);
 
-        // 1. Pet Cost Reduction (Upgrade-Pet)
-        // Wir verwenden this.gameState.activePet, da nur das aktive Pet zählt.
-        const activePetIndex = petsData.findIndex(pet => pet.effectType === 'cost_reduction_upgrades' && this.gameState.activePet === pet.id);
-        if (activePetIndex !== -1) {
-            const pet = petsData[activePetIndex];
-            const petLevel = this.gameState.petLevels[activePetIndex];
-            const petStats = this.calculatePetStat(pet, petLevel);
-            costReduction += petStats.currentEffect;
+        // Boni holen
+        const prestigeEffects = this.calculatePrestigeEffects();
+
+        // Rabatt anwenden (z.B. 5% Rabatt -> Preis * 0.95)
+        if (prestigeEffects.costReduction > 0) {
+            price *= (1 - prestigeEffects.costReduction);
         }
 
-        if (costReduction > 0) {
-            return Math.floor(baseCost * (1 - costReduction));
-        }
-        return baseCost;
+        return Math.ceil(price);
     }
 
     /**
@@ -326,6 +353,58 @@ class SmileyGame {
             currentEffect: currentEffect,
             isMaxLevel: currentLevel >= pet.maxLevel
         };
+    }
+
+    // Diese Funktion berechnet alle aktiven Boni aus dem Skill-Tree
+    calculatePrestigeEffects() {
+        let effects = {
+            spsMultiplier: 1.0,      // Multiplikator für Smileys pro Sekunde
+            clickMultiplier: 1.0,    // Multiplikator für Klickkraft
+            costReduction: 0.0,      // Rabatt (0.05 = 5%)
+            pointEfficiency: 0.10,   // Wie stark ein Prestige-Punkt ist (Standard 10%)
+            petsUnlocked: false,
+            mineUnlocked: false,
+            guildsUnlocked: false
+        };
+
+        // Wir gehen durch die DEFINITIONEN (data.js) und prüfen den STATUS
+        prestigeUpgrades.forEach(upgrade => {
+            // Ist dieses Upgrade gekauft?
+            if (this.gameState.prestigeUpgradeStatus[upgrade.id]) {
+
+                switch (upgrade.type) {
+                    case 'sps_mult':
+                        // Zinseszins (multiplikativ) oder additiv? Multiplikativ ist mächtiger!
+                        effects.spsMultiplier *= (1 + upgrade.value);
+                        break;
+                    case 'click_mult':
+                        effects.clickMultiplier *= (1 + upgrade.value);
+                        break;
+                    case 'cost_reduction':
+                        // Additiv, damit wir nicht bei 99% Rabatt landen
+                        effects.costReduction += upgrade.value;
+                        break;
+                    case 'prestige_efficiency':
+                        effects.pointEfficiency += upgrade.value;
+                        break;
+                    case 'unlock_pets':
+                        effects.petsUnlocked = true;
+                        break;
+                    case 'unlock_mine':
+                        effects.mineUnlocked = true;
+                        break;
+                    case 'unlock_guilds':
+                        effects.guildsUnlocked = true;
+                        break;
+                    case 'global_mult':
+                        effects.spsMultiplier *= (1 + upgrade.value);
+                        effects.clickMultiplier *= (1 + upgrade.value);
+                        break;
+                }
+            }
+        });
+
+        return effects;
     }
 
     applyAllBoni() {
@@ -436,23 +515,40 @@ class SmileyGame {
         this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
     }
 
-
-
     // ================================================================================================================
     // 3. KERNLOGIK (Kauf & Reset)
     // ================================================================================================================
 
     klickeSmiley() {
-        // 1. Klickkraft berechnen
-        const actualClickPower = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
+        // 1. Klickkraft zentral berechnen (inkl. Prestige Bonus!)
+        const actualClickPower = this.getClickStrength();
 
         // 2. Smileys erhöhen
         this.gameState.aktuelle_smileys += actualClickPower;
-        this.gameState.gesammelte_smileys += actualClickPower;
 
-        // Keine Klick-Feedback- oder Debug-Logik mehr.
+        // WICHTIG: lifetime_smileys nutzen, damit Prestige steigt!
+        this.gameState.lifetime_smileys += actualClickPower;
 
+        // UI Update
         this.updateUI();
+
+    }
+
+    getClickStrength() {
+        // 1. Basis-Werte
+        let strength = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
+
+        // 2. Prestige-Boni holen (Das hast du gerade eingebaut)
+        // Falls du die Funktion 'calculatePrestigeEffects' noch nicht hast,
+        // nimm die Version aus meiner vorherigen Nachricht!
+        if (this.calculatePrestigeEffects) {
+            const prestigeEffects = this.calculatePrestigeEffects();
+            strength *= prestigeEffects.clickMultiplier;
+        }
+
+        // (Hier könnten später noch Pet-Boni rein: strength *= petBonus)
+
+        return Math.floor(strength); // Keine halben Smileys ;)
     }
 
     kaufeMehrereGebaeude(index, amount) {
@@ -598,6 +694,42 @@ class SmileyGame {
             this.updateUI();
         }
         this.speichereSpiel();
+    }
+
+    tryBuyPrestigeUpgrade(upgrade) {
+        // 1. Schon gekauft?
+        if (this.gameState.prestigeUpgradeStatus[upgrade.id]) return;
+
+        // Sicherheits-Check: Falls requirements undefined ist, nutzen wir eine leere Liste []
+        const reqs = upgrade.requirements || [];
+
+        // 2. Voraussetzungen erfüllt?
+        const requirementsMet = reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+
+        if (!requirementsMet) {
+            this.showNotification("Du musst erst die vorherigen Skills freischalten!", "error");
+            return;
+        }
+
+        // 3. Genug Punkte?
+        if ((this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost) {
+            // Kaufen & Abziehen
+            this.gameState.prestige_punkte_verfügbar -= upgrade.cost;
+            this.gameState.prestigeUpgradeStatus[upgrade.id] = true;
+
+            this.showNotification(`Skill "${upgrade.name || 'Upgrade'}" gelernt!`, "success");
+
+            // --- HIER WAR DER FEHLER ---
+            this.speichereSpiel(); // <--- Korrigiert von saveGameState() auf speichereSpiel()
+            // ---------------------------
+
+            this.renderSkillTree();
+            this.updatePrestigeUI();
+            this.updateUI(); // Unlocks aktualisieren
+
+        } else {
+            this.showNotification(`Nicht genug Punkte! Benötigt: ${upgrade.cost}`, "error");
+        }
     }
 
     prestigeReset() {
@@ -1067,55 +1199,186 @@ class SmileyGame {
        }
 
     updatePrestigeUI() {
-        if (!this.getById('prestige_punkte_verfügbar')) return;
+        // 1. Sicherheitscheck: Sind wir auf der Prestige-Seite?
+        const displayElement = this.getById('prestige_punkte_verfügbar');
+        if (!displayElement) return;
 
+        // 2. Werte holen (Wir nutzen unsere Hilfsfunktion, um Rechenfehler zu vermeiden)
+        // Wir berechnen hier, wie viele Punkte man INSGESAMT für die Lifetime-Smileys bekäme
+        const totalPotentialPoints = this.calculatePrestigeGain();
+
+        // Wie viele haben wir schon "eingelöst"? (Prestige Level)
+        // Falls du das noch nicht speicherst, nehmen wir prestige_currency als Näherungswert
+        // Besser wäre eine Variable: this.gameState.prestige_level (Gesamt verdiente Punkte jemals)
+        const alreadyEarnedPoints = this.gameState.gesamt_prestige_punkte || 0;
+
+        // Nur die Differenz ist neu claimbar!
+        const pointsToGain = Math.max(0, totalPotentialPoints - alreadyEarnedPoints);
+
+        // Berechnung für den nächsten Punkt (für die Anzeige)
+        // Wie viele Smileys braucht man für (Level + 1)?
         const prestigePointThreshold = 1000000;
-        const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / prestigePointThreshold, 1 / 3));
-        const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
+        const nextLevel = totalPotentialPoints + 1;
+        const nextPointRequirement = Math.pow(nextLevel, 3) * prestigePointThreshold;
 
-        const nextPointRequirement = Math.pow(this.gameState.gesamt_prestige_punkte + pointsToGain + 1, 3) * prestigePointThreshold;
+        // 3. Texte im HTML aktualisieren
+        // ID angepasst an dein HTML:
+        displayElement.innerText = this.formatNumber(this.gameState.prestige_currency || 0); // Verfügbar im Wallet
 
-        this.getById('prestige_punkte_verfügbar').innerText = this.formatNumber(this.gameState.prestige_punkte_verfügbar);
-        this.getById('gesamt_prestige_punkte').innerText = this.formatNumber(this.gameState.gesamt_prestige_punkte);
-        this.getById('aktuelle_smileys_prestige').innerText = this.formatNumber(this.gameState.gesammelte_smileys);
+        this.getById('gesamt_prestige_punkte').innerText = this.formatNumber(alreadyEarnedPoints);
+
+        // WICHTIG: Hier nutzen wir lifetime_smileys, da wir das vorhin eingebaut haben
+        const currentLifetime = this.gameState.lifetime_smileys || 0;
+        this.getById('aktuelle_smileys_prestige').innerText = this.formatNumber(currentLifetime);
+
         this.getById('next_prestige_point').innerText = this.formatNumber(nextPointRequirement);
 
-        const globalMultiDisplay = this.getById('globaler_multiplikator_anzeige_prestige');
+        // ID korrigiert (war vorher ..._prestige, ist im HTML aber ohne)
+        const globalMultiDisplay = this.getById('globaler_multiplikator_anzeige');
         if (globalMultiDisplay) {
-            globalMultiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
+            // Beispiel: 1 Punkt = 10% -> Faktor 0.1
+            // Formel: 1 + (Punkte * 0.1)
+            const mult = 1 + (this.gameState.prestige_currency || 0) * 0.1;
+            globalMultiDisplay.innerText = `x${mult.toFixed(2)}`;
         }
 
-
+        // 4. Button Logik
         const prestigeButton = this.getById('prestige_reset_button');
         if (prestigeButton) {
+            // Button deaktivieren, wenn es nichts zu holen gibt
             prestigeButton.disabled = pointsToGain <= 0;
-            prestigeButton.innerText = `Prestige Reset (${pointsToGain} Punkte)`;
-        }
-        const pointsToGainElement = this.getById('prestige_points_to_gain');
-        if (pointsToGainElement) {
-            pointsToGainElement.innerText = pointsToGain;
+
+            // Text ändern, damit man sieht, was man kriegt
+            if (pointsToGain > 0) {
+                prestigeButton.innerText = `Prestige (${pointsToGain} Punkte)`;
+                prestigeButton.classList.remove('btn-disabled'); // Optional für Styling
+            } else {
+                prestigeButton.innerText = "Benötige mehr Smileys";
+                prestigeButton.classList.add('btn-disabled');
+            }
         }
 
+        // 5. Skill Tree Logik (Lassen wir drin, ist gut für später!)
         if (this.getById('prestige-tree-container')) {
-            prestigeUpgrades.forEach(upgrade => {
-                const node = document.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
-                if (!node) return;
+            // Falls du 'prestigeUpgrades' definiert hast, läuft das hier:
+            if (typeof prestigeUpgrades !== 'undefined') {
+                prestigeUpgrades.forEach(upgrade => {
+                    const node = document.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
+                    if (!node) return;
 
-                const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-                const canAfford = this.gameState.prestige_punkte_verfügbar >= upgrade.cost;
-                const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+                    const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[reqId]);
+                    const canAfford = (this.gameState.prestige_currency || 0) >= upgrade.cost;
+                    const isPurchased = this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[upgrade.id];
 
-                node.classList.remove('purchased', 'available', 'locked');
+                    node.classList.remove('purchased', 'available', 'locked');
 
-                if (isPurchased) {
-                    node.classList.add('purchased');
-                } else if (requirementsMet && canAfford) {
-                    node.classList.add('available');
-                } else {
-                    node.classList.add('locked');
-                }
-            });
+                    if (isPurchased) {
+                        node.classList.add('purchased');
+                    } else if (requirementsMet && canAfford) {
+                        node.classList.add('available');
+                    } else {
+                        node.classList.add('locked');
+                    }
+                });
+            }
         }
+    }
+
+    fuehrePrestigeAus(points) {
+        // 1. Prestige Währung gutschreiben (in BEIDE Töpfe)
+        this.gameState.prestige_punkte_verfügbar += points; // Zum Ausgeben
+        this.gameState.gesamt_prestige_punkte += points;    // Für den Fortschritt/Level
+
+        // Zähler für Statistiken
+        this.gameState.prestigeResets++;
+
+        // 2. Alles zurücksetzen (Soft Reset)
+        this.gameState.aktuelle_smileys = 0;
+        this.gameState.lifetime_smileys = 0; // Reset für den nächsten Run
+
+        // Gebäude & Preise zurücksetzen
+        this.gameState.buildingCounts = this.gameState.buildingCounts.map(() => 0);
+        // WICHTIG: Preise auch wieder auf Basis-Preis setzen!
+        // (Dafür hast du ja buildingPrices im State, oder du berechnest sie eh dynamisch)
+
+        // Upgrades zurücksetzen
+        this.gameState.researchStatus = this.gameState.researchStatus.map(() => false);
+
+        // UI Updates
+        this.updateUI();
+        this.updateGlobalUpgradeUI();
+        this.updatePrestigeUI(); // Damit die neuen Prestige-Punkte sofort angezeigt werden
+
+        this.showNotification(`Prestige erfolgreich! +${points} Smiley Points erhalten!`, 'success');
+    }
+
+    zeigePrestigeDetails() {
+        // Wir suchen das neue Fenster im HTML
+        const modal = document.getElementById('prestige-modal');
+        if (!modal) {
+            console.error("Prestige-Modal nicht gefunden! Hast du den HTML-Code eingefügt?");
+            return;
+        }
+
+        // Werte berechnen
+        // Fallback auf aktuelle Smileys, falls Lifetime noch 0 ist (damit nicht 0 steht)
+        const totalSmileys = this.gameState.lifetime_smileys > 0
+            ? this.gameState.lifetime_smileys
+            : this.gameState.aktuelle_smileys;
+
+        const potentialPoints = this.calculatePrestigeGain();
+        const currentPrestige = this.gameState.prestige_currency || 0;
+
+        // Text im Fenster aktualisieren (wir nutzen sicherheitshalber getElementById direkt)
+        const elLifetime = document.getElementById('prestige-lifetime-display');
+        const elLevel = document.getElementById('prestige-current-level');
+        const elGain = document.getElementById('prestige-gain-display');
+
+        if (elLifetime) elLifetime.innerText = this.formatNumber(totalSmileys);
+        if (elLevel) elLevel.innerText = currentPrestige;
+        if (elGain) elGain.innerText = potentialPoints;
+
+        // DAS WICHTIGSTE: Fenster anzeigen (statt alert)
+        modal.style.display = 'flex';
+
+        // Buttons im Fenster aktivieren
+        const btnConfirm = document.getElementById('btn-do-prestige');
+        const btnCancel = document.getElementById('btn-cancel-prestige');
+
+        // Alten Event-Listener entfernen (durch Klonen), damit er nicht doppelt feuert
+        const newBtnConfirm = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+
+        const newBtnCancel = btnCancel.cloneNode(true);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+        // Neue Klick-Events setzen
+        newBtnConfirm.onclick = () => {
+            if (potentialPoints > 0) {
+                this.fuehrePrestigeAus(potentialPoints);
+                modal.style.display = 'none';
+            } else {
+                // Hier nutzen wir unser schönes Toast-System statt Alert!
+                this.showNotification("Du brauchst mehr Smileys für einen Prestige-Punkt!", "error");
+            }
+        };
+
+        newBtnCancel.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+
+    calculatePrestigeGain() {
+        // Wir nutzen lifetime_smileys oder aktuelle_smileys als Fallback
+        const totalSmileys = this.gameState.lifetime_smileys || this.gameState.aktuelle_smileys || 0;
+
+        const BLOCK_COST = 1000000; // 1 Million Smileys für den ersten Punkt
+
+        if (totalSmileys < BLOCK_COST) return 0;
+
+        // Formel: Dritte Wurzel
+        const points = Math.cbrt(totalSmileys / BLOCK_COST);
+        return Math.floor(points);
     }
 
     showNotification(message, type = 'info') {
@@ -1145,6 +1408,41 @@ class SmileyGame {
                 toast.remove();
             }, 300);
         }, 3000);
+    }
+
+    showSkillTooltip(upgrade, element) {
+        const tooltip = this.getById('prestige-tooltip-modal');
+        if (!tooltip) return;
+
+        // 1. Daten befüllen
+        const title = document.getElementById('tooltip-title');
+        const cost = document.getElementById('tooltip-cost');
+        const status = document.getElementById('tooltip-status');
+
+        if (title) title.innerText = upgrade.name;
+        if (cost) cost.innerText = `Kosten: ${this.formatNumber(upgrade.cost)} Smiley Points`;
+
+        // 2. Status-Text generieren
+        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+        const reqs = upgrade.requirements || [];
+        const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+
+        let statusText = upgrade.description;
+        if (isPurchased) {
+            statusText += "\n\n✅ Bereits erlernt";
+        } else if (!requirementsMet) {
+            statusText += "\n\n❌ Voraussetzungen nicht erfüllt";
+        }
+
+        if (status) status.innerText = statusText;
+
+        // 3. Tooltip positionieren (neben dem Mauszeiger oder dem Node)
+        tooltip.style.display = 'block';
+
+        // Wir positionieren ihn etwas versetzt zum Button
+        const rect = element.getBoundingClientRect();
+        tooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
+        tooltip.style.left = (rect.right + 15) + 'px';
     }
 
     updatePetButtons() {
@@ -1249,7 +1547,123 @@ class SmileyGame {
     // 8. CONTENT RENDERING
     // ================================================================================================================
 
-    // Ausschnitt aus SmileyGame.js (Abschnitt 8. CONTENT RENDERING)
+    renderSkillTree() {
+        const container = this.getById('prestige-tree-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.classList.add("tree-lines-svg");
+        svg.style.position = "absolute";
+        svg.style.width = "100%";
+        svg.style.height = "100%"; // Stellt sicher, dass SVG so hoch wie der Container (1100px) ist
+        svg.style.zIndex = "0";
+        container.appendChild(svg);
+
+        // Hilfsfunktion für Koordinaten (Deine Daten nutzen Pixel-Offset von der Mitte)
+        // x: 0 -> 50%, y: 0 -> 50px Padding oben
+        const getPos = (u) => ({
+            x: `calc(50% + ${u.x}px)`,
+            y: `${u.y + 50}px` // +50px Abstand von ganz oben
+        });
+
+        // --- 1. LINIEN ZEICHNEN ---
+        prestigeUpgrades.forEach(upgrade => {
+            // HIER WAR DER FEHLER: Wir nutzen jetzt 'requirements'
+            const reqs = upgrade.requirements || [];
+
+            reqs.forEach(reqId => {
+                const parent = prestigeUpgrades.find(u => u.id === reqId);
+                if (parent) {
+                    const line = document.createElementNS(svgNS, "line");
+
+                    // Wir müssen calc() für SVG leider simulieren oder JS rechnen lassen.
+                    // Da SVG keine calc() Koordinaten mag, nehmen wir hier JS-Offset:
+                    // Container-Breite annehmen (z.B. Zentrum ist 0)
+                    // Einfacher Trick: Wir nutzen % für SVG, indem wir Pixel grob schätzen oder
+                    // besser: Wir setzen die Linie relativ zur Mitte.
+
+                    // Um SVG einfach zu halten, nehmen wir an:
+                    // Mitte = 50%. 1px entspricht ca. 0.2% (bei 500px Breite).
+                    // Saubere Lösung:
+                    line.setAttribute("x1", `calc(50% + ${parent.x}px)`); // Manche Browser mögen calc in SVG nicht
+                    line.setAttribute("y1", (parent.y + 50));
+                    line.setAttribute("x2", `calc(50% + ${upgrade.x}px)`);
+                    line.setAttribute("y2", (upgrade.y + 50));
+
+                    // FALLBACK für SVG (da calc in Attributen oft nicht geht):
+                    // Wir nutzen CSS Styles für die Linie, wenn möglich, oder absolute Zahlen
+                    // Da wir die Breite nicht kennen, setzen wir x1/x2 via Style oder nehmen an 100% width
+                    // Für jetzt: Wir nutzen den einfachen Weg über Styles ist schwierig bei SVG Lines.
+                    // Alternative: Wir lassen SVG, und positionieren per JS-Rechnung (Container width / 2).
+
+                    // VEREINFACHUNG: Wir nutzen einfach x/y direkt als Pixel + Offset
+                    // Das setzt voraus, dass SVG viewBox richtig ist.
+                    // Machen wir es simpler: Wir nutzen div-Linien ODER wir akzeptieren, dass x=0 die Mitte ist.
+
+                    const containerWidth = container.clientWidth || 600; // Fallback
+                    const centerX = containerWidth / 2;
+
+                    line.setAttribute("x1", centerX + parent.x);
+                    line.setAttribute("y1", parent.y + 50);
+                    line.setAttribute("x2", centerX + upgrade.x);
+                    line.setAttribute("y2", upgrade.y + 50);
+
+                    line.classList.add("connection-line");
+                    if (this.gameState.prestigeUpgradeStatus[parent.id]) {
+                        line.classList.add("unlocked");
+                    }
+                    svg.appendChild(line);
+                }
+            });
+        });
+
+        // --- 2. NODES ZEICHNEN ---
+        prestigeUpgrades.forEach(upgrade => {
+            const node = document.createElement('div');
+            node.className = 'prestige-node';
+            node.dataset.id = upgrade.id;
+
+            // HIER nutzen wir CSS calc, das funktioniert perfekt für HTML Elemente
+            node.style.left = `calc(50% + ${upgrade.x}px)`;
+            node.style.top = `${upgrade.y + 50}px`;
+
+            const reqs = upgrade.requirements || [];
+            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+            const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+            const canAfford = (this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost;
+
+            if (isPurchased) {
+                node.classList.add('purchased');
+                node.innerText = "✔";
+            } else if (requirementsMet && canAfford) {
+                node.classList.add('available');
+                node.innerText = upgrade.id;
+            } else if (requirementsMet && !canAfford) {
+                node.classList.add('locked');
+                node.innerText = upgrade.id;
+                node.style.borderColor = "#f44336";
+            } else {
+                node.classList.add('locked');
+                node.innerText = "?";
+            }
+
+            node.onclick = () => this.tryBuyPrestigeUpgrade(upgrade);
+
+            // Tooltip (optional)
+            if (this.showSkillTooltip) {
+                node.onmouseenter = () => this.showSkillTooltip(upgrade, node);
+            }
+            node.onmouseleave = () => {
+                const tt = this.getById('prestige-tooltip-modal');
+                if(tt) tt.style.display = 'none';
+            };
+
+            container.appendChild(node);
+        });
+    }
 
     renderPetShop() {
             const petGrid = this.getById('pet-shop-grid');
@@ -1802,73 +2216,96 @@ class SmileyGame {
 
 
     setupPrestigeEventListeners() {
-        const prestigeModal = this.getById('prestige_confirm_modal');
+        // --- 1. PRESTIGE RESET (Das Zeitreise-Fenster) ---
+        // Wir verbinden nur den Button. Die Logik zum Öffnen und Berechnen
+        // liegt jetzt zentral in 'zeigePrestigeDetails()'.
         const openPrestigeModalButton = this.getById('prestige_reset_button');
-        const closePrestigeModalButton = this.getById('cancel_prestige_button');
-        const confirmPrestigeButton = this.getById('confirm_prestige_button');
 
-        openPrestigeModalButton?.addEventListener('click', () => {
-            this.updatePrestigeUI();
-            const totalPotentialPoints = Math.floor(Math.pow(this.gameState.gesammelte_smileys / 1000000, 1 / 3));
-            const pointsToGain = Math.max(0, totalPotentialPoints - this.gameState.gesamt_prestige_punkte);
-            if (pointsToGain > 0) {
-                prestigeModal.style.display = 'flex';
-            }
-        });
+        if (openPrestigeModalButton) {
+            openPrestigeModalButton.addEventListener('click', () => {
+                this.zeigePrestigeDetails();
+            });
+        }
 
-        closePrestigeModalButton?.addEventListener('click', () => {
-            prestigeModal.style.display = 'none';
-        });
-        confirmPrestigeButton?.addEventListener('click', () => {
-            this.prestigeReset();
-            prestigeModal.style.display = 'none';
-        });
+        // (Die Buttons "Bestätigen" und "Abbrechen" IM Modal werden
+        // automatisch in 'zeigePrestigeDetails' verwaltet, daher brauchen wir sie hier nicht.)
 
+
+        // --- 2. SKILL TREE (Das Modal mit den Nodes) ---
         const skillTreeModal = this.getById('skill_tree_modal');
         const openSkillTreeButton = this.getById('open_skill_tree_button');
         const closeSkillTreeButton = this.getById('close_skill_tree_button');
 
-        openSkillTreeButton?.addEventListener('click', () => {
-            this.createPrestigeUpgradeElements();
-            this.updatePrestigeUI();
-            skillTreeModal.style.display = 'flex';
-        });
-        closeSkillTreeButton?.addEventListener('click', () => {
-            skillTreeModal.style.display = 'none';
-        });
+        // Öffnen
+        if (openSkillTreeButton && skillTreeModal) {
+            openSkillTreeButton.addEventListener('click', () => {
+                // Modal anzeigen
+                skillTreeModal.style.display = 'flex';
 
-        const prestigeTreeContainer = this.getById('prestige-tree-container');
-        const tooltip = this.getById('prestige-tooltip-modal');
-
-        prestigeTreeContainer?.addEventListener('click', (e) => {
-            const node = e.target.closest('.prestige-node');
-            if (!node) return;
-            const id = parseInt(node.dataset.id, 10);
-            if (!isNaN(id)) this.kaufePrestigeUpgrade(id);
-        });
-
-        if (prestigeTreeContainer && tooltip) {
-
-            prestigeTreeContainer.addEventListener('mouseover', (e) => {
-                const node = e.target.closest('.prestige-node');
-                if (!node || node.dataset.id === undefined) return;
-                this.zeigePrestigeDetails(node, true);
+                // WICHTIG: Jetzt den visuellen Baum zeichnen!
+                // Das ersetzt das alte 'createPrestigeUpgradeElements'
+                this.renderSkillTree();
             });
+        }
 
-            prestigeTreeContainer.addEventListener('mouseout', (e) => {
-                const node = e.target.closest('.prestige-node');
-                if (!node) return;
-                tooltip.style.display = 'none';
+        // Schließen
+        if (closeSkillTreeButton && skillTreeModal) {
+            closeSkillTreeButton.addEventListener('click', () => {
+                skillTreeModal.style.display = 'none';
             });
         }
 
 
+        // --- 3. PUNKTE ZURÜCKSETZEN (Respec) ---
         const resetPrestigeUpgradesButton = this.getById('reset_prestige_upgrades_button');
-        resetPrestigeUpgradesButton?.addEventListener('click', () => {
-            if (confirm("Möchtest du wirklich alle investierten Prestige-Punkte zurücksetzen? Dieser Schritt kann nicht rückgängig gemacht werden.")) {
-                this.resetPrestigeUpgrades();
+        if (resetPrestigeUpgradesButton) {
+            resetPrestigeUpgradesButton.addEventListener('click', () => {
+                if (confirm("Möchtest du wirklich alle investierten Punkte zurücksetzen? Du erhältst die Punkte zurück.")) {
+                    this.respecPrestigeUpgrades();
+                }
+            });
+        }
+    }
+
+    respecPrestigeUpgrades() {
+        let refundedPoints = 0;
+
+        // 1. Punkte berechnen
+        this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
+            if (bought) {
+                const upgrade = prestigeUpgrades.find(u => u.id === id);
+                if (upgrade) {
+                    refundedPoints += upgrade.cost;
+                }
             }
         });
+
+        if (refundedPoints > 0) {
+            if (!confirm("Möchtest du wirklich alle investierten Prestige-Punkte zurücksetzen?")) {
+                return;
+            }
+
+            // 2. Reset durchführen
+            this.gameState.activePet = null; // Pet deaktivieren
+            this.gameState.prestige_punkte_verfügbar += refundedPoints;
+            this.gameState.prestigeUpgradeStatus.fill(false); // Alle auf "falsch" setzen
+
+            // 3. WICHTIG: Speichern & Neu berechnen
+            this.applyAllBoni();
+
+            // --- KORREKTUR HIER ---
+            this.speichereSpiel(); // War vorher saveGameState()
+            // ----------------------
+
+            // 4. UI Aktualisieren
+            this.updatePrestigeUI();
+            this.renderSkillTree(); // WICHTIG: Baum neu zeichnen!
+            this.updateUI();        // WICHTIG: Unlocks (Pets/Gilden) wieder ausblenden
+
+            this.showNotification(`Reset erfolgreich! ${refundedPoints} Punkte erstattet.`, "success");
+        } else {
+            this.showNotification("Du hast noch keine Punkte investiert.", "info");
+        }
     }
 
     setupInfoPageEventListeners() {

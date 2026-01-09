@@ -185,17 +185,118 @@ const globalUpgrades = [
         { id: 109, cost: 150000000000000, description: "Schöpfer: Developer Mode (+500%)", type: "building_mult", value: 5.0, buildingIndex: 14 },
     ];
 
+// data.js - Prestige Upgrades Overhaul
 const prestigeUpgrades = [
-    { id: 0, cost: 1, description: 'Starte mit einem permanenten +10% SPS-Bonus', type: 'global_sps_mult', value: 0.1, x: 0, y: 0, requirements: [] },
-    { id: 1, cost: 2, description: 'Permanenter globaler Klick-Multiplikator +25%', type: 'global_click_mult', value: 0.25, x: -100, y: 100, requirements: [0] },
-    { id: 2, cost: 5, description: 'Erhöhe die Effektivität von Prestige-Punkten um 0.1% (additiv)', type: 'prestige_point_eff', value: 0.001, x: 0, y: 200, requirements: [1, 2] },
-    { id: 3, cost: 3, description: 'Auto-Klicker & Smiley-Bäume sind 50% günstiger', type: 'building_cost_reduction', buildingIndices: [0, 1], value: 0.5, x: -200, y: 200, requirements: [1] },
-    { id: 4, cost: 3, description: 'Schalte einen neuen globalen Bonus frei: +1% SPS pro Prestige-Reset', type: 'prestige_reset_bonus', value: 0.01, x: 200, y: 200, requirements: [2] },
-    { id: 5, cost: 10, description: 'Verbessere den globalen Klick-Multiplikator um weitere 50%', type: 'global_click_mult', value: 0.5, x: -100, y: 300, requirements: [3, 4] },
-    { id: 6, cost: 10, description: 'Der Bonus pro Prestige-Reset wird verdoppelt', type: 'prestige_reset_bonus', value: 0.01, x: 100, y: 300, requirements: [3, 5] },
-    { id: 7, cost: 50, description: 'Schalte das Pet-System frei.', type: 'unlock_pets', value: 0, x: -200, y: 400, requirements: [6] }, // Geändert von 15 auf 50 (für Pets)
-    { id: 8, cost: 15, description: 'Schalte die Diamanten-Mine frei.', type: 'unlock_mine', value: 0, x: 200, y: 400, requirements: [7] },
-    { id: 9, cost: 50, description: 'Schalte das Gilden-System frei.', type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [8, 9] },
+    // --- STUFE 1: Der Start ---
+    {
+        id: 0, name: "Genesis", cost: 1,
+        description: "Startbonus: +10% passive SPS.",
+        type: 'sps_mult', value: 0.10,
+        x: 0, y: 0, requirements: []
+    },
+
+    // --- STUFE 2: Spezialisierung ---
+    {
+        id: 1, name: "Aktive Finger", cost: 2,
+        description: "Klickkraft +25%.",
+        type: 'click_mult', value: 0.25,
+        x: -100, y: 100, requirements: [0]
+    },
+    {
+        id: 2, name: "Passive Macht", cost: 2,
+        description: "SPS +25%.",
+        type: 'sps_mult', value: 0.25,
+        x: 100, y: 100, requirements: [0]
+    },
+
+    // --- STUFE 3: Utility & Effizienz ---
+    {
+        id: 3, name: "Bau-Rabatt", cost: 5,
+        description: "Alle Gebäude sind 5% günstiger.",
+        type: 'cost_reduction', value: 0.05,
+        x: -150, y: 200, requirements: [1]
+    },
+    {
+        id: 4, name: "Prestige-Experte", cost: 10,
+        description: "Prestige-Punkte sind 10% effektiver.",
+        type: 'prestige_efficiency', value: 0.10,
+        x: 150, y: 200, requirements: [2]
+    },
+
+    // --- STUFE 4: Die Mitte (Verbindung) ---
+    {
+        id: 5, name: "Synergie", cost: 15,
+        description: "Klicks geben kurzzeitig SPS-Boost (Simuliert: Klickkraft +50%)",
+        type: 'click_mult', value: 0.50,
+        x: 0, y: 300, requirements: [1, 2]
+    },
+
+    // --- STUFE 5: Feature Unlocks (Midgame) ---
+    {
+        id: 6, name: "Süße Begleiter", cost: 50,
+        description: "Schaltet das PET-SYSTEM frei.",
+        type: 'unlock_pets', value: 0,
+        x: -100, y: 400, requirements: [5]
+    },
+    {
+        id: 7, name: "Tiefbau", cost: 50,
+        description: "Schaltet die DIAMANTEN-MINE frei.",
+        type: 'unlock_mine', value: 0,
+        x: 100, y: 400, requirements: [5]
+    },
+
+    // --- STUFE 6: Das Gilden-System ---
+    {
+        id: 8, name: "Imperium", cost: 100,
+        description: "Schaltet das GILDEN-SYSTEM frei.",
+        type: 'unlock_guilds', value: 0,
+        x: 0, y: 500, requirements: [6, 7]
+    },
+
+    // --- STUFE 7: Die Expansion (Late Game) ---
+    // Hier beginnen die richtig starken Upgrades
+    {
+        id: 9, name: "Globaler Reichtum", cost: 250,
+        description: "Verdoppelt deine gesamte SPS-Produktion (x2).",
+        type: 'global_mult', value: 1.0, // 1.0 = +100%
+        x: 0, y: 600, requirements: [8]
+    },
+
+    // --- STUFE 8: Spezialisierte Pfade ---
+    {
+        id: 10, name: "Klick-Titan", cost: 500,
+        description: "Verdreifacht deine Klickkraft (+200%).",
+        type: 'click_mult', value: 2.0,
+        x: -150, y: 700, requirements: [9]
+    },
+    {
+        id: 11, name: "Industrie-Gigant", cost: 500,
+        description: "Verdreifacht deine passive SPS (+200%).",
+        type: 'sps_mult', value: 2.0,
+        x: 150, y: 700, requirements: [9]
+    },
+
+    // --- STUFE 9: Extreme Effizienz ---
+    {
+        id: 12, name: "Massenproduktion", cost: 1500,
+        description: "Reduziert alle Gebäudekosten um weitere 10%.",
+        type: 'cost_reduction', value: 0.10,
+        x: 0, y: 800, requirements: [10, 11]
+    },
+
+    // --- STUFE 10: Endgame Unlocks / Boosts ---
+    {
+        id: 13, name: "Zeitreise-Meister", cost: 5000,
+        description: "Prestige-Punkte sind 50% effektiver.",
+        type: 'prestige_efficiency', value: 0.50,
+        x: -100, y: 900, requirements: [12]
+    },
+    {
+        id: 14, name: "Big Bang", cost: 10000,
+        description: "Multipliziert ALLES mit 5.",
+        type: 'global_mult', value: 4.0, // +400%
+        x: 100, y: 900, requirements: [12]
+    }
 ];
 
 const petsData = [
