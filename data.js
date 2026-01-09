@@ -27,147 +27,163 @@ const buildingsData = [
 // NOTE: Die buildingIndex Werte für Research-Upgrades sind jetzt 0-14 (da das Labor Index 3 wegfiel)
 const globalUpgrades = [
     // --- 0. KLICKKRAFT UPGRADES (ID 0 - 4 | Gesamt: 5) ---
-    { id: 0, cost: 10000, description: "Klickkraft: Multiplikator +10%", type: "click_mult", value: 0.1, buildingIndex: undefined },
-    { id: 1, cost: 28284, description: "Klickkraft: Multiplikator +10%", type: "click_mult", value: 0.1, buildingIndex: undefined },
-    { id: 2, cost: 51961, description: "Klickkraft: Multiplikator +10%", type: "click_mult", value: 0.1, buildingIndex: undefined },
-    { id: 3, cost: 80000, description: "Klickkraft: Multiplikator +10%", type: "click_mult", value: 0.1, buildingIndex: undefined },
-    { id: 4, cost: 111803, description: "Klickkraft: Multiplikator +10%", type: "click_mult", value: 0.1, buildingIndex: undefined },
+    // Konzept: Exponentielles Wachstum, damit Klicken auch später noch relevant bleibt.
+    { id: 0, cost: 500, description: "Finger-Training: Klickkraft +25%", type: "click_mult", value: 0.25, buildingIndex: undefined },
+    { id: 1, cost: 2500, description: "Gaming-Maus: Klickkraft +50%", type: "click_mult", value: 0.50, buildingIndex: undefined },
+    { id: 2, cost: 10000, description: "Doppelklick-Technik: Klickkraft +100%", type: "click_mult", value: 1.0, buildingIndex: undefined },
+    { id: 3, cost: 50000, description: "Mechanische Finger: Klickkraft +200%", type: "click_mult", value: 2.0, buildingIndex: undefined },
+    { id: 4, cost: 250000, description: "Göttliche Berührung: Klickkraft +500%", type: "click_mult", value: 5.0, buildingIndex: undefined },
 
     // --- GEBÄUDE 0: Auto-Klicker (ID 5 - 11 | Gesamt: 7) ---
-    { id: 5, cost: 146969, description: "Auto-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 0 },
-    { id: 6, cost: 185219, description: "Auto-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 0 },
-    { id: 7, cost: 226274, description: "Auto-Klicker: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 0 }, // NEU: Kostenreduktion
-    { id: 8, cost: 270000, description: "Auto-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 0 },
-    { id: 9, cost: 316228, description: "Auto-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 0 },
-    { id: 10, cost: 364917, description: "Auto-Klicker: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 0 }, // NEU: Kostenreduktion
-    { id: 11, cost: 415692, description: "Auto-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 0 },
+    // Konzept: Von einfacher Ölung bis zur künstlichen Intelligenz.
+    { id: 5, cost: 15000, description: "Auto-Klicker: Bessere Schmierung (+25%)", type: "building_mult", value: 0.25, buildingIndex: 0 },
+    { id: 6, cost: 40000, description: "Auto-Klicker: Stärkere Motoren (+50%)", type: "building_mult", value: 0.50, buildingIndex: 0 },
+    { id: 7, cost: 100000, description: "Auto-Klicker: Mengenrabatt (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 0 },
+    { id: 8, cost: 250000, description: "Auto-Klicker: Titan-Spitzen (+100%)", type: "building_mult", value: 1.0, buildingIndex: 0 },
+    { id: 9, cost: 750000, description: "Auto-Klicker: Übertaktung (+200%)", type: "building_mult", value: 2.0, buildingIndex: 0 },
+    { id: 10, cost: 2000000, description: "Auto-Klicker: Selbst-Reparatur (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 0 },
+    { id: 11, cost: 5000000, description: "Auto-Klicker: K.I. Schwarm (+500%)", type: "building_mult", value: 5.0, buildingIndex: 0 },
 
-    // --- GEBÄUDE 1: Smiley-Baum (ID 12 - 18 | Gesamt: 7) ---
-    { id: 12, cost: 468324, description: "Smiley-Baum: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 1 },
-    { id: 13, cost: 522653, description: "Smiley-Baum: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 1 },
-    { id: 14, cost: 578535, description: "Smiley-Baum: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 1 }, // NEU: Kostenreduktion
-    { id: 15, cost: 635849, description: "Smiley-Baum: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 1 },
-    { id: 16, cost: 694484, description: "Smiley-Baum: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 1 },
-    { id: 17, cost: 754341, description: "Smiley-Baum: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 1 }, // NEU: Kostenreduktion
-    { id: 18, cost: 815334, description: "Smiley-Baum: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 1 },
+    // --- GEBÄUDE 1: Smiley-Baum (ID 12 - 18) ---
+        // Thema: Natur & Wachstum
+        { id: 12, cost: 500000, description: "Smiley-Baum: Spezial-Dünger (+25%)", type: "building_mult", value: 0.25, buildingIndex: 1 },
+        { id: 13, cost: 1200000, description: "Smiley-Baum: Auto-Bewässerung (+50%)", type: "building_mult", value: 0.50, buildingIndex: 1 },
+        { id: 14, cost: 2500000, description: "Smiley-Baum: Großhändler-Rabatt (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 1 },
+        { id: 15, cost: 5000000, description: "Smiley-Baum: Gentechnik (+100%)", type: "building_mult", value: 1.0, buildingIndex: 1 },
+        { id: 16, cost: 12000000, description: "Smiley-Baum: Synthetische Blätter (+200%)", type: "building_mult", value: 2.0, buildingIndex: 1 },
+        { id: 17, cost: 25000000, description: "Smiley-Baum: Stecklinge (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 1 },
+        { id: 18, cost: 60000000, description: "Smiley-Baum: Yggdrasil-Wurzeln (+500%)", type: "building_mult", value: 5.0, buildingIndex: 1 },
 
-    // --- GEBÄUDE 2: Smiley-Fabrik (ID 19 - 25 | Gesamt: 7) ---
-    { id: 19, cost: 877383, description: "Smiley-Fabrik: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 2 },
-    { id: 20, cost: 940407, description: "Smiley-Fabrik: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 2 },
-    { id: 21, cost: 1004456, description: "Smiley-Fabrik: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 2 }, // NEU: Kostenreduktion
-    { id: 22, cost: 1069485, description: "Smiley-Fabrik: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 2 },
-    { id: 23, cost: 1135467, description: "Smiley-Fabrik: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 2 },
-    { id: 24, cost: 1202377, description: "Smiley-Fabrik: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 2 }, // NEU: Kostenreduktion
-    { id: 25, cost: 1270191, description: "Smiley-Fabrik: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 2 },
+        // --- GEBÄUDE 2: Smiley-Fabrik (ID 19 - 25) ---
+        // Thema: Industrie & Automatisierung
+        { id: 19, cost: 900000, description: "Smiley-Fabrik: Schichtarbeit (+25%)", type: "building_mult", value: 0.25, buildingIndex: 2 },
+        { id: 20, cost: 2200000, description: "Smiley-Fabrik: Fließband-Optimierung (+50%)", type: "building_mult", value: 0.50, buildingIndex: 2 },
+        { id: 21, cost: 4500000, description: "Smiley-Fabrik: Material-Recycling (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 2 },
+        { id: 22, cost: 9000000, description: "Smiley-Fabrik: Roboter-Arme (+100%)", type: "building_mult", value: 1.0, buildingIndex: 2 },
+        { id: 23, cost: 20000000, description: "Smiley-Fabrik: KI-Steuerung (+200%)", type: "building_mult", value: 2.0, buildingIndex: 2 },
+        { id: 24, cost: 45000000, description: "Smiley-Fabrik: 3D-Druck (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 2 },
+        { id: 25, cost: 100000000, description: "Smiley-Fabrik: Nanofabrikation (+500%)", type: "building_mult", value: 5.0, buildingIndex: 2 },
 
-    // --- GEBÄUDE 3: Smiley-Mine (ID 26 - 32 | Gesamt: 7) ---
-    { id: 26, cost: 1338885, description: "Smiley-Mine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 3 },
-    { id: 27, cost: 1408436, description: "Smiley-Mine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 3 },
-    { id: 28, cost: 1478822, description: "Smiley-Mine: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 3 }, // NEU: Kostenreduktion
-    { id: 29, cost: 1550024, description: "Smiley-Mine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 3 },
-    { id: 30, cost: 1622020, description: "Smiley-Mine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 3 },
-    { id: 31, cost: 1694794, description: "Smiley-Mine: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 3 }, // NEU: Kostenreduktion
-    { id: 32, cost: 1768326, description: "Smiley-Mine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 3 },
+        // --- GEBÄUDE 3: Smiley-Mine (ID 26 - 32) ---
+        // Thema: Bergbau & Untergrund
+        { id: 26, cost: 1500000, description: "Smiley-Mine: Bessere Spitzhacken (+25%)", type: "building_mult", value: 0.25, buildingIndex: 3 },
+        { id: 27, cost: 3500000, description: "Smiley-Mine: Dynamit-Einsatz (+50%)", type: "building_mult", value: 0.50, buildingIndex: 3 },
+        { id: 28, cost: 7500000, description: "Smiley-Mine: Minen-Logistik (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 3 },
+        { id: 29, cost: 15000000, description: "Smiley-Mine: Diamant-Bohrer (+100%)", type: "building_mult", value: 1.0, buildingIndex: 3 },
+        { id: 30, cost: 35000000, description: "Smiley-Mine: Laser-Abbau (+200%)", type: "building_mult", value: 2.0, buildingIndex: 3 },
+        { id: 31, cost: 80000000, description: "Smiley-Mine: Drohnen-Schwarm (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 3 },
+        { id: 32, cost: 180000000, description: "Smiley-Mine: Planeten-Kern (+500%)", type: "building_mult", value: 5.0, buildingIndex: 3 },
 
-    // --- GEBÄUDE 4: Smiley-Bohrer (ID 33 - 39 | Gesamt: 7) ---
-    { id: 33, cost: 1842600, description: "Smiley-Bohrer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 4 },
-    { id: 34, cost: 1917600, description: "Smiley-Bohrer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 4 },
-    { id: 35, cost: 1993310, description: "Smiley-Bohrer: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 4 }, // NEU: Kostenreduktion
-    { id: 36, cost: 2069715, description: "Smiley-Bohrer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 4 },
-    { id: 37, cost: 2146797, description: "Smiley-Bohrer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 4 },
-    { id: 38, cost: 2224542, description: "Smiley-Bohrer: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 4 }, // NEU: Kostenreduktion
-    { id: 39, cost: 2302936, description: "Smiley-Bohrer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 4 },
+        // --- GEBÄUDE 4: Smiley-Bohrer (ID 33 - 39) ---
+        // Thema: Schweres Gerät & Tiefsee/Erde
+        { id: 33, cost: 2500000, description: "Smiley-Bohrer: Gehärteter Stahl (+25%)", type: "building_mult", value: 0.25, buildingIndex: 4 },
+        { id: 34, cost: 6000000, description: "Smiley-Bohrer: Hydraulik-System (+50%)", type: "building_mult", value: 0.50, buildingIndex: 4 },
+        { id: 35, cost: 12000000, description: "Smiley-Bohrer: Modulare Bauweise (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 4 },
+        { id: 36, cost: 25000000, description: "Smiley-Bohrer: Plasma-Schneider (+100%)", type: "building_mult", value: 1.0, buildingIndex: 4 },
+        { id: 37, cost: 60000000, description: "Smiley-Bohrer: Magma-Antrieb (+200%)", type: "building_mult", value: 2.0, buildingIndex: 4 },
+        { id: 38, cost: 130000000, description: "Smiley-Bohrer: Teleport-Fracht (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 4 },
+        { id: 39, cost: 300000000, description: "Smiley-Bohrer: Erd-Spalter (+500%)", type: "building_mult", value: 5.0, buildingIndex: 4 },
 
-    // --- GEBÄUDE 5: Smiley-Kernkraftwerk (ID 40 - 46 | Gesamt: 7) ---
-    { id: 40, cost: 2381966, description: "Smiley-Kernkraftwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 5 },
-    { id: 41, cost: 2461623, description: "Smiley-Kernkraftwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 5 },
-    { id: 42, cost: 2541902, description: "Smiley-Kernkraftwerk: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 5 }, // NEU: Kostenreduktion
-    { id: 43, cost: 2622791, description: "Smiley-Kernkraftwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 5 },
-    { id: 44, cost: 2704283, description: "Smiley-Kernkraftwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 5 },
-    { id: 45, cost: 2786369, description: "Smiley-Kernkraftwerk: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 5 }, // NEU: Kostenreduktion
-    { id: 46, cost: 2869041, description: "Smiley-Kernkraftwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 5 },
+    // --- GEBÄUDE 5: Smiley-Kernkraftwerk (ID 40 - 46) ---
+        // Thema: Atomare Energie & Strahlung
+        { id: 40, cost: 4000000, description: "Kernkraftwerk: Uran-Anreicherung (+25%)", type: "building_mult", value: 0.25, buildingIndex: 5 },
+        { id: 41, cost: 10000000, description: "Kernkraftwerk: Neue Turbinen (+50%)", type: "building_mult", value: 0.50, buildingIndex: 5 },
+        { id: 42, cost: 20000000, description: "Kernkraftwerk: Sicherheitsprotokoll (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 5 },
+        { id: 43, cost: 50000000, description: "Kernkraftwerk: Kalte Fusion (+100%)", type: "building_mult", value: 1.0, buildingIndex: 5 },
+        { id: 44, cost: 120000000, description: "Kernkraftwerk: Antimaterie-Zelle (+200%)", type: "building_mult", value: 2.0, buildingIndex: 5 },
+        { id: 45, cost: 250000000, description: "Kernkraftwerk: Strahlungs-Recycling (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 5 },
+        { id: 46, cost: 600000000, description: "Kernkraftwerk: Unendliche Energie (+500%)", type: "building_mult", value: 5.0, buildingIndex: 5 },
 
-    // --- GEBÄUDE 6: Smiley-Galaxie (ID 47 - 53 | Gesamt: 7) ---
-    { id: 47, cost: 2952290, description: "Smiley-Galaxie: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 6 },
-    { id: 48, cost: 3036109, description: "Smiley-Galaxie: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 6 },
-    { id: 49, cost: 3120491, description: "Smiley-Galaxie: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 6 }, // NEU: Kostenreduktion
-    { id: 50, cost: 3205427, description: "Smiley-Galaxie: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 6 },
-    { id: 51, cost: 3290910, description: "Smiley-Galaxie: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 6 },
-    { id: 52, cost: 3376934, description: "Smiley-Galaxie: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 6 }, // NEU: Kostenreduktion
-    { id: 53, cost: 3463490, description: "Smiley-Galaxie: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 6 },
+        // --- GEBÄUDE 6: Smiley-Galaxie (ID 47 - 53) ---
+        // Thema: Weltraum & Sterne
+        { id: 47, cost: 8000000, description: "Galaxie: Sternenstaub-Sammler (+25%)", type: "building_mult", value: 0.25, buildingIndex: 6 },
+        { id: 48, cost: 20000000, description: "Galaxie: Planeten-Former (+50%)", type: "building_mult", value: 0.50, buildingIndex: 6 },
+        { id: 49, cost: 45000000, description: "Galaxie: Schwerkraft-Schleuder (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 6 },
+        { id: 50, cost: 100000000, description: "Galaxie: Dyson-Sphäre (+100%)", type: "building_mult", value: 1.0, buildingIndex: 6 },
+        { id: 51, cost: 250000000, description: "Galaxie: Schwarzes Loch (+200%)", type: "building_mult", value: 2.0, buildingIndex: 6 },
+        { id: 52, cost: 600000000, description: "Galaxie: Raumkrümmung (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 6 },
+        { id: 53, cost: 1500000000, description: "Galaxie: Supernova-Explosion (+500%)", type: "building_mult", value: 5.0, buildingIndex: 6 },
 
-    // --- GEBÄUDE 7: Dimensionsportal (ID 54 - 60 | Gesamt: 7) ---
-    { id: 54, cost: 3550572, description: "Dimensionsportal: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 7 },
-    { id: 55, cost: 3638173, description: "Dimensionsportal: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 7 },
-    { id: 56, cost: 3726286, description: "Dimensionsportal: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 7 }, // NEU: Kostenreduktion
-    { id: 57, cost: 3814894, description: "Dimensionsportal: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 7 },
-    { id: 58, cost: 3903993, description: "Dimensionsportal: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 7 },
-    { id: 59, cost: 3993577, description: "Dimensionsportal: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 7 }, // NEU: Kostenreduktion
-    { id: 60, cost: 4083639, description: "Dimensionsportal: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 7 },
+        // --- GEBÄUDE 7: Dimensionsportal (ID 54 - 60) ---
+        // Thema: Multiversum & Risse
+        { id: 54, cost: 20000000, description: "Portal: Riss-Stabilisator (+25%)", type: "building_mult", value: 0.25, buildingIndex: 7 },
+        { id: 55, cost: 50000000, description: "Portal: Leeren-Energie (+50%)", type: "building_mult", value: 0.50, buildingIndex: 7 },
+        { id: 56, cost: 120000000, description: "Portal: Wurmloch-Karte (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 7 },
+        { id: 57, cost: 300000000, description: "Portal: Taschen-Dimension (+100%)", type: "building_mult", value: 1.0, buildingIndex: 7 },
+        { id: 58, cost: 800000000, description: "Portal: Ereignishorizont (+200%)", type: "building_mult", value: 2.0, buildingIndex: 7 },
+        { id: 59, cost: 2000000000, description: "Portal: Realitäts-Anker (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 7 },
+        { id: 60, cost: 5000000000, description: "Portal: Omni-Präsenz (+500%)", type: "building_mult", value: 5.0, buildingIndex: 7 },
 
-    // --- GEBÄUDE 8: Zeitmaschine (ID 61 - 67 | Gesamt: 7) ---
-    { id: 61, cost: 4174175, description: "Zeitmaschine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 8 },
-    { id: 62, cost: 4265179, description: "Zeitmaschine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 8 },
-    { id: 63, cost: 4356644, description: "Zeitmaschine: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 8 }, // NEU: Kostenreduktion
-    { id: 64, cost: 4448564, description: "Zeitmaschine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 8 },
-    { id: 65, cost: 4540933, description: "Zeitmaschine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 8 },
-    { id: 66, cost: 4633744, description: "Zeitmaschine: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 8 }, // NEU: Kostenreduktion
-    { id: 67, cost: 4726992, description: "Zeitmaschine: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 8 },
+        // --- GEBÄUDE 8: Zeitmaschine (ID 61 - 67) ---
+        // Thema: Zeitreisen & Paradoxa
+        { id: 61, cost: 50000000, description: "Zeitmaschine: Fluxkompensator (+25%)", type: "building_mult", value: 0.25, buildingIndex: 8 },
+        { id: 62, cost: 150000000, description: "Zeitmaschine: Zukunfts-Wissen (+50%)", type: "building_mult", value: 0.50, buildingIndex: 8 },
+        { id: 63, cost: 400000000, description: "Zeitmaschine: Paradox-Schutz (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 8 },
+        { id: 64, cost: 1000000000, description: "Zeitmaschine: Zeit-Kristalle (+100%)", type: "building_mult", value: 1.0, buildingIndex: 8 },
+        { id: 65, cost: 3000000000, description: "Zeitmaschine: Ewigkeitsschleife (+200%)", type: "building_mult", value: 2.0, buildingIndex: 8 },
+        { id: 66, cost: 8000000000, description: "Zeitmaschine: Kausalitäts-Bruch (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 8 },
+        { id: 67, cost: 20000000000, description: "Zeitmaschine: Urzeit-Ernte (+500%)", type: "building_mult", value: 5.0, buildingIndex: 8 },
 
-    // --- GEBÄUDE 9: Meta-Klicker (ID 68 - 74 | Gesamt: 7) ---
-    { id: 68, cost: 4820670, description: "Meta-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 9 },
-    { id: 69, cost: 4914775, description: "Meta-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 9 },
-    { id: 70, cost: 5009299, description: "Meta-Klicker: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 9 }, // NEU: Kostenreduktion
-    { id: 71, cost: 5104239, description: "Meta-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 9 },
-    { id: 72, cost: 5199589, description: "Meta-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 9 },
-    { id: 73, cost: 5295346, description: "Meta-Klicker: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 9 }, // NEU: Kostenreduktion
-    { id: 74, cost: 5391506, description: "Meta-Klicker: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 9 },
+        // --- GEBÄUDE 9: Meta-Klicker (ID 68 - 74) ---
+        // Thema: Code, Glitches & 4. Wand
+        { id: 68, cost: 150000000, description: "Meta: Code-Optimierung (+25%)", type: "building_mult", value: 0.25, buildingIndex: 9 },
+        { id: 69, cost: 400000000, description: "Meta: Vierte Wand Durchbruch (+50%)", type: "building_mult", value: 0.50, buildingIndex: 9 },
+        { id: 70, cost: 1000000000, description: "Meta: Entwickler-Konsole (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 9 },
+        { id: 71, cost: 3000000000, description: "Meta: Glitch-Harvesting (+100%)", type: "building_mult", value: 1.0, buildingIndex: 9 },
+        { id: 72, cost: 10000000000, description: "Meta: Root-Zugriff (+200%)", type: "building_mult", value: 2.0, buildingIndex: 9 },
+        { id: 73, cost: 25000000000, description: "Meta: Bug-Exploit (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 9 },
+        { id: 74, cost: 60000000000, description: "Meta: Der Algorithmus (+500%)", type: "building_mult", value: 5.0, buildingIndex: 9 },
 
-    // --- GEBÄUDE 10: Quanten-Netzwerk (ID 75 - 81 | Gesamt: 7) ---
-    { id: 75, cost: 5488065, description: "Quanten-Netzwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 10 },
-    { id: 76, cost: 5585018, description: "Quanten-Netzwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 10 },
-    { id: 77, cost: 5682361, description: "Quanten-Netzwerk: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 10 }, // NEU: Kostenreduktion
-    { id: 78, cost: 5780090, description: "Quanten-Netzwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 10 },
-    { id: 79, cost: 5878199, description: "Quanten-Netzwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 10 },
-    { id: 80, cost: 5976686, description: "Quanten-Netzwerk: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 10 }, // NEU: Kostenreduktion
-    { id: 81, cost: 6075545, description: "Quanten-Netzwerk: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 10 },
+        // --- GEBÄUDE 10: Quanten-Netzwerk (ID 75 - 81) ---
+        // Thema: Physik & Wahrscheinlichkeiten
+        { id: 75, cost: 500000000, description: "Quanten: Qubit-Prozessor (+25%)", type: "building_mult", value: 0.25, buildingIndex: 10 },
+        { id: 76, cost: 1500000000, description: "Quanten: Verschränkung (+50%)", type: "building_mult", value: 0.50, buildingIndex: 10 },
+        { id: 77, cost: 4000000000, description: "Quanten: Unschärfe-Filter (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 10 },
+        { id: 78, cost: 10000000000, description: "Quanten: Superposition (+100%)", type: "building_mult", value: 1.0, buildingIndex: 10 },
+        { id: 79, cost: 30000000000, description: "Quanten: Tunnel-Effekt (+200%)", type: "building_mult", value: 2.0, buildingIndex: 10 },
+        { id: 80, cost: 80000000000, description: "Quanten: Nullpunkt-Energie (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 10 },
+        { id: 81, cost: 200000000000, description: "Quanten: Schrödingers Smiley (+500%)", type: "building_mult", value: 5.0, buildingIndex: 10 },
 
-    // --- GEBÄUDE 11: Endloser Speicher (ID 82 - 88 | Gesamt: 7) ---
-    { id: 82, cost: 6174771, description: "Endloser Speicher: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 11 },
-    { id: 83, cost: 6274360, description: "Endloser Speicher: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 11 },
-    { id: 84, cost: 6374309, description: "Endloser Speicher: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 11 }, // NEU: Kostenreduktion
-    { id: 85, cost: 6474614, description: "Endloser Speicher: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 11 },
-    { id: 86, cost: 6575271, description: "Endloser Speicher: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 11 },
-    { id: 87, cost: 6676277, description: "Endloser Speicher: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 11 }, // NEU: Kostenreduktion
-    { id: 88, cost: 6777628, description: "Endloser Speicher: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 11 },
+        // --- GEBÄUDE 11: Endloser Speicher (ID 82 - 88) ---
+        // Thema: Daten & Unendlichkeit
+        { id: 82, cost: 2000000000, description: "Speicher: Cloud-Upload (+25%)", type: "building_mult", value: 0.25, buildingIndex: 11 },
+        { id: 83, cost: 6000000000, description: "Speicher: Daten-Kompression (+50%)", type: "building_mult", value: 0.50, buildingIndex: 11 },
+        { id: 84, cost: 15000000000, description: "Speicher: Server-Farm (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 11 },
+        { id: 85, cost: 40000000000, description: "Speicher: Holographie (+100%)", type: "building_mult", value: 1.0, buildingIndex: 11 },
+        { id: 86, cost: 120000000000, description: "Speicher: Akasha-Chronik (+200%)", type: "building_mult", value: 2.0, buildingIndex: 11 },
+        { id: 87, cost: 300000000000, description: "Speicher: Das Archiv (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 11 },
+        { id: 88, cost: 800000000000, description: "Speicher: Unendlichkeitsschleife (+500%)", type: "building_mult", value: 5.0, buildingIndex: 11 },
 
-    // --- GEBÄUDE 12: Ursprung (ID 89 - 95 | Gesamt: 7) ---
-    { id: 89, cost: 6879321, description: "Ursprung: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 12 },
-    { id: 90, cost: 6981352, description: "Ursprung: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 12 },
-    { id: 91, cost: 7083719, description: "Ursprung: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 12 }, // NEU: Kostenreduktion
-    { id: 92, cost: 7186419, description: "Ursprung: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 12 },
-    { id: 93, cost: 7289450, description: "Ursprung: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 12 },
-    { id: 94, cost: 7392809, description: "Ursprung: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 12 }, // NEU: Kostenreduktion
-    { id: 95, cost: 7496494, description: "Ursprung: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 12 },
+        // --- GEBÄUDE 12: Ursprung (ID 89 - 95) ---
+        // Thema: Schöpfung & Urknall
+        { id: 89, cost: 10000000000, description: "Ursprung: Ursuppe (+25%)", type: "building_mult", value: 0.25, buildingIndex: 12 },
+        { id: 90, cost: 30000000000, description: "Ursprung: Erster Funke (+50%)", type: "building_mult", value: 0.50, buildingIndex: 12 },
+        { id: 91, cost: 80000000000, description: "Ursprung: Äther-Extraktion (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 12 },
+        { id: 92, cost: 200000000000, description: "Ursprung: Genesis-Funktion (+100%)", type: "building_mult", value: 1.0, buildingIndex: 12 },
+        { id: 93, cost: 600000000000, description: "Ursprung: Gottes-Teilchen (+200%)", type: "building_mult", value: 2.0, buildingIndex: 12 },
+        { id: 94, cost: 1500000000000, description: "Ursprung: Schöpfungs-Code (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 12 },
+        { id: 95, cost: 4000000000000, description: "Ursprung: Alpha & Omega (+500%)", type: "building_mult", value: 5.0, buildingIndex: 12 },
 
-    // --- GEBÄUDE 13: Kosmische Einheit (ID 96 - 102 | Gesamt: 7) ---
-    { id: 96, cost: 7600502, description: "Kosmische Einheit: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 13 },
-    { id: 97, cost: 7704832, description: "Kosmische Einheit: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 13 },
-    { id: 98, cost: 7809480, description: "Kosmische Einheit: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 13 }, // NEU: Kostenreduktion
-    { id: 99, cost: 7914445, description: "Kosmische Einheit: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 13 },
-    { id: 100, cost: 8019726, description: "Kosmische Einheit: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 13 },
-    { id: 101, cost: 8125319, description: "Kosmische Einheit: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 13 }, // NEU: Kostenreduktion
-    { id: 102, cost: 8231224, description: "Kosmische Einheit: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 13 },
+        // --- GEBÄUDE 13: Kosmische Einheit (ID 96 - 102) ---
+        // Thema: Bewusstsein & Harmonie
+        { id: 96, cost: 50000000000, description: "Einheit: Telepathie (+25%)", type: "building_mult", value: 0.25, buildingIndex: 13 },
+        { id: 97, cost: 150000000000, description: "Einheit: Schwarm-Bewusstsein (+50%)", type: "building_mult", value: 0.50, buildingIndex: 13 },
+        { id: 98, cost: 400000000000, description: "Einheit: Kosmische Harmonie (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 13 },
+        { id: 99, cost: 1000000000000, description: "Einheit: Reiner Wille (+100%)", type: "building_mult", value: 1.0, buildingIndex: 13 },
+        { id: 100, cost: 3000000000000, description: "Einheit: Geist-Materie (+200%)", type: "building_mult", value: 2.0, buildingIndex: 13 },
+        { id: 101, cost: 8000000000000, description: "Einheit: Transzendenz (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 13 },
+        { id: 102, cost: 20000000000000, description: "Einheit: Das Eine (+500%)", type: "building_mult", value: 5.0, buildingIndex: 13 },
 
-    // --- GEBÄUDE 14: Absoluter Schöpfer (ID 103 - 109 | Gesamt: 7) ---
-    { id: 103, cost: 8337438, description: "Absoluter Schöpfer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 14 },
-    { id: 104, cost: 8443958, description: "Absoluter Schöpfer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 14 },
-    { id: 105, cost: 8550782, description: "Absoluter Schöpfer: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 14 }, // NEU: Kostenreduktion
-    { id: 106, cost: 8657908, description: "Absoluter Schöpfer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 14 },
-    { id: 107, cost: 8765335, description: "Absoluter Schöpfer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 14 },
-    { id: 108, cost: 8873059, description: "Absoluter Schöpfer: Gebäudekosten -1%", type: "cost_reduction_buildings", value: 0.01, buildingIndex: 14 }, // NEU: Kostenreduktion
-    { id: 109, cost: 8981079, description: "Absoluter Schöpfer: Produktion +10%", type: "building_mult", value: 0.1, buildingIndex: 14 },
-];
+        // --- GEBÄUDE 14: Absoluter Schöpfer (ID 103 - 109) ---
+        // Thema: Ultimative Macht
+        { id: 103, cost: 250000000000, description: "Schöpfer: Realitäts-Editor (+25%)", type: "building_mult", value: 0.25, buildingIndex: 14 },
+        { id: 104, cost: 800000000000, description: "Schöpfer: Unbegrenzte Macht (+50%)", type: "building_mult", value: 0.50, buildingIndex: 14 },
+        { id: 105, cost: 2000000000000, description: "Schöpfer: Weltenbauer (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 14 },
+        { id: 106, cost: 6000000000000, description: "Schöpfer: Existenz-Ebene (+100%)", type: "building_mult", value: 1.0, buildingIndex: 14 },
+        { id: 107, cost: 20000000000000, description: "Schöpfer: Die Antwort 42 (+200%)", type: "building_mult", value: 2.0, buildingIndex: 14 },
+        { id: 108, cost: 50000000000000, description: "Schöpfer: Game Overdrive (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 14 },
+        { id: 109, cost: 150000000000000, description: "Schöpfer: Developer Mode (+500%)", type: "building_mult", value: 5.0, buildingIndex: 14 },
+    ];
 
 const prestigeUpgrades = [
     { id: 0, cost: 1, description: 'Starte mit einem permanenten +10% SPS-Bonus', type: 'global_sps_mult', value: 0.1, x: 0, y: 0, requirements: [] },

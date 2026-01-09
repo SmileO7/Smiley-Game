@@ -471,7 +471,7 @@ class SmileyGame {
         const anzahl = isUnique ? 1 : amount;
 
         for (let i = 0; i < anzahl; i++) {
-            totalCost += this.calculateNextCost(item.basePrice, this.gameState.buildingCounts[index] + i, item.growthRate, index);
+            totalCost += Math.ceil(this.calculateNextCost(item.basePrice, this.gameState.buildingCounts[index] + i, item.growthRate, index));
         }
 
         if (this.gameState.aktuelle_smileys >= totalCost) {
@@ -501,7 +501,7 @@ class SmileyGame {
         const costMultiplier = this.getBuildingCostMultiplier(index);
         cost *= costMultiplier;
 
-        return Math.floor(cost); // Wichtig: Kosten müssen immer ganzzahlig sein
+        return Math.ceil(cost); // Wichtig: Kosten müssen immer ganzzahlig sein
     }
 
     getBuildingCostMultiplier(buildingIndex) {
@@ -536,41 +536,50 @@ class SmileyGame {
         return multiplier;
     }
 
-    kaufeGlobalUpgrade(id, amount = 1) {
-            let purchasedCount = 0;
-            let totalCost = 0;
+   // --- Ersetze die ganze kaufeGlobalUpgrade Funktion ---
 
-            for (let i = 0; i < amount; i++) {
-                const upgrade = globalUpgrades.find(u => u.id === id + i); // Prüft den nächsten in der Serie
-                if (!upgrade || this.gameState.researchStatus[upgrade.id]) break; // Wenn gekauft oder Ende der Serie
+   kaufeGlobalUpgrade(id, amount = 1) {
+       let purchasedCount = 0;
 
-                const finalCost = this.calculateUpgradeCost(upgrade.cost);
+       // Wir merken uns die Gruppe des ersten Upgrades, damit wir nicht aus Versehen
+       // Upgrades eines anderen Gebäudes mitkaufen.
+       const startUpgrade = globalUpgrades.find(u => u.id === id);
+       if (!startUpgrade) return;
+       const targetBuildingIndex = startUpgrade.buildingIndex;
 
-                if (this.gameState.aktuelle_smileys >= finalCost) {
-                    this.gameState.aktuelle_smileys -= finalCost;
-                    this.gameState.researchStatus[upgrade.id] = true;
-                    purchasedCount++;
-                    totalCost += finalCost;
+       for (let i = 0; i < amount; i++) {
+           // Prüfe das nächste Upgrade in der Reihe
+           const nextId = id + i;
+           const upgrade = globalUpgrades.find(u => u.id === nextId);
 
-                    // Wenn es ein Gebäudespezifisches Upgrade ist, muss die Schleife danach abbrechen.
-                    // Ansonsten wird nur das gekaufte Upgrade bestätigt und die Schleife fortgesetzt.
-                    if (upgrade.buildingIndex !== undefined && upgrade.buildingIndex !== -1) {
-                        break;
-                    }
-                } else {
-                    break; // Nicht mehr leisten können
-                }
-            }
+           // Abbruch-Bedingungen:
+           // 1. Upgrade existiert nicht
+           // 2. Upgrade gehört zu einem anderen Gebäude/Gruppe
+           // 3. Upgrade ist schon gekauft
+           if (!upgrade) break;
+           if (upgrade.buildingIndex !== targetBuildingIndex) break;
+           if (this.gameState.researchStatus[upgrade.id]) continue; // Überspringen, falls schon gekauft (Sicherheit)
 
-            if (purchasedCount > 0) {
-                this.applyAllBoni();
-                this.updateGlobalUpgradeUI();
-                this.updateUI();
-                this.speichereSpiel();
-                return true;
-            }
-            return false;
-        }
+           const finalCost = this.calculateUpgradeCost(upgrade.cost);
+
+           if (this.gameState.aktuelle_smileys >= finalCost) {
+               this.gameState.aktuelle_smileys -= finalCost;
+               this.gameState.researchStatus[upgrade.id] = true;
+               purchasedCount++;
+           } else {
+               break; // Nicht mehr genug Geld für das nächste in der Liste
+           }
+       }
+
+       if (purchasedCount > 0) {
+           this.applyAllBoni();
+           this.updateGlobalUpgradeUI(); // UI sofort aktualisieren
+           this.updateUI();
+           this.speichereSpiel();
+           return true;
+       }
+       return false;
+   }
 
     kaufePrestigeUpgrade(id) {
         const upgrade = prestigeUpgrades.find(u => u.id === id);
@@ -992,105 +1001,72 @@ class SmileyGame {
 
         // Ausschnitt aus SmileyGame.js (Abschnitt 7. RENDERING & UI-UPDATES)
 
-        updateGlobalUpgradeUI() {
-                const container = this.getById('global-upgrades-container');
-                if (!container) return;
-                container.innerHTML = '';
+       updateGlobalUpgradeUI() {
+           const container = this.getById('global-upgrades-container');
+           if (!container) return;
+           container.innerHTML = '';
 
-                let nextUpgradeFound = false;
-                let currentGroupIndex = null;
-                let upgradeGroup = [];
-                const MAX_GROUP_RENDER = 4; // Zeigt maximal 4 Upgrades pro Gruppe
+           let nextUpgradeFound = false;
+           let currentGroupIndex = null;
+           let upgradeGroup = [];
+           const MAX_GROUP_RENDER = 4;
 
-                // 1. Gruppierung der Upgrades (für Multi-Kauf Logik)
-                globalUpgrades.forEach(upgrade => {
-                    const isPurchased = this.gameState.researchStatus[upgrade.id];
-                    const buildingIndex = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
+           // 1. Gruppierung (bleibt gleich, sucht das nächste offene Upgrade)
+           globalUpgrades.forEach(upgrade => {
+               const isPurchased = this.gameState.researchStatus[upgrade.id];
+               const buildingIndex = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
 
-                    if (isPurchased) return;
+               if (isPurchased) return;
 
-                    // Definiere die aktuelle Gruppe
-                    if (currentGroupIndex === null) {
-                        currentGroupIndex = buildingIndex;
-                    }
+               // Wir wollen immer nur das allererste verfügbare Upgrade einer Gruppe finden
+               if (!nextUpgradeFound) {
+                    upgradeGroup.push(upgrade);
+                    nextUpgradeFound = true; // Sobald wir eins haben, hören wir auf zu suchen (pro Render-Zyklus)
+               }
+           });
 
-                    // Wenn die Gruppe wechselt oder die maximale Anzahl erreicht ist, beende die Schleife.
-                    if (buildingIndex !== currentGroupIndex || upgradeGroup.length >= MAX_GROUP_RENDER) {
-                         if (nextUpgradeFound) return; // Wenn wir die nächste Gruppe bereits gefunden haben, abbrechen.
-                    }
+           // 2. Rendering
+           if (upgradeGroup.length > 0) {
+               const firstUpgrade = upgradeGroup[0];
+               const finalCost = this.calculateUpgradeCost(firstUpgrade.cost);
 
-                    if (buildingIndex === currentGroupIndex) {
-                         if (!nextUpgradeFound) {
-                            upgradeGroup.push(upgrade);
-                            nextUpgradeFound = true;
-                         }
-                    }
-                });
+               // WICHTIG: Hier nutzen wir auch Math.ceil, damit der Button korrekt reagiert
+               const canAfford = this.gameState.aktuelle_smileys >= Math.ceil(finalCost);
 
-                // 2. Rendering des ersten ungekauften Upgrades (mit Multi-Kauf)
-                if (upgradeGroup.length > 0) {
-                    const firstUpgrade = upgradeGroup[0];
-                    const finalCost1x = this.calculateUpgradeCost(firstUpgrade.cost);
-                    const canAfford1x = this.gameState.aktuelle_smileys >= finalCost1x;
+               // --- Stufe berechnen (z.B. "Stufe 3 von 7") ---
+               const groupIndex = firstUpgrade.buildingIndex !== undefined ? firstUpgrade.buildingIndex : -1;
+               const totalInGroup = globalUpgrades.filter(u => (u.buildingIndex !== undefined ? u.buildingIndex : -1) === groupIndex).length;
+               const boughtInGroup = globalUpgrades.filter(u => (u.buildingIndex !== undefined ? u.buildingIndex : -1) === groupIndex && this.gameState.researchStatus[u.id]).length;
+               const currentStep = boughtInGroup + 1;
 
-                    // Berechne Kosten für 10er und 100er Kauf
-                    let cost10x = 0;
-                    let purchasable10x = 0;
-                    for (let i = 0; i < 10 && (firstUpgrade.id + i) < globalUpgrades.length; i++) {
-                        const nextUpgrade = globalUpgrades[firstUpgrade.id + i];
-                        // Wichtig: Nur Upgrades der gleichen Gruppe zählen!
-                        if (nextUpgrade.buildingIndex !== firstUpgrade.buildingIndex) break;
-                        if (this.gameState.researchStatus[nextUpgrade.id]) continue; // Überspringe bereits gekaufte
+               const typeIcon = firstUpgrade.type === 'click_mult' ? '🖱️' : '🏭';
 
-                        const cost = this.calculateUpgradeCost(nextUpgrade.cost);
-                        if (this.gameState.aktuelle_smileys >= (cost10x + cost)) {
-                             cost10x += cost;
-                             purchasable10x++;
-                        } else {
-                             break;
-                        }
-                    }
+               const upgradeDiv = document.createElement('div');
+               upgradeDiv.className = 'research-item research-group';
+               upgradeDiv.dataset.id = firstUpgrade.id;
 
-                    let cost100x = 0;
-                    let purchasable100x = 0;
-                    for (let i = 0; i < 100 && (firstUpgrade.id + i) < globalUpgrades.length; i++) {
-                         const nextUpgrade = globalUpgrades[firstUpgrade.id + i];
-                         if (nextUpgrade.buildingIndex !== firstUpgrade.buildingIndex) break;
-                         if (this.gameState.researchStatus[nextUpgrade.id]) continue;
-
-                         const cost = this.calculateUpgradeCost(nextUpgrade.cost);
-                         if (this.gameState.aktuelle_smileys >= (cost100x + cost)) {
-                             cost100x += cost;
-                             purchasable100x++;
-                         } else {
-                             break;
-                         }
-                    }
-
-                    const typeIcon = firstUpgrade.type === 'click_mult' ? '🖱️' : '🏭';
-
-                    const upgradeDiv = document.createElement('div');
-                    upgradeDiv.className = 'research-item research-group';
-                    upgradeDiv.dataset.id = firstUpgrade.id;
-
-                    upgradeDiv.innerHTML = `
-                        <h4>${typeIcon} ${firstUpgrade.description}</h4>
-                        <p>Nächstes Upgrade kostet: ${this.formatNumber(finalCost1x)} Smileys</p>
-                        <div class="button-group-upgrade">
-                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="1" ${!canAfford1x ? 'disabled' : ''}>
-                                1x Kaufen
-                            </button>
-                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="${purchasable10x}" ${purchasable10x === 0 ? 'disabled' : ''}>
-                                ${purchasable10x}x (${this.formatNumber(cost10x)})
-                            </button>
-                            <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="${purchasable100x}" ${purchasable100x === 0 ? 'disabled' : ''}>
-                                ${purchasable100x}x (${this.formatNumber(cost100x)})
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(upgradeDiv);
-                }
-            }
+               // HTML ohne die überflüssigen 10x/100x Buttons
+               upgradeDiv.innerHTML = `
+                   <div style="flex: 1; padding-right: 15px;">
+                       <h4 style="margin: 0 0 5px 0;">
+                           ${typeIcon} ${firstUpgrade.description}
+                           <span style="font-size: 0.8em; color: var(--color-accent-blue); margin-left: 5px;">
+                               (Stufe ${currentStep} / ${totalInGroup})
+                           </span>
+                       </h4>
+                       <p style="margin: 0; color: #888; font-size: 0.9em; text-align: left;">
+                           Kosten: <strong style="color: #fff;">${this.formatNumber(Math.ceil(finalCost))}</strong> Smileys
+                       </p>
+                   </div>
+                   <div class="button-group-upgrade">
+                       <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="1" ${!canAfford ? 'disabled' : ''} style="min-width: 120px;">
+                           Kaufen
+                       </button>
+                   </div>
+               `;
+               container.appendChild(upgradeDiv);
+           }
+       }
 
     updatePrestigeUI() {
         if (!this.getById('prestige_punkte_verfügbar')) return;
@@ -1695,18 +1671,24 @@ class SmileyGame {
         });
 
         this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
-                        const button = e.target.closest('.btn-buy-research');
-                        if (!button) return;
+            // 1. Suche den Button (auch wenn man auf das Icon/Text im Button klickt)
+            const button = e.target.closest('.btn-buy-research');
+            if (!button) return;
 
-                        // Lese ID und AMOUND aus
-                        const id = parseInt(button.dataset.id, 10);
-                        const amount = parseInt(button.dataset.amount, 10);
+            // 2. Daten auslesen
+            const id = parseInt(button.dataset.id, 10);
+            const amount = parseInt(button.dataset.amount, 10);
 
-                        if (!isNaN(id) && !isNaN(amount) && amount > 0) {
-                            // NEUER AUFRUF MIT AMOUNT!
-                            this.kaufeGlobalUpgrade(id, amount);
-                        }
-                    })
+            // 3. Debugging (Drück F12, falls es immer noch nicht geht)
+            console.log(`Klick erkannt! ID: ${id}, Menge: ${amount}`);
+
+            // 4. Kauf auslösen
+            if (!isNaN(id) && !isNaN(amount) && amount > 0) {
+                this.kaufeGlobalUpgrade(id, amount);
+            } else {
+                console.error("Fehler: Ungültige ID oder Menge beim Kauf.");
+            }
+        });
 
         this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
