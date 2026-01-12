@@ -1562,6 +1562,7 @@ class SmileyGame {
 
             this.updateBuildingUI();
             this.updatePetButtons();
+            this.checkFeatureUnlocks();
             this.updateDiamondMineStatus();
             this.updateGuildsButton();
 
@@ -1595,7 +1596,20 @@ class SmileyGame {
                         }
                     }
 
-        }
+            const prestigeView = document.getElementById('view-prestige');
+                    if (prestigeView && prestigeView.classList.contains('active')) {
+                        // Wenn Prestige-Seite offen ist -> Live aktualisieren!
+                        if (typeof this.updatePrestigeUIView === 'function') {
+                            this.updatePrestigeUIView();
+                        }
+                    }
+
+                    // Modals live updaten (hast du schon, aber prüf es nochmal)
+                    if(this.getById('guilds-modal')?.style.display === 'flex') this.renderGuildsContent();
+                    if(this.getById('diamond-mine-modal')?.style.display === 'flex') this.renderDiamondMineContent();
+                }
+
+
 
     updateBuildingUI() {
             // HIER WIRD AUF DIE KORREKTE METHODE UMGESTELLT: getBuildingCost
@@ -1640,9 +1654,7 @@ class SmileyGame {
             });
         }
 
-        // Ausschnitt aus SmileyGame.js (Abschnitt 7. RENDERING & UI-UPDATES)
-
-       updateGlobalUpgradeUI() {
+        updateGlobalUpgradeUI() {
            const container = this.getById('global-upgrades-container');
            if (!container) return;
            container.innerHTML = '';
@@ -1707,93 +1719,38 @@ class SmileyGame {
                `;
                container.appendChild(upgradeDiv);
            }
-       }
+        }
 
     updatePrestigeUI() {
-        // 1. Sicherheitscheck: Sind wir auf der Prestige-Seite?
-        const displayElement = this.getById('prestige_punkte_verfügbar');
-        if (!displayElement) return;
+            // Berechne Fortschritt
+            const currentLevel = this.gameState.prestigeLevel || 0;
+            const nextLevelXP = Math.pow(10, 6 + currentLevel); // 1M * 10^Level
+            const safeLifetime = this.gameState.lifetime_smileys || 0;
+            const progressPercent = Math.min(100, (safeLifetime / nextLevelXP) * 100);
 
-        // 2. Werte holen (Wir nutzen unsere Hilfsfunktion, um Rechenfehler zu vermeiden)
-        // Wir berechnen hier, wie viele Punkte man INSGESAMT für die Lifetime-Smileys bekäme
-        const totalPotentialPoints = this.calculatePrestigeGain();
+            // 1. Sidebar: Progress Bar (Mit Sicherheits-Check)
+            const bar = this.getById('prestige-progress-bar');
+            if (bar) bar.style.width = `${progressPercent}%`;
 
-        // Wie viele haben wir schon "eingelöst"? (Prestige Level)
-        // Falls du das noch nicht speicherst, nehmen wir prestige_currency als Näherungswert
-        // Besser wäre eine Variable: this.gameState.prestige_level (Gesamt verdiente Punkte jemals)
-        const alreadyEarnedPoints = this.gameState.gesamt_prestige_punkte || 0;
+            const text = this.getById('prestige-progress-text');
+            if (text) text.innerText = `${this.formatNumber(safeLifetime)} / ${this.formatNumber(nextLevelXP)}`;
 
-        // Nur die Differenz ist neu claimbar!
-        const pointsToGain = Math.max(0, totalPotentialPoints - alreadyEarnedPoints);
+            // 2. Modal: Stats & Gain (Mit Sicherheits-Check)
+            const lifetimeDisp = this.getById('prestige-lifetime-display');
+            if (lifetimeDisp) lifetimeDisp.innerText = this.formatNumber(safeLifetime);
 
-        // Berechnung für den nächsten Punkt (für die Anzeige)
-        // Wie viele Smileys braucht man für (Level + 1)?
-        const prestigePointThreshold = 1000000;
-        const nextLevel = totalPotentialPoints + 1;
-        const nextPointRequirement = Math.pow(nextLevel, 3) * prestigePointThreshold;
+            const currentDisp = this.getById('prestige-current-level');
+            if (currentDisp) currentDisp.innerText = this.gameState.prestigeCurrency || 0;
 
-        // 3. Texte im HTML aktualisieren
-        // ID angepasst an dein HTML:
-        displayElement.innerText = this.formatNumber(this.gameState.prestige_currency || 0); // Verfügbar im Wallet
+            // Berechne möglichen Gewinn
+            const possibleGain = this.calculatePrestigeGain ? this.calculatePrestigeGain() : 0;
 
-        this.getById('gesamt_prestige_punkte').innerText = this.formatNumber(alreadyEarnedPoints);
-
-        // WICHTIG: Hier nutzen wir lifetime_smileys, da wir das vorhin eingebaut haben
-        const currentLifetime = this.gameState.lifetime_smileys || 0;
-        this.getById('aktuelle_smileys_prestige').innerText = this.formatNumber(currentLifetime);
-
-        this.getById('next_prestige_point').innerText = this.formatNumber(nextPointRequirement);
-
-        // ID korrigiert (war vorher ..._prestige, ist im HTML aber ohne)
-        const globalMultiDisplay = this.getById('globaler_multiplikator_anzeige');
-        if (globalMultiDisplay) {
-            // Beispiel: 1 Punkt = 10% -> Faktor 0.1
-            // Formel: 1 + (Punkte * 0.1)
-            const mult = 1 + (this.gameState.prestige_currency || 0) * 0.1;
-            globalMultiDisplay.innerText = `x${mult.toFixed(2)}`;
-        }
-
-        // 4. Button Logik
-        const prestigeButton = this.getById('prestige_reset_button');
-        if (prestigeButton) {
-            // Button deaktivieren, wenn es nichts zu holen gibt
-            prestigeButton.disabled = pointsToGain <= 0;
-
-            // Text ändern, damit man sieht, was man kriegt
-            if (pointsToGain > 0) {
-                prestigeButton.innerText = `Prestige (${pointsToGain} Punkte)`;
-                prestigeButton.classList.remove('btn-disabled'); // Optional für Styling
-            } else {
-                prestigeButton.innerText = "Benötige mehr Smileys";
-                prestigeButton.classList.add('btn-disabled');
+            const gainDisp = this.getById('prestige-gain-display');
+            if (gainDisp) {
+                gainDisp.innerText = possibleGain;
+                gainDisp.style.color = possibleGain > 0 ? '#4CAF50' : '#009ffd';
             }
         }
-
-        // 5. Skill Tree Logik (Lassen wir drin, ist gut für später!)
-        if (this.getById('prestige-tree-container')) {
-            // Falls du 'prestigeUpgrades' definiert hast, läuft das hier:
-            if (typeof prestigeUpgrades !== 'undefined') {
-                prestigeUpgrades.forEach(upgrade => {
-                    const node = document.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
-                    if (!node) return;
-
-                    const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[reqId]);
-                    const canAfford = (this.gameState.prestige_currency || 0) >= upgrade.cost;
-                    const isPurchased = this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[upgrade.id];
-
-                    node.classList.remove('purchased', 'available', 'locked');
-
-                    if (isPurchased) {
-                        node.classList.add('purchased');
-                    } else if (requirementsMet && canAfford) {
-                        node.classList.add('available');
-                    } else {
-                        node.classList.add('locked');
-                    }
-                });
-            }
-        }
-    }
 
     fuehrePrestigeAus(points) {
         // 1. Prestige Währung gutschreiben (in BEIDE Töpfe)
@@ -2059,122 +2016,346 @@ class SmileyGame {
     // ================================================================================================================
 
     renderSkillTree() {
-        const container = this.getById('prestige-tree-container');
-        if (!container) return;
+            const container = this.getById('prestige-tree-container');
+            if (!container) return;
 
-        container.innerHTML = '';
+            container.innerHTML = '';
 
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.classList.add("tree-lines-svg");
-        svg.style.position = "absolute";
-        svg.style.width = "100%";
-        svg.style.height = "100%"; // Stellt sicher, dass SVG so hoch wie der Container (1100px) ist
-        svg.style.zIndex = "0";
-        container.appendChild(svg);
+            // --- SVG HINTERGRUND FÜR LINIEN ---
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.style.position = "absolute";
+            svg.style.width = "100%";
+            svg.style.height = "100%";
+            svg.style.zIndex = "0";
+            svg.style.pointerEvents = "none"; // WICHTIG: Damit man durch die Linien klicken kann
+            container.appendChild(svg);
 
-        // Hilfsfunktion für Koordinaten (Deine Daten nutzen Pixel-Offset von der Mitte)
-        // x: 0 -> 50%, y: 0 -> 50px Padding oben
-        const getPos = (u) => ({
-            x: `calc(50% + ${u.x}px)`,
-            y: `${u.y + 50}px` // +50px Abstand von ganz oben
-        });
+            // --- 1. LINIEN ZEICHNEN ---
+            const containerWidth = container.clientWidth || 600;
+            const centerX = containerWidth / 2;
 
-        // --- 1. LINIEN ZEICHNEN ---
-        prestigeUpgrades.forEach(upgrade => {
-            // HIER WAR DER FEHLER: Wir nutzen jetzt 'requirements'
-            const reqs = upgrade.requirements || [];
+            prestigeUpgrades.forEach(upgrade => {
+                const reqs = upgrade.requirements || [];
+                reqs.forEach(reqId => {
+                    const parent = prestigeUpgrades.find(u => u.id === reqId);
+                    if (parent) {
+                        const line = document.createElementNS(svgNS, "line");
+                        // Koordinaten berechnen (Mitte + Offset)
+                        line.setAttribute("x1", centerX + parent.x);
+                        line.setAttribute("y1", parent.y + 50);
+                        line.setAttribute("x2", centerX + upgrade.x);
+                        line.setAttribute("y2", upgrade.y + 50);
 
-            reqs.forEach(reqId => {
-                const parent = prestigeUpgrades.find(u => u.id === reqId);
-                if (parent) {
-                    const line = document.createElementNS(svgNS, "line");
-
-                    // Wir müssen calc() für SVG leider simulieren oder JS rechnen lassen.
-                    // Da SVG keine calc() Koordinaten mag, nehmen wir hier JS-Offset:
-                    // Container-Breite annehmen (z.B. Zentrum ist 0)
-                    // Einfacher Trick: Wir nutzen % für SVG, indem wir Pixel grob schätzen oder
-                    // besser: Wir setzen die Linie relativ zur Mitte.
-
-                    // Um SVG einfach zu halten, nehmen wir an:
-                    // Mitte = 50%. 1px entspricht ca. 0.2% (bei 500px Breite).
-                    // Saubere Lösung:
-                    line.setAttribute("x1", `calc(50% + ${parent.x}px)`); // Manche Browser mögen calc in SVG nicht
-                    line.setAttribute("y1", (parent.y + 50));
-                    line.setAttribute("x2", `calc(50% + ${upgrade.x}px)`);
-                    line.setAttribute("y2", (upgrade.y + 50));
-
-                    // FALLBACK für SVG (da calc in Attributen oft nicht geht):
-                    // Wir nutzen CSS Styles für die Linie, wenn möglich, oder absolute Zahlen
-                    // Da wir die Breite nicht kennen, setzen wir x1/x2 via Style oder nehmen an 100% width
-                    // Für jetzt: Wir nutzen den einfachen Weg über Styles ist schwierig bei SVG Lines.
-                    // Alternative: Wir lassen SVG, und positionieren per JS-Rechnung (Container width / 2).
-
-                    // VEREINFACHUNG: Wir nutzen einfach x/y direkt als Pixel + Offset
-                    // Das setzt voraus, dass SVG viewBox richtig ist.
-                    // Machen wir es simpler: Wir nutzen div-Linien ODER wir akzeptieren, dass x=0 die Mitte ist.
-
-                    const containerWidth = container.clientWidth || 600; // Fallback
-                    const centerX = containerWidth / 2;
-
-                    line.setAttribute("x1", centerX + parent.x);
-                    line.setAttribute("y1", parent.y + 50);
-                    line.setAttribute("x2", centerX + upgrade.x);
-                    line.setAttribute("y2", upgrade.y + 50);
-
-                    line.classList.add("connection-line");
-                    if (this.gameState.prestigeUpgradeStatus[parent.id]) {
-                        line.classList.add("unlocked");
+                        line.setAttribute("stroke", this.gameState.prestigeUpgradeStatus[parent.id] ? "#FFD700" : "#555");
+                        line.setAttribute("stroke-width", "3");
+                        svg.appendChild(line);
                     }
-                    svg.appendChild(line);
-                }
+                });
             });
-        });
 
-        // --- 2. NODES ZEICHNEN ---
-        prestigeUpgrades.forEach(upgrade => {
-            const node = document.createElement('div');
-            node.className = 'prestige-node';
-            node.dataset.id = upgrade.id;
+            // --- 2. NODES (KREISE) ZEICHNEN ---
+            prestigeUpgrades.forEach(upgrade => {
+                const node = document.createElement('div');
+                node.className = 'prestige-node';
 
-            // HIER nutzen wir CSS calc, das funktioniert perfekt für HTML Elemente
-            node.style.left = `calc(50% + ${upgrade.x}px)`;
-            node.style.top = `${upgrade.y + 50}px`;
+                // Positionierung
+                node.style.left = `calc(50% + ${upgrade.x}px)`;
+                node.style.top = `${upgrade.y + 50}px`;
 
-            const reqs = upgrade.requirements || [];
-            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
-            const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-            const canAfford = (this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost;
+                // Status prüfen
+                const reqs = upgrade.requirements || [];
+                const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+                const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+                const canAfford = (this.gameState.prestigeCurrency || 0) >= upgrade.cost;
 
-            if (isPurchased) {
-                node.classList.add('purchased');
-                node.innerText = "✔";
-            } else if (requirementsMet && canAfford) {
-                node.classList.add('available');
-                node.innerText = upgrade.id;
-            } else if (requirementsMet && !canAfford) {
-                node.classList.add('locked');
-                node.innerText = upgrade.id;
-                node.style.borderColor = "#f44336";
-            } else {
-                node.classList.add('locked');
-                node.innerText = "?";
-            }
+                // Klassen & Text setzen
+                if (isPurchased) {
+                    node.classList.add('purchased');
+                    node.innerText = "✔";
+                } else if (requirementsMet && canAfford) {
+                    node.classList.add('available');
+                    node.innerText = upgrade.id;
+                } else if (requirementsMet && !canAfford) {
+                    node.classList.add('locked');
+                    node.innerText = upgrade.id;
+                    node.style.borderColor = "#f44336"; // Rot für "zu teuer"
+                } else {
+                    node.classList.add('locked');
+                    node.innerText = "?";
+                }
 
-            node.onclick = () => this.tryBuyPrestigeUpgrade(upgrade);
+                // Klick Event
+                node.onclick = () => this.tryBuyPrestigeUpgrade(upgrade);
 
-            // Tooltip (optional)
-            if (this.showSkillTooltip) {
-                node.onmouseenter = () => this.showSkillTooltip(upgrade, node);
-            }
-            node.onmouseleave = () => {
-                const tt = this.getById('prestige-tooltip-modal');
-                if(tt) tt.style.display = 'none';
-            };
+                // --- 🛠️ FIX: TOOLTIP DIREKT HIER BEFÜLLEN ---
+                node.onmouseenter = () => {
+                    const tooltip = document.getElementById('prestige-tooltip-modal');
+                    if (tooltip) {
+                        // HTML Inhalt bauen
+                        let html = `<h4 style="margin:0 0 5px 0; color:#FFD700; border-bottom:1px solid #555; padding-bottom:5px;">${upgrade.name}</h4>`;
+                        html += `<p style="margin:5px 0; font-size:0.9em;">${upgrade.description}</p>`;
 
-            container.appendChild(node);
-        });
-    }
+                        if(isPurchased) {
+                            html += `<p style="color:#4CAF50; font-weight:bold; margin-top:5px;">✅ Bereits gekauft</p>`;
+                        } else {
+                            const color = canAfford ? '#4CAF50' : '#f44336';
+                            html += `<p style="color:#aaa; margin-top:5px;">Kosten: <span style="color:${color}; font-weight:bold;">${this.formatNumber(upgrade.cost)}</span> Punkte</p>`;
+                        }
+
+                        // Inhalt setzen & Anzeigen
+                        tooltip.innerHTML = html;
+                        tooltip.style.display = 'block';
+
+                        // Positionieren (Rechts neben dem Node)
+                        // Wir nutzen die Node-Position + einen festen Wert
+                        const nodeRect = node.getBoundingClientRect();
+                        const containerRect = container.getBoundingClientRect();
+
+                        // Position relativ zum Container berechnen
+                        let leftPos = (parseInt(node.style.left) || (container.offsetWidth / 2 + upgrade.x)) + 30;
+                        let topPos = (parseInt(node.style.top) || (upgrade.y + 50)) - 10;
+
+                        tooltip.style.left = leftPos + 'px';
+                        tooltip.style.top = topPos + 'px';
+                    }
+                };
+
+                node.onmouseleave = () => {
+                    const tooltip = document.getElementById('prestige-tooltip-modal');
+                    if (tooltip) tooltip.style.display = 'none';
+                };
+
+                container.appendChild(node);
+            });
+        }
+
+   // =========================================================
+       // PRESTIGE SKILL TREE (Angepasst für DEINE Datenstruktur)
+       // =========================================================
+
+       renderPrestigeTree() {
+           const container = this.getById('prestige-tree-container');
+           if (!container) return;
+
+           container.innerHTML = ''; // Altes löschen
+
+           // 1. Anzeige der verfügbaren Punkte aktualisieren
+           const ptsDisplay = this.getById('prestige_punkte_verfügbar');
+           // Fallback auf 0, falls undefined
+           if(ptsDisplay) ptsDisplay.innerText = this.formatNumber(this.gameState.prestigeCurrency || 0);
+
+           // CHECK: Nutzen wir deine Variable 'prestigeUpgrades'?
+           if (typeof prestigeUpgrades === 'undefined') {
+               container.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Variable "prestigeUpgrades" fehlt in data.js!</div>';
+               return;
+           }
+
+           // 2. SVG-Layer für Verbindungslinien
+           const svgNS = "http://www.w3.org/2000/svg";
+           const svg = document.createElementNS(svgNS, "svg");
+           Object.assign(svg.style, {
+               position: "absolute", width: "100%", height: "100%", top: "0", left: "0", pointerEvents: "none"
+           });
+           container.appendChild(svg);
+
+           // ZENTRIERUNG: Deine Koordinaten sind z.B. x:0, y:0.
+           // Wir verschieben den Startpunkt in die Mitte des Fensters.
+           const centerX = container.offsetWidth / 2;
+           const startY = 50; // Etwas Abstand von oben
+
+           // 3. Nodes zeichnen
+           prestigeUpgrades.forEach(upgrade => {
+               // Check: Ist gekauft?
+               const isBought = (this.gameState.prestigeUpgrades || []).includes(upgrade.id);
+
+               // Check: Sind Voraussetzungen (Requirements) erfüllt?
+               let requirementsMet = true;
+               if (upgrade.requirements && upgrade.requirements.length > 0) {
+                   // Jede ID im requirements-Array muss gekauft sein
+                   requirementsMet = upgrade.requirements.every(reqId =>
+                       (this.gameState.prestigeUpgrades || []).includes(reqId)
+                   );
+               }
+
+               const canBuy = requirementsMet && (this.gameState.prestigeCurrency >= upgrade.cost);
+               const isLocked = !requirementsMet;
+
+               // Berechne echte Position im Fenster
+               const drawX = centerX + upgrade.x;
+               const drawY = startY + upgrade.y;
+
+               // A. LINIEN ZU DEN ELTERN ZEICHNEN
+               if (upgrade.requirements && upgrade.requirements.length > 0) {
+                   upgrade.requirements.forEach(reqId => {
+                       const parent = prestigeUpgrades.find(p => p.id === reqId);
+                       if (parent) {
+                           const parentX = centerX + parent.x;
+                           const parentY = startY + parent.y;
+
+                           const line = document.createElementNS(svgNS, "line");
+                           // Offset +25, damit die Linie in der Mitte des Buttons (50px breit) startet
+                           const offset = 25;
+
+                           line.setAttribute("x1", parentX + offset);
+                           line.setAttribute("y1", parentY + offset);
+                           line.setAttribute("x2", drawX + offset);
+                           line.setAttribute("y2", drawY + offset);
+
+                           // Farbe: Gold wenn Parent gekauft, sonst Grau
+                           const parentIsBought = (this.gameState.prestigeUpgrades || []).includes(parent.id);
+                           line.setAttribute("stroke", parentIsBought ? "#ffd700" : "#555");
+                           line.setAttribute("stroke-width", "4");
+                           svg.appendChild(line);
+                       }
+                   });
+               }
+
+               // B. DEN BUTTON (NODE) ERSTELLEN
+               const node = document.createElement('div');
+               node.className = `prestige-node ${isBought ? 'bought' : (isLocked ? 'locked' : (canBuy ? 'available' : 'expensive'))}`;
+
+               // Inline Styles für Position
+               Object.assign(node.style, {
+                   position: 'absolute',
+                   left: drawX + 'px',
+                   top: drawY + 'px',
+                   width: '50px',
+                   height: '50px',
+                   borderRadius: '50%',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   cursor: isLocked ? 'not-allowed' : 'pointer',
+                   border: '2px solid #fff',
+                   zIndex: '10',
+                   fontSize: '20px'
+               });
+
+               // Farben Logik
+               if (isBought) {
+                   node.style.backgroundColor = '#ffd700'; // Gold
+                   node.style.borderColor = '#b8860b';
+                   node.style.color = '#000';
+               } else if (isLocked) {
+                   node.style.backgroundColor = '#333'; // Grau
+                   node.style.borderColor = '#555';
+               } else if (canBuy) {
+                   node.style.backgroundColor = '#009ffd'; // Blau
+                   node.style.borderColor = '#fff';
+               } else {
+                   node.style.backgroundColor = '#8b0000'; // Rot (zu teuer)
+               }
+
+               // Icon bestimmen (Fallback falls undefined)
+               let iconSymbol = '★';
+               if (upgrade.type === 'unlock_pets') iconSymbol = '🐾';
+               else if (upgrade.type === 'unlock_mine') iconSymbol = '💎';
+               else if (upgrade.type === 'unlock_guilds') iconSymbol = '⚔️';
+               else if (upgrade.type === 'click_mult') iconSymbol = '👆';
+               else if (upgrade.type === 'sps_mult') iconSymbol = '⚡';
+
+               node.innerHTML = `<span>${iconSymbol}</span>`;
+
+               // Hover Events
+               node.addEventListener('mouseenter', (e) => this.showPrestigeTooltip(e, upgrade, isBought, isLocked));
+               node.addEventListener('mouseleave', () => this.hidePrestigeTooltip());
+
+               // Klick Event
+               if (!isBought && !isLocked) {
+                   node.addEventListener('click', () => this.buyPrestigeUpgrade(upgrade.id));
+               }
+
+               container.appendChild(node);
+           });
+       }
+
+       // Tooltip Anzeige
+       showPrestigeTooltip(e, upgrade, isBought, isLocked) {
+           const tooltip = this.getById('prestige-tooltip-modal');
+           if (!tooltip) return;
+
+           tooltip.style.display = 'block';
+           // Positionierung etwas neben der Maus
+           tooltip.style.left = (e.clientX + 20) + 'px';
+           tooltip.style.top = (e.clientY + 20) + 'px';
+
+           const statusText = isBought ? "✅ Gekauft" : (isLocked ? "🔒 Gesperrt (Voraussetzung fehlt!)" : "Klicken zum Kaufen");
+
+           tooltip.innerHTML = `
+               <h4 style="color:#ffd700; margin:0 0 5px 0;">${upgrade.name}</h4>
+               <p style="font-size:0.9em; margin:0 0 5px 0;">${upgrade.description}</p>
+               <p style="font-weight:bold;">Kosten: ${this.formatNumber(upgrade.cost)} Prestige-Punkte</p>
+               <small style="color:${isBought?'#4CAF50':(isLocked?'#f44336':'#ccc')}">${statusText}</small>
+           `;
+       }
+
+       hidePrestigeTooltip() {
+           const tooltip = this.getById('prestige-tooltip-modal');
+           if (tooltip) tooltip.style.display = 'none';
+       }
+
+       // Kauf-Logik (Angepasst an Requirements Array)
+       buyPrestigeUpgrade(id) {
+           if (!this.gameState.prestigeUpgrades) this.gameState.prestigeUpgrades = [];
+           if (this.gameState.prestigeUpgrades.includes(id)) return;
+
+           // Nutze DEINE Variable 'prestigeUpgrades'
+           const upgrade = prestigeUpgrades.find(u => u.id === id);
+           if (!upgrade) return;
+
+           // Requirements Check (Array!)
+           if (upgrade.requirements && upgrade.requirements.length > 0) {
+               const allMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgrades.includes(reqId));
+               if (!allMet) {
+                   this.showNotification("Voraussetzungen nicht erfüllt!", "error");
+                   return;
+               }
+           }
+
+           // Geld Check
+           if (this.gameState.prestigeCurrency >= upgrade.cost) {
+               this.gameState.prestigeCurrency -= upgrade.cost;
+               this.gameState.prestigeUpgrades.push(id);
+
+               // Feature Unlocks direkt triggern
+               if (upgrade.type === 'unlock_pets') this.showNotification("🐶 Pet Shop freigeschaltet!", "success");
+               if (upgrade.type === 'unlock_mine') this.showNotification("💎 Mine freigeschaltet!", "success");
+               if (upgrade.type === 'unlock_guilds') this.showNotification("⚔️ Gilden freigeschaltet!", "success");
+
+               // WICHTIG: Buttons sichtbar machen
+               this.checkFeatureUnlocks();
+               this.recalculateGlobalMultipliers(); // Globalen Bonus neu berechnen
+
+               this.showNotification(`${upgrade.name} gekauft!`, "success");
+               this.speichereSpiel();
+               this.renderPrestigeTree(); // Neu zeichnen
+               this.updateUI(); // UI updaten wegen Geldabzug
+           } else {
+               this.showNotification("Nicht genug Prestige-Punkte!", "error");
+           }
+       }
+
+       // Helper: Features sichtbar machen (Buttons)
+       checkFeatureUnlocks() {
+           if (typeof prestigeUpgrades === 'undefined') return;
+           const upgrades = this.gameState.prestigeUpgrades || [];
+
+           // Prüfe anhand der IDs oder Typen in deiner Liste
+           const hasPets = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_pets');
+           const hasMine = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_mine');
+           const hasGuilds = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_guilds');
+
+           // Buttons ein/ausblenden
+           const btnPets = this.getById('open-pet-shop-button');
+           if(btnPets) btnPets.style.display = hasPets ? 'block' : 'none';
+
+           const btnMine = this.getById('open_diamond_mine_button');
+           if(btnMine) btnMine.style.display = hasMine ? 'block' : 'none';
+
+           const btnGuilds = this.getById('open_guilds_button');
+           if(btnGuilds) btnGuilds.style.display = hasGuilds ? 'block' : 'none';
+       }
 
     renderPetShop() {
             const petGrid = this.getById('pet-shop-grid');
@@ -3409,36 +3590,168 @@ createInfoPetsElements() {
     // ================================================================================================================
 
     ladeAudioEinstellungen() {
-        const musicVolume = localStorage.getItem('musicVolume');
-        const soundVolume = localStorage.getItem('soundVolume');
+            const musicVolume = localStorage.getItem('musicVolume');
+            const soundVolume = localStorage.getItem('soundVolume');
 
-        const musicVolumeSlider = this.getById('music-volume');
-        const soundVolumeSlider = this.getById('sound-volume');
+            const musicVolumeSlider = this.getById('music-volume');
+            const soundVolumeSlider = this.getById('sound-volume');
 
-        if (musicVolumeSlider && musicVolume !== null) {
-            musicVolumeSlider.value = musicVolume;
+            if (musicVolumeSlider && musicVolume !== null) {
+                musicVolumeSlider.value = musicVolume;
+            }
+
+            if (soundVolumeSlider && soundVolume !== null) {
+                soundVolumeSlider.value = soundVolume;
+            }
+            this.setzeLautstaerke();
         }
 
-        if (soundVolumeSlider && soundVolume !== null) {
-            soundVolumeSlider.value = soundVolume;
+        setzeLautstaerke() {
+            const musicVolume = parseFloat(localStorage.getItem('musicVolume') || 100) / 100;
+            const soundVolume = parseFloat(localStorage.getItem('soundVolume') || 100) / 100;
+
+            const musicPlayer = this.getById('background-music');
+            if (musicPlayer) {
+                musicPlayer.volume = musicVolume;
+            }
+
+            const clickSound = this.getById('click-sound');
+            if (clickSound) {
+                clickSound.volume = soundVolume;
+            }
         }
-        this.setzeLautstaerke();
-    }
 
-    setzeLautstaerke() {
+        // =========================================================
+        // NAVIGATION & ONE-PAGE LOGIK (Muss INNERHALB der Klasse sein!)
+        // =========================================================
 
-        const musicVolume = parseFloat(localStorage.getItem('musicVolume') || 100) / 100;
-        const soundVolume = parseFloat(localStorage.getItem('soundVolume') || 100) / 100;
+        switchView(viewName) {
+                // 1. Schließe alle großen Modals erst einmal
+                const modals = ['prestige-shop-modal', 'info-modal', 'settings-modal'];
+                modals.forEach(id => {
+                    const m = document.getElementById(id);
+                    if(m) m.style.display = 'none';
+                });
 
-        const musicPlayer = this.getById('background-music');
-        if (musicPlayer) {
-            musicPlayer.volume = musicVolume;
+                // 2. Logik je nach Button
+                if (viewName === 'home') {
+                    // Bei "Start" machen wir einfach alle Modals zu (siehe oben)
+                    // und stellen sicher, dass man wieder oben auf der Seite ist
+                    window.scrollTo(0, 0);
+                }
+                else if (viewName === 'prestige') {
+                    // Öffne das Prestige Modal
+                    const pModal = document.getElementById('prestige-shop-modal');
+                    if(pModal) {
+                        pModal.style.display = 'flex';
+                        this.updatePrestigeUIView(); // Daten aktualisieren
+                    }
+                }
+                else if (viewName === 'info') {
+                    // Öffne das Info Modal
+                    const iModal = document.getElementById('info-modal');
+                    if(iModal) iModal.style.display = 'flex';
+                }
+            }
+
+        // Spezielle Update-Funktion für die Elemente auf der Prestige-Seite
+        updatePrestigeUIView() {
+            const prestigeAvailable = this.getById('prestige_punkte_verfügbar');
+            const prestigeTotal = this.getById('gesamt_prestige_punkte');
+            const currentSmileys = this.getById('aktuelle_smileys_prestige');
+            const nextPoint = this.getById('next_prestige_point');
+            const multiDisplay = this.getById('prestige_view_multi');
+
+            // Nutze Sicherheits-Checks, falls Elemente nicht gefunden werden
+            if (prestigeAvailable) prestigeAvailable.innerText = this.formatNumber(this.gameState.prestigeCurrency || 0);
+            if (prestigeTotal) prestigeTotal.innerText = this.formatNumber(this.gameState.gesamt_prestige_punkte || 0);
+            if (currentSmileys) currentSmileys.innerText = this.formatNumber(this.gameState.lifetime_smileys || 0);
+            if (multiDisplay) multiDisplay.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
+
+            // Berechnung für den nächsten Punkt
+            const totalPotentialPoints = this.calculatePrestigeGain();
+            const nextLevel = totalPotentialPoints + 1;
+            const nextPointRequirement = Math.pow(nextLevel, 3) * 1000000;
+            if (nextPoint) nextPoint.innerText = this.formatNumber(nextPointRequirement);
+
+            // Reset Button auf der Seite verknüpfen
+            const btnPage = this.getById('prestige_reset_button_page');
+            if (btnPage) {
+                btnPage.onclick = () => this.zeigePrestigeDetails();
+            }
         }
 
-        const clickSound = this.getById('click-sound');
+        // --- HELPER FÜR INFO SEITEN (Damit sie nicht leer sind) ---
 
-        if (clickSound) {
-            clickSound.volume = soundVolume;
+        createBuildingInfoElements() {
+            const c = this.getById('info_buildings_container'); if(!c) return;
+            c.innerHTML = '';
+            const all = [...buildingsData, ...uniqueBuildingsData];
+            all.forEach(b => {
+                // Zeige nur freigeschaltete
+                if(b.id === 'diamond_mine' && !this.gameState.diamondMineUnlocked) return;
+
+                const div = document.createElement('div');
+                div.className = 'info-upgrade-item';
+                div.innerHTML = `<h4>${b.name}</h4><p>Basis Preis: ${this.formatNumber(b.basePrice)}</p>`;
+                c.appendChild(div);
+            });
         }
-    }
-}
+
+        createInfoGlobalUpgradeElements() {
+            const c = this.getById('info_global_upgrades_container'); if(!c) return;
+            c.innerHTML = '';
+            globalUpgrades.forEach(u => {
+                const bought = this.gameState.researchStatus[u.id];
+                c.innerHTML += `<div class="info-upgrade-item" style="border-left:5px solid ${bought?'green':'gray'}">
+                    <h4>${u.description}</h4><p>${bought?'Gekauft':'Noch offen'}</p></div>`;
+            });
+        }
+
+        createInfoPetsElements() {
+            const c = this.getById('info_pets_container'); if(!c) return;
+            c.innerHTML = '';
+            petsData.forEach(p => {
+                const lvl = this.gameState.petLevels[p.id] || 0;
+                c.innerHTML += `<div class="info-upgrade-item"><h4>${p.name} (Lv ${lvl})</h4><p>${p.description}</p></div>`;
+            });
+        }
+
+        createInfoStatsElements() {
+            const c = this.getById('info_stats_container'); if(!c) return;
+            c.innerHTML = `
+                <div class="info-upgrade-item"><h4>Total Klicks</h4><p>${this.formatNumber(this.gameState.totalClicksLifetime)}</p></div>
+                <div class="info-upgrade-item"><h4>Lifetime Smileys</h4><p>${this.formatNumber(this.gameState.lifetime_smileys)}</p></div>
+                <div class="info-upgrade-item"><h4>Resets</h4><p>${this.gameState.prestigeResets}</p></div>
+            `;
+        }
+
+        createInfoAchievementElements() {
+            const c = this.getById('info_achievements_container'); if(!c) return;
+            c.innerHTML = '';
+            achievementsData.forEach((a, i) => {
+                const unlocked = this.gameState.achievementsUnlocked[i];
+                c.innerHTML += `<div class="info-upgrade-item" style="opacity:${unlocked?1:0.5}">
+                    <h4>${unlocked?'🏆':'🔒'} ${a.name}</h4><p>${a.description}</p></div>`;
+            });
+        }
+
+        setupInfoPageEventListeners() {
+            const bind = (btnId, modalId, fn) => {
+                const btn = this.getById(btnId);
+                if(btn) btn.onclick = () => {
+                    this.getById(modalId).style.display='flex';
+                    if(fn) fn.call(this);
+                };
+                const closeBtn = this.getById(modalId)?.querySelector('.btn-cancel');
+                if(closeBtn) closeBtn.onclick = () => this.getById(modalId).style.display='none';
+            };
+
+            bind('show_buildings_button', 'buildings_info_modal', this.createBuildingInfoElements);
+            bind('show_global_upgrades_button', 'global_upgrades_info_modal', this.createInfoGlobalUpgradeElements);
+            bind('show_pets_button', 'pets_info_modal', this.createInfoPetsElements);
+            bind('show_stats_button', 'stats_info_modal', this.createInfoStatsElements);
+            bind('show_achievements_button', 'achievements_info_modal', this.createInfoAchievementElements);
+            bind('show_prestige_button', 'prestige_info_modal', this.updatePrestigeInfoTree);
+        }
+        }

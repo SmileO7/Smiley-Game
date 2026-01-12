@@ -268,19 +268,55 @@ main {
 
 #global-upgrades-container { display: flex; flex-direction: column; gap: var(--spacing-sm); }
 
+/* ========================================= */
+/* 🛠️ FIX: FLEXIBLE UPGRADE BOXEN (Mitte)   */
+/* ========================================= */
+
 .research-item {
     background-color: var(--container-bg);
-    border: 1px solid var(--color-neutral-olive);
+    border: 1px solid #444;
     border-radius: 8px;
+
+    /* WICHTIG: Flex-Wrap erlaubt das Umbrechen */
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     align-items: center;
-    padding: var(--spacing-sm);
-    transition: background-color 0.2s;
+    justify-content: space-between;
+
+    padding: 15px;
+    margin-bottom: 10px;
+    min-height: 80px;
+    height: auto;     /* Passt sich dem Text an */
+    gap: 15px;
 }
 
-.research-item h4 { color: var(--color-text-primary); flex-grow: 1; margin: 0; text-align: left; }
-.research-item p { color: var(--color-text-accent); font-size: 0.9rem; margin: 0; min-width: 120px; text-align: right; margin-right: var(--spacing-md); }
+/* Text-Bereich */
+.research-item div {
+    flex: 1 1 200px; /* Nimmt Platz, bricht aber um wenn schmaler als 200px */
+    text-align: left;
+    margin-right: 10px;
+}
+
+.research-item h4 {
+    color: #fff;
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.research-item p {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin: 0;
+    white-space: normal; /* Textumbruch erzwungen */
+}
+
+/* Kaufen-Button stabilisieren */
+.btn-buy-research {
+    flex: 0 0 auto; /* Verhindert das Zerquetschen */
+    min-width: 120px;
+    margin-left: auto;
+}
 
 /* ======================================================= */
 /* 5. MODALS & UI MESSAGES                                */
@@ -346,12 +382,8 @@ main {
 }
 
 .toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { border-left: 5px solid #FFD700; color: #FFD700; }
 
-/* In style.css */
-.toast.success {
-    border-left: 5px solid #FFD700; /* Gold für Meilensteine */
-    color: #FFD700;
-}
 /* ======================================================= */
 /* 6. PETS & MINIGAME                                     */
 /* ======================================================= */
@@ -426,21 +458,48 @@ main {
 #skill_tree_modal .modal-content.large::-webkit-scrollbar { width: 8px; }
 #skill_tree_modal .modal-content.large::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 4px; }
 
-/* TOOLTIP */
-.modal-tooltip {
+/* ========================================= */
+/* 🛠️ FIX: TOOLTIP FÜR PRESTIGE TREE        */
+/* ========================================= */
+
+.modal-tooltip, #prestige-tooltip-modal {
     position: absolute;
-    background: rgba(10, 10, 20, 0.95);
-    border: 1px solid #FFD700;
-    padding: 12px;
+    background: rgba(10, 10, 25, 0.95) !important;
+    border: 2px solid #FFD700 !important;
+    padding: 15px !important;
     border-radius: 8px;
-    z-index: 3000;
+    z-index: 10000 !important;
     pointer-events: none;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    max-width: 250px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+
+    /* Layout */
+    width: auto;
+    min-width: 300px;
+    max-width: 400px;
+    height: auto;
+
+    /* Text */
+    color: #fff !important;
+    white-space: normal !important; /* Erlaubt Umbruch */
+    text-align: left;
 }
 
-.modal-content-tooltip h4 { margin: 0 0 5px 0; color: #FFD700; font-size: 1.1em; }
-.modal-content-tooltip p { margin: 3px 0; font-size: 0.9em; color: #eee; white-space: pre-line; }
+.modal-content-tooltip h4, #prestige-tooltip-modal h4 {
+    margin: 0 0 5px 0;
+    color: #FFD700;
+    font-size: 1.1em;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+}
+
+.modal-content-tooltip p, #prestige-tooltip-modal p {
+    margin: 3px 0;
+    font-size: 0.95em;
+    color: #eee;
+    white-space: normal;
+    line-height: 1.4;
+}
+
 #tooltip-cost { font-weight: bold; color: #aaa; }
 
 /* ======================================================= */
@@ -472,19 +531,17 @@ main {
 /* 💎 DIAMANTEN-MINE DESIGN OVERHAUL         */
 /* ========================================= */
 
-/* Der Hintergrund des Minen-Bereichs (Dunkle Höhle) */
 #diamond-mine-content {
     background: radial-gradient(circle at center, #1a2639 0%, #080c11 100%);
     border: 1px solid #304a6e;
     border-radius: 12px;
     padding: 30px;
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
-    color: #e0f7ff; /* Helles Blau für Text */
+    color: #e0f7ff;
     position: relative;
     overflow: hidden;
 }
 
-/* Optional: Ein subtiles Gitter oder Muster im Hintergrund */
 #diamond-mine-content::before {
     content: "";
     position: absolute;
@@ -512,7 +569,6 @@ main {
     letter-spacing: 1px;
 }
 
-/* Aktiver Tab (Blau) */
 .mine-nav button.active {
     background: #009ffd;
     color: #000;
@@ -520,42 +576,10 @@ main {
     border: none;
 }
 
-/* Inaktiver Tab (Dunkelgrau/Grünlich wie im Bild) */
 .mine-nav button:not(.active) {
-    background: #2f3b2f; /* Dunkles Oliv/Grau */
+    background: #2f3b2f;
     color: #8fa38f;
     border: 1px solid #445544;
-}
-
-/* --- Der Neon-Fortschrittsbalken --- */
-.minigame-progress-container {
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid #005f99;
-    border-radius: 20px; /* Sehr rund */
-    height: 25px;
-    margin: 20px 0;
-    padding: 3px; /* Abstand innen */
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.2);
-    position: relative;
-    z-index: 2;
-}
-
-#minigame-bar {
-    background: linear-gradient(90deg, #009ffd, #80d4ff);
-    height: 100%;
-    border-radius: 15px;
-    width: 0%;
-    box-shadow: 0 0 15px #009ffd; /* Das Leuchten */
-    position: relative;
-}
-
-/* Glanz-Effekt auf dem Balken */
-#minigame-bar::after {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 15px 15px 0 0;
 }
 
 /* --- Der Rote Action-Button (Spitzhacke) --- */
@@ -590,49 +614,38 @@ main {
     box-shadow: 0 0 5px rgba(255, 51, 51, 0.8);
 }
 
-/* Icon im Button */
 .pickaxe-icon {
     font-size: 1.5rem;
     filter: drop-shadow(0 0 5px red);
 }
+
 /* ========================================= */
 /* ✨ FLOATING TEXT (Popcorn Effekt)         */
 /* ========================================= */
 
 .floating-text {
-    position: fixed; /* Fixiert auf dem Bildschirm, egal wo gescrollt */
-    pointer-events: none; /* Klicks gehen durch, damit man weiter hämmern kann */
+    position: fixed;
+    pointer-events: none;
     font-weight: bold;
     font-size: 1.2rem;
     color: #fff;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    animation: floatUp 1s ease-out forwards; /* Startet Animation sofort */
-    z-index: 9999; /* Immer ganz oben */
+    animation: floatUp 1s ease-out forwards;
+    z-index: 9999;
     user-select: none;
 }
 
-/* Stil für KRITISCHE Treffer */
 .floating-text.crit {
-    color: #ff3333; /* Dein Rot */
-    font-size: 2.5rem; /* Viel größer! */
+    color: #ff3333;
+    font-size: 2.5rem;
     text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 2px 2px 0px #000;
     z-index: 10000;
 }
 
-/* Die Bewegung: Nach oben schweben und verblassen */
 @keyframes floatUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: translateY(-50px) scale(1.1);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-100px) scale(1);
-    }
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    50% { opacity: 1; transform: translateY(-50px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(-100px) scale(1); }
 }
 
 /* ======================================================= */
