@@ -313,11 +313,104 @@ const diamondShopUpgrades = [
     }
 ];
 
+// ================================================================================================================
+// === GILDEN MITGLIEDER (10 Stufen) ===
+// ================================================================================================================
 const guildUpgradesData = [
-    { id: 0, name: "Erster Lehrling (x1.1 SPS)", description: "Ein unmotivierter Lehrling.", baseCost: 1e5, costMultiplier: 2.0, spsMultiplier: 1.1 },
-    { id: 1, name: "Erfahrener Sammler (x1.5 SPS)", description: "Dein erster richtiger Produktionsschub.", baseCost: 1e8, costMultiplier: 2.2, spsMultiplier: 1.5 },
-    { id: 2, name: "Gildenmeister (x2.0 Klick)", description: "Verdoppelt deine Klickkraft.", baseCost: 1e12, costMultiplier: 3.0, spsMultiplier: 2.0, isClickMultiplier: true },
-    { id: 3, name: "Kontinentales Abkommen (x5.0 SPS)", description: "Erweiterung über Kontinente.", baseCost: 1e16, costMultiplier: 3.0, spsMultiplier: 5.0 }
+    {
+        id: 0,
+        name: "Der Novize",
+        description: "Kehrt die Halle. +5% SPS.",
+        baseCost: 500000, // 500k
+        spsMultiplier: 1.05,
+        isClickMultiplier: false,
+        icon: "🧹"
+    },
+    {
+        id: 1,
+        name: "Der Knappe",
+        description: "Trägt dein Schwert. +10% Klickkraft.",
+        baseCost: 2500000, // 2.5M
+        spsMultiplier: 1.10,
+        isClickMultiplier: true,
+        icon: "⚔️"
+    },
+    {
+        id: 2,
+        name: "Der Händler",
+        description: "Feilscht gut. -2% Gebäudekosten.",
+        baseCost: 10000000, // 10M
+        spsMultiplier: 1.0,
+        specialEffect: "cost_reduction_2",
+        isClickMultiplier: false,
+        icon: "⚖️"
+    },
+    {
+        id: 3,
+        name: "Der Söldner",
+        description: "Kämpft für Gold. +25% Klickkraft.",
+        baseCost: 50000000, // 50M
+        spsMultiplier: 1.25,
+        isClickMultiplier: true,
+        icon: "🛡️"
+    },
+    {
+        id: 4,
+        name: "Der Barde",
+        description: "Singt von Ruhm. +10% Prestige-Punkte.",
+        baseCost: 250000000, // 250M
+        spsMultiplier: 1.0,
+        specialEffect: "prestige_boost_10",
+        isClickMultiplier: false,
+        icon: "🎵"
+    },
+    {
+        id: 5,
+        name: "Der Baumeister",
+        description: "Kennt Abkürzungen. -5% Gebäudekosten.",
+        baseCost: 1000000000, // 1B
+        spsMultiplier: 1.0,
+        specialEffect: "cost_reduction_5",
+        isClickMultiplier: false,
+        icon: "🏗️"
+    },
+    {
+        id: 6,
+        name: "Der Ritter",
+        description: "Ein Veteran. +50% Klickkraft.",
+        baseCost: 5000000000, // 5B
+        spsMultiplier: 1.50,
+        isClickMultiplier: true,
+        icon: "🐴"
+    },
+    {
+        id: 7,
+        name: "Der Alchemist",
+        description: "Verwandelt Blei in Smileys. +50% SPS.",
+        baseCost: 25000000000, // 25B
+        spsMultiplier: 1.50,
+        isClickMultiplier: false,
+        icon: "⚗️"
+    },
+    {
+        id: 8,
+        name: "Der Erzmagier",
+        description: "Beschwört Smileys. +100% SPS (x2).",
+        baseCost: 100000000000, // 100B
+        spsMultiplier: 2.0,
+        isClickMultiplier: false,
+        icon: "🔮"
+    },
+    {
+        id: 9,
+        name: "Der Gilden-König",
+        description: "Die absolute Macht. Verdoppelt ALLES (x2 Global).",
+        baseCost: 1000000000000, // 1T (1 Billion)
+        spsMultiplier: 2.0,
+        specialEffect: "global_god_boost",
+        isClickMultiplier: false,
+        icon: "👑"
+    }
 ];
 /* ======================================================= */
 /* 6. ACHIEVEMENT SYSTEM (MEILENSTEINE)                   */

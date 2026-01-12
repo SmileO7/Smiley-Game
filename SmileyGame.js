@@ -9,64 +9,79 @@ class SmileyGame {
 
     constructor() {
         this.gameState = {
-            // --- Währungen ---
-            aktuelle_smileys: 0,
-            lifetime_smileys: 0,
-            diamanten: 0,
+                    // --- Währungen ---
+                    aktuelle_smileys: 0,
+                    lifetime_smileys: 0,
+                    diamanten: 0,
 
-            // --- Prestige & Stats ---
-            prestige_punkte_verfügbar: 0,
-            gesamt_prestige_punkte: 0,
-            prestigeResets: 0,
+                    // --- Prestige & Stats ---
+                    prestige_punkte_verfügbar: 0,
+                    gesamt_prestige_punkte: 0,
+                    prestigeResets: 0,
 
-            // --- Basis-Werte & Multiplikatoren ---
-            klickKraft: 2,
-            klickKraftMultiplier: 1,
-            globalerPrestigeMultiplikator: 1,
+                    // --- Basis-Werte & Multiplikatoren ---
+                    klickKraft: 2,
+                    klickKraftMultiplier: 1,
+                    globalerPrestigeMultiplikator: 1,
 
-            // --- ZENTRALE ZUSTANDS-ARRAYs ---
-            buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
-            buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
+                    // --- ZENTRALE ZUSTANDS-ARRAYs ---
+                    buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
+                    buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
 
-            researchStatus: globalUpgrades.map(() => false), // <--- JETZT KORREKT HINZUFÜGEN!
-            prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
+                    researchStatus: globalUpgrades.map(() => false),
+                    prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
 
-            petLevels: {}, // NEU BEHALTEN
-            activePet: null,
+                    petLevels: {},
+                    activePet: null,
 
-            // --- Laufzeit-Statistiken & Boni ---
-            totalSPS: 0,
-            globalSPSMultiplier: 1,
-            prestigePointMultiplier: 0.01,
-            prestigeResetBonus: 0,
+                    // --- Laufzeit-Statistiken & Boni ---
+                    totalSPS: 0,
+                    globalSPSMultiplier: 1,
+                    prestigePointMultiplier: 0.01,
+                    prestigeResetBonus: 0,
 
-            // --- Feature-States (Freischaltung) ---
+                    // --- Diamant-Upgrades ---
+                    critChance: 0,
+                    critDamageMult: 1,
+                    diamondMineBoost: 0,
+                    globalCostReduction: 0,
+                    clickSPSRatio: 0,
+                    godModeMultiplier: 1,
+                    diamondShopPurchases: [],
 
-            // --- Diamant-Upgrades
-            critChance: 0,           // 0.0 bis 1.0
-            critDamageMult: 1,       // Standard x1 (wird zu x3, x5 etc.)
-            diamondMineBoost: 0,     // Bonus für Minigame
-            globalCostReduction: 0,  // Rabatt auf Gebäude
-            clickSPSRatio: 0,        // Wieviel % der SPS zum Klick addiert werden
-            godModeMultiplier: 1,
-            diamondShopPurchases: [],
-            diamondMineUnlocked: false, // Prio 6
+                    // --- Feature-States ---
+                    diamondMineUnlocked: false,
+                    petsUnlocked: false,
+                    guildsUnlocked: false,
 
-            petsUnlocked: false,
-            guildsUnlocked: false,      // Prio 8
-            petAutoClickTimer: 0,
-            achievementsUnlocked: achievementsData.map(() => false),
-            totalClicksLifetime: 0,
+                    petAutoClickTimer: 0,
+                    achievementsUnlocked: achievementsData.map(() => false),
+                    totalClicksLifetime: 0,
 
-            // --- GILDEN ZUSTAND (Prio 9) ---
-            guildName: null,
-            guildUpgradeStatus: guildUpgradesData.map(() => false),
-            guildSPSMultiplier: 0,
+                    // --- GILDEN ZUSTAND ---
+                    guildName: null,
+                    guildUpgradeStatus: guildUpgradesData.map(() => false),
+                    guildSPSMultiplier: 0,
+                    guildCostReduction: 0,
+                    guildPrestigeBonus: 0,
+                    guildGlobalMultiplier: 1, // <--- WICHTIGES KOMMA!
 
-            // -- Minigame Status
-            diamondMinigameRunning: false,
-            diamondMinigameTimer: null,
-        };
+                    // NEU: Gilden-Boss (Raid)
+                    guildBossLevel: 1,       // Startet bei Level 1
+                    guildBossHP: 1000,       // Aktuelles Leben
+                    guildBossMaxHP: 1000,    // Maximales Leben (steigt pro Level)
+                    guildBossFighting: false,// Kämpfen wir gerade?
+                    guildBossTimer: 0,       // Zeitlimit (30s)
+
+                    // NEU: Gilden Quests
+                    guildAvailableQuests: [], // Liste der offenen Missionen
+                    guildActiveQuests: [],    // Missionen, die gerade laufen
+                    lastQuestGenTime: 0,      // Wann wurden zuletzt Quests generiert?
+
+                    // -- Minigame Status
+                    diamondMinigameRunning: false,
+                    diamondMinigameTimer: null,
+                };
 
         this.productionInterval = null;
         this.uiInterval = null;
@@ -558,21 +573,53 @@ class SmileyGame {
                 this.gameState.globalSPSMultiplier *= diamondStaticSPS; // SPS verdoppeln
                 this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier; // God Mode auf SPS
 
-        this.gameState.guildUpgradeStatus.forEach((bought, id) => {
+        // --- GILDEN BONI BERECHNEN (10 Mitglieder) ---
+                // Reset
+                this.gameState.guildCostReduction = 0;
+                this.gameState.guildPrestigeBonus = 0;
+                this.gameState.guildGlobalMultiplier = 1;
+                this.gameState.guildSPSMultiplier = 0;
+
+                this.gameState.guildUpgradeStatus.forEach((bought, id) => {
                     if (bought) {
-                        // KORREKTUR: Nutze den neuen Namen guildUpgradesData
-                        const upgrade = guildUpgradesData.find(u => u.id === id);
-                        if (upgrade) {
-                            if (upgrade.isClickMultiplier) {
-                                // NEU: Füge Klick-Multiplikatoren hinzu
-                                prestigeClickMultiplier += upgrade.spsMultiplier - 1;
-                            } else {
-                                // SPS Multiplikatoren
-                                this.gameState.guildSPSMultiplier += upgrade.spsMultiplier - 1;
+                        const member = guildUpgradesData.find(u => u.id === id);
+                        if (member) {
+                            // 1. Standard Multiplikatoren (SPS oder Klick)
+                            if (member.isClickMultiplier) {
+                                // Klick: Nur addieren (z.B. 1.10 -> +0.10)
+                                prestigeClickMultiplier += (member.spsMultiplier - 1);
+                            } else if (member.spsMultiplier > 1 && !member.specialEffect) {
+                                // SPS: Nur addieren, wenn KEIN Special Effect (oder beides)
+                                this.gameState.guildSPSMultiplier += (member.spsMultiplier - 1);
+                            }
+
+                            // 2. Spezialeffekte (Neu)
+                            if (member.specialEffect) {
+                                switch (member.specialEffect) {
+                                    case "cost_reduction_2":
+                                        this.gameState.guildCostReduction += 0.02; // Händler
+                                        break;
+                                    case "cost_reduction_5":
+                                        this.gameState.guildCostReduction += 0.05; // Baumeister
+                                        break;
+                                    case "prestige_boost_10":
+                                        this.gameState.guildPrestigeBonus += 0.10; // Barde
+                                        break;
+                                    case "global_god_boost":
+                                        this.gameState.guildGlobalMultiplier *= member.spsMultiplier; // König (x2)
+                                        break;
+                                }
                             }
                         }
                     }
                 });
+
+                // Einrechnen der neuen Gilden-Spezials in die globalen Werte
+                // A. Prestige Bonus (Barde)
+                this.gameState.prestigePointMultiplier += this.gameState.guildPrestigeBonus;
+
+                // B. Globaler Multiplikator (König)
+                this.gameState.globalSPSMultiplier *= this.gameState.guildGlobalMultiplier;
 
         // In applyAllBoni()
         achievementsData.forEach((achievement, index) => {
@@ -769,7 +816,12 @@ class SmileyGame {
                     multiplier *= (1 - this.gameState.globalCostReduction);
                 }
 
-                return multiplier;
+                // 4. Gilden-Rabatt (Händler & Baumeister)
+                        if (this.gameState.guildCostReduction > 0) {
+                            multiplier *= (1 - this.gameState.guildCostReduction);
+                        }
+
+                        return multiplier;
     }
 
    // --- Ersetze die ganze kaufeGlobalUpgrade Funktion ---
@@ -1198,28 +1250,255 @@ class SmileyGame {
     }
 
     buyGuildUpgrade(id) {
-        const upgrade = guildUpgradesData.find(u => u.id === id);
-        if (!upgrade || this.gameState.guildUpgradeStatus[id]) return;
+            // 1. Upgrade in den Daten suchen
+            const upgrade = guildUpgradesData.find(u => u.id === id);
 
-        if (!this.gameState.guildName) {
-        console.warn("Gilde muss zuerst gegründet werden.");
-        return;
-    }
+            // Sicherheits-Checks
+            if (!upgrade) return;
+            if (this.gameState.guildUpgradeStatus[id]) return; // Schon gekauft
+            if (!this.gameState.guildName) {
+                console.warn("Gilde muss zuerst gegründet werden.");
+                return;
+            }
 
-    // Prüfe gegen Smileys (da Währungssystem später kommt)
-        if (this.gameState.aktuelle_smileys < upgrade.cost) { // <<< HIER GEPRÜFT
-        console.warn("Nicht genug Smileys für dieses Gilden-Upgrade.");
-        return;
-    }
+            // --- WICHTIGER FIX: Wir nutzen 'baseCost' ---
+            // Früher hieß das vielleicht nur 'cost', jetzt heißt es in data.js 'baseCost'
+            const preis = upgrade.baseCost;
 
-        this.gameState.aktuelle_smileys -= upgrade.cost; // <<< HIER ABGEZOGEN
-        this.gameState.guildUpgradeStatus[id] = true;
+            // 2. Währung prüfen
+            if (this.gameState.aktuelle_smileys < preis) {
+                console.warn("Nicht genug Smileys für dieses Gilden-Mitglied.");
+                return;
+            }
 
-        this.applyAllBoni();
-        this.updateUI();
-        this.speichereSpiel();
-        this.renderGuildsContent();
-}
+            // 3. Kaufen
+            this.gameState.aktuelle_smileys -= preis; // Hier wird jetzt sicher eine Zahl abgezogen
+            this.gameState.guildUpgradeStatus[id] = true;
+
+            // 4. Speichern & UI Updates
+            this.applyAllBoni(); // Neue Boni berechnen
+            this.updateUI();     // Smiley-Anzeige oben aktualisieren
+            this.renderGuildsContent(); // Shop-Fenster aktualisieren (Button deaktivieren)
+            this.speichereSpiel();
+
+            // Optional: Feedback
+            this.showNotification(`${upgrade.name} wurde angeheuert!`, 'success');
+        }
+
+        // ===========================================
+            // ⚔️ GILDEN BOSS (RAID) LOGIK
+            // ===========================================
+
+            startGuildBoss() {
+                if (this.gameState.guildBossFighting) return;
+
+                // Boss Werte berechnen (HP wächst exponentiell: 1000 * 1.5^Level)
+                const level = this.gameState.guildBossLevel;
+                const hp = Math.floor(1000 * Math.pow(1.5, level - 1));
+
+                this.gameState.guildBossMaxHP = hp;
+                this.gameState.guildBossHP = hp;
+                this.gameState.guildBossFighting = true;
+                this.gameState.guildBossTimer = 30; // 30 Sekunden Zeit
+
+                this.renderGuildsContent(); // UI auf "Kampf" umschalten
+
+                // Timer starten
+                if (this.bossInterval) clearInterval(this.bossInterval);
+
+                this.bossInterval = setInterval(() => {
+                    if (!this.gameState.guildBossFighting) {
+                        clearInterval(this.bossInterval);
+                        return;
+                    }
+
+                    this.gameState.guildBossTimer -= 1;
+
+                    // UI Update (Timer & HP Bar)
+                    const timerDisplay = this.getById('boss-timer-display');
+                    if (timerDisplay) timerDisplay.innerText = this.gameState.guildBossTimer + "s";
+
+                    // Zeit abgelaufen? -> Niederlage
+                    if (this.gameState.guildBossTimer <= 0) {
+                        this.endGuildBoss(false);
+                    }
+                }, 1000);
+            }
+
+            clickGuildBoss() {
+                if (!this.gameState.guildBossFighting) return;
+
+                // Schaden berechnen (Klickstärke + Bonus für Gildenmitglieder?)
+                // Wir nehmen erstmal die normale Klickstärke
+                let damage = this.getClickStrength();
+
+                // Optional: Kritische Treffer auch hier erlauben!
+                if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
+                    damage *= this.gameState.critDamageMult;
+                    this.spawnFloatingText(null, "CRIT!", "crit"); // Visuelles Feedback
+                }
+
+                this.gameState.guildBossHP -= damage;
+
+                // HP Update im UI
+                this.updateBossUI();
+
+                // Boss tot? -> Sieg
+                if (this.gameState.guildBossHP <= 0) {
+                    this.endGuildBoss(true);
+                }
+            }
+
+            endGuildBoss(victory) {
+                clearInterval(this.bossInterval);
+                this.gameState.guildBossFighting = false;
+
+                if (victory) {
+                    // Belohnung: 10 Diamanten * BossLevel
+                    const reward = this.gameState.guildBossLevel * 10;
+                    this.gameState.diamanten += reward;
+                    this.gameState.guildBossLevel++; // Boss wird stärker
+
+                    this.showNotification(`BOSS BESIEGT! +${reward} 💎`, 'success');
+                    // Konfetti oder Sound könnte hier hin
+                } else {
+                    this.showNotification("Zeit abgelaufen! Der Boss ist entkommen.", 'error');
+                    // Boss HP resettet sich beim nächsten Start automatisch
+                }
+
+                this.updateUI();
+                this.renderGuildsContent(); // Zurück zum Start-Screen
+                this.speichereSpiel();
+            }
+
+            updateBossUI() {
+                const hpBar = this.getById('boss-hp-bar');
+                const hpText = this.getById('boss-hp-text');
+
+                if (hpBar && hpText) {
+                    const pct = Math.max(0, (this.gameState.guildBossHP / this.gameState.guildBossMaxHP) * 100);
+                    hpBar.style.width = `${pct}%`;
+                    hpText.innerText = `${this.formatNumber(this.gameState.guildBossHP)} / ${this.formatNumber(this.gameState.guildBossMaxHP)}`;
+                }
+            }
+
+           // ===========================================
+               // 📜 GILDEN QUESTS LOGIK (Korrigiert)
+               // ===========================================
+
+               generateGuildQuests() {
+                   // FIX: this.gameState... verwenden!
+                   if (!this.gameState.guildAvailableQuests) this.gameState.guildAvailableQuests = []; // Sicherheits-Init
+
+                   // Nur neue Quests generieren, wenn wir weniger als 3 zur Auswahl haben
+                   if (this.gameState.guildAvailableQuests.length >= 3) return;
+
+                   const questNames = ["Patrouille im Wald", "Vorräte liefern", "Banditen verjagen", "Verlorenen Schatz suchen", "Drachen-Späher", "Königliche Eskorte"];
+                   const rarities = [
+                       { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6 },
+                       { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3 },
+                       { name: "Legendär", multi: 10, color: "#ff9800", chance: 0.1 }
+                   ];
+
+                   // Auffüllen bis wir 3 Quests haben
+                   while (this.gameState.guildAvailableQuests.length < 3) {
+                       const name = questNames[Math.floor(Math.random() * questNames.length)];
+
+                       // Zufällige Seltenheit bestimmen
+                       const r = Math.random();
+                       let rarity = rarities[0];
+                       if (r > 0.9) rarity = rarities[2];
+                       else if (r > 0.6) rarity = rarities[1];
+
+                       // Dauer: Zwischen 1 und 10 Minuten (in Sekunden)
+                       const duration = Math.floor(Math.random() * 600) + 60;
+
+                       // Belohnung: Basiert auf deiner aktuellen SPS
+                       let rewardValue = Math.max(1000, this.gameState.totalSPS * duration * 0.5);
+                       rewardValue *= rarity.multi;
+
+                       // Seltene Chance auf Diamanten bei Legendären Quests
+                       let isDiamond = false;
+                       if (rarity.name === "Legendär" && Math.random() > 0.5) {
+                           isDiamond = true;
+                           rewardValue = Math.max(5, Math.floor(duration / 60));
+                       }
+
+                       this.gameState.guildAvailableQuests.push({
+                           id: Date.now() + Math.random(),
+                           name: name,
+                           rarity: rarity,
+                           duration: duration,
+                           reward: Math.floor(rewardValue),
+                           isDiamond: isDiamond,
+                           startTime: null
+                       });
+                   }
+               }
+
+              startQuest(questId) {
+                      // --- FIX 1: Limit prüfen ---
+                      // Wenn wir schon eine aktive Quest haben, brechen wir ab.
+                      if (this.gameState.guildActiveQuests && this.gameState.guildActiveQuests.length >= 3) {
+                                  this.showNotification("Deine Gilde ist voll ausgelastet (Max. 3 Missionen)!", "error");
+                                  return;
+                              }
+
+                              // ... (Der Rest der Funktion bleibt exakt gleich wie vorher) ...
+                              const index = this.gameState.guildAvailableQuests.findIndex(q => q.id === questId);
+                              if (index === -1) return;
+
+                              const quest = this.gameState.guildAvailableQuests[index];
+
+                              if (!this.gameState.guildUpgradeStatus.some(status => status)) {
+                                  this.showNotification("Du brauchst Gilden-Mitglieder für Missionen!", "error");
+                                  return;
+                              }
+
+                              quest.startTime = Date.now();
+
+                              if (!this.gameState.guildActiveQuests) this.gameState.guildActiveQuests = [];
+                              this.gameState.guildActiveQuests.push(quest);
+
+                              this.gameState.guildAvailableQuests.splice(index, 1);
+
+                              this.renderGuildsContent();
+                              this.speichereSpiel();
+                          }
+
+               claimQuest(questId) {
+                   // Hier war es schon fast richtig, aber sicherheitshalber auch prüfen
+                   if (!this.gameState.guildActiveQuests) return;
+
+                   const index = this.gameState.guildActiveQuests.findIndex(q => q.id === questId);
+                   if (index === -1) return;
+
+                   const quest = this.gameState.guildActiveQuests[index];
+
+                   // Ist sie wirklich fertig?
+                   const elapsed = (Date.now() - quest.startTime) / 1000;
+                   if (elapsed < quest.duration) return;
+
+                   // Belohnung gutschreiben
+                   if (quest.isDiamond) {
+                       this.gameState.diamanten += quest.reward;
+                       this.showNotification(`Quest abgeschlossen: +${quest.reward} 💎`, "success");
+                   } else {
+                       this.gameState.aktuelle_smileys += quest.reward;
+                       this.gameState.lifetime_smileys += quest.reward;
+                       this.showNotification(`Quest abgeschlossen: +${this.formatNumber(quest.reward)} Smileys`, "success");
+                   }
+
+                   // Quest löschen
+                   this.gameState.guildActiveQuests.splice(index, 1);
+
+                   // Sofort neue Quests nachladen
+                   this.generateGuildQuests();
+
+                   this.renderGuildsContent();
+                   this.updateUI();
+                   this.speichereSpiel();
+               }
 
     // ================================================================================================================
     // 7. RENDERING & UI-UPDATES
@@ -1277,7 +1556,8 @@ class SmileyGame {
                 `.trim().replace(/\s{2,}/g, ' ');
 
                 globalMultiDisplay.title = tooltipText;
-                // -------------------------------------------------------------
+
+
             }
 
             this.updateBuildingUI();
@@ -1307,6 +1587,14 @@ class SmileyGame {
                     progressText.innerText = `${this.formatNumber(this.gameState.gesammelte_smileys)} / ${this.formatNumber(nextPointRequirement)}`;
                 }
             }
+
+            const guildsModal = this.getById('guilds-modal');
+                    if (guildsModal && guildsModal.style.display === 'flex') {
+                        if (this.guildView === 'quests' || (this.guildView === 'boss' && this.gameState.guildBossFighting)) {
+                            this.renderGuildsContent();
+                        }
+                    }
+
         }
 
     updateBuildingUI() {
@@ -2173,96 +2461,190 @@ class SmileyGame {
             });
         }
 
-    renderGuildsContent() {
-            const container = this.getById('guilds-content');
-            if (!container) return;
+    // Speichert, welchen Tab wir gerade sehen ('shop' oder 'boss')
+        guildView = 'shop';
 
-            if (!this.gameState.guildName) {
-                // --- GRÜNDUNGS-ANSICHT (Kostet Smileys) ---
-                const COST = 500000000;
-                const canAfford = this.gameState.aktuelle_smileys >= COST;
+        renderGuildsContent() {
+                const container = this.getById('guilds-content');
+                if (!container) return;
 
-                container.innerHTML = `
-                    <h3>Gilde Gründen</h3>
-                    <p>Gründe Deine eigene Gilde, um dauerhafte globale Boni freizuschalten.</p>
-                    <p><strong>Kosten:</strong> ${this.formatNumber(COST)} Smileys</p>
-                    <input type="text" id="guild-name-input" placeholder="Gildenname eingeben" maxlength="20">
-                    <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'}>
-                        Gilde Gründen
-                    </button>
-                    <p id="guild-error" style="color: red; margin-top: 10px;"></p>
-                `;
-
-                this.getById('found-guild-button')?.addEventListener('click', () => {
-                    const nameInput = this.getById('guild-name-input');
-                    const name = nameInput ? nameInput.value.trim() : '';
-                    if (name.length < 3) {
-                        this.getById('guild-error').innerText = "Gildenname muss mindestens 3 Zeichen lang sein.";
-                        return;
-                    }
-                    this.foundGuild(name);
-                });
-
-            } else {
-                // --- UPGRADE-ANSICHT: ZEIGT UPGRADES ---
-                let upgradesHtml = '';
-                let clickBonus = 0;
-                let spsBonus = 0;
-
-                // NEU: Iteriere über die korrekten Daten
-                guildUpgradesData.forEach((upgrade, index) => {
-                    const isBought = this.gameState.guildUpgradeStatus[index];
-
-                    // Berechne den Gesamtkosten-Multiplikator für skalierende Upgrades (falls wir sie später skalieren wollten)
-                    const costMultiplier = upgrade.costMultiplier || 1.0;
-                    // Für diese Prio verwenden wir nur die Basis-Kosten (baseCost)
-                    const cost = upgrade.baseCost;
-
-                    const canAfford = this.gameState.aktuelle_smileys >= cost;
-
-                    const icon = upgrade.isClickMultiplier ? '🖱️' : '🏭';
-                    const effectText = upgrade.isClickMultiplier ?
-                                       `Klickkraft x${upgrade.spsMultiplier.toFixed(1)}` :
-                                       `SPS x${upgrade.spsMultiplier.toFixed(1)}`;
-
-                    if (isBought) {
-                        if (upgrade.isClickMultiplier) {
-                            clickBonus += upgrade.spsMultiplier - 1;
-                        } else {
-                            spsBonus += upgrade.spsMultiplier - 1;
-                        }
-                    }
-
-                    upgradesHtml += `
-                        <div class="guild-upgrade-item ${isBought ? 'purchased' : (canAfford ? 'available' : 'locked')}" data-id="${upgrade.id}">
-                            <h4>${icon} ${upgrade.name}</h4>
-                            <p>Effekt: <strong>${effectText}</strong></p>
-                            <p>Kosten: ${this.formatNumber(cost)} Smileys</p>
-                            <button class="btn-buy-guild" data-id="${upgrade.id}" ${isBought || !canAfford ? 'disabled' : ''}>
-                                ${isBought ? 'Gekauft' : 'Kaufen'}
-                            </button>
-                        </div>
+                // Fall 1: Gilde noch nicht gegründet
+                if (!this.gameState.guildName) {
+                    const COST = 500000000;
+                    const canAfford = this.gameState.aktuelle_smileys >= COST;
+                    container.innerHTML = `
+                        <h3>Gilde Gründen</h3>
+                        <p>Gründe Deine eigene Gilde für Bosse und Quests.</p>
+                        <p><strong>Kosten:</strong> ${this.formatNumber(COST)} Smileys</p>
+                        <input type="text" id="guild-name-input" placeholder="Gildenname eingeben" maxlength="20">
+                        <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'}>Gilde Gründen</button>
                     `;
-                });
+                    this.getById('found-guild-button')?.addEventListener('click', () => {
+                        const val = this.getById('guild-name-input').value;
+                        if(val.length > 2) this.foundGuild(val);
+                    });
+                    return;
+                }
 
+                // Fall 2: Gilde existiert -> TAB Navigation zeigen
+                let contentHtml = '';
+
+                if (this.guildView === 'shop') {
+                    // --- SHOP LOGIK ---
+                    let listHtml = '';
+                    guildUpgradesData.forEach((u, i) => {
+                       const bought = this.gameState.guildUpgradeStatus[i];
+                       const cost = u.baseCost;
+                       const can = this.gameState.aktuelle_smileys >= cost;
+                       const icon = u.icon || '👤';
+
+                       listHtml += `
+                           <div class="guild-upgrade-item ${bought ? 'purchased' : (can ? 'available' : 'locked')}">
+                               <div style="font-size:1.5em">${icon}</div>
+                               <div>
+                                   <h4>${u.name}</h4>
+                                   <small>${u.description}</small>
+                               </div>
+                               <button class="btn-buy-guild" data-id="${u.id}" ${bought||!can?'disabled':''}>
+                                   ${bought ? 'Aktiv' : this.formatNumber(cost)}
+                               </button>
+                           </div>
+                       `;
+                    });
+                    contentHtml = `<div class="info-grid">${listHtml}</div>`;
+
+                } else if (this.guildView === 'boss') {
+                    // --- BOSS ARENA ---
+                    if (this.gameState.guildBossFighting) {
+                         const pct = Math.max(0, (this.gameState.guildBossHP / this.gameState.guildBossMaxHP) * 100);
+                         contentHtml = `
+                            <div class="boss-arena active" style="text-align:center;">
+                                <h3>Boss Kampf läuft!</h3>
+                                <div style="font-size:2em; color:red; font-weight:bold;">${this.gameState.guildBossTimer}s</div>
+                                <div style="background:#333; height:20px; border-radius:10px; overflow:hidden; margin:10px 0; border:1px solid #555;">
+                                    <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:#d32f2f; transition:width 0.1s linear;"></div>
+                                </div>
+                                <p>${this.formatNumber(this.gameState.guildBossHP)} / ${this.formatNumber(this.gameState.guildBossMaxHP)} HP</p>
+                                <div id="guild-boss-clicker" style="font-size:80px; cursor:crosshair; user-select:none;">👹</div>
+                                <p>Klicken zum Angreifen!</p>
+                            </div>`;
+                    } else {
+                        const nextHp = Math.floor(1000 * Math.pow(1.5, this.gameState.guildBossLevel - 1));
+                        contentHtml = `
+                            <div class="boss-lobby" style="text-align:center; padding:20px;">
+                                <div style="font-size: 60px; margin-bottom:10px;">🏰</div>
+                                <h3>Gilden-Raid (Level ${this.gameState.guildBossLevel})</h3>
+                                <p>Besiege den Boss für Diamanten!</p>
+                                <p>Boss HP: ${this.formatNumber(nextHp)}</p>
+                                <button id="start-boss-btn" class="btn-danger" style="margin-top:15px; font-size:1.2em;">Kampf starten</button>
+                            </div>`;
+                    }
+
+                } else if (this.guildView === 'quests') {
+                    // --- QUESTS TAB ---
+                    this.generateGuildQuests();
+
+                    let activeHtml = '';
+                    const activeQuests = this.gameState.guildActiveQuests || [];
+
+                    // 🛑 HIER IST DIE SPERRE AUF 3 GESETZT 🛑
+                    const isQuestLimitReached = activeQuests.length >= 3;
+
+                    if (activeQuests.length > 0) {
+                        // Anzeige aktualisiert: Zeigt jetzt x / 3 an
+                        activeHtml += `<h4>Laufende Missionen (${activeQuests.length} / 3)</h4>`;
+                        activeQuests.forEach(q => {
+                            const elapsed = (Date.now() - q.startTime) / 1000;
+                            const progress = Math.min(100, (elapsed / q.duration) * 100);
+                            const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+                            const isDone = timeLeft <= 0;
+
+                            activeHtml += `
+                                <div style="background:rgba(255,255,255,0.05); border:1px solid #555; padding:10px; margin-bottom:10px; border-radius:8px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <strong>${q.name}</strong>
+                                        <span>${isDone ? 'Fertig!' : timeLeft + 's'}</span>
+                                    </div>
+                                    <div style="background:#222; height:10px; border-radius:5px; margin:5px 0; overflow:hidden;">
+                                        <div style="width:${progress}%; height:100%; background:${isDone ? '#4CAF50' : '#009ffd'}; transition:width 1s linear;"></div>
+                                    </div>
+                                    ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}" style="width:100%; padding:5px; margin-top:5px;">Belohnung abholen</button>` : ''}
+                                </div>
+                            `;
+                        });
+                    } else {
+                        activeHtml = `<p style="color:#888; font-style:italic; text-align:center; padding:10px;">Keine Gildenmitglieder sind unterwegs.</p>`;
+                    }
+
+                    let availableHtml = `<h4>Verfügbare Aufträge</h4><div class="info-grid">`;
+                    const availQuests = this.gameState.guildAvailableQuests || [];
+
+                    availQuests.forEach(q => {
+                        const rewardText = q.isDiamond ? `${q.reward} 💎` : `${this.formatNumber(q.reward)} Smileys`;
+
+                        // 🛑 BUTTON LOGIK 🛑
+                        const btnState = isQuestLimitReached ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+                        const btnText = isQuestLimitReached ? 'Gilde voll' : 'Starten';
+
+                        availableHtml += `
+                            <div class="guild-upgrade-item" style="border-color:${q.rarity.color}">
+                                <h4 style="color:${q.rarity.color}">${q.name}</h4>
+                                <p style="font-size:0.9em">${q.rarity.name}</p>
+                                <p>⏳ ${Math.ceil(q.duration / 60)} Min</p>
+                                <p>💰 ${rewardText}</p>
+                                <button class="btn-primary btn-start-quest" data-id="${q.id}" ${btnState}>${btnText}</button>
+                            </div>
+                        `;
+                    });
+                    availableHtml += `</div>`;
+
+                    contentHtml = `<div style="padding:10px;">${activeHtml}<hr style="border-color:#444; margin:20px 0;">${availableHtml}</div>`;
+                }
+
+                // HTML zusammenbauen
                 container.innerHTML = `
-                    <h3>Willkommen in Gilde: ${this.gameState.guildName}</h3>
-                    <p>Globaler SPS-Gildenbonus: x${(1 + spsBonus).toFixed(2)}</p>
-                    <p>Globaler Klick-Gildenbonus: x${(1 + clickBonus).toFixed(2)}</p>
-                    <p>Guthaben: ${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys</p>
-                    <div class="info-grid">
-                        ${upgradesHtml}
+                    <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
+                        <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Mitglieder</button>
+                        <button id="tab-guild-boss" class="btn-primary ${this.guildView==='boss'?'':'btn-cancel'}" style="flex:1">Boss Raid</button>
+                        <button id="tab-guild-quests" class="btn-primary ${this.guildView==='quests'?'':'btn-cancel'}" style="flex:1">Quests</button>
                     </div>
+                    <h3>Gilde: ${this.gameState.guildName}</h3>
+                    ${contentHtml}
                 `;
 
-                container.querySelectorAll('.btn-buy-guild').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const id = parseInt(e.target.dataset.id, 10);
-                        this.buyGuildUpgrade(id);
+                // Event Listeners
+                this.getById('tab-guild-shop')?.addEventListener('click', () => { this.guildView='shop'; this.renderGuildsContent(); });
+                this.getById('tab-guild-boss')?.addEventListener('click', () => { this.guildView='boss'; this.renderGuildsContent(); });
+                this.getById('tab-guild-quests')?.addEventListener('click', () => { this.guildView='quests'; this.renderGuildsContent(); });
+
+                // Buttons binden
+                if (this.guildView === 'shop') {
+                     container.querySelectorAll('.btn-buy-guild').forEach(btn => {
+                        btn.addEventListener('click', (e) => this.buyGuildUpgrade(parseInt(e.target.dataset.id)));
                     });
-                });
+                }
+
+                if (this.guildView === 'quests') {
+                    container.querySelectorAll('.btn-start-quest').forEach(btn => {
+                        btn.addEventListener('click', (e) => this.startQuest(parseFloat(e.target.dataset.id)));
+                    });
+                    container.querySelectorAll('.btn-claim-quest').forEach(btn => {
+                        btn.addEventListener('click', (e) => this.claimQuest(parseFloat(e.target.dataset.id)));
+                    });
+                }
+
+                if (this.guildView === 'boss') {
+                     this.getById('start-boss-btn')?.addEventListener('click', () => this.startGuildBoss());
+                     const bossClicker = this.getById('guild-boss-clicker');
+                     if(bossClicker) {
+                         bossClicker.addEventListener('mousedown', () => {
+                             bossClicker.style.transform = "scale(0.9)";
+                             this.clickGuildBoss();
+                         });
+                         bossClicker.addEventListener('mouseup', () => bossClicker.style.transform = "scale(1)");
+                     }
+                }
             }
-        }
 
 
     createBuildingElements() {
