@@ -214,11 +214,103 @@ const petsData = [
 /* 5. DIAMOND SHOP & GILDEN                               */
 /* ======================================================= */
 
+// ================================================================================================================
+// === DIAMANTEN SHOP UPGRADES (10 Slots) ===
+// ================================================================================================================
 const diamondShopUpgrades = [
-    { id: 0, name: "Diamant-Hände (x10 Klick)", description: "Permanent 10x mehr Klickkraft.", cost: 250, effect: 10, type: "click_mult", maxPurchases: 1 },
-    { id: 1, name: "SPS-Kompressor (x2 SPS)", description: "Verdoppelt die gesamte SPS permanent.", cost: 500, effect: 2, type: "sps_mult", maxPurchases: 1 },
-    { id: 2, name: "Prestige-Beschleuniger", description: "Erhöht PP-Effektivität um 0.5%.", cost: 1000, effect: 0.005, type: "prestige_point_eff", maxPurchases: 1 },
-    { id: 3, name: "Automatisierte Diamanten-Mine", description: "Schaltet auto Diamantenproduktion frei.", cost: 2500, effect: 1, type: "auto_diamond_mine", maxPurchases: 1 }
+    // --- BASIS UPGRADES (ID 0-3) ---
+    {
+        id: 0,
+        name: "Diamant-Hände",
+        description: "Permanent 10x mehr Klickkraft (Multiplikativ).",
+        cost: 250,
+        value: 10, // Achtung: Hier 'value' statt 'effect' nutzen für Einheitlichkeit
+        type: "click_mult_static",
+        maxPurchases: 1
+    },
+    {
+        id: 1,
+        name: "SPS-Kompressor",
+        description: "Verdoppelt die gesamte SPS permanent (x2).",
+        cost: 500,
+        value: 1, // +100% = x2
+        type: "sps_mult_static",
+        maxPurchases: 1
+    },
+    {
+        id: 2,
+        name: "Prestige-Beschleuniger",
+        description: "Erhöht Prestige-Punkte-Effektivität um +5%.",
+        cost: 1000,
+        value: 0.05,
+        type: "prestige_point_eff",
+        maxPurchases: 5
+    },
+    {
+        id: 3,
+        name: "Automatisierte Mine",
+        description: "Die Mine produziert passiv 10% Ertrag/Sek.",
+        cost: 2500,
+        value: 1,
+        type: "auto_diamond_mine",
+        maxPurchases: 1
+    },
+
+    // --- NEUE MECHANIKEN (ID 4-9) ---
+    {
+        id: 4,
+        name: "Kritische Linse",
+        description: "+5% Chance auf Kritische Treffer beim Klicken.",
+        cost: 150,
+        value: 0.05,
+        type: "crit_chance",
+        maxPurchases: 10 // Max 50% Chance
+    },
+    {
+        id: 5,
+        name: "Kritischer Verstärker",
+        description: "Erhöht den Schaden kritischer Treffer um +200%.",
+        cost: 300,
+        value: 2.0,
+        type: "crit_damage",
+        maxPurchases: 5
+    },
+    {
+        id: 6,
+        name: "Diamant-Bohrer",
+        description: "Erhöht den Ertrag des Minigames um +25%.",
+        cost: 400,
+        value: 0.25,
+        type: "mine_boost",
+        maxPurchases: 4 // Max +100% (Verdopplung)
+    },
+    {
+        id: 7,
+        name: "Effiziente Architektur",
+        description: "Reduziert ALLE Gebäudekosten um 2%.",
+        cost: 600,
+        value: 0.02,
+        type: "cost_reduction_global",
+        maxPurchases: 10 // Max -20% Kosten
+    },
+    {
+        id: 8,
+        name: "Synergie-Matrix",
+        description: "Addiert 1% deiner SPS zu deinem Klick-Schaden.",
+        cost: 1500,
+        value: 0.01,
+        type: "click_sps_link",
+        maxPurchases: 5 // Max 5% der SPS pro Klick
+    },
+    {
+        id: 9,
+        name: "Göttliche Energie",
+        description: "Ein extrem starker x1.5 Multiplikator auf ALLES.",
+        cost: 10000,
+        value: 0.5,
+        type: "global_god_mode",
+        maxPurchases: 1
+    }
 ];
 
 const guildUpgradesData = [

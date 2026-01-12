@@ -41,9 +41,18 @@ class SmileyGame {
             prestigeResetBonus: 0,
 
             // --- Feature-States (Freischaltung) ---
-            petsUnlocked: false,
+
+            // --- Diamant-Upgrades
+            critChance: 0,           // 0.0 bis 1.0
+            critDamageMult: 1,       // Standard x1 (wird zu x3, x5 etc.)
+            diamondMineBoost: 0,     // Bonus für Minigame
+            globalCostReduction: 0,  // Rabatt auf Gebäude
+            clickSPSRatio: 0,        // Wieviel % der SPS zum Klick addiert werden
+            godModeMultiplier: 1,
             diamondShopPurchases: [],
             diamondMineUnlocked: false, // Prio 6
+
+            petsUnlocked: false,
             guildsUnlocked: false,      // Prio 8
             petAutoClickTimer: 0,
             achievementsUnlocked: achievementsData.map(() => false),
@@ -492,6 +501,62 @@ class SmileyGame {
                         }
                     }
         }
+        // --- DIAMANT SHOP BONI BERECHNEN ---
+                // 1. Reset der Werte
+                this.gameState.critChance = 0;
+                this.gameState.critDamageMult = 3; // Basis-Crit ist 3x Schaden
+                this.gameState.diamondMineBoost = 0;
+                this.gameState.globalCostReduction = 0;
+                this.gameState.clickSPSRatio = 0;
+                this.gameState.godModeMultiplier = 1;
+
+                let diamondStaticClick = 1;
+                let diamondStaticSPS = 1;
+
+                // 2. Loop durch Upgrades
+                diamondShopUpgrades.forEach(upgrade => {
+                    const count = this.gameState.diamondShopPurchases[upgrade.id] || 0;
+                    if (count > 0) {
+                        switch(upgrade.type) {
+                            case 'click_mult_static':
+                                diamondStaticClick *= (upgrade.value * count); // x10
+                                break;
+                            case 'sps_mult_static':
+                                diamondStaticSPS += (upgrade.value * count); // +100% = x2
+                                break;
+                            case 'prestige_point_eff':
+                                this.gameState.prestigePointMultiplier += (upgrade.value * count);
+                                break;
+                            case 'auto_diamond_mine':
+                                this.gameState.autoDiamondMineUnlocked = true;
+                                break;
+                            // -- NEUE --
+                            case 'crit_chance':
+                                this.gameState.critChance += (upgrade.value * count);
+                                break;
+                            case 'crit_damage':
+                                this.gameState.critDamageMult += (upgrade.value * count);
+                                break;
+                            case 'mine_boost':
+                                this.gameState.diamondMineBoost += (upgrade.value * count);
+                                break;
+                            case 'cost_reduction_global':
+                                this.gameState.globalCostReduction += (upgrade.value * count);
+                                break;
+                            case 'click_sps_link':
+                                this.gameState.clickSPSRatio += (upgrade.value * count);
+                                break;
+                            case 'global_god_mode':
+                                this.gameState.godModeMultiplier *= (1 + upgrade.value);
+                                break;
+                        }
+                    }
+                });
+
+                // 3. Multiplikatoren anwenden
+                prestigeClickMultiplier += (diamondStaticClick - 1); // Klick verrechnen
+                this.gameState.globalSPSMultiplier *= diamondStaticSPS; // SPS verdoppeln
+                this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier; // God Mode auf SPS
 
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
                     if (bought) {
@@ -544,38 +609,52 @@ class SmileyGame {
     // ================================================================================================================
 
     klickeSmiley() {
-        // 1. Klickkraft zentral berechnen (inkl. Prestige Bonus!)
-        const actualClickPower = this.getClickStrength();
+            let damage = this.getClickStrength();
+            let isCrit = false;
 
-        // 2. Smileys erhöhen
-        this.gameState.aktuelle_smileys += actualClickPower;
+            // Crit Chance prüfen
+            if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
+                damage *= this.gameState.critDamageMult;
+                isCrit = true;
+            }
 
-        // WICHTIG: lifetime_smileys nutzen, damit Prestige steigt!
-        this.gameState.lifetime_smileys += actualClickPower;
+            this.gameState.aktuelle_smileys += damage;
+            this.gameState.lifetime_smileys += damage;
 
-        this.checkAchievements();
+            // Optional: Visuelles Feedback für Crit
+            if (isCrit) {
+                console.log("CRIT! " + damage);
+                // Später: showFloatingText(damage, 'crit');
+            }
 
-        // UI Update
-        this.updateUI();
-
-    }
-
-    getClickStrength() {
-        // 1. Basis-Werte
-        let strength = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
-
-        // 2. Prestige-Boni holen (Das hast du gerade eingebaut)
-        // Falls du die Funktion 'calculatePrestigeEffects' noch nicht hast,
-        // nimm die Version aus meiner vorherigen Nachricht!
-        if (this.calculatePrestigeEffects) {
-            const prestigeEffects = this.calculatePrestigeEffects();
-            strength *= prestigeEffects.clickMultiplier;
+            this.checkAchievements();
+            this.updateUI();
         }
 
-        // (Hier könnten später noch Pet-Boni rein: strength *= petBonus)
+    getClickStrength() {
+            // 1. Basis & Prestige
+            let strength = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
 
-        return Math.floor(strength); // Keine halben Smileys ;)
-    }
+            if (this.calculatePrestigeEffects) {
+                const prestigeEffects = this.calculatePrestigeEffects();
+                strength *= prestigeEffects.clickMultiplier;
+            }
+
+            // 2. God Mode (Diamant Shop Upgrade 9)
+            strength *= this.gameState.godModeMultiplier;
+
+            // 3. Synergie-Matrix (SPS addiert zum Klick)
+            if (this.gameState.clickSPSRatio > 0) {
+                strength += (this.gameState.totalSPS * this.gameState.clickSPSRatio);
+            }
+
+            // --- Kritischer Treffer Logik ---
+            // Wir prüfen hier nicht den Zufall (das macht klickeSmiley),
+            // sondern geben nur die Basis-Stärke zurück.
+            // Die Crit-Berechnung muss in 'klickeSmiley' passieren!
+
+            return Math.floor(strength);
+        }
 
     kaufeMehrereGebaeude(index, amount) {
         let item;
@@ -656,7 +735,11 @@ class SmileyGame {
             }
         }
 
-        return multiplier;
+        if (this.gameState.globalCostReduction > 0) {
+                    multiplier *= (1 - this.gameState.globalCostReduction);
+                }
+
+                return multiplier;
     }
 
    // --- Ersetze die ganze kaufeGlobalUpgrade Funktion ---
@@ -966,45 +1049,96 @@ class SmileyGame {
     startDiamondMinigame() {
         const MINE_INDEX = DIAMOND_MINE_INDEX;
         const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-        const BONUS_DIAMOND = 5 * mineCount; // Bonus skaliert mit der Mine
-        const DURATION = 5000;
+        const DURATION = 5000; // 5 Sekunden Laufzeit
 
+        // Sicherheits-Check
         if (this.gameState.diamondMinigameRunning || mineCount === 0) return;
 
+        // --- START ---
+        this.currentMinigameClicks = 0;
         this.gameState.diamondMinigameRunning = true;
-        this.updateUI(); // UI aktualisieren, um Button zu sperren
+        this.updateUI(); // Setzt Button-Text
 
         const progressBar = this.getById('minigame-bar');
         const resultText = this.getById('minigame-result');
 
-        if (resultText) resultText.innerText = 'Schürfe läuft...';
-
-        // Animation der Progress Bar starten
-        if (progressBar) {
-            // Setze den Übergang für die Dauer
-            progressBar.style.transition = `width ${DURATION}ms linear`;
-            // Starte die Animation von 100% auf 0%
-            progressBar.style.width = '0%';
+        if (resultText) {
+            resultText.style.color = '#fff';
+            resultText.innerText = 'Hämmer auf den Button! (Klick Klick!)';
         }
 
+        // --- BALKEN-ANIMATION (Manuell via JS) ---
+        // Wir löschen alte Animationen, falls vorhanden
+        if (this.barInterval) clearInterval(this.barInterval);
+
+        let progress = 0;
+        const step = 100 / (DURATION / 50); // Wie viel % pro 50ms (Update-Rate)
+
+        if (progressBar) {
+            progressBar.style.transition = 'none'; // CSS-Automatik aus
+            progressBar.style.width = '0%';
+
+            this.barInterval = setInterval(() => {
+                progress += step;
+                if (progress >= 100) progress = 100;
+                progressBar.style.width = `${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(this.barInterval);
+                }
+            }, 50);
+        }
+
+        // --- LOGIK-TIMER (Das Ende) ---
         this.gameState.diamondMinigameTimer = setTimeout(() => {
+            try {
+                console.log("Minigame Timer abgelaufen. Berechne...");
 
-            this.gameState.diamanten += BONUS_DIAMOND;
-            this.gameState.diamondMinigameRunning = false;
+                let baseGain = 5 * mineCount;
+                let clickBonus = Math.floor(this.currentMinigameClicks * 0.5 * mineCount);
 
-            if (resultText) resultText.innerText = `Erfolgreich! +${BONUS_DIAMOND} Diamanten erhalten.`;
+                // Boni berechnen
+                if (this.gameState.activePet) {
+                    const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
+                    if (pet) {
+                        // Sicherstellen, dass Level existiert
+                        const level = this.gameState.petLevels[pet.id] || 0;
+                        if (level > 0) {
+                            const stats = this.calculatePetStat(pet, level);
+                            baseGain *= (1 + stats.currentEffect);
+                            clickBonus *= (1 + stats.currentEffect);
+                        }
+                    }
+                }
 
-            // Reset Progress Bar für den nächsten Start
-            if (progressBar) {
-                 progressBar.style.transition = `width 0s`;
-                 progressBar.style.width = '100%';
+                let totalGain = Math.floor(baseGain + clickBonus);
+                this.gameState.diamanten += totalGain;
+
+                // UI Feedback
+                if (resultText) {
+                    resultText.innerHTML = `
+                        <span style="color: #4CAF50">Erfolg!</span> Basis: ${Math.floor(baseGain)} + Klicks: ${Math.floor(clickBonus)} =
+                        <strong style="color: #009ffd;">+${totalGain} 💎</strong>
+                    `;
+                }
+
+                console.log(`Diamanten gutgeschrieben: ${totalGain}`);
+
+            } catch (error) {
+                console.error("Fehler im Minigame-Ende:", error);
+            } finally {
+                // AUFRÄUMEN (Wird immer ausgeführt, auch bei Fehlern)
+                this.gameState.diamondMinigameRunning = false;
+                this.currentMinigameClicks = 0;
+
+                // Bar zurücksetzen (kurz warten, damit man 100% sieht)
+                setTimeout(() => {
+                    if (progressBar) progressBar.style.width = '0%';
+                }, 1000);
+
+                this.updateUI();
+                this.speichereSpiel();
             }
-
-            this.updateUI();
-            this.speichereSpiel();
-
-            console.log(`[Minigame] Abgeschlossen. +${BONUS_DIAMOND} Diamanten.`);
-
         }, DURATION);
     }
 
@@ -1782,120 +1916,174 @@ class SmileyGame {
 
     diamondMineView = 'mine';
 
-    renderDiamondMineContent() {
-            const container = this.getById('diamond-mine-content');
-            if (!container) return;
+   renderDiamondMineContent() {
+       const container = this.getById('diamond-mine-content');
+       if (!container) return;
 
-            // Stellt sicher, dass das Modal den Shop/Mine-Titel trägt
-            const modalTitle = container.closest('.modal-content').querySelector('h2');
-            if (modalTitle) modalTitle.innerHTML = `💎 Diamanten-Mine & Shop`;
+       // Titel aktualisieren
+       const modalTitle = container.closest('.modal-content')?.querySelector('h2');
+       if (modalTitle) modalTitle.innerHTML = `💎 Diamanten-Mine & Shop`;
 
-            const MINE_INDEX = DIAMOND_MINE_INDEX;
-            const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-            if (!mineDefinition) return;
-            const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+       const MINE_INDEX = DIAMOND_MINE_INDEX;
+       const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
+       if (!mineDefinition) return;
+       const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
 
-            // Wenn Mine nicht gekauft: Nur Kauf-Ansicht zeigen
-            if (mineCount === 0) {
-                const mineCost = this.getBuildingCost(MINE_INDEX, 0);
-                const canAfford = this.gameState.aktuelle_smileys >= mineCost;
+       // --- FALL 1: Mine noch nicht gekauft ---
+       if (mineCount === 0) {
+           const mineCost = this.getBuildingCost(MINE_INDEX, 0);
+           const canAfford = this.gameState.aktuelle_smileys >= mineCost;
 
-                container.innerHTML = `
-                    <h3>Schalte die ${mineDefinition.name} frei</h3>
-                    <p>Die Mine wird benötigt, um Diamanten zu sammeln und den Shop freizuschalten.</p>
-                    <p>Kosten: ${this.formatNumber(mineCost)} Smileys</p>
-                    <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'}>
-                        Mine Kaufen
-                    </button>
-                `;
-                return;
-            }
+           container.innerHTML = `
+               <h3>Schalte die ${mineDefinition.name} frei</h3>
+               <p style="color: #aaa;">Die Mine wird benötigt, um Diamanten zu sammeln und den Shop freizuschalten.</p>
+               <p>Kosten: <span style="color: #fff; font-weight: bold;">${this.formatNumber(mineCost)} Smileys</span></p>
+               <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'} style="width: 100%; margin-top: 10px;">
+                   Mine Kaufen
+               </button>
+           `;
+           return;
+       }
 
-            // --- HAUPTANSICHT: TAB-NAVIGATION ---
-            container.innerHTML = `
-                <div class="mine-nav" style="margin-bottom: 20px;">
-                    <button id="mine-tab-mine" class="btn-primary ${this.diamondMineView === 'mine' ? 'active' : 'btn-cancel'}">Minispiel</button>
-                    <button id="mine-tab-shop" class="btn-primary ${this.diamondMineView === 'shop' ? 'active' : 'btn-cancel'}">Diamanten Shop</button>
-                </div>
-                <div id="mine-dynamic-content"></div>
-                <p style="text-align: center; margin-top: 10px;">Deine Diamanten: <strong id="shop-diamanten-anzeige">${this.formatNumber(this.gameState.diamanten)}</strong> 💎</p>
-            `;
+       // --- FALL 2: Mine gekauft (Hauptansicht) ---
 
-            // Event Listener für Tab-Wechsel
-            this.getById('mine-tab-mine')?.addEventListener('click', () => {
-                this.diamondMineView = 'mine';
-                this.renderDiamondMineContent();
-            });
-            this.getById('mine-tab-shop')?.addEventListener('click', () => {
-                this.diamondMineView = 'shop';
-                this.renderDiamondMineContent();
-            });
+       // WICHTIG: Prüfen, ob das Grundgerüst (Tabs) schon da ist.
+       // Wenn JA (!hasNav), bauen wir NICHT neu, damit der Balken überlebt!
+       const hasNav = container.querySelector('.mine-nav');
 
-            // Rendere den Inhalt basierend auf dem aktiven Tab
-            const dynamicContent = this.getById('mine-dynamic-content');
-            if (dynamicContent) {
-                if (this.diamondMineView === 'mine') {
-                    this.renderDiamondMinigame(dynamicContent);
-                } else if (this.diamondMineView === 'shop') {
-                    this.renderDiamondShopContent(dynamicContent);
+       if (!hasNav) {
+           // Erstmaliges Rendern (Baut das HTML auf)
+           container.innerHTML = `
+               <div class="mine-nav">
+                   <button id="mine-tab-mine" class="${this.diamondMineView === 'mine' ? 'active' : ''}">Minispiel</button>
+                   <button id="mine-tab-shop" class="${this.diamondMineView === 'shop' ? 'active' : ''}">Diamanten Shop</button>
+               </div>
+               <div id="mine-dynamic-content" style="min-height: 200px;"></div>
+               <p style="text-align: center; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
+                   Deine Diamanten: <strong id="shop-diamanten-anzeige" style="color: #009ffd;">${this.formatNumber(this.gameState.diamanten)}</strong> 💎
+               </p>
+           `;
+
+           // Event Listener für Tabs (nur einmal hinzufügen)
+           this.getById('mine-tab-mine').addEventListener('click', () => {
+               this.diamondMineView = 'mine';
+               // Hier erzwingen wir ein Re-Render, indem wir den Container leeren,
+               // damit beim Tab-Wechsel der Inhalt stimmt.
+               container.innerHTML = '';
+               this.renderDiamondMineContent();
+           });
+           this.getById('mine-tab-shop').addEventListener('click', () => {
+               this.diamondMineView = 'shop';
+               container.innerHTML = '';
+               this.renderDiamondMineContent();
+           });
+       } else {
+           // Update Modus: Nur Diamanten-Anzeige aktualisieren
+           const diamDisplay = this.getById('shop-diamanten-anzeige');
+           if(diamDisplay) diamDisplay.innerText = this.formatNumber(this.gameState.diamanten);
+       }
+
+       // Inhalt des aktiven Tabs rendern
+       const dynamicContent = this.getById('mine-dynamic-content');
+       if (dynamicContent) {
+           if (this.diamondMineView === 'mine') {
+               this.renderDiamondMinigame(dynamicContent);
+           } else if (this.diamondMineView === 'shop') {
+               this.renderDiamondShopContent(dynamicContent);
+           }
+       }
+   }
+
+    renderDiamondMinigame(targetContainer) {
+        const container = targetContainer || this.getById('minigame-placeholder');
+        if (!container) return;
+
+        const MINE_INDEX = DIAMOND_MINE_INDEX;
+        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
+
+        // --- Berechnung der Werte ---
+        let BONUS_DIAMOND = 5 * mineCount;
+        // Pet Bonus Berechnung
+        if (this.gameState.activePet) {
+            const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
+            if (pet) {
+                const currentLevel = this.gameState.petLevels[pet.id] || 0;
+                if (currentLevel > 0) {
+                    const stats = this.calculatePetStat(pet, currentLevel);
+                    BONUS_DIAMOND *= (1 + stats.currentEffect);
                 }
             }
         }
+        BONUS_DIAMOND = Math.floor(BONUS_DIAMOND);
 
-    renderDiamondMinigame(targetContainer) {
-                const container = targetContainer || this.getById('minigame-placeholder');
-                if (!container) return;
+        // --- SCHRITT 1: HTML nur erstellen, wenn es noch nicht da ist ---
+        if (!this.getById('start-minigame-button')) {
+            container.innerHTML = `
+                <h3 style="color: #009ffd; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,159,253,0.3);">
+                    Minispiel: Aktive Schürfung
+                </h3>
 
-                const MINE_INDEX = DIAMOND_MINE_INDEX;
-                const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-                const DURATION = 5000; // 5 Sekunden
+                <div style="text-align: left; margin-bottom: 5px; color: #aaa;">
+                    Ertrag pro erfolgreicher Schürfung: <strong id="minigame-base-reward" style="color: #fff;">${BONUS_DIAMOND} 💎</strong>
+                </div>
 
-                // --- Dynamischen Bonus berechnen ---
-                let BONUS_DIAMOND = 5 * mineCount;
+                <div class="minigame-progress-container">
+                    <div id="minigame-bar" style="width: 0%;"></div>
+                </div>
 
-                // BONUS durch Prestige/Pets
-                if (this.gameState.activePet) {
-                    const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
-                    if (pet) {
-                        const currentLevel = this.gameState.petLevels[pet.id] || 0;
-                        if (currentLevel > 0) {
-                            const stats = this.calculatePetStat(pet, currentLevel);
-                            BONUS_DIAMOND *= (1 + stats.currentEffect);
-                        }
-                    }
-                }
-                BONUS_DIAMOND = Math.floor(BONUS_DIAMOND);
-                // --------------------------------------------------------------------------
+                <div id="minigame-result" style="height: 40px; color: #8fa38f; font-style: italic; margin-bottom: 10px;">
+                    Bereit zum Starten.
+                </div>
 
-                container.innerHTML = `
-                    <h3>Minispiel: Aktive Schürfung</h3>
-                    <p>Ertrag pro erfolgreicher Schürfung: <strong>${BONUS_DIAMOND} 💎</strong></p>
+                <button id="start-minigame-button">
+                    <span class="pickaxe-icon">⛏️</span>
+                    <span id="minigame-btn-text">Schürfen starten</span>
+                </button>
+            `;
 
-                    <div class="minigame-progress-container">
-                        <div id="minigame-bar" class="progress-bar" style="width: 100%; transition: width 0s;"></div>
-                    </div>
-                    <p id="minigame-result" class="info-section">Bereit zum Starten.</p>
-
-                    <button id="start-minigame-button" class="btn-confirm" ${this.gameState.diamondMinigameRunning ? 'disabled' : ''}>
-                        ${this.gameState.diamondMinigameRunning ? 'Schürfe läuft...' : 'Schürfen starten!'}
-                    </button>
-                `;
-
-                // Event Listener für Start Button
-                this.getById('start-minigame-button')?.addEventListener('click', () => {
+            // Event Listener (Wird nur EINMAL hinzugefügt)
+            const startBtn = this.getById('start-minigame-button');
+            startBtn.addEventListener('click', () => {
+                if (!this.gameState.diamondMinigameRunning) {
                     this.startDiamondMinigame();
-                });
+                } else {
+                    // Klick-Bonus während es läuft
+                    this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
 
-                // Bar-Zustand beim Neu-Rendern (falls Minigame gerade läuft)
-                if (this.gameState.diamondMinigameRunning) {
-                    const progressBar = this.getById('minigame-bar');
-                    if (progressBar) {
-                         // Setzt die Bar optisch auf den laufenden Zustand zurück (wird durch startDiamondMinigame neu animiert)
-                        progressBar.style.width = '100%';
-                        this.getById('minigame-result').innerText = 'Schürfe läuft...';
+                    // Visueller Effekt beim Klicken
+                    startBtn.style.transform = 'scale(0.95)';
+                    setTimeout(() => startBtn.style.transform = 'scale(1)', 50);
+
+                    // Feedback Text direkt aktualisieren
+                    const resultText = this.getById('minigame-result');
+                    if (resultText) {
+                        resultText.style.color = '#fff';
+                        // Zeige sofort an, dass geklickt wurde
+                        resultText.innerHTML = `Power: <span style="color: #ff3333; font-size: 1.2em;">${this.currentMinigameClicks}</span> 🔥`;
                     }
                 }
-            }
+            });
+        }
+
+        // --- SCHRITT 2: Nur Texte aktualisieren (Soft Update) ---
+        // Das läuft bei jedem updateUI(), zerstört aber nicht den Balken!
+
+        // Status Text aktualisieren (nur wenn das Spiel NICHT läuft, sonst überschreiben wir den Klick-Zähler)
+        if (!this.gameState.diamondMinigameRunning) {
+            const btnText = this.getById('minigame-btn-text');
+            if (btnText) btnText.innerText = "Schürfen starten";
+
+            // Ergebnis nur anzeigen, wenn nicht gerade "Abgeschlossen" da steht (Logik in startDiamondMinigame)
+            // Hier machen wir nichts, damit der Abschluss-Text stehen bleibt.
+        } else {
+            const btnText = this.getById('minigame-btn-text');
+            if (btnText) btnText.innerText = "SCHÜRFE LÄUFT... (KLICK!)";
+        }
+
+        // Basis-Ertrag aktualisieren (falls Upgrades gekauft wurden)
+        const rewardDisplay = this.getById('minigame-base-reward');
+        if (rewardDisplay) rewardDisplay.innerText = `${BONUS_DIAMOND} 💎`;
+    }
 
     renderDiamondShopContent(targetContainer) {
             // Wir verwenden den übergebenen Container.
@@ -2230,8 +2418,20 @@ class SmileyGame {
                 }
             }
 
-            if (startButton && !this.gameState.diamondMinigameRunning) {
-                this.startDiamondMinigame();
+            if (startButton) {
+                if (!this.gameState.diamondMinigameRunning) {
+                    this.startDiamondMinigame();
+                } else {
+                    // Wenn es läuft, zählen wir die Klicks für den Bonus!
+                    this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
+
+                    // Kleiner visueller Effekt beim Klicken
+                    startButton.style.transform = 'scale(0.95)';
+                    setTimeout(() => startButton.style.transform = 'scale(1)', 50);
+
+                    const resultText = this.getById('minigame-result');
+                    if (resultText) resultText.innerText = `Schürf-Power: ${this.currentMinigameClicks}`;
+                }
             }
         });
 
