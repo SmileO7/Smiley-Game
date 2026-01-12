@@ -604,11 +604,38 @@ class SmileyGame {
         this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
     }
 
+    spawnFloatingText(event, amount, type = 'normal') {
+            // Position bestimmen (Mauszeiger oder Mitte des Buttons falls undefined)
+            let x = event ? event.clientX : window.innerWidth / 2;
+            let y = event ? event.clientY : window.innerHeight / 2;
+
+            // Etwas Zufall in die Position bringen (damit Zahlen nicht stapeln)
+            const randomX = (Math.random() - 0.5) * 40; // +/- 20px
+            const randomY = (Math.random() - 0.5) * 40;
+
+            // HTML Element erstellen
+            const el = document.createElement('div');
+            el.className = `floating-text ${type}`; // 'normal' oder 'crit'
+            el.innerText = `+${this.formatNumber(amount)}`;
+
+            // Positionieren
+            el.style.left = `${x + randomX}px`;
+            el.style.top = `${y + randomY}px`;
+
+            document.body.appendChild(el);
+
+            // Nach Ende der Animation (1s) löschen, um Speicher zu sparen
+            setTimeout(() => {
+                el.remove();
+            }, 1000);
+        }
+
     // ================================================================================================================
     // 3. KERNLOGIK (Kauf & Reset)
     // ================================================================================================================
 
-    klickeSmiley() {
+    // WICHTIG: 'e' als Parameter hinzufügen!
+        klickeSmiley(e) {
             let damage = this.getClickStrength();
             let isCrit = false;
 
@@ -621,11 +648,14 @@ class SmileyGame {
             this.gameState.aktuelle_smileys += damage;
             this.gameState.lifetime_smileys += damage;
 
-            // Optional: Visuelles Feedback für Crit
-            if (isCrit) {
-                console.log("CRIT! " + damage);
-                // Später: showFloatingText(damage, 'crit');
+            // --- VISUALS ---
+            // Wenn wir ein Maus-Event haben (e), zeigen wir den Text
+            if (e) {
+                this.spawnFloatingText(e, damage, isCrit ? 'crit' : 'normal');
             }
+
+            // Optional: Kleines Konsolen-Feedback bei Crits wegnehmen, nervt sonst
+            // if (isCrit) console.log("CRIT!");
 
             this.checkAchievements();
             this.updateUI();
@@ -2346,8 +2376,8 @@ class SmileyGame {
     // ================================================================================================================
 
     setupMainEventListeners() {
-        this.getById('smiley_button')?.addEventListener('click', () => this.klickeSmiley());
-
+        // Wir geben 'e' (das Event) weiter!
+        this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
         this.getById('building-grid')?.addEventListener('click', (e) => {
             const button = e.target.closest('.btn-buy');
             if (!button) return;

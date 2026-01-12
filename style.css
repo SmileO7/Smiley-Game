@@ -595,7 +595,45 @@ main {
     font-size: 1.5rem;
     filter: drop-shadow(0 0 5px red);
 }
+/* ========================================= */
+/* ✨ FLOATING TEXT (Popcorn Effekt)         */
+/* ========================================= */
 
+.floating-text {
+    position: fixed; /* Fixiert auf dem Bildschirm, egal wo gescrollt */
+    pointer-events: none; /* Klicks gehen durch, damit man weiter hämmern kann */
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    animation: floatUp 1s ease-out forwards; /* Startet Animation sofort */
+    z-index: 9999; /* Immer ganz oben */
+    user-select: none;
+}
+
+/* Stil für KRITISCHE Treffer */
+.floating-text.crit {
+    color: #ff3333; /* Dein Rot */
+    font-size: 2.5rem; /* Viel größer! */
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 2px 2px 0px #000;
+    z-index: 10000;
+}
+
+/* Die Bewegung: Nach oben schweben und verblassen */
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-50px) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(1);
+    }
+}
 
 /* ======================================================= */
 /* 9. RESPONSIVE DESIGN                                   */
