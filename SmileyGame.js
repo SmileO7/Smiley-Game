@@ -831,46 +831,75 @@ class SmileyGame {
 
    // --- Ersetze die ganze kaufeGlobalUpgrade Funktion ---
 
-   kaufeGlobalUpgrade(id, amount = 1) {
-       let purchasedCount = 0;
+   kaufeGlobalUpgrade(id) {
+           // 1. Upgrade finden
+           const upgrade = globalUpgrades.find(u => u.id === id);
+           if (!upgrade) {
+               console.error("Upgrade nicht gefunden mit ID:", id);
+               return;
+           }
 
-       const startUpgrade = globalUpgrades.find(u => u.id === id);
-       if (!startUpgrade) return;
-       const targetBuildingIndex = startUpgrade.buildingIndex;
+           // 2. Prüfen, ob schon gekauft
+           if (this.gameState.researchStatus[upgrade.id]) {
+               this.showNotification("Bereits gekauft!", "info");
+               return;
+           }
 
-       for (let i = 0; i < amount; i++) {
-           const nextId = id + i;
-           const upgrade = globalUpgrades.find(u => u.id === nextId);
+           // 3. Kosten berechnen (Basis-Preis minus Rabatte)
+           let finalCost = upgrade.cost;
 
-           if (!upgrade) break;
-           if (upgrade.buildingIndex !== targetBuildingIndex) break;
-           if (this.gameState.researchStatus[upgrade.id]) continue;
+           // --- Rabatt-Logik ---
+           let discount = 0;
 
-           // WICHTIG: Auch hier Math.ceil nutzen, damit es zur UI passt
-           const finalCost = Math.ceil(this.calculateUpgradeCost(upgrade.cost));
+           // A. Prestige Rabatt
+           const prestigeEffects = this.calculatePrestigeEffects(); // Deine existierende Methode
+           if (prestigeEffects && prestigeEffects.costReduction) {
+               discount += prestigeEffects.costReduction;
+           }
 
+           // B. Globaler Rabatt (z.B. aus dem Diamant-Shop)
+           if (this.gameState.globalCostReduction) {
+               discount += this.gameState.globalCostReduction;
+           }
+
+           // C. Pet Rabatt (Eule)
+           if (this.gameState.activePet) {
+               const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'cost_reduction_upgrades');
+               if (pet) {
+                   const level = this.gameState.petLevels[pet.id] || 0;
+                   if (level > 0) {
+                       const stats = this.calculatePetStat(pet, level);
+                       discount += stats.currentEffect;
+                   }
+               }
+           }
+
+           // Rabatt anwenden (Maximal 90% Rabatt erlauben, damit es nicht kostenlos wird)
+           if (discount > 0.9) discount = 0.9;
+           finalCost = finalCost * (1 - discount);
+           finalCost = Math.ceil(finalCost); // Runde auf ganze Zahlen
+
+           // 4. Kauf durchführen
            if (this.gameState.aktuelle_smileys >= finalCost) {
+               // Bezahlen
                this.gameState.aktuelle_smileys -= finalCost;
+
+               // Freischalten
                this.gameState.researchStatus[upgrade.id] = true;
-               purchasedCount++;
 
-               // --- HIER IST DAS NEUE VISUELLE FEEDBACK ---
-               // Wir rufen die Toast-Nachricht auf:
-               this.showNotification(`Upgrade gekauft: ${upgrade.description}`, 'success');
-               // -------------------------------------------
+               // Boni sofort neu berechnen!
+               this.applyAllBoni();
 
+               // Speichern & UI Updates
+               this.speichereSpiel();
+               this.updateUI();
+               this.updateGlobalUpgradeUI(); // Liste aktualisieren (damit es verschwindet/gekauft aussieht)
+
+               this.showNotification(`Upgrade "${upgrade.name || 'Upgrade'}" gekauft!`, 'success');
            } else {
-               break;
+               this.showNotification(`Nicht genug Smileys! Benötigt: ${this.formatNumber(finalCost)}`, 'error');
            }
        }
-
-       // UI aktualisieren, wenn etwas gekauft wurde
-       if (purchasedCount > 0) {
-           this.updateUI();
-           // Falls du eine spezielle Funktion für Upgrades hast:
-           if (this.updateGlobalUpgradeUI) this.updateGlobalUpgradeUI();
-       }
-   }
 
     kaufePrestigeUpgrade(id) {
         const upgrade = prestigeUpgrades.find(u => u.id === id);
@@ -1723,72 +1752,108 @@ class SmileyGame {
             });
         }
 
-        updateGlobalUpgradeUI() {
-           const container = this.getById('global-upgrades-container');
-           if (!container) return;
-           container.innerHTML = '';
+      updateGlobalUpgradeUI() {
+              const container = this.getById('global-upgrades-container');
+              if (!container) return;
+              container.innerHTML = '';
 
-           let nextUpgradeFound = false;
-           let currentGroupIndex = null;
-           let upgradeGroup = [];
-           const MAX_GROUP_RENDER = 4;
+              // 1. Gruppieren
+              const groups = {};
+              globalUpgrades.forEach(upgrade => {
+                  // Wenn buildingIndex fehlt, ist es -1 (Global)
+                  const groupKey = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
+                  if (!groups[groupKey]) groups[groupKey] = [];
+                  groups[groupKey].push(upgrade);
+              });
 
-           // 1. Gruppierung (bleibt gleich, sucht das nächste offene Upgrade)
-           globalUpgrades.forEach(upgrade => {
-               const isPurchased = this.gameState.researchStatus[upgrade.id];
-               const buildingIndex = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
+              const upgradesToRender = [];
 
-               if (isPurchased) return;
+              // 2. Filtern & Sortieren
+              Object.keys(groups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(key => {
+                  const groupList = groups[key];
+                  groupList.sort((a, b) => a.id - b.id);
 
-               // Wir wollen immer nur das allererste verfügbare Upgrade einer Gruppe finden
-               if (!nextUpgradeFound) {
-                    upgradeGroup.push(upgrade);
-                    nextUpgradeFound = true; // Sobald wir eins haben, hören wir auf zu suchen (pro Render-Zyklus)
-               }
-           });
+                  // Finde das nächste nicht gekaufte Upgrade
+                  const nextUpgrade = groupList.find(u => !this.gameState.researchStatus[u.id]);
 
-           // 2. Rendering
-           if (upgradeGroup.length > 0) {
-               const firstUpgrade = upgradeGroup[0];
-               const finalCost = this.calculateUpgradeCost(firstUpgrade.cost);
+                  if (nextUpgrade) {
+                      const bIndex = nextUpgrade.buildingIndex;
+                      const isGlobal = (bIndex === undefined || bIndex === -1);
+                      // Sicherheits-Check: Hat der Spieler das Gebäude schon?
+                      const hasBuilding = bIndex >= 0 && this.gameState.buildingCounts[bIndex] > 0;
 
-               // WICHTIG: Hier nutzen wir auch Math.ceil, damit der Button korrekt reagiert
-               const canAfford = this.gameState.aktuelle_smileys >= Math.ceil(finalCost);
+                      // Zeige es an, wenn es Global ist ODER das Gebäude existiert
+                      if (isGlobal || hasBuilding) {
+                          upgradesToRender.push(nextUpgrade);
+                      }
+                  }
+              });
 
-               // --- Stufe berechnen (z.B. "Stufe 3 von 7") ---
-               const groupIndex = firstUpgrade.buildingIndex !== undefined ? firstUpgrade.buildingIndex : -1;
-               const totalInGroup = globalUpgrades.filter(u => (u.buildingIndex !== undefined ? u.buildingIndex : -1) === groupIndex).length;
-               const boughtInGroup = globalUpgrades.filter(u => (u.buildingIndex !== undefined ? u.buildingIndex : -1) === groupIndex && this.gameState.researchStatus[u.id]).length;
-               const currentStep = boughtInGroup + 1;
+              if (upgradesToRender.length === 0) {
+                  container.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">Alle verfügbaren Upgrades erforscht! <br> <small>Kaufe mehr Gebäude für neue Upgrades.</small></div>';
+                  return;
+              }
 
-               const typeIcon = firstUpgrade.type === 'click_mult' ? '🖱️' : '🏭';
+              // 3. Anzeigen (Mit sauberem HTML für das neue CSS)
+              upgradesToRender.forEach(upgrade => {
+                  const finalCost = upgrade.cost; // Hier ggf. deine Preisberechnung nutzen
+                  const canAfford = this.gameState.aktuelle_smileys >= finalCost;
 
-               const upgradeDiv = document.createElement('div');
-               upgradeDiv.className = 'research-item research-group';
-               upgradeDiv.dataset.id = firstUpgrade.id;
+                  // Titel Bestimmung (FIX GEGEN "UNDEFINED")
+                  let groupTitle = 'Global / Klick'; // Standardwert
+                  let typeIcon = '⚡';
 
-               // HTML ohne die überflüssigen 10x/100x Buttons
-               upgradeDiv.innerHTML = `
-                   <div style="flex: 1; padding-right: 15px;">
-                       <h4 style="margin: 0 0 5px 0;">
-                           ${typeIcon} ${firstUpgrade.description}
-                           <span style="font-size: 0.8em; color: var(--color-accent-blue); margin-left: 5px;">
-                               (Stufe ${currentStep} / ${totalInGroup})
-                           </span>
-                       </h4>
-                       <p style="margin: 0; color: #888; font-size: 0.9em; text-align: left;">
-                           Kosten: <strong style="color: #fff;">${this.formatNumber(Math.ceil(finalCost))}</strong> Smileys
-                       </p>
-                   </div>
-                   <div class="button-group-upgrade">
-                       <button class="btn-buy-research" data-id="${firstUpgrade.id}" data-amount="1" ${!canAfford ? 'disabled' : ''} style="min-width: 120px;">
-                           Kaufen
-                       </button>
-                   </div>
-               `;
-               container.appendChild(upgradeDiv);
-           }
-        }
+                  if (upgrade.buildingIndex !== undefined && upgrade.buildingIndex > -1) {
+                      // Prüfen ob buildingsData existiert und der Index gültig ist
+                      if (typeof buildingsData !== 'undefined' && buildingsData[upgrade.buildingIndex]) {
+                          groupTitle = buildingsData[upgrade.buildingIndex].name;
+                          typeIcon = '📈';
+                      } else {
+                          groupTitle = 'Gebäude-Upgrade'; // Fallback
+                      }
+                  } else {
+                      // Spezielle Icons für globale Upgrades
+                      if (upgrade.type === 'click_mult') typeIcon = '🖱️';
+                      if (upgrade.type === 'cost_reduction_buildings') typeIcon = '💸';
+                  }
+
+                  const div = document.createElement('div');
+                  div.className = 'research-item'; // Nutzt das neue CSS
+
+                  div.innerHTML = `
+                      <div class="research-content">
+                          <div class="research-title-row">
+                              <span class="research-group-name">${groupTitle}</span>
+                              <span class="research-name">${typeIcon} ${upgrade.name || 'Upgrade'}</span>
+                          </div>
+                          <div class="research-desc">
+                              ${upgrade.description}
+                          </div>
+                      </div>
+
+                      <div class="research-action">
+                          <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
+                              ${this.formatNumber(finalCost)}
+                          </span>
+                          <button class="btn-buy-research" data-id="${upgrade.id}" data-amount="1"
+                              ${!canAfford ? 'disabled' : ''}
+                              style="
+                                  padding: 4px 10px;
+                                  font-size: 0.8rem;
+                                  background: ${canAfford ? '#009ffd' : '#333'};
+                                  color: ${canAfford ? '#fff' : '#888'};
+                                  border: none;
+                                  border-radius: 4px;
+                                  cursor: ${canAfford ? 'pointer' : 'not-allowed'};
+                                  width: 100%;
+                              ">
+                              Kaufen
+                          </button>
+                      </div>
+                  `;
+                  container.appendChild(div);
+              });
+          }
 
     updatePrestigeUI() {
             // Berechne Fortschritt
@@ -2872,132 +2937,143 @@ class SmileyGame {
     // ================================================================================================================
 
     setupMainEventListeners() {
-        // Wir geben 'e' (das Event) weiter!
-        this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
-        this.getById('building-grid')?.addEventListener('click', (e) => {
-            const button = e.target.closest('.btn-buy');
-            if (!button) return;
-            const buildingItem = button.closest('.building-item');
-            if (!buildingItem) return;
-            const index = parseInt(buildingItem.dataset.index, 10);
-            const amount = parseInt(button.dataset.amount, 10);
-            if (!isNaN(index) && !isNaN(amount)) this.kaufeMehrereGebaeude(index, amount);
-        });
+            // 1. SMILEY KLICKEN
+            this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
 
-        this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
-            // 1. Suche den Button (auch wenn man auf das Icon/Text im Button klickt)
-            const button = e.target.closest('.btn-buy-research');
-            if (!button) return;
+            // 2. GEBÄUDE KAUFEN (Event Delegation)
+            this.getById('building-grid')?.addEventListener('click', (e) => {
+                const button = e.target.closest('.btn-buy');
+                if (!button) return;
 
-            // 2. Daten auslesen
-            const id = parseInt(button.dataset.id, 10);
-            const amount = parseInt(button.dataset.amount, 10);
+                const buildingItem = button.closest('.building-item');
+                if (!buildingItem) return;
 
-            // 3. Debugging (Drück F12, falls es immer noch nicht geht)
-            console.log(`Klick erkannt! ID: ${id}, Menge: ${amount}`);
+                const index = parseInt(buildingItem.dataset.index, 10);
+                const amount = parseInt(button.dataset.amount, 10);
 
-            // 4. Kauf auslösen
-            if (!isNaN(id) && !isNaN(amount) && amount > 0) {
-                this.kaufeGlobalUpgrade(id, amount);
-            } else {
-                console.error("Fehler: Ungültige ID oder Menge beim Kauf.");
-            }
-        });
+                if (!isNaN(index) && !isNaN(amount)) {
+                    this.kaufeMehrereGebaeude(index, amount);
+                }
+            });
 
-        this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
+            this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
+                // Wir suchen das Element mit der Klasse 'btn-buy-research'
+                const button = e.target.closest('.btn-buy-research');
+
+                // Wenn kein Button geklickt wurde, brechen wir ab
+                if (!button) return;
+
+                // Daten aus dem Button lesen
+                const id = parseInt(button.dataset.id, 10);
+                const amount = parseInt(button.dataset.amount, 10);
+
+                console.log("Klick auf Upgrade:", id); // <--- ZUM TESTEN
+
+                if (!isNaN(id)) {
+                    this.kaufeGlobalUpgrade(id, amount || 1);
+                }
+            });
+
+            // 4. PET SHOP INTERAKTIONEN (Kaufen & Aktivieren)
+            this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
+
                 const petId = button.dataset.id;
 
-                if (button.classList.contains('btn-buy-pet')) { // Prüft auf Level Up Button (Klasse von renderPetShop)
-                    this.levelUpPet(petId); // Level Up Logik
+                if (button.classList.contains('btn-buy-pet')) {
+                    // Level Up / Kaufen
+                    this.levelUpPet(petId);
                 } else if (button.classList.contains('btn-pet-activate')) {
+                    // Aktivieren / Deaktivieren
                     this.activatePet(petId);
                 }
             });
 
-        const petModal = this.getById('pet-shop-modal');
-        const openPetButton = this.getById('open-pet-shop-button');
-        const closePetButton = this.getById('close-pet-shop-button');
+            // 5. PET SHOP MODAL STEUERUNG
+            const petModal = this.getById('pet-shop-modal');
+            const openPetButton = this.getById('open-pet-shop-button');
+            const closePetButton = this.getById('close-pet-shop-button');
 
-        if (openPetButton && petModal) {
-            openPetButton.addEventListener('click', () => {
-                this.updatePetButtons();
-                petModal.style.display = 'flex';
-            });
-        }
-
-        if (closePetButton && petModal) {
-            closePetButton.addEventListener('click', () => {
-                petModal.style.display = 'none';
-            });
-        }
-
-        this.getById('diamond-mine-content')?.addEventListener('click', (e) => {
-            const buyButton = e.target.closest('#buy-diamond-mine-button');
-            const startButton = e.target.closest('#start-minigame-button');
-
-            if (buyButton) {
-                const index = parseInt(buyButton.dataset.index, 10);
-                if (index === DIAMOND_MINE_INDEX) {
-                    this.kaufeMehrereGebaeude(index, 1);
-                }
+            if (openPetButton && petModal) {
+                openPetButton.addEventListener('click', () => {
+                    this.updatePetButtons();
+                    petModal.style.display = 'flex';
+                });
+            }
+            if (closePetButton && petModal) {
+                closePetButton.addEventListener('click', () => {
+                    petModal.style.display = 'none';
+                });
             }
 
-            if (startButton) {
-                if (!this.gameState.diamondMinigameRunning) {
-                    this.startDiamondMinigame();
-                } else {
-                    // Wenn es läuft, zählen wir die Klicks für den Bonus!
-                    this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
+            // 6. DIAMANT MINE & MINIGAME INTERAKTIONEN
+            this.getById('diamond-mine-content')?.addEventListener('click', (e) => {
+                const buyButton = e.target.closest('#buy-diamond-mine-button');
+                const startButton = e.target.closest('#start-minigame-button');
 
-                    // Kleiner visueller Effekt beim Klicken
-                    startButton.style.transform = 'scale(0.95)';
-                    setTimeout(() => startButton.style.transform = 'scale(1)', 50);
-
-                    const resultText = this.getById('minigame-result');
-                    if (resultText) resultText.innerText = `Schürf-Power: ${this.currentMinigameClicks}`;
+                // Mine kaufen (Gebäude Index 8)
+                if (buyButton) {
+                    const index = parseInt(buyButton.dataset.index, 10);
+                    if (index === DIAMOND_MINE_INDEX) {
+                        this.kaufeMehrereGebaeude(index, 1);
+                    }
                 }
+
+                // Minigame starten oder klicken
+                if (startButton) {
+                    if (!this.gameState.diamondMinigameRunning) {
+                        this.startDiamondMinigame();
+                    } else {
+                        // Klick während des Spiels
+                        this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
+
+                        // Visueller Effekt
+                        startButton.style.transform = 'scale(0.95)';
+                        setTimeout(() => startButton.style.transform = 'scale(1)', 50);
+
+                        const resultText = this.getById('minigame-result');
+                        if (resultText) resultText.innerText = `Schürf-Power: ${this.currentMinigameClicks}`;
+                    }
+                }
+            });
+
+            // 7. DIAMANT MINE MODAL STEUERUNG
+            const diamondMineModal = this.getById('diamond-mine-modal');
+            const openMineButton = this.getById('open_diamond_mine_button');
+            const closeMineButton = this.getById('close_diamond_mine_button');
+
+            if (openMineButton && diamondMineModal) {
+                openMineButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.updateDiamondMineStatus();
+                    diamondMineModal.style.display = 'flex';
+                });
             }
-        });
+            if (closeMineButton && diamondMineModal) {
+                closeMineButton.addEventListener('click', () => {
+                    diamondMineModal.style.display = 'none';
+                });
+            }
 
-        const diamondMineModal = this.getById('diamond-mine-modal');
-        const openMineButton = this.getById('open_diamond_mine_button');
-        const closeMineButton = this.getById('close_diamond_mine_button');
+            // 8. GILDEN MODAL STEUERUNG
+            const guildsModal = this.getById('guilds-modal');
+            const openGuildsButton = this.getById('open_guilds_button');
+            const closeGuildsButton = this.getById('close_guilds_button');
 
-        if (openMineButton && diamondMineModal) {
-            openMineButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.updateDiamondMineStatus();
-                diamondMineModal.style.display = 'flex';
-            });
+            if (openGuildsButton && guildsModal) {
+                openGuildsButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.renderGuildsContent();
+                    guildsModal.style.display = 'flex';
+                });
+            }
+            if (closeGuildsButton && guildsModal) {
+                closeGuildsButton.addEventListener('click', () => {
+                    guildsModal.style.display = 'none';
+                });
+            }
         }
-
-        if (closeMineButton && diamondMineModal) {
-            closeMineButton.addEventListener('click', () => {
-                diamondMineModal.style.display = 'none';
-            });
-        }
-
-        // NEU: Gilden Modal Steuerung (Prio 8/9)
-        const guildsModal = this.getById('guilds-modal');
-        const openGuildsButton = this.getById('open_guilds_button');
-        const closeGuildsButton = this.getById('close_guilds_button');
-
-        if (openGuildsButton && guildsModal) {
-            openGuildsButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.renderGuildsContent();
-                guildsModal.style.display = 'flex';
-            });
-        }
-
-        if (closeGuildsButton && guildsModal) {
-            closeGuildsButton.addEventListener('click', () => {
-                guildsModal.style.display = 'none';
-            });
-        }
-    }
 
 
     setupPrestigeEventListeners() {
@@ -3780,26 +3856,41 @@ createInfoPetsElements() {
                 // Hilfsfunktion zum Binden von Buttons an Modals
                 const bind = (btnId, modalId, fn) => {
                     const btn = this.getById(btnId);
-                    if(btn) btn.addEventListener('click', () => {
-                        this.getById(modalId).style.display = 'flex';
-                        // Ruft die Render-Funktion auf, falls vorhanden
-                        if(fn) fn.call(this);
-                    });
 
-                    const closeBtn = this.getById(modalId)?.querySelector('.btn-cancel');
-                    if(closeBtn) closeBtn.addEventListener('click', () => {
-                        this.getById(modalId).style.display = 'none';
-                    });
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                            const modal = this.getById(modalId);
+                            if (modal) {
+                                modal.style.display = 'flex';
+                                // Ruft die Render-Funktion auf, falls vorhanden
+                                if (fn) fn.call(this);
+                            } else {
+                                console.error(`FEHLER: Das Modal mit der ID '${modalId}' wurde im HTML nicht gefunden!`);
+                            }
+                        });
+                    }
+
+                    // Close-Button Logik (ebenfalls sicherer gemacht)
+                    const modalEl = this.getById(modalId);
+                    if (modalEl) {
+                        const closeBtn = modalEl.querySelector('.btn-cancel');
+                        // Auch prüfen, ob IDs wie 'close_buildings_info_button' direkt genutzt werden
+                        // (Optional, falls du Klassen statt IDs für Close-Buttons nutzt)
+
+                        if (closeBtn) {
+                            closeBtn.addEventListener('click', () => {
+                                modalEl.style.display = 'none';
+                            });
+                        }
+                    }
                 };
 
-                // Hier nutzen wir jetzt nur noch die sauberen Einzeiler:
+                // Binden der Buttons (Hier definiert du, welche ID zu welchem Modal gehört)
                 bind('show_buildings_button', 'buildings_info_modal', this.createBuildingInfoElements);
                 bind('show_global_upgrades_button', 'global_upgrades_info_modal', this.createInfoGlobalUpgradeElements);
                 bind('show_pets_button', 'pets_info_modal', this.createInfoPetsElements);
                 bind('show_stats_button', 'stats_info_modal', this.createInfoStatsElements);
                 bind('show_achievements_button', 'achievements_info_modal', this.createInfoAchievementElements);
-
-                // WICHTIG: Hier wird die neue LISTE aufgerufen (nicht mehr der Baum)
                 bind('show_prestige_button', 'prestige_info_modal', this.createPrestigeInfoList);
             }
             }

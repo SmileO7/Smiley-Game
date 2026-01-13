@@ -101,6 +101,8 @@ main {
     flex-grow: 1;
     padding-top: 70px;
     width: 100%;
+    /* Verhindert, dass main größer wird als der Screen */
+    max-height: 100vh;
 }
 
 .navbar {
@@ -112,6 +114,7 @@ main {
     top: 0;
     width: 100%;
     z-index: 1000;
+    height: 60px; /* Feste Höhe für Berechnung */
 }
 
 .navbar a,
@@ -137,20 +140,49 @@ main {
 }
 
 .main-layout {
-    align-items: start;
-    gap: var(--spacing-md);
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr;
-    margin: var(--spacing-md) auto;
-    max-width: 1600px;
-    min-height: calc(100vh - 100px);
-    padding: var(--spacing-md);
-    width: 100%;
+    /* UPDATE: Die Mitte ist jetzt flexibel, aber maximal 600px breit.
+       Das gesamte Spiel wird zentriert (justify-content: center). */
+    grid-template-columns: 320px minmax(400px, 600px) 320px;
+    justify-content: center; /* Zentriert das Spielfeld auf dem Monitor */
+    gap: 30px; /* Mehr Luft zwischen den Spalten (vorher 20px) */
+
+    /* WICHTIG: Höhe berechnen */
+    height: calc(100vh - 80px);
+
+    overflow: hidden;
+    /* UPDATE: Mehr Abstand zu den Rändern */
+    padding: 20px 40px;
+    max-width: 1600px; /* Verhindert, dass es auf Ultrawide-Monitoren zu breit wird */
+    margin: 0 auto;    /* Zentriert den Container */
 }
 
-.left-column,
-.middle-column,
-.right-column,
+/* SPALTEN LOGIK */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* WICHTIG: Linke Spalte darf scrollen */
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.middle-column, .right-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden; /* Container scrollen innen */
+}
+
+.middle-column h3, .right-column h2 {
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+/* Scrollbar Styling für die Linke Spalte */
+.left-column::-webkit-scrollbar { width: 6px; }
+.left-column::-webkit-scrollbar-thumb { background-color: #333; border-radius: 3px; }
+
 .box-style,
 .stats-box.prestige-stats {
     background-color: var(--color-box-background);
@@ -160,9 +192,41 @@ main {
     padding: var(--spacing-lg);
 }
 
-.left-column { text-align: center; display: flex; flex-direction: column; gap: var(--spacing-lg); }
-.middle-column { display: flex; flex-direction: column; gap: var(--spacing-lg); align-items: center; padding: 10px; }
-.right-column { max-height: calc(100vh - 120px); overflow-y: auto; }
+/* === SCROLL-CONTAINER LAYOUT (Mitte & Rechts) === */
+#global-upgrades-container,
+#building-grid {
+    flex-grow: 1;
+    min-height: 0; /* WICHTIG für Flexbox */
+
+    overflow-y: auto;
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 5px;
+
+    scrollbar-width: thin;
+    scrollbar-color: #009ffd #222;
+}
+
+/* Für Webkit-Browser (Chrome/Edge/Safari) */
+#global-upgrades-container::-webkit-scrollbar,
+#building-grid::-webkit-scrollbar {
+    width: 8px;
+}
+#global-upgrades-container::-webkit-scrollbar-track,
+#building-grid::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 4px;
+}
+#global-upgrades-container::-webkit-scrollbar-thumb,
+#building-grid::-webkit-scrollbar-thumb {
+    background-color: #009ffd;
+    border-radius: 4px;
+    border: 2px solid #222;
+}
 
 /* ======================================================= */
 /* 3. BUTTONS & UTILITIES                                 */
@@ -265,42 +329,75 @@ main {
     padding: var(--spacing-md);
 }
 
-#global-upgrades-container { display: flex; flex-direction: column; gap: var(--spacing-sm); }
-
-/* UPGRADE BOXEN (Mitte) */
+/* === UPGRADE KARTEN DESIGN (Kompakt & Schick) === */
 .research-item {
-    background-color: var(--container-bg);
-    border: 1px solid #444;
-    border-radius: 8px;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     justify-content: space-between;
-    padding: 15px;
-    margin-bottom: 10px;
-    min-height: 80px;
-    height: auto;
-    gap: 15px;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.05); /* Leicht transparent */
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px; /* Abstand zur nächsten Karte */
+    min-height: 60px;   /* Fixe Mindesthöhe */
+    transition: background 0.2s;
 }
 
-.research-item div {
-    flex: 1 1 200px;
-    text-align: left;
-    margin-right: 10px;
+.research-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: #666;
 }
 
-.research-item h4 {
+/* Linker Teil: Text */
+.research-content {
+    flex-grow: 1;
+    margin-right: 15px;
+    overflow: hidden;
+}
+
+.research-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.research-group-name {
+    font-size: 0.75rem;
+    color: #009FFD;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.research-name {
+    font-weight: bold;
     color: #fff;
-    margin: 0 0 5px 0;
-    font-size: 1.1rem;
-    line-height: 1.3;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.research-item p {
-    color: #ccc;
+.research-desc {
+    font-size: 0.8rem;
+    color: #aaa;
+    line-height: 1.2;
+}
+
+/* Rechter Teil: Preis & Button */
+.research-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 90px;
+    flex-shrink: 0;
+}
+
+.research-cost {
     font-size: 0.9rem;
-    margin: 0;
-    white-space: normal;
+    font-weight: bold;
+    margin-bottom: 4px;
 }
 
 .btn-buy-research {
@@ -413,7 +510,6 @@ main {
 #prestige-tree-container {
     position: relative;
     width: 100%;
-    /* OPTIMIERT: 600px ist besser für Übersichtlichkeit als 1100px */
     height: 600px;
     background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
     border-radius: 12px;
@@ -439,7 +535,6 @@ main {
     transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
     width: 40px;
     z-index: 2;
-    /* WICHTIG: Damit Nodes zentriert auf Linien sitzen */
     transform: translate(-50%, -50%);
 }
 
@@ -454,20 +549,16 @@ main {
 
 /* TOOLTIPS */
 .modal-tooltip, #prestige-tooltip-modal {
-    position: fixed !important; /* <--- WICHTIG: Fixed statt Absolute */
+    position: fixed !important;
     background: rgba(10, 10, 25, 0.98) !important;
     border: 2px solid #FFD700 !important;
     padding: 15px !important;
     border-radius: 8px;
-    z-index: 10001 !important; /* Muss höher sein als das Modal (2000) */
+    z-index: 10001 !important;
     pointer-events: none;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
-
-    /* Layout */
     min-width: 300px;
     max-width: 350px;
-
-    /* Text */
     color: #fff !important;
     text-align: left;
 }
@@ -484,14 +575,12 @@ main {
 /* 8. INFO SEITE & WIKI LAYOUT (REDESIGNED)               */
 /* ======================================================= */
 
-/* Das Layout für das neue Handbuch (2 Spalten) */
 .info-page-layout {
     display: flex;
     gap: 20px;
     align-items: flex-start;
 }
 
-/* Die Container für Text-Bereiche */
 .info-section {
     background-color: var(--color-box-background);
     border: 1px solid var(--color-neutral-accent);
@@ -502,7 +591,6 @@ main {
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* Überschriften im Handbuch */
 .info-section h3 {
     color: var(--color-accent-blue);
     border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -512,30 +600,17 @@ main {
     text-align: left;
 }
 
-/* Listen im Handbuch */
-.info-section ul {
-    padding-left: 20px;
-    margin: 0;
-}
-.info-section ul li {
-    margin-bottom: 8px;
-    color: var(--color-text-secondary);
-}
-.info-section strong {
-    color: #fff;
-}
+.info-section ul { padding-left: 20px; margin: 0; }
+.info-section ul li { margin-bottom: 8px; color: var(--color-text-secondary); }
+.info-section strong { color: #fff; }
 
-/* Buttons in der rechten Spalte */
 .info-page-layout button {
     text-align: left;
     padding-left: 20px;
     transition: transform 0.2s, background 0.2s;
 }
-.info-page-layout button:hover {
-    transform: translateX(5px);
-}
+.info-page-layout button:hover { transform: translateX(5px); }
 
-/* Grid Styles für Listen (Gebäude, Achievements, etc.) */
 .info-grid {
     display: grid;
     gap: var(--spacing-md);
@@ -674,7 +749,11 @@ main {
 /* ======================================================= */
 
 @media (max-width: 1400px) {
-    .main-layout { grid-template-columns: 1fr 1fr; }
+    .main-layout {
+        padding: 10px;
+        gap: 15px;
+        grid-template-columns: 300px 1fr 300px; /* Zurück zum flexiblen Layout wenn Platz eng ist */
+    }
 }
 
 @media (max-width: 900px) {
@@ -785,4 +864,27 @@ input[type=range]::-moz-range-thumb {
     font-family: monospace;
     resize: none;
     margin-top: 10px;
+}
+
+/* === NEUES BUTTON GRID IN DER MITTE === */
+.feature-button-grid {
+    display: grid;
+    /* 2 Spalten, 2 Zeilen -> Schönes 2x2 Raster */
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px; /* Abstand zur Upgrade-Liste */
+    flex-shrink: 0; /* Verhindert, dass die Buttons schrumpfen */
+}
+
+.feature-button-grid button {
+    width: 100%;
+    height: 60px; /* Alle exakt gleich hoch */
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 !important; /* Überschreibt inline margins */
+    white-space: normal; /* Erlaubt Textumbruch bei langen Namen */
+    line-height: 1.2;
 }
