@@ -700,9 +700,8 @@ class SmileyGame {
                 // WICHTIG: Hier nutzen wir jetzt auch die zentrale Funktion!
                 // (Vorher stand hier this.gameState.aktuelle_smileys += damage)
                 this.addSmileys(damage);
-
-                // Tracking für Achievements (Total Clicks)
                 this.gameState.totalClicksLifetime++;
+                this.playClickSound();
 
                 // --- VISUALS ---
                 if (e) {
@@ -3563,6 +3562,59 @@ createInfoPetsElements() {
                 clickSound.volume = soundVolume;
             }
         }
+
+        // =========================================
+            // 🎵 AUDIO SYSTEM
+            // =========================================
+            playClickSound() {
+                const sound = this.getById('click-sound');
+                // Nur abspielen, wenn Element da ist und Lautstärke > 0
+                if (sound && sound.volume > 0) {
+                    sound.currentTime = 0; // WICHTIG: Setzt Sound zurück -> Erlaubt schnelles Hämmern!
+                    sound.play().catch(e => {
+                        // Fehler abfangen (z.B. wenn Browser Audio blockiert)
+                        // console.log("Audio play blocked", e);
+                    });
+                }
+            }
+
+        // =// =========================================
+                // 🎵 AUDIO SYSTEM (Version: Mechanischer Klick)
+                // =========================================
+                playClickSound() {
+                    const soundVolumeSlider = this.getById('sound-volume');
+                    const volume = soundVolumeSlider ? (parseInt(soundVolumeSlider.value) / 100) : 0.5;
+
+                    if (volume <= 0) return;
+
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!this.audioCtx) this.audioCtx = new AudioContext();
+                    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+                    const oscillator = this.audioCtx.createOscillator();
+                    const gainNode = this.audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioCtx.destination);
+
+                    // --- DESIGN: MECHANISCHER KLICK ---
+
+                    // 'triangle' klingt etwas schärfer/metallischer als 'sine'
+                    oscillator.type = 'triangle';
+
+                    // Konstante, tiefere Frequenz (kein "Pew"-Effekt mehr)
+                    // Leichte Variation (200-250Hz), damit es natürlich klingt
+                    const freq = 200 + Math.random() * 50;
+                    oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+                    // Sehr kurz und knackig
+                    gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(volume * 0.3, this.audioCtx.currentTime + 0.005); // Sehr schneller Attack
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.05);  // Sofort weg
+
+                    oscillator.start();
+                    oscillator.stop(this.audioCtx.currentTime + 0.06);
+                }
 
         // =========================================================
         // NAVIGATION & ONE-PAGE LOGIK (Muss INNERHALB der Klasse sein!)
