@@ -454,15 +454,20 @@ main {
 
 /* TOOLTIPS */
 .modal-tooltip, #prestige-tooltip-modal {
-    position: absolute;
-    background: rgba(10, 10, 25, 0.95) !important;
+    position: fixed !important; /* <--- WICHTIG: Fixed statt Absolute */
+    background: rgba(10, 10, 25, 0.98) !important;
     border: 2px solid #FFD700 !important;
     padding: 15px !important;
     border-radius: 8px;
-    z-index: 10000 !important;
+    z-index: 10001 !important; /* Muss höher sein als das Modal (2000) */
     pointer-events: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+
+    /* Layout */
     min-width: 300px;
+    max-width: 350px;
+
+    /* Text */
     color: #fff !important;
     text-align: left;
 }

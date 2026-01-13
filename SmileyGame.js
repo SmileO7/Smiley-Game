@@ -1947,40 +1947,59 @@ class SmileyGame {
         }, 3000);
     }
 
-    showSkillTooltip(upgrade, element) {
-        const tooltip = this.getById('prestige-tooltip-modal');
-        if (!tooltip) return;
+    showSkillTooltip(upgrade, e) {
+            const tooltip = this.getById('prestige-tooltip-modal');
+            if (!tooltip) return;
 
-        // 1. Daten befüllen
-        const title = document.getElementById('tooltip-title');
-        const cost = document.getElementById('tooltip-cost');
-        const status = document.getElementById('tooltip-status');
+            // 1. Text generieren
+            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+            // Sicherheits-Check: Falls requirements undefined ist, leeres Array nutzen
+            const reqs = upgrade.requirements || [];
+            const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
 
-        if (title) title.innerText = upgrade.name;
-        if (cost) cost.innerText = `Kosten: ${this.formatNumber(upgrade.cost)} Smiley Points`;
+            let statusHtml = '';
+            if (isPurchased) {
+                statusHtml = `<p style="color:#4CAF50; font-weight:bold; margin-top:5px;">✅ Bereits gekauft</p>`;
+            } else if (!requirementsMet) {
+                statusHtml = `<p style="color:#f44336; margin-top:5px;">🔒 Gesperrt (Voraussetzung fehlt)</p>`;
+            } else {
+                const canAfford = (this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost;
+                const costColor = canAfford ? '#4CAF50' : '#f44336';
+                statusHtml = `<p style="color:#aaa; margin-top:5px;">Kosten: <span style="color:${costColor}; font-weight:bold;">${this.formatNumber(upgrade.cost)}</span> Punkte</p>`;
+            }
 
-        // 2. Status-Text generieren
-        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
-        const reqs = upgrade.requirements || [];
-        const requirementsMet = reqs.length === 0 || reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+            tooltip.innerHTML = `
+                <h4 style="margin:0 0 5px 0; color:#FFD700; border-bottom:1px solid #555; padding-bottom:5px;">${upgrade.name}</h4>
+                <p style="margin:5px 0; font-size:0.9em; color:#ddd;">${upgrade.description}</p>
+                ${statusHtml}
+            `;
 
-        let statusText = upgrade.description;
-        if (isPurchased) {
-            statusText += "\n\n✅ Bereits erlernt";
-        } else if (!requirementsMet) {
-            statusText += "\n\n❌ Voraussetzungen nicht erfüllt";
+            // 2. Positionieren (An der Maus!)
+            tooltip.style.display = 'block';
+
+            // Dynamische Größe des Tooltips ermitteln (statt hardcoded 320/150)
+            // Das verhindert Fehler, wenn das Element noch nicht gerendert ist
+            const rect = tooltip.getBoundingClientRect();
+            const tooltipWidth = rect.width || 300;
+            const tooltipHeight = rect.height || 150;
+
+            // Ein bisschen Abstand zur Maus (20px nach rechts/unten)
+            let x = e.clientX + 20;
+            let y = e.clientY + 20;
+
+            // Verhindern, dass er RECHTS aus dem Bild läuft
+            if (x + tooltipWidth > window.innerWidth) {
+                x = e.clientX - tooltipWidth - 10; // Links von der Maus anzeigen
+            }
+
+            // Verhindern, dass er UNTEN aus dem Bild läuft
+            if (y + tooltipHeight > window.innerHeight) {
+                y = e.clientY - tooltipHeight - 10; // Oberhalb der Maus anzeigen
+            }
+
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
         }
-
-        if (status) status.innerText = statusText;
-
-        // 3. Tooltip positionieren (neben dem Mauszeiger oder dem Node)
-        tooltip.style.display = 'block';
-
-        // Wir positionieren ihn etwas versetzt zum Button
-        const rect = element.getBoundingClientRect();
-        tooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
-        tooltip.style.left = (rect.right + 15) + 'px';
-    }
 
     updatePetButtons() {
             const petShopModal = this.getById('pet-shop-modal');
@@ -2176,11 +2195,9 @@ class SmileyGame {
                   };
 
                   // Tooltip (Mouseover)
-                  node.onmouseenter = (e) => this.showSkillTooltip(upgrade, node); // Nutze deine existierende Tooltip Funktion
-                  node.onmouseleave = () => {
-                      const tooltip = this.getById('prestige-tooltip-modal');
-                      if(tooltip) tooltip.style.display = 'none';
-                  };
+                  // So muss es in renderPrestigeTree() aussehen:
+                  node.onmouseenter = (e) => this.showSkillTooltip(upgrade, e);
+                  node.onmousemove = (e) => this.showSkillTooltip(upgrade, e); // WICHTIG: Das 'e' weitergeben!
 
                   container.appendChild(node);
               });
@@ -3362,14 +3379,14 @@ createInfoGlobalUpgradeElements() {
     createPrestigeInfoList() {
         const container = this.getById('info_prestige_container');
         if (!container) return;
-        
+
         // WICHTIG: Wir nutzen das Grid-Layout statt des Baum-Layouts
-        container.className = 'info-grid'; 
+        container.className = 'info-grid';
         container.innerHTML = '';
 
         prestigeUpgrades.forEach(upgrade => {
             const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
-            
+
             // Icon Logik (Dieselbe wie im Baum)
             let icon = "★";
             if (upgrade.type === 'unlock_pets') icon = "🐾";
@@ -3381,7 +3398,7 @@ createInfoGlobalUpgradeElements() {
             const item = document.createElement('div');
             // Wir nutzen Klassen für "gekauft" oder "noch offen"
             item.className = `info-upgrade-item ${isPurchased ? 'bought-upgrade' : ''}`;
-            
+
             // Stylen basierend auf Status
             if (!isPurchased) {
                 item.style.borderColor = '#555'; // Grau für nicht gekauft
@@ -3395,14 +3412,14 @@ createInfoGlobalUpgradeElements() {
                     </h3>
                     ${isPurchased ? '<span style="color:#4CAF50;">✔ Gekauft</span>' : ''}
                 </div>
-                
+
                 <p style="min-height:40px;">${upgrade.description}</p>
-                
+
                 <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:5px; margin-top:5px; font-size:0.9em;">
                     <strong>Kosten:</strong> <span style="color:#FFD700;">${this.formatNumber(upgrade.cost)}</span> Punkte
                 </div>
             `;
-            
+
             container.appendChild(item);
         });
     }
