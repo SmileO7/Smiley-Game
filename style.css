@@ -655,3 +655,57 @@ main {
 @media (max-width: 1400px) {
     .main-layout { grid-template-columns: 1fr 1fr; }
 }
+
+/* ========================================= */
+/* 📊 PRESTIGE BALKEN: FIXED SIZE            */
+/* ========================================= */
+
+.prestige-progress-box {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-family: sans-serif;
+}
+
+/* Der Kasten (40px Höhe ist perfekt für eine Zeile Text) */
+.progress-container {
+    height: 40px;               /* Fixe Höhe */
+    background: #0b0f19;        /* Sehr dunkel, fast schwarz */
+    border: 2px solid #555;     /* Dezent grauer Rahmen */
+    border-radius: 20px;        /* Rundung wie im Ideal-Bild */
+    position: relative;
+    overflow: hidden;           /* Wichtig! */
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+/* Der blaue Füll-Balken */
+#prestige-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #009ffd, #00d2ff); /* Dein Blau */
+    width: 0%;
+    transition: width 0.3s ease-out;
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
+}
+
+/* Der Text IM Balken */
+#prestige-percent-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* Perfekt mittig */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* DIE FIXES: */
+    font-size: 1.1rem;       /* Kleiner, damit es reinpasst (ca 17-18px) */
+    font-weight: 800;        /* Sehr fett */
+    letter-spacing: 1px;
+    z-index: 10;
+
+    /* Standard-Schatten für Lesbarkeit */
+    text-shadow: 1px 1px 2px black, -1px -1px 2px black;
+}
