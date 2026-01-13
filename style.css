@@ -152,7 +152,6 @@ main {
 .middle-column,
 .right-column,
 .box-style,
-.info-page-layout,
 .stats-box.prestige-stats {
     background-color: var(--color-box-background);
     border: 2px solid var(--color-blue-main);
@@ -268,31 +267,24 @@ main {
 
 #global-upgrades-container { display: flex; flex-direction: column; gap: var(--spacing-sm); }
 
-/* ========================================= */
-/* 🛠️ FIX: FLEXIBLE UPGRADE BOXEN (Mitte)   */
-/* ========================================= */
-
+/* UPGRADE BOXEN (Mitte) */
 .research-item {
     background-color: var(--container-bg);
     border: 1px solid #444;
     border-radius: 8px;
-
-    /* WICHTIG: Flex-Wrap erlaubt das Umbrechen */
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-
     padding: 15px;
     margin-bottom: 10px;
     min-height: 80px;
-    height: auto;     /* Passt sich dem Text an */
+    height: auto;
     gap: 15px;
 }
 
-/* Text-Bereich */
 .research-item div {
-    flex: 1 1 200px; /* Nimmt Platz, bricht aber um wenn schmaler als 200px */
+    flex: 1 1 200px;
     text-align: left;
     margin-right: 10px;
 }
@@ -308,12 +300,11 @@ main {
     color: #ccc;
     font-size: 0.9rem;
     margin: 0;
-    white-space: normal; /* Textumbruch erzwungen */
+    white-space: normal;
 }
 
-/* Kaufen-Button stabilisieren */
 .btn-buy-research {
-    flex: 0 0 auto; /* Verhindert das Zerquetschen */
+    flex: 0 0 auto;
     min-width: 120px;
     margin-left: auto;
 }
@@ -422,7 +413,8 @@ main {
 #prestige-tree-container {
     position: relative;
     width: 100%;
-    height: 1100px;
+    /* OPTIMIERT: 600px ist besser für Übersichtlichkeit als 1100px */
+    height: 600px;
     background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
     border-radius: 12px;
     margin-top: 20px;
@@ -432,7 +424,7 @@ main {
 
 #prestige-lines { height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: 1; }
 
-.prestige-node {
+.skill-node, .prestige-node {
     align-items: center;
     background-color: var(--color-primary-dark);
     border: 3px solid var(--color-secondary-red);
@@ -447,21 +439,20 @@ main {
     transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
     width: 40px;
     z-index: 2;
+    /* WICHTIG: Damit Nodes zentriert auf Linien sitzen */
+    transform: translate(-50%, -50%);
 }
 
-.prestige-node:active { transform: scale(1.05); }
-.prestige-node:hover:not(.purchased) { border-color: var(--color-accent-blue); transform: scale(1.15); }
-.prestige-node.available { background-color: var(--color-neutral-olive); border-color: var(--color-accent-blue); }
-.prestige-node.locked { background-color: var(--color-primary-dark); border-color: var(--color-neutral-olive); opacity: 0.7; }
-.prestige-node.purchased { background-color: var(--color-accent-blue); border-color: var(--color-text-light); }
+.skill-node:active { transform: translate(-50%, -50%) scale(1.05); }
+.skill-node:hover:not(.purchased) { border-color: var(--color-accent-blue); transform: translate(-50%, -50%) scale(1.15); }
+.skill-node.available { background-color: var(--color-neutral-olive); border-color: var(--color-accent-blue); }
+.skill-node.locked { background-color: var(--color-primary-dark); border-color: var(--color-neutral-olive); opacity: 0.7; }
+.skill-node.purchased { background-color: var(--color-accent-blue); border-color: var(--color-text-light); }
 
 #skill_tree_modal .modal-content.large::-webkit-scrollbar { width: 8px; }
 #skill_tree_modal .modal-content.large::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 4px; }
 
-/* ========================================= */
-/* 🛠️ FIX: TOOLTIP FÜR PRESTIGE TREE        */
-/* ========================================= */
-
+/* TOOLTIPS */
 .modal-tooltip, #prestige-tooltip-modal {
     position: absolute;
     background: rgba(10, 10, 25, 0.95) !important;
@@ -471,20 +462,12 @@ main {
     z-index: 10000 !important;
     pointer-events: none;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
-
-    /* Layout */
-    width: auto;
     min-width: 300px;
-    max-width: 400px;
-    height: auto;
-
-    /* Text */
     color: #fff !important;
-    white-space: normal !important; /* Erlaubt Umbruch */
     text-align: left;
 }
 
-.modal-content-tooltip h4, #prestige-tooltip-modal h4 {
+#prestige-tooltip-modal h4 {
     margin: 0 0 5px 0;
     color: #FFD700;
     font-size: 1.1em;
@@ -492,43 +475,86 @@ main {
     padding-bottom: 5px;
 }
 
-.modal-content-tooltip p, #prestige-tooltip-modal p {
-    margin: 3px 0;
-    font-size: 0.95em;
-    color: #eee;
-    white-space: normal;
-    line-height: 1.4;
+/* ======================================================= */
+/* 8. INFO SEITE & WIKI LAYOUT (REDESIGNED)               */
+/* ======================================================= */
+
+/* Das Layout für das neue Handbuch (2 Spalten) */
+.info-page-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
 }
 
-#tooltip-cost { font-weight: bold; color: #aaa; }
+/* Die Container für Text-Bereiche */
+.info-section {
+    background-color: var(--color-box-background);
+    border: 1px solid var(--color-neutral-accent);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+    padding: 20px;
+    text-align: left;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
 
-/* ======================================================= */
-/* 8. INFO SEITE / STATS BOXES                            */
-/* ======================================================= */
+/* Überschriften im Handbuch */
+.info-section h3 {
+    color: var(--color-accent-blue);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    text-align: left;
+}
 
-.info-grid { display: grid; gap: var(--spacing-md); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+/* Listen im Handbuch */
+.info-section ul {
+    padding-left: 20px;
+    margin: 0;
+}
+.info-section ul li {
+    margin-bottom: 8px;
+    color: var(--color-text-secondary);
+}
+.info-section strong {
+    color: #fff;
+}
+
+/* Buttons in der rechten Spalte */
+.info-page-layout button {
+    text-align: left;
+    padding-left: 20px;
+    transition: transform 0.2s, background 0.2s;
+}
+.info-page-layout button:hover {
+    transform: translateX(5px);
+}
+
+/* Grid Styles für Listen (Gebäude, Achievements, etc.) */
+.info-grid {
+    display: grid;
+    gap: var(--spacing-md);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
 
 .info-upgrade-item {
     background-color: var(--color-box-background);
     border: 1px solid var(--color-neutral-accent);
     border-radius: 8px;
-    margin-bottom: var(--spacing-md);
     padding: 15px;
     text-align: left;
 }
-
 .info-upgrade-item.bought-upgrade { border-left: 5px solid var(--color-accent-blue); }
-.info-upgrade-item h3 { color: var(--color-text-primary); font-size: 1rem; margin-bottom: 5px; text-align: left; }
-.info-upgrade-item p { color: var(--color-text-secondary); font-size: 0.9rem; line-height: 1.3; margin-bottom: 0.3rem; }
-.info-upgrade-item strong { color: var(--color-text-accent); }
+.info-upgrade-item h3 { margin-top: 0; font-size: 1rem; color: #fff; }
+.info-upgrade-item p { color: #ccc; font-size: 0.9rem; }
 
+/* Stats Box */
 .stats-box { background: var(--color-dark-overlay); border: 1px solid var(--color-neutral-accent); border-radius: 10px; margin-bottom: var(--spacing-md); padding: 15px; text-align: left; }
 .stats-box p { color: var(--color-text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; }
 .stats-box span { color: var(--color-text-accent); font-weight: 500; }
 
-
 /* ========================================= */
-/* 💎 DIAMANTEN-MINE DESIGN OVERHAUL         */
+/* 💎 DIAMANTEN-MINE DESIGN                 */
 /* ========================================= */
 
 #diamond-mine-content {
@@ -542,50 +568,14 @@ main {
     overflow: hidden;
 }
 
-#diamond-mine-content::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image:
-        radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
-    pointer-events: none;
-}
+.mine-nav { display: flex; gap: 10px; margin-bottom: 30px; position: relative; z-index: 2; }
+.mine-nav button { flex: 1; border-radius: 6px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+.mine-nav button.active { background: #009ffd; color: #000; box-shadow: 0 0 15px rgba(0, 159, 253, 0.4); border: none; }
+.mine-nav button:not(.active) { background: #2f3b2f; color: #8fa38f; border: 1px solid #445544; }
 
-/* Die Navigation (Tabs) */
-.mine-nav {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 2;
-}
-
-.mine-nav button {
-    flex: 1;
-    border-radius: 6px;
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.mine-nav button.active {
-    background: #009ffd;
-    color: #000;
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
-    border: none;
-}
-
-.mine-nav button:not(.active) {
-    background: #2f3b2f;
-    color: #8fa38f;
-    border: 1px solid #445544;
-}
-
-/* --- Der Rote Action-Button (Spitzhacke) --- */
 #start-minigame-button {
     background: linear-gradient(180deg, #2a2a2a, #111);
-    border: 2px solid #ff3333; /* Roter Rand */
+    border: 2px solid #ff3333;
     color: #fff;
     font-size: 1.1rem;
     padding: 15px 25px;
@@ -596,28 +586,14 @@ main {
     border-radius: 8px;
     margin-top: 20px;
     box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
-    transition: all 0.1s;
     width: 100%;
     text-shadow: 0 2px 2px black;
     position: relative;
     z-index: 2;
 }
 
-#start-minigame-button:hover {
-    box-shadow: 0 0 20px rgba(255, 51, 51, 0.6);
-    background: linear-gradient(180deg, #331a1a, #220000);
-    transform: translateY(-2px);
-}
-
-#start-minigame-button:active {
-    transform: scale(0.98);
-    box-shadow: 0 0 5px rgba(255, 51, 51, 0.8);
-}
-
-.pickaxe-icon {
-    font-size: 1.5rem;
-    filter: drop-shadow(0 0 5px red);
-}
+#start-minigame-button:hover { box-shadow: 0 0 20px rgba(255, 51, 51, 0.6); background: linear-gradient(180deg, #331a1a, #220000); transform: translateY(-2px); }
+.pickaxe-icon { font-size: 1.5rem; filter: drop-shadow(0 0 5px red); }
 
 /* ========================================= */
 /* ✨ FLOATING TEXT (Popcorn Effekt)         */
@@ -648,14 +624,6 @@ main {
     100% { opacity: 0; transform: translateY(-100px) scale(1); }
 }
 
-/* ======================================================= */
-/* 9. RESPONSIVE DESIGN                                   */
-/* ======================================================= */
-
-@media (max-width: 1400px) {
-    .main-layout { grid-template-columns: 1fr 1fr; }
-}
-
 /* ========================================= */
 /* 📊 PRESTIGE BALKEN: FIXED SIZE            */
 /* ========================================= */
@@ -667,45 +635,50 @@ main {
     font-family: sans-serif;
 }
 
-/* Der Kasten (40px Höhe ist perfekt für eine Zeile Text) */
 .progress-container {
     height: 40px;               /* Fixe Höhe */
-    background: #0b0f19;        /* Sehr dunkel, fast schwarz */
-    border: 2px solid #555;     /* Dezent grauer Rahmen */
-    border-radius: 20px;        /* Rundung wie im Ideal-Bild */
+    background: #0b0f19;
+    border: 2px solid #555;
+    border-radius: 20px;
     position: relative;
-    overflow: hidden;           /* Wichtig! */
+    overflow: hidden;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
 }
 
-/* Der blaue Füll-Balken */
 #prestige-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #009ffd, #00d2ff); /* Dein Blau */
+    background: linear-gradient(90deg, #009ffd, #00d2ff);
     width: 0%;
     transition: width 0.3s ease-out;
     box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
 }
 
-/* Der Text IM Balken */
 #prestige-percent-text {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    /* Perfekt mittig */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* DIE FIXES: */
-    font-size: 1.1rem;       /* Kleiner, damit es reinpasst (ca 17-18px) */
-    font-weight: 800;        /* Sehr fett */
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
     letter-spacing: 1px;
     z-index: 10;
-
-    /* Standard-Schatten für Lesbarkeit */
     text-shadow: 1px 1px 2px black, -1px -1px 2px black;
+}
+
+/* ======================================================= */
+/* 9. RESPONSIVE DESIGN                                   */
+/* ======================================================= */
+
+@media (max-width: 1400px) {
+    .main-layout { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+    /* Handbuch Layout wird vertikal */
+    .info-page-layout { flex-direction: column; }
+
+    /* Hauptlayout wird 1-Spaltig */
+    .main-layout { grid-template-columns: 1fr; }
+
+    .navbar { position: relative; } /* Scrollt mit auf Handy */
+    main { padding-top: 10px; }
 }

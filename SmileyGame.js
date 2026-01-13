@@ -2847,7 +2847,7 @@ class SmileyGame {
                 }
             });
 
-            if (isInfo) this.updatePrestigeInfoTree();
+            if (isInfo) this.createPrestigeInfoList();
         });
     }
 
@@ -3108,7 +3108,7 @@ class SmileyGame {
         const openPrestigeButton = this.getById('show_prestige_button');
         const closePrestigeButton = this.getById('close_prestige_info_button');
         openPrestigeButton?.addEventListener('click', () => {
-            this.updatePrestigeInfoTree();
+            this.createPrestigeInfoList();
             if (prestigeModal) prestigeModal.style.display = 'flex';
         });
         closePrestigeButton?.addEventListener('click', () => {
@@ -3359,28 +3359,54 @@ createInfoGlobalUpgradeElements() {
     container.innerHTML = htmlContent;
 }
 
-updatePrestigeInfoTree() {
-    const treeContainer = this.getById('info_prestige_container');
-    if (!treeContainer) return;
+// Ersetzt den grafischen Baum durch eine übersichtliche Liste
+    createPrestigeInfoList() {
+        const container = this.getById('info_prestige_container');
+        if (!container) return;
+        
+        // WICHTIG: Wir nutzen das Grid-Layout statt des Baum-Layouts
+        container.className = 'info-grid'; 
+        container.innerHTML = '';
 
-    prestigeUpgrades.forEach(upgrade => {
-        const node = treeContainer.querySelector(`.prestige-node[data-id="${upgrade.id}"]`);
-        if (!node) return;
-        const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+        prestigeUpgrades.forEach(upgrade => {
+            const isPurchased = this.gameState.prestigeUpgradeStatus[upgrade.id];
+            
+            // Icon Logik (Dieselbe wie im Baum)
+            let icon = "★";
+            if (upgrade.type === 'unlock_pets') icon = "🐾";
+            if (upgrade.type === 'unlock_mine') icon = "💎";
+            if (upgrade.type === 'unlock_guilds') icon = "⚔️";
+            if (upgrade.type === 'click_mult') icon = "👆";
+            if (upgrade.type === 'sps_mult') icon = "⚡";
 
-        node.classList.toggle('purchased', isPurchased);
+            const item = document.createElement('div');
+            // Wir nutzen Klassen für "gekauft" oder "noch offen"
+            item.className = `info-upgrade-item ${isPurchased ? 'bought-upgrade' : ''}`;
+            
+            // Stylen basierend auf Status
+            if (!isPurchased) {
+                item.style.borderColor = '#555'; // Grau für nicht gekauft
+                item.style.opacity = '0.9';
+            }
 
-        const requirementsMet = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-        const svg = this.getById('prestige-lines-info');
-        if (svg) {
-            svg.querySelectorAll('line').forEach(line => {
-                const fromId = parseInt(line.dataset.from, 10);
-                const isFromPurchased = this.gameState.prestigeUpgradeStatus[fromId];
-                line.classList.toggle('active', isFromPurchased);
-            });
-        }
-    });
-}
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <h3 style="margin:0; font-size:1.1rem; color:${isPurchased ? '#fff' : '#aaa'};">
+                        ${icon} ${upgrade.name}
+                    </h3>
+                    ${isPurchased ? '<span style="color:#4CAF50;">✔ Gekauft</span>' : ''}
+                </div>
+                
+                <p style="min-height:40px;">${upgrade.description}</p>
+                
+                <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:5px; margin-top:5px; font-size:0.9em;">
+                    <strong>Kosten:</strong> <span style="color:#FFD700;">${this.formatNumber(upgrade.cost)}</span> Punkte
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
+    }
 
 createInfoStatsElements() {
     const container = this.getById('info_stats_container');
@@ -3635,13 +3661,41 @@ createInfoPetsElements() {
         }
 
         createInfoStatsElements() {
-            const c = this.getById('info_stats_container'); if(!c) return;
-            c.innerHTML = `
-                <div class="info-upgrade-item"><h4>Total Klicks</h4><p>${this.formatNumber(this.gameState.totalClicksLifetime)}</p></div>
-                <div class="info-upgrade-item"><h4>Lifetime Smileys</h4><p>${this.formatNumber(this.gameState.lifetime_smileys)}</p></div>
-                <div class="info-upgrade-item"><h4>Resets</h4><p>${this.gameState.prestigeResets}</p></div>
-            `;
-        }
+                const container = this.getById('info_stats_container');
+                if (!container) return;
+
+                container.className = 'info-grid'; // Grid-Layout nutzen
+                container.innerHTML = '';
+
+                // Alle wichtigen Werte sammeln
+                const stats = [
+                    { label: 'Aktuelle Smileys', value: this.formatNumber(this.gameState.aktuelle_smileys) },
+                    { label: 'Lifetime Smileys (Gesamt)', value: this.formatNumber(this.gameState.lifetime_smileys) },
+                    { label: 'Smileys pro Sekunde (SPS)', value: this.formatNumber(this.gameState.totalSPS) },
+                    { label: 'Klick-Stärke', value: this.formatNumber(this.getClickStrength()) },
+                    { label: 'Globaler Multiplikator', value: 'x' + this.gameState.globalerPrestigeMultiplikator.toFixed(2), highlight: true },
+                    { label: 'Kritische Trefferchance', value: (this.gameState.critChance * 100).toFixed(1) + '%' },
+                    { label: 'Kritischer Schaden', value: 'x' + this.gameState.critDamageMult.toFixed(2) },
+                    { label: 'Totale Klicks (Lifetime)', value: this.formatNumber(this.gameState.totalClicksLifetime) },
+                    { label: 'Prestige Resets', value: this.gameState.prestigeResets },
+                    { label: 'Prestige Punkte', value: this.formatNumber(this.gameState.gesamt_prestige_punkte) },
+                    { label: 'Diamanten', value: this.formatNumber(this.gameState.diamanten) }
+                ];
+
+                stats.forEach(stat => {
+                    const item = document.createElement('div');
+                    item.className = 'info-upgrade-item';
+
+                    // Highlight Farbe für wichtige Multiplikatoren
+                    const valueColor = stat.highlight ? '#009ffd' : '#fff';
+
+                    item.innerHTML = `
+                        <h4 style="margin:0 0 5px 0; color:#aaa; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">${stat.label}</h4>
+                        <div style="font-size:1.4rem; font-weight:bold; color:${valueColor};">${stat.value}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
 
         createInfoAchievementElements() {
             const c = this.getById('info_achievements_container'); if(!c) return;
@@ -3654,21 +3708,29 @@ createInfoPetsElements() {
         }
 
         setupInfoPageEventListeners() {
-            const bind = (btnId, modalId, fn) => {
-                const btn = this.getById(btnId);
-                if(btn) btn.onclick = () => {
-                    this.getById(modalId).style.display='flex';
-                    if(fn) fn.call(this);
-                };
-                const closeBtn = this.getById(modalId)?.querySelector('.btn-cancel');
-                if(closeBtn) closeBtn.onclick = () => this.getById(modalId).style.display='none';
-            };
+                // Hilfsfunktion zum Binden von Buttons an Modals
+                const bind = (btnId, modalId, fn) => {
+                    const btn = this.getById(btnId);
+                    if(btn) btn.addEventListener('click', () => {
+                        this.getById(modalId).style.display = 'flex';
+                        // Ruft die Render-Funktion auf, falls vorhanden
+                        if(fn) fn.call(this);
+                    });
 
-            bind('show_buildings_button', 'buildings_info_modal', this.createBuildingInfoElements);
-            bind('show_global_upgrades_button', 'global_upgrades_info_modal', this.createInfoGlobalUpgradeElements);
-            bind('show_pets_button', 'pets_info_modal', this.createInfoPetsElements);
-            bind('show_stats_button', 'stats_info_modal', this.createInfoStatsElements);
-            bind('show_achievements_button', 'achievements_info_modal', this.createInfoAchievementElements);
-            bind('show_prestige_button', 'prestige_info_modal', this.updatePrestigeInfoTree);
-        }
-        }
+                    const closeBtn = this.getById(modalId)?.querySelector('.btn-cancel');
+                    if(closeBtn) closeBtn.addEventListener('click', () => {
+                        this.getById(modalId).style.display = 'none';
+                    });
+                };
+
+                // Hier nutzen wir jetzt nur noch die sauberen Einzeiler:
+                bind('show_buildings_button', 'buildings_info_modal', this.createBuildingInfoElements);
+                bind('show_global_upgrades_button', 'global_upgrades_info_modal', this.createInfoGlobalUpgradeElements);
+                bind('show_pets_button', 'pets_info_modal', this.createInfoPetsElements);
+                bind('show_stats_button', 'stats_info_modal', this.createInfoStatsElements);
+                bind('show_achievements_button', 'achievements_info_modal', this.createInfoAchievementElements);
+
+                // WICHTIG: Hier wird die neue LISTE aufgerufen (nicht mehr der Baum)
+                bind('show_prestige_button', 'prestige_info_modal', this.createPrestigeInfoList);
+            }
+            }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="#011638" stroke="#009ffd" stroke-width="2"/>
+
+    <circle cx="22" cy="26" r="5" fill="#009ffd">
+        <animate attributeName="opacity" values="1;0.8;1" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="42" cy="26" r="5" fill="#009ffd">
+        <animate attributeName="opacity" values="1;0.8;1" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <path d="M 20 38 Q 32 54 44 38" stroke="#009ffd" stroke-width="5" fill="none" stroke-linecap="round" >
+        <animate attributeName="stroke-width" values="5;4.5;5" dur="3s" repeatCount="indefinite"/>
+    </path>
+</svg>
