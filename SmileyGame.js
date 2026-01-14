@@ -346,8 +346,6 @@ class SmileyGame {
         return Math.floor(price);
     }
 
-    // Ausschnitt aus SmileyGame.js (Abschnitt 2. SPEICHERUNG & HILFSFUNKTIONEN)
-
     /**
      * Berechnet die Kosten für Upgrades (ehemals Research, jetzt Global Upgrades)
      * unter Berücksichtigung von Pet-Boni (Upgrade Cost Reduction).
@@ -479,248 +477,277 @@ class SmileyGame {
     }
 
     applyAllBoni() {
-        // Reset Multipliers
-        this.gameState.globalSPSMultiplier = 1;
-        this.gameState.prestigePointMultiplier = 0.05;
-        this.gameState.prestigeResetBonus = 0;
-        this.gameState.guildSPSMultiplier = 0;
+            // 1. Reset der Basis-Multiplikatoren
+            this.gameState.globalSPSMultiplier = 1;
+            this.gameState.prestigePointMultiplier = 0.05;
+            this.gameState.prestigeResetBonus = 0;
+            this.gameState.guildSPSMultiplier = 0;
 
-        let diamondSPSMultiplier = 1;
-        let diamondClickMultiplier = 1;
-        this.gameState.autoDiamondMineUnlocked = false;
+            let diamondSPSMultiplier = 1;
+            let diamondClickMultiplier = 1;
+            this.gameState.autoDiamondMineUnlocked = false;
 
-        // Reset Feature States
-        this.gameState.petsUnlocked = false;
-        this.gameState.diamondMineUnlocked = false;
-        this.gameState.guildsUnlocked = false;
+            // Reset Feature States (werden gleich neu gesetzt, falls Upgrade gefunden)
+            this.gameState.petsUnlocked = false;
+            this.gameState.diamondMineUnlocked = false;
+            this.gameState.guildsUnlocked = false;
 
-        let baseClickMultiplier = 1;
-        let prestigeClickMultiplier = 0;
-        buildingsData.forEach(b => {
-            b.prestigeMulti = 1;
-        });
+            let baseClickMultiplier = 1;
+            let prestigeClickMultiplier = 0; // Hier sammeln wir ALLE Klick-Boni
 
-        // 2. PRESTIGE Boni
-        this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
-            if (bought) {
-                const upgrade = prestigeUpgrades.find(u => u.id === id);
-                if (upgrade) {
-                    switch (upgrade.type) {
-                        case 'global_sps_mult':
-                            this.gameState.globalSPSMultiplier += upgrade.value;
-                            break;
-                        case 'global_click_mult':
+            // Reset Gebäude Prestige Multi
+            buildingsData.forEach(b => {
+                b.prestigeMulti = 1;
+            });
+
+            // --- NEU: 0. FORSCHUNG / GLOBAL UPGRADES (Der fehlende Teil!) ---
+            this.gameState.researchStatus.forEach((bought, index) => {
+                if (bought) {
+                    const upgrade = globalUpgrades[index];
+                    if (upgrade) {
+                        if (upgrade.type === 'click_mult') {
+                            // Klick-Stärke addieren (z.B. 0.5 für +50%)
                             prestigeClickMultiplier += upgrade.value;
-                            break;
-                        case 'prestige_point_eff':
-                            this.gameState.prestigePointMultiplier += upgrade.value;
-                            break;
-                        case 'prestige_reset_bonus':
-                            this.gameState.prestigeResetBonus += upgrade.value;
-                            break;
-                        case 'unlock_pets':
-                            this.gameState.petsUnlocked = true;
-                            break;
-                        case 'unlock_mine':
-                            this.gameState.diamondMineUnlocked = true;
-                            break;
-                        case 'unlock_guilds':
-                            this.gameState.guildsUnlocked = true;
-                            break;
+                        }
+                        // Falls du später SPS-Upgrades in der Forschung hast:
+                        // else if (upgrade.type === 'sps_mult') {
+                        //    this.gameState.globalSPSMultiplier += upgrade.value;
+                        // }
                     }
                 }
-            }
-        });
+            });
 
-        // 3. PET Boni
-        if (this.gameState.activePet) {
-                    // Findet das Pet-Objekt
-                    const pet = petsData.find(p => p.id === this.gameState.activePet);
-
-                    if (pet) {
-                        // WICHTIG: Hole den skalierten Effekt basierend auf der STRING ID
-                        const currentLevel = this.gameState.petLevels[pet.id] || 0;
-
-                        // Wenn das Pet noch Level 0 ist (oder nicht existiert), überspringen wir.
-                        if (currentLevel > 0) {
-                            const stats = this.calculatePetStat(pet, currentLevel);
-                            const scaledEffect = stats.currentEffect;
-
-                            switch (pet.effectType) {
-                                case 'click_mult':
-                                    prestigeClickMultiplier += scaledEffect;
-                                    break;
-                                case 'sps_mult':
-                                    this.gameState.globalSPSMultiplier += scaledEffect;
-                                    break;
-                                case 'prestige_point_eff':
-                                    this.gameState.prestigePointMultiplier += scaledEffect;
-                                    break;
-                                // cost_reduction_buildings und cost_reduction_upgrades werden in den Cost-Methoden behandelt.
-                            }
-                        }
-                    }
-        }
-        // --- DIAMANT SHOP BONI BERECHNEN ---
-                // 1. Reset der Werte
-                this.gameState.critChance = 0;
-                this.gameState.critDamageMult = 3; // Basis-Crit ist 3x Schaden
-                this.gameState.diamondMineBoost = 0;
-                this.gameState.globalCostReduction = 0;
-                this.gameState.clickSPSRatio = 0;
-                this.gameState.godModeMultiplier = 1;
-
-                let diamondStaticClick = 1;
-                let diamondStaticSPS = 1;
-
-                // 2. Loop durch Upgrades
-                diamondShopUpgrades.forEach(upgrade => {
-                    const count = this.gameState.diamondShopPurchases[upgrade.id] || 0;
-                    if (count > 0) {
-                        switch(upgrade.type) {
-                            case 'click_mult_static':
-                                diamondStaticClick *= (upgrade.value * count); // x10
+            // --- 1. PRESTIGE BONI ---
+            this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
+                if (bought) {
+                    const upgrade = prestigeUpgrades.find(u => u.id === id);
+                    if (upgrade) {
+                        switch (upgrade.type) {
+                            case 'global_sps_mult':
+                                this.gameState.globalSPSMultiplier += upgrade.value;
                                 break;
-                            case 'sps_mult_static':
-                                diamondStaticSPS += (upgrade.value * count); // +100% = x2
+                            case 'global_click_mult':
+                                prestigeClickMultiplier += upgrade.value;
                                 break;
                             case 'prestige_point_eff':
-                                this.gameState.prestigePointMultiplier += (upgrade.value * count);
+                                this.gameState.prestigePointMultiplier += upgrade.value;
                                 break;
-                            case 'auto_diamond_mine':
-                                this.gameState.autoDiamondMineUnlocked = true;
+                            case 'prestige_reset_bonus':
+                                this.gameState.prestigeResetBonus += upgrade.value;
                                 break;
-                            // -- NEUE --
-                            case 'crit_chance':
-                                this.gameState.critChance += (upgrade.value * count);
+                            case 'unlock_pets':
+                                this.gameState.petsUnlocked = true;
                                 break;
-                            case 'crit_damage':
-                                this.gameState.critDamageMult += (upgrade.value * count);
+                            case 'unlock_mine':
+                                this.gameState.diamondMineUnlocked = true;
                                 break;
-                            case 'mine_boost':
-                                this.gameState.diamondMineBoost += (upgrade.value * count);
-                                break;
-                            case 'cost_reduction_global':
-                                this.gameState.globalCostReduction += (upgrade.value * count);
-                                break;
-                            case 'click_sps_link':
-                                this.gameState.clickSPSRatio += (upgrade.value * count);
-                                break;
-                            case 'global_god_mode':
-                                this.gameState.godModeMultiplier *= (1 + upgrade.value);
+                            case 'unlock_guilds':
+                                this.gameState.guildsUnlocked = true;
                                 break;
                         }
                     }
-                });
+                }
+            });
 
-                // 3. Multiplikatoren anwenden
-                prestigeClickMultiplier += (diamondStaticClick - 1); // Klick verrechnen
-                this.gameState.globalSPSMultiplier *= diamondStaticSPS; // SPS verdoppeln
-                this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier; // God Mode auf SPS
+            // --- 2. PET BONI ---
+            if (this.gameState.activePet) {
+                const pet = petsData.find(p => p.id === this.gameState.activePet);
+                if (pet) {
+                    const currentLevel = this.gameState.petLevels[pet.id] || 0;
+                    if (currentLevel > 0) {
+                        const stats = this.calculatePetStat(pet, currentLevel);
+                        const scaledEffect = stats.currentEffect;
 
-        // --- GILDEN BONI BERECHNEN (10 Mitglieder) ---
-                // Reset
-                this.gameState.guildCostReduction = 0;
-                this.gameState.guildPrestigeBonus = 0;
-                this.gameState.guildGlobalMultiplier = 1;
-                this.gameState.guildSPSMultiplier = 0;
-
-                this.gameState.guildUpgradeStatus.forEach((bought, id) => {
-                    if (bought) {
-                        const member = guildUpgradesData.find(u => u.id === id);
-                        if (member) {
-                            // 1. Standard Multiplikatoren (SPS oder Klick)
-                            if (member.isClickMultiplier) {
-                                // Klick: Nur addieren (z.B. 1.10 -> +0.10)
-                                prestigeClickMultiplier += (member.spsMultiplier - 1);
-                            } else if (member.spsMultiplier > 1 && !member.specialEffect) {
-                                // SPS: Nur addieren, wenn KEIN Special Effect (oder beides)
-                                this.gameState.guildSPSMultiplier += (member.spsMultiplier - 1);
-                            }
-
-                            // 2. Spezialeffekte (Neu)
-                            if (member.specialEffect) {
-                                switch (member.specialEffect) {
-                                    case "cost_reduction_2":
-                                        this.gameState.guildCostReduction += 0.02; // Händler
-                                        break;
-                                    case "cost_reduction_5":
-                                        this.gameState.guildCostReduction += 0.05; // Baumeister
-                                        break;
-                                    case "prestige_boost_10":
-                                        this.gameState.guildPrestigeBonus += 0.10; // Barde
-                                        break;
-                                    case "global_god_boost":
-                                        this.gameState.guildGlobalMultiplier *= member.spsMultiplier; // König (x2)
-                                        break;
-                                }
-                            }
+                        switch (pet.effectType) {
+                            case 'click_mult':
+                                prestigeClickMultiplier += scaledEffect;
+                                break;
+                            case 'sps_mult':
+                                this.gameState.globalSPSMultiplier += scaledEffect;
+                                break;
+                            case 'prestige_point_eff':
+                                this.gameState.prestigePointMultiplier += scaledEffect;
+                                break;
                         }
                     }
-                });
-
-                // Einrechnen der neuen Gilden-Spezials in die globalen Werte
-                // A. Prestige Bonus (Barde)
-                this.gameState.prestigePointMultiplier += this.gameState.guildPrestigeBonus;
-
-                // B. Globaler Multiplikator (König)
-                this.gameState.globalSPSMultiplier *= this.gameState.guildGlobalMultiplier;
-
-        // In applyAllBoni()
-        achievementsData.forEach((achievement, index) => {
-            if (this.gameState.achievementsUnlocked[index]) {
-                const bonus = achievement.bonus;
-                switch (bonus.type) {
-                    case 'sps_mult':
-                        this.gameState.globalSPSMultiplier += bonus.value;
-                        break;
-                    case 'click_mult':
-                        this.gameState.klickKraftMultiplier += bonus.value;
-                        break;
-                    case 'prestige_efficiency':
-                        this.gameState.prestigePointMultiplier += bonus.value;
-                        break;
-                    case 'global_mult':
-                        this.gameState.globalSPSMultiplier += bonus.value;
-                        this.gameState.klickKraftMultiplier += bonus.value;
-                        break;
                 }
             }
-        });
 
-        // 5. Finalisierung
-        this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
-        const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
-        const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+            // --- 3. DIAMANT SHOP BONI ---
+            // Reset der Werte
+            this.gameState.critChance = 0;
+            this.gameState.critDamageMult = 3;
+            this.gameState.diamondMineBoost = 0;
+            this.gameState.globalCostReduction = 0;
+            this.gameState.clickSPSRatio = 0;
+            this.gameState.godModeMultiplier = 1;
 
-        this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
-    }
+            let diamondStaticClick = 1;
+            let diamondStaticSPS = 1;
+
+            diamondShopUpgrades.forEach(upgrade => {
+                const count = this.gameState.diamondShopPurchases[upgrade.id] || 0;
+                if (count > 0) {
+                    switch(upgrade.type) {
+                        case 'click_mult_static':
+                            diamondStaticClick *= (upgrade.value * count);
+                            break;
+                        case 'sps_mult_static':
+                            diamondStaticSPS += (upgrade.value * count);
+                            break;
+                        case 'prestige_point_eff':
+                            this.gameState.prestigePointMultiplier += (upgrade.value * count);
+                            break;
+                        case 'auto_diamond_mine':
+                            this.gameState.autoDiamondMineUnlocked = true;
+                            break;
+                        case 'crit_chance':
+                            this.gameState.critChance += (upgrade.value * count);
+                            break;
+                        case 'crit_damage':
+                            this.gameState.critDamageMult += (upgrade.value * count);
+                            break;
+                        case 'mine_boost':
+                            this.gameState.diamondMineBoost += (upgrade.value * count);
+                            break;
+                        case 'cost_reduction_global':
+                            this.gameState.globalCostReduction += (upgrade.value * count);
+                            break;
+                        case 'click_sps_link':
+                            this.gameState.clickSPSRatio += (upgrade.value * count);
+                            break;
+                        case 'global_god_mode':
+                            this.gameState.godModeMultiplier *= (1 + upgrade.value);
+                            break;
+                    }
+                }
+            });
+
+            // Diamant Multiplikatoren anwenden
+            prestigeClickMultiplier += (diamondStaticClick - 1);
+            this.gameState.globalSPSMultiplier *= diamondStaticSPS;
+            this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier;
+
+            // --- 4. GILDEN BONI ---
+            this.gameState.guildCostReduction = 0;
+            this.gameState.guildPrestigeBonus = 0;
+            this.gameState.guildGlobalMultiplier = 1;
+            this.gameState.guildSPSMultiplier = 0;
+
+            this.gameState.guildUpgradeStatus.forEach((bought, id) => {
+                if (bought) {
+                    const member = guildUpgradesData.find(u => u.id === id);
+                    if (member) {
+                        if (member.isClickMultiplier) {
+                            prestigeClickMultiplier += (member.spsMultiplier - 1);
+                        } else if (member.spsMultiplier > 1 && !member.specialEffect) {
+                            this.gameState.guildSPSMultiplier += (member.spsMultiplier - 1);
+                        }
+
+                        if (member.specialEffect) {
+                            switch (member.specialEffect) {
+                                case "cost_reduction_2": this.gameState.guildCostReduction += 0.02; break;
+                                case "cost_reduction_5": this.gameState.guildCostReduction += 0.05; break;
+                                case "prestige_boost_10": this.gameState.guildPrestigeBonus += 0.10; break;
+                                case "global_god_boost": this.gameState.guildGlobalMultiplier *= member.spsMultiplier; break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            this.gameState.prestigePointMultiplier += this.gameState.guildPrestigeBonus;
+            this.gameState.globalSPSMultiplier *= this.gameState.guildGlobalMultiplier;
+
+            // --- 5. ACHIEVEMENTS (Bugfix: Jetzt wird es korrekt addiert!) ---
+            achievementsData.forEach((achievement, index) => {
+                if (this.gameState.achievementsUnlocked[index]) {
+                    const bonus = achievement.bonus;
+                    switch (bonus.type) {
+                        case 'sps_mult':
+                            this.gameState.globalSPSMultiplier += bonus.value;
+                            break;
+                        case 'click_mult':
+                            // WICHTIG: Hier addieren wir zum Sammel-Wert, statt direkt zu setzen
+                            prestigeClickMultiplier += bonus.value;
+                            break;
+                        case 'prestige_efficiency':
+                            this.gameState.prestigePointMultiplier += bonus.value;
+                            break;
+                        case 'global_mult':
+                            this.gameState.globalSPSMultiplier += bonus.value;
+                            prestigeClickMultiplier += bonus.value;
+                            break;
+                    }
+                }
+            });
+
+            // --- 6. FINALISIERUNG ---
+            // Jetzt wird alles zusammengerechnet
+            this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
+
+            const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
+            const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
+
+            this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
+        }
 
     spawnFloatingText(event, amount, type = 'normal') {
-            // Position bestimmen (Mauszeiger oder Mitte des Buttons falls undefined)
             let x = event ? event.clientX : window.innerWidth / 2;
             let y = event ? event.clientY : window.innerHeight / 2;
 
-            // Etwas Zufall in die Position bringen (damit Zahlen nicht stapeln)
-            const randomX = (Math.random() - 0.5) * 40; // +/- 20px
+            const randomX = (Math.random() - 0.5) * 40;
             const randomY = (Math.random() - 0.5) * 40;
 
-            // HTML Element erstellen
             const el = document.createElement('div');
-            el.className = `floating-text ${type}`; // 'normal' oder 'crit'
-            el.innerText = `+${this.formatNumber(amount)}`;
+            el.className = `floating-text ${type}`;
 
-            // Positionieren
+            // Logik für Vorzeichen: Boss-Schaden kriegt "-", Einnahmen kriegen "+"
+            if (type === 'boss-damage') {
+                el.innerText = `-${this.formatNumber(amount)}`;
+            } else {
+                el.innerText = `+${this.formatNumber(amount)}`;
+            }
+
             el.style.left = `${x + randomX}px`;
             el.style.top = `${y + randomY}px`;
 
             document.body.appendChild(el);
 
-            // Nach Ende der Animation (1s) löschen, um Speicher zu sparen
             setTimeout(() => {
                 el.remove();
-            }, 1000);
+            }, 1000); // Boss-Text könnte man auch schneller löschen (0.8s im CSS)
         }
+
+        closeAllModals() {
+                // Liste aller IDs von Fenstern/Modals, die wir haben
+                const modalIDs = [
+                    'settings-modal',
+                    'pet-shop-modal',
+                    'diamond-mine-modal',
+                    'guilds-modal',
+                    'skill_tree_modal',
+                    'prestige-modal',         // Das Reset-Fenster
+                    'prestige-shop-modal',    // Falls du das nutzt
+                    'info-modal',             // Das Haupt-Info-Menü
+                    // Die Unter-Menüs der Info-Seite:
+                    'buildings_info_modal',
+                    'global_upgrades_info_modal',
+                    'pets_info_modal',
+                    'stats_info_modal',
+                    'achievements_info_modal',
+                    'prestige_info_modal',
+                    'prestige-tooltip-modal'  // Tooltips auch wegmachen
+                ];
+
+                // Alle durchgehen und ausblenden
+                modalIDs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.display = 'none';
+                    }
+                });
+            }
 
     // ================================================================================================================
     // 3. KERNLOGIK (Kauf & Reset)
@@ -754,26 +781,28 @@ class SmileyGame {
             }
 
     getClickStrength() {
-            // 1. Basis & Prestige
+            // 1. Basis & Klick-Spezifische Multiplikatoren (Forschung, Pets, etc.)
             let strength = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
 
-            if (this.calculatePrestigeEffects) {
-                const prestigeEffects = this.calculatePrestigeEffects();
+            // Prestige-spezifische Klick-Boni (falls vorhanden)
+            const prestigeEffects = this.calculatePrestigeEffects();
+            if (prestigeEffects) {
                 strength *= prestigeEffects.clickMultiplier;
+            }
+
+            // --- NEU: DER GLOBALE MULTIPLIKATOR ---
+            // Jetzt profitieren Klicks auch von deinen 38k Prestige-Punkten!
+            if (this.gameState.globalerPrestigeMultiplikator > 1) {
+                strength *= this.gameState.globalerPrestigeMultiplikator;
             }
 
             // 2. God Mode (Diamant Shop Upgrade 9)
             strength *= this.gameState.godModeMultiplier;
 
-            // 3. Synergie-Matrix (SPS addiert zum Klick)
+            // 3. Synergie-Matrix (SPS addiert zum Klick) - Additiv am Ende
             if (this.gameState.clickSPSRatio > 0) {
                 strength += (this.gameState.totalSPS * this.gameState.clickSPSRatio);
             }
-
-            // --- Kritischer Treffer Logik ---
-            // Wir prüfen hier nicht den Zufall (das macht klickeSmiley),
-            // sondern geben nur die Basis-Stärke zurück.
-            // Die Crit-Berechnung muss in 'klickeSmiley' passieren!
 
             return Math.floor(strength);
         }
@@ -1530,29 +1559,38 @@ class SmileyGame {
                 }, 1000);
             }
 
-            clickGuildBoss() {
-                if (!this.gameState.guildBossFighting) return;
+            clickGuildBoss(e) {
+                    if (!this.gameState.guildBossFighting) return;
 
-                // Schaden berechnen (Klickstärke + Bonus für Gildenmitglieder?)
-                // Wir nehmen erstmal die normale Klickstärke
-                let damage = this.getClickStrength();
+                    // Schaden berechnen (Globaler Multiplikator wirkt jetzt auch hier!)
+                    let damage = this.getClickStrength();
+                    let isCrit = false;
 
-                // Optional: Kritische Treffer auch hier erlauben!
-                if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
-                    damage *= this.gameState.critDamageMult;
-                    this.spawnFloatingText(null, "CRIT!", "crit"); // Visuelles Feedback
+                    // Crit Berechnung
+                    if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
+                        damage *= this.gameState.critDamageMult;
+                        isCrit = true;
+                    }
+
+                    this.gameState.guildBossHP -= damage;
+
+                    // --- VISUALS: Rote Zahlen spawnen! ---
+                    if (e) {
+                        this.spawnFloatingText(e, damage, 'boss-damage');
+
+                        // Wenn Crit, dann vielleicht noch extra Text oder größer?
+                        if (isCrit) {
+                            // Optional: Extra "CRIT!" Text
+                            // this.spawnFloatingText(e, "CRIT!", "crit");
+                        }
+                    }
+
+                    this.updateBossUI();
+
+                    if (this.gameState.guildBossHP <= 0) {
+                        this.endGuildBoss(true);
+                    }
                 }
-
-                this.gameState.guildBossHP -= damage;
-
-                // HP Update im UI
-                this.updateBossUI();
-
-                // Boss tot? -> Sieg
-                if (this.gameState.guildBossHP <= 0) {
-                    this.endGuildBoss(true);
-                }
-            }
 
             endGuildBoss(victory) {
                 clearInterval(this.bossInterval);
@@ -2709,7 +2747,9 @@ class SmileyGame {
                 const container = this.getById('guilds-content');
                 if (!container) return;
 
-                // Fall 1: Gilde noch nicht gegründet
+                // ===========================================
+                // FALL 1: GILDE NOCH NICHT GEGRÜNDET
+                // ===========================================
                 if (!this.gameState.guildName) {
                     const COST = 500000000;
                     const canAfford = this.gameState.aktuelle_smileys >= COST;
@@ -2727,11 +2767,13 @@ class SmileyGame {
                     return;
                 }
 
-                // Fall 2: Gilde existiert -> TAB Navigation zeigen
+                // ===========================================
+                // FALL 2: GILDE EXISTIERT (TABS ANZEIGEN)
+                // ===========================================
                 let contentHtml = '';
 
+                // --- TAB A: SHOP (MITGLIEDER) ---
                 if (this.guildView === 'shop') {
-                    // --- SHOP LOGIK ---
                     let listHtml = '';
                     guildUpgradesData.forEach((u, i) => {
                        const bought = this.gameState.guildUpgradeStatus[i];
@@ -2754,9 +2796,10 @@ class SmileyGame {
                     });
                     contentHtml = `<div class="info-grid">${listHtml}</div>`;
 
+                // --- TAB B: BOSS RAID ---
                 } else if (this.guildView === 'boss') {
-                    // --- BOSS ARENA ---
                     if (this.gameState.guildBossFighting) {
+                         // Kampf läuft
                          const pct = Math.max(0, (this.gameState.guildBossHP / this.gameState.guildBossMaxHP) * 100);
                          contentHtml = `
                             <div class="boss-arena active" style="text-align:center;">
@@ -2766,10 +2809,13 @@ class SmileyGame {
                                     <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:#d32f2f; transition:width 0.1s linear;"></div>
                                 </div>
                                 <p>${this.formatNumber(this.gameState.guildBossHP)} / ${this.formatNumber(this.gameState.guildBossMaxHP)} HP</p>
+
                                 <div id="guild-boss-clicker" style="font-size:80px; cursor:crosshair; user-select:none;">👹</div>
+
                                 <p>Klicken zum Angreifen!</p>
                             </div>`;
                     } else {
+                        // Lobby
                         const nextHp = Math.floor(1000 * Math.pow(1.5, this.gameState.guildBossLevel - 1));
                         contentHtml = `
                             <div class="boss-lobby" style="text-align:center; padding:20px;">
@@ -2781,18 +2827,15 @@ class SmileyGame {
                             </div>`;
                     }
 
+                // --- TAB C: QUESTS ---
                 } else if (this.guildView === 'quests') {
-                    // --- QUESTS TAB ---
                     this.generateGuildQuests();
 
                     let activeHtml = '';
                     const activeQuests = this.gameState.guildActiveQuests || [];
-
-                    // 🛑 HIER IST DIE SPERRE AUF 3 GESETZT 🛑
                     const isQuestLimitReached = activeQuests.length >= 3;
 
                     if (activeQuests.length > 0) {
-                        // Anzeige aktualisiert: Zeigt jetzt x / 3 an
                         activeHtml += `<h4>Laufende Missionen (${activeQuests.length} / 3)</h4>`;
                         activeQuests.forEach(q => {
                             const elapsed = (Date.now() - q.startTime) / 1000;
@@ -2822,8 +2865,6 @@ class SmileyGame {
 
                     availQuests.forEach(q => {
                         const rewardText = q.isDiamond ? `${q.reward} 💎` : `${this.formatNumber(q.reward)} Smileys`;
-
-                        // 🛑 BUTTON LOGIK 🛑
                         const btnState = isQuestLimitReached ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                         const btnText = isQuestLimitReached ? 'Gilde voll' : 'Starten';
 
@@ -2838,11 +2879,12 @@ class SmileyGame {
                         `;
                     });
                     availableHtml += `</div>`;
-
                     contentHtml = `<div style="padding:10px;">${activeHtml}<hr style="border-color:#444; margin:20px 0;">${availableHtml}</div>`;
                 }
 
-                // HTML zusammenbauen
+                // ===========================================
+                // HTML IN CONTAINER SCHREIBEN
+                // ===========================================
                 container.innerHTML = `
                     <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
                         <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Mitglieder</button>
@@ -2853,18 +2895,23 @@ class SmileyGame {
                     ${contentHtml}
                 `;
 
-                // Event Listeners
+                // ===========================================
+                // EVENT LISTENER BINDEN
+                // ===========================================
+
+                // 1. TABS
                 this.getById('tab-guild-shop')?.addEventListener('click', () => { this.guildView='shop'; this.renderGuildsContent(); });
                 this.getById('tab-guild-boss')?.addEventListener('click', () => { this.guildView='boss'; this.renderGuildsContent(); });
                 this.getById('tab-guild-quests')?.addEventListener('click', () => { this.guildView='quests'; this.renderGuildsContent(); });
 
-                // Buttons binden
+                // 2. SHOP BUTTONS
                 if (this.guildView === 'shop') {
                      container.querySelectorAll('.btn-buy-guild').forEach(btn => {
                         btn.addEventListener('click', (e) => this.buyGuildUpgrade(parseInt(e.target.dataset.id)));
                     });
                 }
 
+                // 3. QUEST BUTTONS
                 if (this.guildView === 'quests') {
                     container.querySelectorAll('.btn-start-quest').forEach(btn => {
                         btn.addEventListener('click', (e) => this.startQuest(parseFloat(e.target.dataset.id)));
@@ -2874,14 +2921,22 @@ class SmileyGame {
                     });
                 }
 
+                // 4. BOSS BUTTONS & KLICKER
                 if (this.guildView === 'boss') {
+                     // Start Button
                      this.getById('start-boss-btn')?.addEventListener('click', () => this.startGuildBoss());
+
+                     // Klick auf den Boss (Oger)
                      const bossClicker = this.getById('guild-boss-clicker');
                      if(bossClicker) {
-                         bossClicker.addEventListener('mousedown', () => {
+                         // WICHTIG: Hier fangen wir das Event (e) ab!
+                         bossClicker.addEventListener('mousedown', (e) => {
                              bossClicker.style.transform = "scale(0.9)";
-                             this.clickGuildBoss();
+
+                             // Wir geben (e) an die Funktion weiter, damit die roten Zahlen an der Maus spawnen
+                             this.clickGuildBoss(e);
                          });
+
                          bossClicker.addEventListener('mouseup', () => bossClicker.style.transform = "scale(1)");
                      }
                 }
@@ -3135,8 +3190,13 @@ class SmileyGame {
                     guildsModal.style.display = 'none';
                 });
             }
-        }
 
+            document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            this.closeAllModals();
+                        }
+                    });
+                }
 
     setupPrestigeEventListeners() {
         // --- 1. PRESTIGE RESET (Das Zeitreise-Fenster) ---
@@ -3659,7 +3719,7 @@ createInfoStatsElements() {
 
             // MULTIPLIKATOREN (JETZT MIT DETAIL!)
             {
-                label: '🚀 Globaler Multiplikator',
+                label: '🚀 Produktions-Bonus',
                 value: xFmt(totalGlobal),
                 // HIER IST DIE NEUE AUFSCHLÜSSELUNG:
                 detail: `Punkte: ${xFmt(multPoints)} | Resets: ${xFmt(multResets)} | Upgrades: ${xFmt(multUpgrades)} | Gilde: ${xFmt(multGuild)}`,
