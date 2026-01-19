@@ -193,6 +193,8 @@ class SmileyGame {
             }
         ];
 
+        this.currentBuyAmount = 1;
+
         this.gameState = {
             aktuelle_smileys: 0,
             lifetime_smileys: 0,
@@ -1460,14 +1462,9 @@ class SmileyGame {
         }
     }
 
-    updateBuildingUI() {
+   updateBuildingUI() {
         buildingsData.forEach((building, index) => {
-            const cost1x = this.getBuildingCost(index, this.gameState.buildingCounts[index]);
-            let cost10x = 0;
-            for (let i = 0; i < 10; i++) cost10x += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
-            let cost100x = 0;
-            for (let i = 0; i < 100; i++) cost100x += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
-
+            // 1. Zähler & SPS (Bleibt wie vorher)
             const baseBuildingSPS = (this.gameState.buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
             const actualBuildingSPS = baseBuildingSPS * this.gameState.globalerPrestigeMultiplikator;
             const spsPercentage = this.gameState.totalSPS > 0 ? (actualBuildingSPS / this.gameState.totalSPS * 100) : 0;
@@ -1479,20 +1476,31 @@ class SmileyGame {
             const spsPctElement = this.getById(`building-sps-pct-${index}`);
             if (spsPctElement) spsPctElement.innerText = spsPercentage.toFixed(1);
 
-            const btn1x = this.getById(`buy-1-${index}`);
-            if (btn1x) {
-                btn1x.innerHTML = `1x (${this.formatNumber(cost1x)})`;
-                btn1x.disabled = this.gameState.aktuelle_smileys < cost1x;
+            // 2. DYNAMISCHE PREISBERECHNUNG (NEU)
+            const amount = this.currentBuyAmount; // 1, 10 oder 100
+            let totalCost = 0;
+            
+            // Schleife um den Gesamtpreis für X Stück zu berechnen
+            for (let i = 0; i < amount; i++) {
+                totalCost += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
             }
-            const btn10x = this.getById(`buy-10-${index}`);
-            if (btn10x) {
-                btn10x.innerHTML = `10x (${this.formatNumber(cost10x)})`;
-                btn10x.disabled = this.gameState.aktuelle_smileys < cost10x;
-            }
-            const btn100x = this.getById(`buy-100-${index}`);
-            if (btn100x) {
-                btn100x.innerHTML = `100x (${this.formatNumber(cost100x)})`;
-                btn100x.disabled = this.gameState.aktuelle_smileys < cost100x;
+
+            // 3. Button aktualisieren
+            const btn = this.getById(`buy-btn-${index}`);
+            const costSpan = this.getById(`buy-cost-${index}`); // Preis-Anzeige im Button
+            
+            if (btn && costSpan) {
+                // Text links: "1x", "10x" oder "100x"
+                btn.firstElementChild.innerText = `Kaufen ${amount}x`;
+                
+                // Preis rechts
+                costSpan.innerText = this.formatNumber(totalCost);
+                
+                // Aktiv/Inaktiv setzen
+                btn.disabled = this.gameState.aktuelle_smileys < totalCost;
+                
+                // Farbe des Preises (Grün wenn leistbar, Rot wenn nicht)
+                costSpan.style.color = (this.gameState.aktuelle_smileys >= totalCost) ? '#4CAF50' : '#ff5252';
             }
         });
     }
@@ -2368,17 +2376,21 @@ class SmileyGame {
         const buildingGrid = this.getById('building-grid');
         if (!buildingGrid) return;
         buildingGrid.innerHTML = '';
+
         buildingsData.forEach((building, index) => {
             const buildingDiv = document.createElement('div');
             buildingDiv.className = 'building-item';
             buildingDiv.dataset.index = index;
+
+            // Wir erstellen nur noch EINEN Button mit der ID 'buy-btn-index'
             buildingDiv.innerHTML = `
                 <h3>${building.name} (<span id="building-count-${index}">0</span>)</h3>
                 <p class="production">Produktion: <span id="building-sps-${index}">0</span> SPS (<span id="building-sps-pct-${index}">0.0</span>%)</p>
                 <div class="button-group">
-                    <button id="buy-1-${index}" data-amount="1" class="btn-buy">1x</button>
-                    <button id="buy-10-${index}" data-amount="10" class="btn-buy">10x</button>
-                    <button id="buy-100-${index}" data-amount="100" class="btn-buy">100x</button>
+                    <button id="buy-btn-${index}" class="btn-buy">
+                        <span>Kaufen</span>
+                        <span id="buy-cost-${index}">---</span>
+                    </button>
                 </div>
             `;
             buildingGrid.appendChild(buildingDiv);
@@ -2448,20 +2460,77 @@ class SmileyGame {
     // ================================================================================================================
 
     setupMainEventListeners() {
+        // 1. SMILEY KLICKEN
         this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
 
+        // --- NEU: TOGGLE LEISTE (1x, 10x, 100x) ---
+        const toggleContainer = this.getById('buy-amount-toggles');
+        if (toggleContainer) {
+            toggleContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-toggle');
+                if (!btn) return;
+
+                // Visuell umschalten (Active Klasse setzen)
+                document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Wert setzen & UI updaten
+                this.currentBuyAmount = parseInt(btn.dataset.amount, 10);
+                this.updateUI(); // Berechnet sofort die Preise neu
+            });
+        }
+
+        // --- NEU: TASTATUR SHORTCUTS (Shift/Strg) ---
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return; // Verhindert Flackern
+
+            if (e.shiftKey) {
+                this.currentBuyAmount = 10;
+                this.highlightToggle(10); // Visuelles Feedback
+                this.updateUI();
+            } else if (e.ctrlKey) {
+                this.currentBuyAmount = 100;
+                this.highlightToggle(100); // Visuelles Feedback
+                this.updateUI();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift' || e.key === 'Control') {
+                // Zurücksetzen auf den Button, der eigentlich aktiv ist
+                const activeBtn = document.querySelector('.btn-toggle.active');
+                if (activeBtn) {
+                    this.currentBuyAmount = parseInt(activeBtn.dataset.amount);
+                } else {
+                    this.currentBuyAmount = 1;
+                }
+                
+                // Visuelles Feedback entfernen
+                document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('key-active'));
+                
+                this.updateUI();
+            }
+        });
+
+        // 2. GEBÄUDE KAUFEN (Angepasst auf dynamische Menge)
         this.getById('building-grid')?.addEventListener('click', (e) => {
             const button = e.target.closest('.btn-buy');
             if (!button) return;
+
             const buildingItem = button.closest('.building-item');
             if (!buildingItem) return;
+
             const index = parseInt(buildingItem.dataset.index, 10);
-            const amount = parseInt(button.dataset.amount, 10);
-            if (!isNaN(index) && !isNaN(amount)) {
+            
+            // WICHTIG: Wir nutzen jetzt die globale Variable statt data-amount!
+            const amount = this.currentBuyAmount; 
+
+            if (!isNaN(index)) {
                 this.kaufeMehrereGebaeude(index, amount);
             }
         });
 
+        // 3. GLOBAL UPGRADES (Unverändert)
         this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
             const button = e.target.closest('.btn-buy-research');
             if (!button) return;
@@ -2472,6 +2541,7 @@ class SmileyGame {
             }
         });
 
+        // 4. PET SHOP (Unverändert)
         this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (!button) return;
@@ -2498,6 +2568,7 @@ class SmileyGame {
             });
         }
 
+        // 5. DIAMANT MINE & MINIGAME (Unverändert)
         this.getById('diamond-mine-content')?.addEventListener('click', (e) => {
             const buyButton = e.target.closest('#buy-diamond-mine-button');
             const startButton = e.target.closest('#start-minigame-button');
@@ -2536,6 +2607,7 @@ class SmileyGame {
             });
         }
 
+        // 6. GILDEN (Unverändert)
         const guildsModal = this.getById('guilds-modal');
         const openGuildsButton = this.getById('open_guilds_button');
         const closeGuildsButton = this.getById('close_guilds_button');
@@ -2552,20 +2624,14 @@ class SmileyGame {
             });
         }
 
+        // 7. ESCAPE KEY (Unverändert)
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 const modals = [
-                    'prestige-shop-modal', 
-                    'skill_tree_modal', 
-                    'settings-modal', 
-                    'pet-shop-modal',
-                    'diamond-mine-modal',
-                    'guilds-modal',
-                    'buildings_info_modal',
-                    'global_upgrades_info_modal',
-                    'achievements_info_modal',
-                    'stats_info_modal',
-                    'prestige_info_modal'
+                    'prestige-shop-modal', 'skill_tree_modal', 'settings-modal', 
+                    'pet-shop-modal', 'diamond-mine-modal', 'guilds-modal',
+                    'buildings_info_modal', 'global_upgrades_info_modal', 
+                    'achievements_info_modal', 'stats_info_modal', 'prestige_info_modal'
                 ];
                 modals.forEach(id => {
                     const el = document.getElementById(id);
@@ -2573,6 +2639,19 @@ class SmileyGame {
                         el.style.display = 'none';
                     }
                 });
+            }
+        });
+    }
+
+    // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
+    highlightToggle(amount) {
+        const btns = document.querySelectorAll('.btn-toggle');
+        btns.forEach(b => {
+            // Wenn der Button dem gedrückten Key entspricht -> Highlight an
+            if (parseInt(b.dataset.amount) === amount) {
+                b.classList.add('key-active');
+            } else {
+                b.classList.remove('key-active');
             }
         });
     }

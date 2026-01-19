@@ -340,6 +340,59 @@ main {
 /* 5. GLOBALE BUTTONS & UPGRADES                           */
 /* ======================================================= */
 
+/* === MULTIPLIKATOR TOGGLES (RECHTS) === */
+.buy-amount-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-toggle {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #444;
+    color: #888;
+    padding: 5px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-toggle.active {
+    background: var(--color-accent-blue);
+    color: #000;
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 10px rgba(0, 159, 253, 0.4);
+}
+
+/* === EINZELNER KAUF-BUTTON IN DER KARTE === */
+/* Da wir nur noch einen Button haben, soll der die volle Breite nutzen */
+.building-item .button-group {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.building-item .btn-buy {
+    width: 100%; /* Volle Breite */
+    height: 35px; /* Etwas höher als vorher */
+    font-size: 0.9rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between; /* Text links, Preis rechts */
+    padding: 0 10px;
+}
+
 .btn-primary, .btn-confirm, .btn-danger, .btn-prestige, .btn-cancel, .btn-feature {
     border: none;
     border-radius: 6px;
