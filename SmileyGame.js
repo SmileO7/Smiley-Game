@@ -742,88 +742,8 @@ class SmileyGame {
 
             setTimeout(() => {
                 el.remove();
-            }, 1000); // Boss-Text könnte man auch schneller löschen (0.8s im CSS)
+            }, 1000);
         }
-
-        closeAllModals() {
-                // Liste aller IDs von Fenstern/Modals, die wir haben
-                const modalIDs = [
-                    'settings-modal',
-                    'pet-shop-modal',
-                    'diamond-mine-modal',
-                    'guilds-modal',
-                    'skill_tree_modal',
-                    'prestige-modal',         // Das Reset-Fenster
-                    'prestige-shop-modal',    // Falls du das nutzt
-                    'info-modal',             // Das Haupt-Info-Menü
-                    // Die Unter-Menüs der Info-Seite:
-                    'buildings_info_modal',
-                    'global_upgrades_info_modal',
-                    'pets_info_modal',
-                    'stats_info_modal',
-                    'achievements_info_modal',
-                    'prestige_info_modal',
-                    'prestige-tooltip-modal'  // Tooltips auch wegmachen
-                ];
-
-                // Alle durchgehen und ausblenden
-                modalIDs.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.style.display = 'none';
-                    }
-                });
-            }
-
-        checkOfflineProgress() {
-                // 1. Haben wir einen Zeitstempel?
-                if (!this.gameState.lastSaveTime) return;
-
-                // 2. Zeit berechnen
-                const now = Date.now();
-                const diffInMs = now - this.gameState.lastSaveTime;
-                const diffInSeconds = Math.floor(diffInMs / 1000);
-
-                // Nur wenn man länger als 10 Sekunden weg war
-                if (diffInSeconds < 10) return;
-
-                // 3. SPS berechnen
-                const currentSPS = this.computeTotalSPS();
-
-                if (currentSPS <= 0) return;
-
-                // 4. Gewinn berechnen
-                const earned = currentSPS * diffInSeconds;
-
-                if (earned > 0) {
-                    this.addSmileys(earned);
-
-                    // Zeit schön formatieren
-                    let timeString = "";
-                    if (diffInSeconds < 60) timeString = `${diffInSeconds} Sek`;
-                    else if (diffInSeconds < 3600) timeString = `${Math.floor(diffInSeconds/60)} Min`;
-                    else timeString = `${(diffInSeconds/3600).toFixed(1)} Std`;
-
-                    // STATT ALERT: Wir nutzen deine hübsche Notification!
-                    // Wir machen eine kleine Verzögerung (500ms), damit die UI erst fertig laden kann
-                    setTimeout(() => {
-                        this.showNotification(`💤 Offline-Bonus (${timeString}): +${this.formatNumber(earned)} Smileys`, 'success');
-                    }, 500);
-
-                    this.speichereSpiel();
-                    this.updateUI();
-                }
-            }
-
-            // --- DEBUG FUNKTION ---
-                simulateOfflineTime() {
-                    // Wir tun so, als wäre das letzte Speichern vor 1 Stunde (3600 Sekunden) gewesen
-                    this.gameState.lastSaveTime = Date.now() - (3600 * 1000);
-                    this.speichereSpiel();
-
-                    // Seite neu laden, um den Effekt auszulösen
-                    location.reload();
-                }
 
     // ================================================================================================================
     // 3. KERNLOGIK (Kauf & Reset)
@@ -3300,13 +3220,8 @@ class SmileyGame {
                     guildsModal.style.display = 'none';
                 });
             }
+        }
 
-            document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') {
-                            this.closeAllModals();
-                        }
-                    });
-    }
 
     setupPrestigeEventListeners() {
         // --- 1. PRESTIGE RESET (Das Zeitreise-Fenster) ---

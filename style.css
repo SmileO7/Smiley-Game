@@ -721,6 +721,15 @@ main {
     animation: floatUpAggressive 0.6s ease-out forwards; /* Schneller! */
 }
 
+/* Style für Boss-Schaden */
+.floating-text.boss-damage {
+    color: #ff0000; /* Knallrot */
+    font-weight: 900; /* Sehr fett */
+    font-size: 1.5rem; /* Größer */
+    text-shadow: 2px 2px 0px #000; /* Schwarzer Rand für Lesbarkeit */
+    animation: floatUp 0.8s ease-out forwards; /* Schnelleres Aufsteigen */
+}
+
 /* Normale Animation (sanft nach oben) */
 @keyframes floatUp {
     0% { opacity: 1; transform: translateY(0) scale(1); }
