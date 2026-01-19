@@ -333,11 +333,16 @@ main {
     box-shadow: 0 4px var(--color-primary-dark);
     cursor: pointer;
     display: block;
-    height: 200px;
-    margin: var(--spacing-md) auto;
+    
+    /* ÄNDERUNG: Kleiner machen für Compact Mode */
+    height: 130px; /* Vorher 200px */
+    width: 130px;  /* Vorher 200px */
+    
+    /* ÄNDERUNG: Weniger Abstand nach oben/unten */
+    margin: 10px auto; /* Vorher var(--spacing-md) */
+    
     padding: 0;
     transition: all 0.1s;
-    width: 200px;
 }
 
 #smiley_button:active { box-shadow: none; transform: translateY(2px); }
@@ -498,8 +503,43 @@ main {
 /* 6. PETS & MINIGAME                                     */
 /* ======================================================= */
 
-.active-pet-img { border: 2px solid var(--color-red-main); border-radius: 50%; height: 30px; margin-right: 10px; width: 30px; }
+/* Pet Display Layout */
+#active_pet_display {
+    /* Flexbox ist jetzt inline im HTML definiert, aber wir verfeinern den Inhalt */
+    transition: all 0.3s ease;
+}
 
+/* Das Bild im Pet Display */
+#active_pet_display img.active-pet-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #FFD700; /* Goldener Rand */
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); /* Goldener Schein */
+    flex-shrink: 0; /* Verhindert Schrumpfen */
+}
+
+/* Der Text-Container im Pet Display */
+#active_pet_display div {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+/* Pet Name & Level */
+#active_pet_display span {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+/* Info Icon */
+#active_pet_display .pet-tooltip {
+    font-size: 0.8rem;
+    color: #aaa;
+    cursor: help;
+}
 .pet-item {
     background: rgba(1, 22, 56, 0.7);
     border: 2px solid var(--color-neutral-accent);

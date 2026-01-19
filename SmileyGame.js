@@ -14,36 +14,36 @@ class SmileyGame {
             // === START (Mitte Unten) ===
             { 
                 id: 0, 
-                name: "Genesis", 
+                name: "Genesis Protokoll", 
                 cost: 1, 
-                description: "Startbonus: +10% passive SPS.", 
+                description: "Initialisiert das Prestige-System. Gewährt einen dauerhaften Startbonus auf alle Einnahmen.", 
                 type: 'sps_mult', 
                 value: 0.10, 
-                x: 50, y: 90,       // Startposition (Unten Mitte)
+                x: 50, y: 90,       
                 category: 'start',
                 parents: [] 
             },
 
-            // === TIER 1: DIE ENTSCHEIDUNG (Links vs Rechts) ===
+            // === TIER 1: KLICK vs IDLE ===
             { 
                 id: 1, 
-                name: "Aktive Finger", 
+                name: "Biometrischer Verstärker", // Vorher: Aktive Finger
                 cost: 2, 
-                description: "Klickkraft +25%.", 
+                description: "Verbessert die Signalübertragung beim Klicken. Klickkraft +25%.", 
                 type: 'click_mult', 
                 value: 0.25, 
-                x: 30, y: 75,       // Links (Rot)
+                x: 30, y: 75,       
                 category: 'click',
                 parents: [0] 
             },
             { 
                 id: 2, 
-                name: "Passive Macht", 
+                name: "Autonome Netzwerke", // Vorher: Passive Macht
                 cost: 2, 
-                description: "SPS +25%.", 
+                description: "Optimiert die Hintergrundprozesse deiner Gebäude. SPS +25%.", 
                 type: 'sps_mult', 
                 value: 0.25, 
-                x: 70, y: 75,       // Rechts (Blau)
+                x: 70, y: 75,       
                 category: 'idle',
                 parents: [0] 
             },
@@ -51,73 +51,73 @@ class SmileyGame {
             // === TIER 2: SPEZIALISIERUNG ===
             { 
                 id: 3, 
-                name: "Bau-Rabatt", 
+                name: "Effizienz-Module", // Vorher: Bau-Rabatt
                 cost: 5, 
-                description: "Alle Gebäude sind 5% günstiger.", 
+                description: "Optimiert die Baukosten durch bessere Ressourcennutzung. Alle Gebäude 5% günstiger.", 
                 type: 'cost_reduction', 
                 value: 0.05, 
-                x: 15, y: 60,       // Ganz weit Links Außen
+                x: 15, y: 60,       
                 category: 'qol',
                 parents: [1] 
             },
             { 
                 id: 4, 
-                name: "Prestige-Experte", 
+                name: "Zeit-Komprimierung", // Vorher: Prestige-Experte
                 cost: 10, 
-                description: "Prestige-Punkte sind 10% effektiver.", 
+                description: "Erhöht die Ausbeute bei Zeitreisen. Prestige-Punkte sind 10% effektiver.", 
                 type: 'prestige_efficiency', 
                 value: 0.10, 
-                x: 85, y: 60,       // Ganz weit Rechts Außen
+                x: 85, y: 60,       
                 category: 'idle',
                 parents: [2] 
             },
 
-            // === TIER 3: ZUSAMMENFÜHRUNG (Mitte) ===
+            // === TIER 3: SYNERGIE ===
             { 
                 id: 5, 
-                name: "Synergie", 
+                name: "Neural-Link Matrix", // Vorher: Synergie
                 cost: 15, 
-                description: "Klicks geben kurzzeitig SPS-Boost.", 
+                description: "Verbindet aktive Handlungen mit passiven Systemen. Klicks skalieren jetzt mit deiner SPS.", 
                 type: 'click_mult', 
                 value: 0.50, 
-                x: 50, y: 55,       // Zurück in die Mitte
+                x: 50, y: 55,       
                 category: 'special',
-                parents: [1, 2]     // Verbindet Rot und Blau
+                parents: [1, 2]     
             },
 
-            // === TIER 4: FEATURE UNLOCKS (Verzweigung) ===
+            // === TIER 4: FEATURE UNLOCKS ===
             { 
                 id: 6, 
-                name: "Süße Begleiter", 
+                name: "Bio-Labor Zugang", // Vorher: Süße Begleiter
                 cost: 50, 
-                description: "Schaltet das PET-SYSTEM frei.", 
+                description: "Gewährt Zugriff auf genetisch modifizierte Begleiter. Schaltet das PET-SYSTEM frei.", 
                 type: 'unlock_pets', 
                 value: 0, 
-                x: 35, y: 40,       // Leicht Links
+                x: 35, y: 40,       
                 category: 'special',
                 parents: [5] 
             },
             { 
                 id: 7, 
-                name: "Tiefbau", 
+                name: "Tiefenbohrung", // Vorher: Tiefbau
                 cost: 50, 
-                description: "Schaltet die DIAMANTEN-MINE frei.", 
+                description: "Erlaubt Bohrungen in den Erdkern. Schaltet die DIAMANTEN-MINE frei.", 
                 type: 'unlock_mine', 
                 value: 0, 
-                x: 65, y: 40,       // Leicht Rechts
+                x: 65, y: 40,       
                 category: 'special',
                 parents: [5] 
             },
 
-            // === TIER 5: DAS IMPERIUM (Mitte Oben) ===
+            // === TIER 5: DAS IMPERIUM ===
             { 
                 id: 8, 
-                name: "Imperium", 
+                name: "Konzern-Gründung", // Vorher: Imperium
                 cost: 100, 
-                description: "Schaltet das GILDEN-SYSTEM frei.", 
+                description: "Erlaube die Bildung von Allianzen und Fraktionen. Schaltet das GILDEN-SYSTEM frei.", 
                 type: 'unlock_guilds', 
                 value: 0, 
-                x: 50, y: 25,       // Zentriert, über Pets/Mine
+                x: 50, y: 25,       
                 category: 'special',
                 parents: [6, 7] 
             },
@@ -125,72 +125,68 @@ class SmileyGame {
             // === TIER 6: GLOBALER BOOST ===
             { 
                 id: 9, 
-                name: "Globaler Reichtum", 
+                name: "Markt-Dominanz", // Vorher: Globaler Reichtum
                 cost: 250, 
-                description: "Verdoppelt deine gesamte SPS-Produktion (x2).", 
+                description: "Dein Unternehmen beherrscht den Markt. Verdoppelt die gesamte Produktion (x2).", 
                 type: 'global_mult', 
                 value: 1.0, 
-                x: 50, y: 10,       // Fast ganz oben
-                category: 'qol',    // Oder Special
+                x: 50, y: 10,       
+                category: 'qol',    
                 parents: [8] 
             },
 
-            // === ENDGAME (Erweiterung nach oben/außen) ===
-            // Da wir bei 0% Y (Oben) angekommen sind, müssen wir den Container
-            // evtl. höher scrollen lassen oder die Koordinaten anpassen.
-            // Ich setze sie mal "neben" Globaler Reichtum.
-
+            // === ENDGAME ===
             { 
                 id: 10, 
-                name: "Klick-Titan", 
+                name: "Kybernetischer Gott", // Vorher: Klick-Titan
                 cost: 500, 
-                description: "Verdreifacht Klickkraft.", 
+                description: "Verschmilzt Bewusstsein mit Maschine. Verdreifacht Klickkraft (+200%).", 
                 type: 'click_mult', 
                 value: 2.0, 
-                x: 20, y: 15,       // Links oben neben Imperium
+                x: 20, y: 15,       
                 category: 'click',
                 parents: [9] 
             },
             { 
                 id: 11, 
-                name: "Industrie-Gigant", 
+                name: "Industrie-Singularität", // Vorher: Industrie-Gigant
                 cost: 500, 
-                description: "Verdreifacht passive SPS.", 
+                description: "Vollständige Automation aller Sektoren. Verdreifacht passive SPS (+200%).", 
                 type: 'sps_mult', 
                 value: 2.0, 
-                x: 80, y: 15,       // Rechts oben neben Imperium
+                x: 80, y: 15,       
                 category: 'idle',
                 parents: [9] 
             },
 
-            // === ULTIMATE (Ganz oben Spitze) ===
+            // === ULTIMATE ===
             { 
                 id: 12, 
-                name: "Massenproduktion", 
+                name: "Nano-Konstruktion", // Vorher: Massenproduktion
                 cost: 1500, 
-                description: "Gebäudekosten -10%.", 
+                description: "Gebäude werden auf atomarer Ebene gebaut. Kosten -10%.", 
                 type: 'cost_reduction', 
                 value: 0.10, 
-                x: 50, y: -10,      // MINUS Bereich bedeutet: Man muss weiter scrollen!
+                x: 50, y: -10,      
                 category: 'qol',
                 parents: [10, 11] 
             },
             { 
                 id: 13, 
-                name: "Zeitreise-Meister", 
+                name: "Chronos-Manipulator", // Vorher: Zeitreise-Meister
                 cost: 5000, 
-                description: "Prestige +50% effektiv.", 
+                description: "Beugt die Zeit zu deinem Vorteil. Prestige-Effizienz +50%.", 
                 type: 'prestige_efficiency', 
                 value: 0.50, 
-                x: 30, y: -25,      // Noch weiter oben
+                x: 30, y: -25,      
                 category: 'idle',
                 parents: [12] 
             },
             { 
                 id: 14, 
-                name: "Big Bang", 
+                name: "The Big Crunch", // Vorher: Big Bang
                 cost: 10000, 
-                description: "Multipliziert ALLES mit 5.", 
+                description: "Kollaps und Neustart des Universums. Multipliziert ALLES mit 5.", 
                 type: 'global_mult', 
                 value: 4.0, 
                 x: 70, y: -25, 
@@ -2488,8 +2484,10 @@ class SmileyGame {
 
                     activePetDisplayElement.innerHTML = `
                         <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
-                        <span>Aktives Pet: ${pet.name} (Lv. ${currentLevel})</span>
-                        <span class="pet-tooltip" title="${pet.description.replace('%', currentEffectDisplay)}">ℹ️</span>
+                        <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                            <span style="color:#FFD700;">${pet.name} <small style="color:#ccc;">(Lv. ${currentLevel})</small></span>
+                            <small style="color:#aaa; font-size:0.75rem;">${pet.description.replace('%', currentEffectDisplay)}</small>
+                        </div>
                     `;
                     activePetDisplayElement.style.display = 'flex';
                 } else {
