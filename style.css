@@ -949,6 +949,13 @@ input[type=range]::-moz-range-thumb {
     font-weight: 900;     /* Extra fett */
 }
 
+/* --- Squish Animation (Finale Version) --- */
+/* WICHTIG: Wir verbinden ID (#) und Klasse (.), damit dieser Befehl stärker ist als alles andere! */
+#smiley_button.anim-squish {
+    transform: scale(0.90); /* Auf 90% verkleinern (sieht knackig aus) */
+    transition: transform 0.05s ease-out; /* Sehr schnell zusammendrücken */
+}
+
 @keyframes floatUp {
     0% {
         opacity: 1;

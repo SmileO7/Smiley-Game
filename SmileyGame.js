@@ -313,6 +313,46 @@ class SmileyGame {
         }
     }
 
+    checkOfflineProgress() {
+        // 1. Haben wir einen Zeitstempel?
+        if (!this.gameState.lastSaveTime) return;
+
+        // 2. Zeit berechnen
+        const now = Date.now();
+        const diffInMs = now - this.gameState.lastSaveTime;
+        const diffInSeconds = Math.floor(diffInMs / 1000);
+
+        // Nur wenn man länger als 10 Sekunden weg war
+        if (diffInSeconds < 10) return;
+
+        // 3. SPS berechnen
+        const currentSPS = this.computeTotalSPS();
+
+        if (currentSPS <= 0) return;
+
+        // 4. Gewinn berechnen
+        const earned = currentSPS * diffInSeconds;
+
+        if (earned > 0) {
+            this.addSmileys(earned);
+
+            // Zeit schön formatieren
+            let timeString = "";
+            if (diffInSeconds < 60) timeString = `${diffInSeconds} Sek`;
+            else if (diffInSeconds < 3600) timeString = `${Math.floor(diffInSeconds / 60)} Min`;
+            else timeString = `${(diffInSeconds / 3600).toFixed(1)} Std`;
+
+            // STATT ALERT: Wir nutzen deine hübsche Notification!
+            // Wir machen eine kleine Verzögerung (500ms), damit die UI erst fertig laden kann
+            setTimeout(() => {
+                this.showNotification(`💤 Offline-Bonus (${timeString}): +${this.formatNumber(earned)} Smileys`, 'success');
+            }, 500);
+
+            this.speichereSpiel();
+            this.updateUI();
+        }
+    }
+
     formatNumber(num) {
         if (typeof num !== 'number' || isNaN(num)) return '0';
         if (num < 1000) return Math.floor(num).toString();
@@ -768,16 +808,14 @@ class SmileyGame {
 
                 // --- VISUALS ---
                 if (e) {
-                // Wir nutzen formatNumber für hübsche Zahlen (z.B. "500" statt "500.00")
-                let text = this.formatNumber(damage);
+                // HIER muss der Aufruf stehen:
+                this.animateSmiley(); 
 
+                // Zahlen formatieren und anzeigen
+                let text = this.formatNumber(damage);
                 if (isCrit) {
-                    // HIER: Wir rufen die neue Funktion mit 'crit' auf -> ROT
                     this.showClickEffect(e, text, 'crit');
-                    
-                    // (Die alte spawnFloatingText Zeile kannst du jetzt löschen, die brauchen wir nicht mehr)
                 } else {
-                    // HIER: Normaler Aufruf -> BLAU
                     this.showClickEffect(e, text, 'normal');
                 }
             }
@@ -2292,6 +2330,20 @@ class SmileyGame {
         setTimeout(() => {
             effect.remove();
         }, 1000);
+    }
+
+    // Lässt den Smiley kurz zucken
+   animateSmiley() {
+        const smiley = this.getById('smiley_button'); // Deine ID
+        
+        if (smiley) {
+            smiley.classList.add('anim-squish');
+
+            // Warte 100ms (länger als die 0.05s im CSS), dann ploppt er zurück
+            setTimeout(() => {
+                smiley.classList.remove('anim-squish');
+            }, 100); 
+        }
     }
 
     // ================================================================================================================
