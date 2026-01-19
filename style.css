@@ -526,71 +526,130 @@ main {
 .progress-bar { background: var(--color-blue-main); border-radius: 4px; height: 100%; width: 100%; }
 
 /* ======================================================= */
-/* 7. PRESTIGE SKILL-TREE                                 */
+/* 7. PRESTIGE SKILL-TREE (DRAG & DROP SYSTEM)             */
 /* ======================================================= */
 
+/* Haupt-Container (Das "Fenster") */
 #prestige-tree-container {
     position: relative;
     width: 100%;
-    height: 600px;
-    background: radial-gradient(circle at center, #1a1a2e, #0f0f1a);
+    height: 600px; /* Fixe Höhe des Fensters */
+    
+    /* Design: Weltraum-Hintergrund */
+    background: radial-gradient(circle at center, #0b0f19 0%, #000 100%);
+    border: 1px solid var(--color-accent-blue);
     border-radius: 12px;
-    margin-top: 20px;
-    border: 1px solid #333;
-    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+    
+    /* WICHTIG: Keine Scrollbalken mehr! Wir verstecken alles was übersteht. */
+    overflow: hidden; 
+    
+    /* Zeigt dem Spieler, dass er greifen kann */
+    cursor: grab; 
+    user-select: none; /* Verhindert, dass man Text markiert beim Ziehen */
+
+    /* Holo-Raster (Optional, sieht aber cool aus) */
+    background-image: 
+        radial-gradient(circle at center, rgba(1, 22, 56, 0.8) 0%, #000 100%),
+        linear-gradient(rgba(0, 159, 253, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 159, 253, 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
 }
 
-#prestige-lines { height: 100%; left: 0; position: absolute; top: 0; width: 100%; z-index: 1; }
+/* Wenn man klickt und hält */
+#prestige-tree-container:active {
+    cursor: grabbing;
+}
 
-.skill-node, .prestige-node {
-    align-items: center;
-    background-color: var(--color-primary-dark);
-    border: 3px solid var(--color-secondary-red);
-    border-radius: 50%;
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    height: 40px;
-    justify-content: center;
-    overflow: hidden;
+/* Die neue "Welt"-Ebene, die wir per JS verschieben */
+#prestige-tree-world {
     position: absolute;
-    transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
-    width: 40px;
-    z-index: 2;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    width: 0px;  /* Größe egal, da wir transform nutzen */
+    height: 0px;
+    
+    /* Damit die Bewegung flüssig ist */
+    transform-origin: 0 0;
+    will-change: transform; 
 }
 
-.skill-node:active { transform: translate(-50%, -50%) scale(1.05); }
-.skill-node:hover:not(.purchased) { border-color: var(--color-accent-blue); transform: translate(-50%, -50%) scale(1.15); }
-.skill-node.available { background-color: var(--color-neutral-olive); border-color: var(--color-accent-blue); }
-.skill-node.locked { background-color: var(--color-primary-dark); border-color: var(--color-neutral-olive); opacity: 0.7; }
-.skill-node.purchased { background-color: var(--color-accent-blue); border-color: var(--color-text-light); }
+/* Canvas für Linien */
+#prestige-lines { 
+    position: absolute; 
+    top: 0;
+    left: 0;
+    pointer-events: none; 
+    z-index: 1; 
+}
 
-#skill_tree_modal .modal-content.large::-webkit-scrollbar { width: 8px; }
-#skill_tree_modal .modal-content.large::-webkit-scrollbar-thumb { background: #FFD700; border-radius: 4px; }
-
-/* TOOLTIPS */
-.modal-tooltip, #prestige-tooltip-modal {
+#prestige-tooltip-modal {
     position: fixed !important;
     background: rgba(10, 10, 25, 0.98) !important;
     border: 2px solid #FFD700 !important;
     padding: 15px !important;
     border-radius: 8px;
-    z-index: 10001 !important;
-    pointer-events: none;
+    z-index: 20000 !important; /* Ganz weit oben */
+    
+    /* WICHTIG: Maus ignoriert den Text -> Kein Flackern mehr! */
+    pointer-events: none; 
+    
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
-    min-width: 300px;
-    max-width: 350px;
+    min-width: 250px;
+    max-width: 320px;
     color: #fff !important;
     text-align: left;
+    display: none; /* Standardmäßig aus */
 }
 
-#prestige-tooltip-modal h4 {
-    margin: 0 0 5px 0;
-    color: #FFD700;
-    font-size: 1.1em;
-    border-bottom: 1px solid #555;
-    padding-bottom: 5px;
+/* Nodes Styling */
+.skill-node {
+    position: absolute;
+    width: 50px;  /* Feste Größe */
+    height: 50px; /* Feste Größe */
+    border-radius: 50%; /* Macht es zum Kreis */
+    
+    /* Design */
+    background-color: #0b0f19; /* Dunkler Hintergrund */
+    border: 3px solid #6B0504; /* Standard Rand (Rot) */
+    color: #fff;
+    
+    /* Zentrierung von Text/Icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    
+    z-index: 10; /* Liegt ÜBER den Linien */
+    transform: translate(-50%, -50%); /* Zentriert den Punkt exakt auf der Koordinate */
+    
+    cursor: pointer; /* Zeigefinger-Maus */
+    transition: transform 0.1s, border-color 0.2s;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Hover-Effekt (Vergrößern) */
+.skill-node:hover {
+    transform: translate(-50%, -50%) scale(1.2); /* Wächst beim Hovern */
+    z-index: 100; /* Kommt ganz nach vorne */
+}
+
+/* Status-Farben */
+.skill-node.purchased {
+    background-color: #009ffd;
+    border-color: #fff;
+    box-shadow: 0 0 15px #009ffd;
+}
+
+.skill-node.available {
+    background-color: #3E5641;
+    border-color: #009ffd;
+}
+
+.skill-node.locked {
+    opacity: 0.6;
+    border-color: #333;
 }
 
 /* ======================================================= */

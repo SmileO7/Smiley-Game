@@ -8,6 +8,196 @@ class SmileyGame {
     // ================================================================================================================
 
     constructor() {
+
+
+        this.prestigeUpgrades = [
+            // === START (Mitte Unten) ===
+            { 
+                id: 0, 
+                name: "Genesis", 
+                cost: 1, 
+                description: "Startbonus: +10% passive SPS.", 
+                type: 'sps_mult', 
+                value: 0.10, 
+                x: 50, y: 90,       // Startposition (Unten Mitte)
+                category: 'start',
+                parents: [] 
+            },
+
+            // === TIER 1: DIE ENTSCHEIDUNG (Links vs Rechts) ===
+            { 
+                id: 1, 
+                name: "Aktive Finger", 
+                cost: 2, 
+                description: "Klickkraft +25%.", 
+                type: 'click_mult', 
+                value: 0.25, 
+                x: 30, y: 75,       // Links (Rot)
+                category: 'click',
+                parents: [0] 
+            },
+            { 
+                id: 2, 
+                name: "Passive Macht", 
+                cost: 2, 
+                description: "SPS +25%.", 
+                type: 'sps_mult', 
+                value: 0.25, 
+                x: 70, y: 75,       // Rechts (Blau)
+                category: 'idle',
+                parents: [0] 
+            },
+
+            // === TIER 2: SPEZIALISIERUNG ===
+            { 
+                id: 3, 
+                name: "Bau-Rabatt", 
+                cost: 5, 
+                description: "Alle Gebäude sind 5% günstiger.", 
+                type: 'cost_reduction', 
+                value: 0.05, 
+                x: 15, y: 60,       // Ganz weit Links Außen
+                category: 'qol',
+                parents: [1] 
+            },
+            { 
+                id: 4, 
+                name: "Prestige-Experte", 
+                cost: 10, 
+                description: "Prestige-Punkte sind 10% effektiver.", 
+                type: 'prestige_efficiency', 
+                value: 0.10, 
+                x: 85, y: 60,       // Ganz weit Rechts Außen
+                category: 'idle',
+                parents: [2] 
+            },
+
+            // === TIER 3: ZUSAMMENFÜHRUNG (Mitte) ===
+            { 
+                id: 5, 
+                name: "Synergie", 
+                cost: 15, 
+                description: "Klicks geben kurzzeitig SPS-Boost.", 
+                type: 'click_mult', 
+                value: 0.50, 
+                x: 50, y: 55,       // Zurück in die Mitte
+                category: 'special',
+                parents: [1, 2]     // Verbindet Rot und Blau
+            },
+
+            // === TIER 4: FEATURE UNLOCKS (Verzweigung) ===
+            { 
+                id: 6, 
+                name: "Süße Begleiter", 
+                cost: 50, 
+                description: "Schaltet das PET-SYSTEM frei.", 
+                type: 'unlock_pets', 
+                value: 0, 
+                x: 35, y: 40,       // Leicht Links
+                category: 'special',
+                parents: [5] 
+            },
+            { 
+                id: 7, 
+                name: "Tiefbau", 
+                cost: 50, 
+                description: "Schaltet die DIAMANTEN-MINE frei.", 
+                type: 'unlock_mine', 
+                value: 0, 
+                x: 65, y: 40,       // Leicht Rechts
+                category: 'special',
+                parents: [5] 
+            },
+
+            // === TIER 5: DAS IMPERIUM (Mitte Oben) ===
+            { 
+                id: 8, 
+                name: "Imperium", 
+                cost: 100, 
+                description: "Schaltet das GILDEN-SYSTEM frei.", 
+                type: 'unlock_guilds', 
+                value: 0, 
+                x: 50, y: 25,       // Zentriert, über Pets/Mine
+                category: 'special',
+                parents: [6, 7] 
+            },
+
+            // === TIER 6: GLOBALER BOOST ===
+            { 
+                id: 9, 
+                name: "Globaler Reichtum", 
+                cost: 250, 
+                description: "Verdoppelt deine gesamte SPS-Produktion (x2).", 
+                type: 'global_mult', 
+                value: 1.0, 
+                x: 50, y: 10,       // Fast ganz oben
+                category: 'qol',    // Oder Special
+                parents: [8] 
+            },
+
+            // === ENDGAME (Erweiterung nach oben/außen) ===
+            // Da wir bei 0% Y (Oben) angekommen sind, müssen wir den Container
+            // evtl. höher scrollen lassen oder die Koordinaten anpassen.
+            // Ich setze sie mal "neben" Globaler Reichtum.
+
+            { 
+                id: 10, 
+                name: "Klick-Titan", 
+                cost: 500, 
+                description: "Verdreifacht Klickkraft.", 
+                type: 'click_mult', 
+                value: 2.0, 
+                x: 20, y: 15,       // Links oben neben Imperium
+                category: 'click',
+                parents: [9] 
+            },
+            { 
+                id: 11, 
+                name: "Industrie-Gigant", 
+                cost: 500, 
+                description: "Verdreifacht passive SPS.", 
+                type: 'sps_mult', 
+                value: 2.0, 
+                x: 80, y: 15,       // Rechts oben neben Imperium
+                category: 'idle',
+                parents: [9] 
+            },
+
+            // === ULTIMATE (Ganz oben Spitze) ===
+            { 
+                id: 12, 
+                name: "Massenproduktion", 
+                cost: 1500, 
+                description: "Gebäudekosten -10%.", 
+                type: 'cost_reduction', 
+                value: 0.10, 
+                x: 50, y: -10,      // MINUS Bereich bedeutet: Man muss weiter scrollen!
+                category: 'qol',
+                parents: [10, 11] 
+            },
+            { 
+                id: 13, 
+                name: "Zeitreise-Meister", 
+                cost: 5000, 
+                description: "Prestige +50% effektiv.", 
+                type: 'prestige_efficiency', 
+                value: 0.50, 
+                x: 30, y: -25,      // Noch weiter oben
+                category: 'idle',
+                parents: [12] 
+            },
+            { 
+                id: 14, 
+                name: "Big Bang", 
+                cost: 10000, 
+                description: "Multipliziert ALLES mit 5.", 
+                type: 'global_mult', 
+                value: 4.0, 
+                x: 70, y: -25, 
+                category: 'special',
+                parents: [12] 
+            }
+        ];
         this.gameState = {
                     // --- Währungen ---
                     aktuelle_smileys: 0,
@@ -29,7 +219,7 @@ class SmileyGame {
                     buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
 
                     researchStatus: globalUpgrades.map(() => false),
-                    prestigeUpgradeStatus: prestigeUpgrades.map(() => false),
+                    prestigeUpgradeStatus: this.prestigeUpgrades.map(() => false),
 
                     petLevels: {},
                     activePet: null,
@@ -113,6 +303,7 @@ class SmileyGame {
             this.setupMainEventListeners();
             this.setupPrestigeEventListeners();
             this.setupInfoPageEventListeners();
+            this.setupSkillTreeControls();
 
             // SCHRITT 3: Intervalle starten (Produktion & Autosave)
             this.startIntervals();
@@ -1170,6 +1361,26 @@ class SmileyGame {
             this.updateUI();
         }
         this.speichereSpiel();
+    }
+
+    canBuyPrestigeUpgrade(upgrade) {
+        // 1. Genug Punkte?
+        if (this.gameState.prestige_punkte_verfügbar < upgrade.cost) return false;
+
+        // 2. Parents Check (Sind alle Vorgänger gekauft?)
+        if (upgrade.parents && upgrade.parents.length > 0) {
+            for (let parentId of upgrade.parents) {
+                // Finde den Index des Eltern-Upgrades
+                const parentIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
+                // Wenn ein Elternteil NICHT gekauft ist -> False
+                if (!this.gameState.prestigeUpgradeStatus[parentIndex]) {
+                    return false;
+                }
+            }
+        }
+
+        // Wenn keine Parents da sind (Start-Knoten) oder alle gekauft sind -> True
+        return true;
     }
 
     tryBuyPrestigeUpgrade(upgrade) {
@@ -2351,124 +2562,254 @@ class SmileyGame {
     // ================================================================================================================
 
       renderPrestigeTree() {
-              const container = this.getById('prestige-tree-container'); // Oder 'skill-tree-container' je nach HTML ID
-              if (!container) return;
+        const container = this.getById('prestige-tree-container');
+        if (!container) return;
 
-              container.innerHTML = ''; // Container leeren
+        // 1. Welt-Container erstellen
+        let world = this.getById('prestige-tree-world');
+        if (!world) {
+            world = document.createElement('div');
+            world.id = 'prestige-tree-world';
+            container.appendChild(world);
+            
+            // Startposition zentrieren
+            this.treeX = container.clientWidth / 2;
+            this.treeY = container.clientHeight / 2;
+            world.style.transform = `translate(${this.treeX}px, ${this.treeY}px)`;
+        }
+        world.innerHTML = '';
 
-              // 1. SVG Layer für Linien (Hintergrund)
-              const svgNS = "http://www.w3.org/2000/svg";
-              const svg = document.createElementNS(svgNS, "svg");
-              Object.assign(svg.style, {
-                  position: "absolute", width: "100%", height: "100%",
-                  top: "0", left: "0", pointerEvents: "none", zIndex: "0"
-              });
-              container.appendChild(svg);
+        // 2. Canvas für Linien
+        const canvas = document.createElement('canvas');
+        canvas.id = 'prestige-lines';
+        const CANVAS_SIZE = 4000;
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
+        canvas.style.position = 'absolute';
+        canvas.style.left = `-${CANVAS_SIZE / 2}px`;
+        canvas.style.top = `-${CANVAS_SIZE / 2}px`;
+        
+        // WICHTIG: Auch hier per JS nochmal setzen, falls CSS versagt
+        canvas.style.pointerEvents = 'none'; 
+        
+        world.appendChild(canvas);
 
-              // ZENTRIERUNG: Wir starten in der Mitte des Containers
-              const centerX = container.offsetWidth / 2;
-              const startY = 50;
+        // 3. Nodes erstellen
+        const ZOOM = 10; 
 
-              // 2. Nodes zeichnen
-              prestigeUpgrades.forEach(upgrade => {
-                  // Status prüfen
-                  const isBought = (this.gameState.prestigeUpgradeStatus[upgrade.id] === true); // Array-Index Zugriff (Boolean)
-                  // Falls du IDs speicherst, nutze: this.gameState.prestigeUpgrades.includes(upgrade.id)
+        this.prestigeUpgrades.forEach(upgrade => {
+            const node = document.createElement('div');
+            node.className = 'skill-node';
 
-                  // Requirements prüfen
-                  let isLocked = false;
-                  if (upgrade.requirements && upgrade.requirements.length > 0) {
-                      // Prüfen ob alle Parents gekauft sind
-                      const allParentsBought = upgrade.requirements.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
-                      if (!allParentsBought) isLocked = true;
-                  }
+            // Koordinaten berechnen
+            const pixelX = (upgrade.x - 50) * ZOOM;
+            const pixelY = (upgrade.y - 50) * ZOOM; 
 
-                  const canAfford = this.gameState.prestige_punkte_verfügbar >= upgrade.cost;
-                  const isAvailable = !isLocked && !isBought && canAfford;
+            node.style.left = pixelX + 'px';
+            node.style.top = pixelY + 'px';
 
-                  // Koordinaten berechnen
-                  const drawX = centerX + upgrade.x;
-                  const drawY = startY + upgrade.y;
+            // Icons
+            if (upgrade.category) node.classList.add('node-' + upgrade.category);
 
-                  // A. LINIEN ZEICHNEN (Zu den Eltern)
-                  if (upgrade.requirements) {
-                      upgrade.requirements.forEach(reqId => {
-                          const parent = prestigeUpgrades.find(p => p.id === reqId);
-                          if (parent) {
-                              const parentX = centerX + parent.x;
-                              const parentY = startY + parent.y;
+            // Status prüfen
+            const upgradeIndex = this.prestigeUpgrades.findIndex(u => u.id === upgrade.id);
+            const isBought = this.gameState.prestigeUpgradeStatus[upgradeIndex];
+            const canBuy = this.canBuyPrestigeUpgrade(upgrade);
 
-                              const line = document.createElementNS(svgNS, "line");
-                              line.setAttribute("x1", parentX);
-                              line.setAttribute("y1", parentY);
-                              line.setAttribute("x2", drawX);
-                              line.setAttribute("y2", drawY);
+            // Aussehen je nach Status
+            if (isBought) {
+                node.classList.add('purchased');
+                node.innerHTML = this.getUpgradeIcon(upgrade.type); // Icon anzeigen
+            } else if (canBuy) {
+                node.classList.add('available');
+                node.innerText = "?";
+                // Klick zum Kaufen
+                node.onclick = (e) => {
+                    e.stopPropagation(); // Verhindert, dass man beim Klicken versehentlich die Map zieht
+                    this.buyPrestigeUpgrade(upgrade.id);
+                };
+            } else {
+                node.classList.add('locked');
+                node.innerText = "🔒";
+            }
 
-                              // Farbe: Gold wenn Verbindung aktiv (Parent gekauft), sonst Grau
-                              const parentBought = this.gameState.prestigeUpgradeStatus[parent.id];
-                              line.setAttribute("stroke", parentBought ? "#ffd700" : "#444");
-                              line.setAttribute("stroke-width", parentBought ? "4" : "2");
+            // === TOOLTIP EVENTS (Der Hover Fix) ===
+            // Maus rein -> Tooltip an
+            node.addEventListener('mouseenter', (e) => {
+                this.showPrestigeTooltip(e, upgrade, isBought, !canBuy && !isBought);
+            });
 
-                              svg.appendChild(line);
-                          }
-                      });
-                  }
+            // Maus raus -> Tooltip aus
+            node.addEventListener('mouseleave', () => {
+                this.hidePrestigeTooltip();
+            });
 
-                  // B. BUTTON (NODE) ERSTELLEN
-                  const node = document.createElement('div');
-                  // CSS Klasse für Styling (Stelle sicher, dass du .skill-node im CSS hast!)
-                  node.className = `skill-node ${isBought ? 'purchased' : (isLocked ? 'locked' : 'available')}`;
+            world.appendChild(node);
+        });
 
-                  // WICHTIG: Inline Styles für exakte Positionierung
-                  Object.assign(node.style, {
-                      position: 'absolute',
-                      left: drawX + 'px',
-                      top: drawY + 'px',
-                      transform: 'translate(-50%, -50%)' // ZENTRIERT DEN PUNKT GENAU AUF DER LINIE
-                  });
+        // 4. Linien zeichnen
+        setTimeout(() => this.drawPrestigeLines(), 50);
+    }
 
-                  // Icon Logik
-                  let icon = "★";
-                  if (upgrade.type === 'unlock_pets') icon = "🐾";
-                  if (upgrade.type === 'unlock_mine') icon = "💎";
-                  if (upgrade.type === 'click_mult') icon = "👆";
+    // === NEU: Steuerung für den Drag & Drop Skill-Tree ===
+    setupSkillTreeControls() {
+        const container = this.getById('prestige-tree-container');
+        if (!container) return;
 
-                  node.innerHTML = `<span>${icon}</span>`;
+        // Startwerte
+        this.treeX = 0;
+        this.treeY = 0;
+        this.isDragging = false;
+        this.startX = 0;
+        this.startY = 0;
 
-                  // Events
-                  node.onclick = () => {
-                      // Rufe die Kauf-Funktion auf (wir nutzen tryBuyPrestigeUpgrade, die du schon hast)
-                      this.tryBuyPrestigeUpgrade(upgrade);
-                  };
+        // 1. Maus drücken
+        container.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            this.startX = e.clientX - this.treeX;
+            this.startY = e.clientY - this.treeY;
+            container.style.cursor = 'grabbing';
+        });
 
-                  // Tooltip (Mouseover)
-                  // So muss es in renderPrestigeTree() aussehen:
-                  node.onmouseenter = (e) => this.showSkillTooltip(upgrade, e);
-                  node.onmousemove = (e) => this.showSkillTooltip(upgrade, e); // WICHTIG: Das 'e' weitergeben!
+        // 2. Maus loslassen (überall im Fenster)
+        window.addEventListener('mouseup', () => {
+            this.isDragging = false;
+            if(container) container.style.cursor = 'grab';
+        });
 
-                  container.appendChild(node);
-              });
-          }
+        // 3. Maus bewegen
+        window.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            e.preventDefault(); // Verhindert Text-Markieren
+
+            // Neue Position berechnen
+            this.treeX = e.clientX - this.startX;
+            this.treeY = e.clientY - this.startY;
+
+            // Welt bewegen
+            const world = this.getById('prestige-tree-world');
+            if (world) {
+                world.style.transform = `translate(${this.treeX}px, ${this.treeY}px)`;
+            }
+        });
+    }
+
+    drawPrestigeLines() {
+        const canvas = this.getById('prestige-lines');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // 1. Alles löschen
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 2. WICHTIG: Den Nullpunkt in die MITTE des Canvas schieben!
+        ctx.save(); 
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+
+        // Styling
+        ctx.lineCap = 'round';
+        const ZOOM = 10; // MUSS GLEICH SEIN WIE IN renderPrestigeTree!
+
+        this.prestigeUpgrades.forEach(upgrade => {
+            // Hat das Upgrade Eltern (Vorgänger)?
+            if (upgrade.parents && upgrade.parents.length > 0) {
+                
+                // Ziel-Koordinaten berechnen (Relativ zur Mitte)
+                const targetX = (upgrade.x - 50) * ZOOM;
+                const targetY = (upgrade.y - 50) * ZOOM;
+
+                upgrade.parents.forEach(parentId => {
+                    const parentUpgrade = this.prestigeUpgrades.find(u => u.id === parentId);
+                    
+                    if (parentUpgrade) {
+                        // Start-Koordinaten berechnen
+                        const startX = (parentUpgrade.x - 50) * ZOOM;
+                        const startY = (parentUpgrade.y - 50) * ZOOM;
+
+                        // Farbe bestimmen (Gekauft = Blau, Sonst = Grau)
+                        const uIndex = this.prestigeUpgrades.findIndex(u => u.id === upgrade.id);
+                        const pIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
+                        
+                        const isTargetBought = this.gameState.prestigeUpgradeStatus[uIndex];
+                        const isParentBought = this.gameState.prestigeUpgradeStatus[pIndex];
+
+                        ctx.beginPath();
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(targetX, targetY);
+
+                        if (isTargetBought && isParentBought) {
+                            ctx.strokeStyle = '#009ffd'; // Blaues Leuchten
+                            ctx.lineWidth = 4;
+                        } else if (isParentBought) {
+                            ctx.strokeStyle = '#FFD700'; // Gold (Verfügbarer Pfad)
+                            ctx.lineWidth = 2;
+                        } else {
+                            ctx.strokeStyle = '#333'; // Dunkelgrau (Gesperrt)
+                            ctx.lineWidth = 1;
+                        }
+                        
+                        ctx.stroke();
+                    }
+                });
+            }
+        });
+
+        ctx.restore(); // Den Context zurücksetzen
+    }
+
+    // Hilfsfunktion für kleine Icons im Baum
+    getUpgradeIcon(type) {
+        if (type === 'click_mult') return '👆';
+        if (type === 'sps_mult') return '⚡';
+        if (type === 'cost_reduction') return '📉';
+        if (type === 'unlock_pets') return '🐾';
+        if (type === 'unlock_mine') return '💎';
+        if (type === 'unlock_guilds') return '🏰';
+        return '★';
+    }
 
        // Tooltip Anzeige
        showPrestigeTooltip(e, upgrade, isBought, isLocked) {
-           const tooltip = this.getById('prestige-tooltip-modal');
-           if (!tooltip) return;
+        const tooltip = this.getById('prestige-tooltip-modal');
+        if (!tooltip) return;
 
-           tooltip.style.display = 'block';
-           // Positionierung etwas neben der Maus
-           tooltip.style.left = (e.clientX + 20) + 'px';
-           tooltip.style.top = (e.clientY + 20) + 'px';
+        // 1. Text generieren
+        const statusText = isBought ? "✅ Gekauft" : (isLocked ? "🔒 Gesperrt (Voraussetzung fehlt!)" : "Klicken zum Kaufen");
+        const colorTitle = isBought ? '#4CAF50' : (isLocked ? '#777' : '#FFD700');
+        
+        tooltip.innerHTML = `
+            <h4 style="color:${colorTitle}; margin:0 0 5px 0;">${upgrade.name}</h4>
+            <p style="font-size:0.9em; margin:0 0 10px 0; color:#ddd;">${upgrade.description}</p>
+            <div style="border-top:1px solid #444; padding-top:5px; font-size:0.85em;">
+                <p style="margin:0;">Kosten: <span style="color:#FFD700; font-weight:bold;">${this.formatNumber(upgrade.cost)}</span></p>
+                <p style="margin:0; color:${isBought?'#4CAF50':(isLocked?'#f44336':'#aaa')}">${statusText}</p>
+            </div>
+        `;
 
-           const statusText = isBought ? "✅ Gekauft" : (isLocked ? "🔒 Gesperrt (Voraussetzung fehlt!)" : "Klicken zum Kaufen");
+        // 2. Anzeigen, um Größe zu berechnen
+        tooltip.style.display = 'block';
 
-           tooltip.innerHTML = `
-               <h4 style="color:#ffd700; margin:0 0 5px 0;">${upgrade.name}</h4>
-               <p style="font-size:0.9em; margin:0 0 5px 0;">${upgrade.description}</p>
-               <p style="font-weight:bold;">Kosten: ${this.formatNumber(upgrade.cost)} Prestige-Punkte</p>
-               <small style="color:${isBought?'#4CAF50':(isLocked?'#f44336':'#ccc')}">${statusText}</small>
-           `;
-       }
+        // 3. Intelligente Positionierung
+        const rect = tooltip.getBoundingClientRect();
+        const offset = 15; // Abstand zur Maus
+        
+        let left = e.clientX + offset;
+        let top = e.clientY + offset;
+
+        // Passt es rechts nicht mehr hin? -> Nach Links schieben
+        if (left + rect.width > window.innerWidth) {
+            left = e.clientX - rect.width - offset;
+        }
+
+        // Passt es unten nicht mehr hin? -> Nach Oben schieben
+        if (top + rect.height > window.innerHeight) {
+            top = e.clientY - rect.height - offset;
+        }
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
 
        hidePrestigeTooltip() {
            const tooltip = this.getById('prestige-tooltip-modal');
@@ -3272,7 +3613,40 @@ class SmileyGame {
                     guildsModal.style.display = 'none';
                 });
             }
-        }
+
+            window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Liste aller Modal-IDs, die geschlossen werden sollen
+                const modals = [
+                    'prestige-shop-modal', 
+                    'skill_tree_modal', 
+                    'settings-modal', 
+                    'pet-shop-modal',
+                    'diamond-mine-modal',
+                    'guilds-modal',
+                    'buildings_info_modal',
+                    'global_upgrades_info_modal',
+                    'info_achievements_modal',
+                    'stats_info_modal',
+                    'prestige_info_modal'
+                ];
+
+                let closedSomething = false;
+                modals.forEach(id => {
+                    const el = document.getElementById(id);
+                    // Nur schließen, wenn es wirklich offen ist (display != none)
+                    if (el && el.style.display && el.style.display !== 'none') {
+                        el.style.display = 'none';
+                        closedSomething = true;
+                    }
+                });
+
+                // Wenn wir ein Fenster geschlossen haben, Sound abspielen? (Optional)
+                // if (closedSomething) this.playClickSound(); 
+            }
+        });
+    }
+    
 
 
     setupPrestigeEventListeners() {
