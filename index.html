@@ -109,25 +109,20 @@
         </div>
 </div>
 
-            <div class="middle-column">
-                <div class="feature-button-grid">
-                    <button id="open-pet-shop-button" class="btn-feature">
-                        <span>🐾</span> Pets
-                    </button>
-                    <button id="open_diamond_mine_button" class="btn-feature">
-                        <span>💎</span> Mine
-                    </button>
-                    <button id="open_guilds_button" class="btn-feature">
-                        <span>⚔️</span> Gilden
-                    </button>
-                    <button id="show_achievements_button" class="btn-primary">
-                        <span>🏆</span> Erfolge
-                    </button>
-                </div>
-
-                <h3 style="margin-top: 10px; flex-shrink: 0;">Globale Upgrades</h3>
-                <div id="global-upgrades-container"></div>
-            </div>
+            <div class="feature-button-grid">
+    <button id="open-pet-shop-button" class="btn-feature">
+        <span>🐾</span> PET SHOP
+    </button>
+    <button id="open_diamond_mine_button" class="btn-feature">
+        <span>💎</span> DIAMANTEN-MINE
+    </button>
+    <button id="open_guilds_button" class="btn-feature">
+        <span>⚔️</span> GILDEN
+    </button>
+    <button id="show_achievements_button" class="btn-primary">
+        <span>🏆</span> ERFOLGE
+    </button>
+</div>
 
             <div class="right-column">
                 <h2>Gebäude</h2>
@@ -175,49 +170,49 @@
 
 <div id="info-modal" class="modal" style="display: none;">
     <div class="modal-content large">
-        <h2>📚 Handbuch & Strategie</h2>
+        <h2>📚 SPIELANLEITUNG</h2>
 
         <div class="page-container info-page-layout">
 
             <div style="flex: 2; display: flex; flex-direction: column; gap: 15px;">
 
                 <div class="info-section box-style">
-                    <h3>🚀 Schnelleinstieg</h3>
-                    <p>Willkommen beim Smiley Clicker! Dein Ziel ist es, so viele Smileys wie möglich zu sammeln.</p>
+                    <h3>🚀 DEIN START</h3>
+                    <p>Willkommen beim Smiley Clicker! Dein Ziel ist einfach: <strong>Sammle so viele Smileys wie möglich.</strong></p>
                     <ul style="margin-left: 20px; margin-top: 5px; color: #ccc;">
-                        <li>Klicke den Smiley für den Startschuss.</li>
-                        <li>Kaufe <strong>Gebäude</strong>, um automatisch Smileys zu produzieren (SPS).</li>
-                        <li>Kaufe <strong>Globale Upgrades</strong>, um deine Klicks und Gebäude zu verstärken.</li>
+                        <li><strong>Klicken:</strong> Klicke auf den großen Smiley, um zu starten.</li>
+                        <li><strong>Bauen:</strong> Kaufe Gebäude, die automatisch Smileys für dich sammeln.</li>
+                        <li><strong>Upgrades:</strong> Verbessere deine Klicks und Gebäude im Shop.</li>
                     </ul>
                 </div>
 
                 <div class="info-section box-style">
-                    <h3>💎 Fortgeschrittene Mechaniken</h3>
-                    <p><strong>Prestige:</strong> Wenn das Spiel langsam wird, nutze den "Prestige Reset". Du verlierst Gebäude, erhältst aber <em>Smiley Points</em>, die deine Produktion dauerhaft vervielfachen!</p>
-                    <p><strong>Pets:</strong> Schalte Pets im Prestige-Tree frei. Sie geben mächtige passive Boni, müssen aber mit Diamanten gelevelt werden.</p>
-                    <p><strong>Gilden:</strong> Gründe eine Gilde, um Bosse zu bekämpfen. Bosse droppen Diamanten!</p>
+                    <h3>💎 BESONDERE FEATURES</h3>
+                    <p><strong>Prestige:</strong> Setze deinen Fortschritt zurück, um <em>Smiley Points</em> zu erhalten. Diese Punkte machen dich dauerhaft stärker!</p>
+                    <p><strong>Pets:</strong> Sammle süße Begleiter im Pet Shop. Sie geben dir Boni, brauchen aber Diamanten zum Leveln.</p>
+                    <p><strong>Gilden:</strong> Gründe eine Gilde und kämpfe gemeinsam gegen Bosse für extra Belohnungen.</p>
                 </div>
 
                 <div class="info-section box-style" style="border-color: #ffd700;">
-                    <h3>💡 Profi-Tipps</h3>
+                    <h3>💡 TIPPS & TRICKS</h3>
                     <ul style="margin-left: 20px; color: #fff;">
-                        <li>Warte mit dem ersten Prestige, bis du mindestens <strong>10-20 Punkte</strong> bekommst.</li>
-                        <li>Die <strong>Diamanten-Mine</strong> ist der Schlüssel zum Pet-Leveling.</li>
-                        <li>Aktiviere immer das Pet, das gerade zu deinem Ziel passt (z.B. "Fuchs" vor dem Prestige für mehr Punkte).</li>
+                        <li>Warte mit dem ersten Prestige, bis du ca. <strong>10-20 Punkte</strong> bekommen würdest.</li>
+                        <li>Besuche die <strong>Diamanten-Mine</strong>, um Währung für deine Pets zu finden.</li>
+                        <li>Achte auf <strong>Globale Upgrades</strong> – sie können Gebäude viel günstiger machen!</li>
                     </ul>
                 </div>
             </div>
 
             <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
                 <div class="info-section box-style" style="text-align: center;">
-                    <h3>Datenbank</h3>
-                    <p style="font-size: 0.9em; color: #aaa; margin-bottom: 15px;">Detaillierte Listen aller Werte:</p>
+                    <h3>DATENBANK</h3>
+                    <p style="font-size: 0.9em; color: #aaa; margin-bottom: 15px;">Details & Listen:</p>
 
                     <button id="show_buildings_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🏗️ Gebäude-Liste</button>
-                    <button id="show_global_upgrades_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">⚙️ Upgrades</button>
-                    <button id="show_prestige_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🌌 Skill-Tree Info</button>
-                    <button id="show_pets_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🐾 Pet-Übersicht</button>
-                    <button id="show_stats_button" class="btn-primary" style="width: 100%;">📊 Meine Stats</button>
+                    <button id="show_global_upgrades_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">⚙️ Alle Upgrades</button>
+                    <button id="show_prestige_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🌌 Skill-Tree Infos</button>
+                    <button id="show_pets_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🐾 Pet-Lexikon</button>
+                    <button id="show_stats_button" class="btn-primary" style="width: 100%;">📊 Deine Statistik</button>
                 </div>
             </div>
 

@@ -1,13 +1,13 @@
 /* ======================================================= */
-/* 0. CONFIGURATION & VARIABLES                           */
+/* 0. CONFIGURATION & VARIABLES                            */
 /* ======================================================= */
 
 :root {
-    /* Deine gespeicherten Farben */
-    --color-primary-dark: #011638;      /* Haupt-Hintergrund & Box-Hintergrund */
-    --color-secondary-red: #6B0504;     /* Rot-Akzent, Gefahr, Prestige */
-    --color-accent-blue: #009FFD;       /* Helles Cyan-Blau, Interaktion, Status */
-    --color-neutral-olive: #3E5641;     /* Neutraler Akzent / Deaktiviert / Grau */
+    /* Farben */
+    --color-primary-dark: #011638;      /* Haupt-Hintergrund */
+    --color-secondary-red: #6B0504;     /* Rot-Akzent */
+    --color-accent-blue: #009FFD;       /* Helles Cyan-Blau */
+    --color-neutral-olive: #3E5641;     /* Neutraler Akzent */
 
     /* Text Farben */
     --color-text-primary: #ffffff;
@@ -15,12 +15,12 @@
     --color-text-accent: var(--color-accent-blue);
     --color-text-light: #f0f0f0;
 
-    /* Container & Overlay Backgrounds */
+    /* Overlay Backgrounds */
     --container-bg: rgba(255, 255, 255, 0.05);
     --color-dark-overlay: rgba(0, 0, 0, 0.4);
     --color-modal-bg: rgba(0, 0, 0, 0.8);
 
-    /* Zuweisungen für bestehenden Code */
+    /* Mapping für Legacy Code */
     --color-background-dark: var(--color-primary-dark);
     --color-red-main: var(--color-secondary-red);
     --color-blue-main: var(--color-accent-blue);
@@ -28,19 +28,19 @@
     --color-box-background: var(--color-primary-dark);
     --color-shadow: rgba(0, 0, 0, 0.3);
 
-    /* Layout Spacings */
+    /* Spacings */
     --spacing-sm: 10px;
     --spacing-md: 20px;
     --spacing-lg: 30px;
 }
 
-/* BOX MODELING & GLOBAL RESET */
+/* GLOBAL RESET */
 *, *::before, *::after {
     box-sizing: border-box;
 }
 
 /* ======================================================= */
-/* 1. BASE STYLES & TYPOGRAPHY                            */
+/* 1. BASE STYLES & TYPOGRAPHY                             */
 /* ======================================================= */
 
 body, html {
@@ -57,28 +57,20 @@ body {
     font-family: 'Roboto', sans-serif;
     font-size: 16px;
     line-height: 1.6;
-    transition: background-color 0.5s ease;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-font-smoothing: antialiased;
+    overflow: hidden; /* Scrollbar nur in den Containern */
 }
 
-/* PAGE BACKGROUNDS */
-body.home-page,
-body.info-page {
-    background-color: var(--color-background-dark);
-    background-attachment: fixed;
-    background-image: radial-gradient(circle at top left, var(--color-accent-blue) 0.1, transparent 50%),
-                      radial-gradient(circle at bottom right, var(--color-red-main) 0.1, transparent 50%),
-                      linear-gradient(135deg, var(--color-background-dark), #24243e);
+/* HINTERGRÜNDE */
+body.home-page, body.info-page {
+    background-image: 
+        radial-gradient(circle at top left, var(--color-accent-blue) 0.1, transparent 50%),
+        radial-gradient(circle at bottom right, var(--color-red-main) 0.1, transparent 50%),
+        linear-gradient(135deg, var(--color-background-dark), #24243e);
     background-size: 100% 100%;
+    background-attachment: fixed;
 }
 
-body.prestige-page {
-    background-color: var(--color-background-dark);
-    background-image: radial-gradient(circle at top, #1a3863 0%, var(--color-background-dark) 80%);
-}
-
-/* HEADINGS & TEXT */
+/* HEADINGS */
 h1, h2, h3, h4 {
     color: var(--color-text-accent);
     font-weight: 500;
@@ -88,980 +80,528 @@ h1, h2, h3, h4 {
     text-align: center;
 }
 
-h1 { font-size: 2.5rem; margin-bottom: var(--spacing-lg); }
-h2 { color: var(--color-text-primary); font-size: 2rem; }
-h3 { color: var(--color-text-accent); font-size: 1.5rem; }
-p { color: var(--color-text-secondary); font-size: 1.1rem; margin-bottom: 1rem; }
+h1 { font-size: 2.2rem; margin-bottom: 15px; } 
+h2 { color: var(--color-text-primary); font-size: 1.5rem; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+h3 { color: var(--color-text-accent); font-size: 1.2rem; }
+p { color: var(--color-text-secondary); font-size: 1rem; margin-bottom: 1rem; }
 
 /* ======================================================= */
-/* 2. LAYOUT & NAVIGATION                                 */
+/* 2. LAYOUT & NAVIGATION                                  */
 /* ======================================================= */
 
 main {
     flex-grow: 1;
-    padding-top: 70px;
+    padding-top: 60px; /* Platz für Navbar */
     width: 100%;
-    /* Verhindert, dass main größer wird als der Screen */
     max-height: 100vh;
 }
 
 .navbar {
     background-color: rgba(1, 22, 56, 0.95);
     box-shadow: 0 4px 10px var(--color-shadow);
-    padding: 8px 0;
+    padding: 0;
     position: fixed;
     text-align: center;
     top: 0;
     width: 100%;
     z-index: 1000;
-    height: 60px; /* Feste Höhe für Berechnung */
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.navbar a,
-.navbar button {
+.navbar a, .navbar button {
     background-color: transparent;
     border: none;
-    border-bottom: 2px solid transparent;
     color: var(--color-text-light);
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: bold;
-    padding: 10px 20px;
+    padding: 18px 20px;
     text-decoration: none;
-    transition: color 0.3s, background-color 0.3s, border-color 0.3s;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
 }
 
-.navbar a:hover,
-.navbar a.active,
-.navbar button:hover {
-    background-color: transparent;
-    border-bottom: 2px solid var(--color-blue-main);
+.navbar a:hover, .navbar a.active, .navbar button:hover {
+    border-bottom: 3px solid var(--color-blue-main);
     color: var(--color-blue-main);
+    background: rgba(255,255,255,0.05);
 }
 
 .main-layout {
     display: grid;
-    /* UPDATE: Die Mitte ist jetzt flexibel, aber maximal 600px breit.
-       Das gesamte Spiel wird zentriert (justify-content: center). */
-    grid-template-columns: 340px minmax(400px, 600px) 320px;
-    justify-content: center; /* Zentriert das Spielfeld auf dem Monitor */
-    gap: 30px; /* Mehr Luft zwischen den Spalten (vorher 20px) */
-
-    /* WICHTIG: Höhe berechnen */
-    height: calc(100vh - 80px);
-
-    overflow: hidden;
-    /* UPDATE: Mehr Abstand zu den Rändern */
-    padding: 20px 40px;
-    max-width: 1650px; /* Verhindert, dass es auf Ultrawide-Monitoren zu breit wird */
-    margin: 0 auto;    /* Zentriert den Container */
+    /* Linke und Rechte Spalte fix, Mitte flexibel */
+    grid-template-columns: 320px minmax(400px, 600px) 320px;
+    justify-content: center;
+    gap: 20px;
+    height: calc(100vh - 60px); /* Volle Höhe minus Header */
+    padding: 10px 20px;
+    max-width: 1800px;
+    margin: 0 auto;
 }
 
-/* SPALTEN LOGIK */
-.left-column {
+/* SPALTEN SCROLLING */
+.left-column, .right-column {
     display: flex;
     flex-direction: column;
     height: 100%;
-    /* WICHTIG: Linke Spalte darf scrollen */
     overflow-y: auto;
-    padding-right: 5px;
-}
-
-.middle-column, .right-column {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden; /* Container scrollen innen */
-}
-
-.middle-column h3, .right-column h2 {
-    margin-bottom: 10px;
-    flex-shrink: 0;
-}
-
-/* Scrollbar Styling für die Linke Spalte */
-.left-column::-webkit-scrollbar { width: 6px; }
-.left-column::-webkit-scrollbar-thumb { background-color: #333; border-radius: 3px; }
-
-.box-style,
-.stats-box.prestige-stats {
-    background-color: var(--color-box-background);
-    border: 2px solid var(--color-blue-main);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    padding: var(--spacing-lg);
-}
-
-/* === SCROLL-CONTAINER LAYOUT (Mitte & Rechts) === */
-#global-upgrades-container,
-#building-grid {
-    flex-grow: 1;
-    min-height: 0; /* WICHTIG für Flexbox */
-
-    overflow-y: auto;
-    height: 100%;
-
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 5px;
-
     scrollbar-width: thin;
-    scrollbar-color: #009ffd #222;
+    padding: 5px;
 }
 
-/* Für Webkit-Browser (Chrome/Edge/Safari) */
-#global-upgrades-container::-webkit-scrollbar,
-#building-grid::-webkit-scrollbar {
-    width: 8px;
+/* WICHTIG: FIX FÜR MITTLERE SPALTE (Buttons oben halten) */
+.middle-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 5px;
+    
+    /* Der entscheidende Fix: */
+    justify-content: flex-start; 
+    gap: 15px; 
 }
-#global-upgrades-container::-webkit-scrollbar-track,
-#building-grid::-webkit-scrollbar-track {
-    background: #222;
-    border-radius: 4px;
+
+/* Box Style (Basis für Module) */
+.box-style {
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
 }
-#global-upgrades-container::-webkit-scrollbar-thumb,
-#building-grid::-webkit-scrollbar-thumb {
-    background-color: #009ffd;
-    border-radius: 4px;
-    border: 2px solid #222;
-}
+
+/* Webkit Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #222; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-accent-blue); border-radius: 3px; }
 
 /* ======================================================= */
-/* 3. BUTTONS & UTILITIES                                 */
-/* ======================================================= */
-
-/* === FIX: KAUF-BUTTONS NEBENEINANDER === */
-.building-item .button-group {
-    display: flex;
-    gap: 4px; /* Kleinerer Abstand zwischen den Buttons */
-    margin-top: auto;
-    width: 100%; /* Nutze die volle Breite */
-}
-
-.building-item .btn-buy {
-    flex: 1; /* Jeder Button bekommt exakt 1/3 des Platzes */
-    min-height: 32px; /* Etwas flacher */
-    padding: 2px 0;   /* Wenig Innenabstand, damit Text Platz hat */
-    font-size: 0.75rem; /* Schrift etwas kleiner */
-    font-weight: bold;
-
-    /* WICHTIG: Text abschneiden verhindern, lieber klein machen */
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-buy, .btn-confirm, .btn-cancel, .btn-prestige, .btn-primary, .btn-danger, .btn-feature {
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    min-height: 48px;
-    padding: 10px 15px;
-    text-align: center;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-/* BLUE: Primäre Aktion */
-.btn-buy, .btn-primary { background-color: var(--color-blue-main); color: var(--color-background-dark); }
-.btn-buy:hover:not(:disabled), .btn-primary:hover:not(:disabled) {
-    background-color: var(--color-accent-blue);
-    box-shadow: 0 4px 10px rgba(0, 159, 253, 0.4);
-    transform: translateY(-1px);
-}
-
-/* RED: Sekundäre Aktion */
-.btn-prestige, .btn-danger, .btn-confirm { background-color: var(--color-red-main); color: white; }
-.btn-prestige:hover:not(:disabled), .btn-danger:hover:not(:disabled), .btn-confirm:hover:not(:disabled) {
-    background-color: rgba(107, 5, 4, 0.85);
-    box-shadow: 0 4px 10px rgba(107, 5, 4, 0.4);
-    transform: translateY(-1px);
-}
-
-/* NEUTRAL: Abbruch */
-.btn-cancel { background-color: var(--color-neutral-accent); color: white; }
-
-/* DEAKTIVIERT */
-.btn-buy:disabled, .btn-primary:disabled, .btn-danger:disabled, .btn-prestige:disabled, .btn-cancel:disabled {
-    background-color: var(--color-neutral-olive);
-    box-shadow: none;
-    color: var(--color-text-secondary);
-    cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
-}
-
-.btn-buy:focus, .navbar a:focus, .navbar button:focus {
-    outline: 3px solid var(--color-accent-blue);
-    outline-offset: 2px;
-}
-
-/* SPECIAL FEATURE BUTTONS (Middle Column) */
-.btn-feature {
-    width: 100%;
-    max-width: 300px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-transform: uppercase;
-    transition: all 0.2s ease-in-out;
-    border: 2px solid transparent;
-}
-
-#open-pet-shop-button { background-color: #007bff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
-#open-pet-shop-button:hover { background-color: #0056b3; transform: scale(1.02); }
-
-#open_diamond_mine_button { background-color: #000; border-color: #007bff; color: #007bff; }
-#open_diamond_mine_button:hover { background-color: #007bff; color: white; transform: scale(1.02); }
-
-#open_guilds_button { background-color: #000; border-color: #f44336; color: #f44336; }
-#open_guilds_button:hover { background-color: #f44336; color: white; transform: scale(1.02); }
-
-/* ======================================================= */
-/* 4. GAME COMPONENTS (CLICKER & LAB)                     */
+/* 3. SMILEY & LINKES DASHBOARD (KOMPAKT)                  */
 /* ======================================================= */
 
 #smiley_button {
     background-color: var(--color-accent-blue);
-    border: 5px solid var(--color-primary-dark);
+    border: 4px solid var(--color-primary-dark);
     border-radius: 50%;
-    box-shadow: 0 4px var(--color-primary-dark);
+    box-shadow: 0 0 20px rgba(0, 159, 253, 0.2);
     cursor: pointer;
     display: block;
     
-    /* ÄNDERUNG: Kleiner machen für Compact Mode */
-    height: 130px; /* Vorher 200px */
-    width: 130px;  /* Vorher 200px */
-    
-    /* ÄNDERUNG: Weniger Abstand nach oben/unten */
-    margin: 10px auto; /* Vorher var(--spacing-md) */
+    /* COMPACT SIZE (Wichtig!) */
+    height: 130px; 
+    width: 130px;
+    margin: 10px auto; 
     
     padding: 0;
+    transition: transform 0.05s ease, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+#smiley_button:active { transform: scale(0.95); }
+#smiley_button:hover { box-shadow: 0 0 30px rgba(0, 159, 253, 0.5); transform: scale(1.05); }
+#smiley_image { display: block; height: 100%; width: 100%; object-fit: cover; border-radius: 50%; }
+
+/* Animation beim Klicken */
+#smiley_button.anim-squish {
+    transform: scale(0.90);
+    transition: transform 0.05s ease-out;
+}
+
+/* Linke Stats Box */
+.stats-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Pet Display in der Sidebar */
+#active_pet_display {
+    /* Flexbox ist jetzt inline im HTML definiert */
+    transition: all 0.3s ease;
+}
+
+#active_pet_display img.active-pet-img {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    border: 2px solid #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    flex-shrink: 0;
+}
+
+#active_pet_display div { display: flex; flex-direction: column; text-align: left; }
+#active_pet_display span { font-size: 0.95rem; font-weight: bold; color: #fff; margin-bottom: 2px; }
+#active_pet_display .pet-tooltip { font-size: 0.8rem; color: #aaa; cursor: help; }
+
+/* ======================================================= */
+/* 4. RECHTE SPALTE & GEBÄUDE (HOLO STYLE)                 */
+/* ======================================================= */
+
+/* Container für Gebäude */
+.building-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Einzelne Gebäude-Karte */
+.building-item {
+    background-color: rgba(255, 255, 255, 0.05); /* Transparenter Hintergrund */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Feiner Rahmen */
+    border-radius: 8px;
+    padding: 10px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.building-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-accent-blue);
+    transform: translateX(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Titelzeile */
+.building-item h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+/* Anzahl Badge */
+.building-item h3 span {
+    background: rgba(0, 159, 253, 0.15);
+    color: var(--color-accent-blue);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Info Text */
+.building-item .production {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+/* Buttons */
+.building-item .button-group {
+    display: flex;
+    gap: 4px;
+    margin-top: auto;
+}
+
+.building-item .btn-buy {
+    flex: 1;
+    font-size: 0.7rem;
+    padding: 4px 0;
+    min-height: 28px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid #444;
+    color: #ccc;
+    border-radius: 4px;
+    cursor: pointer;
     transition: all 0.1s;
 }
 
-#smiley_button:active { box-shadow: none; transform: translateY(2px); }
-#smiley_button:focus, #smiley_button:hover { box-shadow: 0 6px var(--color-primary-dark); transform: translateY(-2px); }
-#smiley_image { border-radius: 50%; display: block; height: 100%; object-fit: cover; width: 100%; }
-
-#lab-main-content {
-    background-color: rgba(107, 5, 4, 0.2);
-    border: 2px solid var(--color-red-main);
-    border-radius: 16px;
-    padding: var(--spacing-md);
+/* Aktive Buttons */
+.building-item .btn-buy:not(:disabled) {
+    background-color: rgba(0, 159, 253, 0.15);
+    border-color: var(--color-accent-blue);
+    color: #fff;
 }
 
-/* === UPGRADE KARTEN DESIGN (Kompakt & Schick) === */
+.building-item .btn-buy:not(:disabled):hover {
+    background-color: var(--color-accent-blue);
+    color: #000;
+    font-weight: bold;
+}
+
+.building-item .btn-buy:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ======================================================= */
+/* 5. GLOBALE BUTTONS & UPGRADES                           */
+/* ======================================================= */
+
+.btn-primary, .btn-confirm, .btn-danger, .btn-prestige, .btn-cancel, .btn-feature {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px 15px;
+    text-align: center;
+    transition: background 0.2s, transform 0.1s;
+    color: #fff;
+}
+
+.btn-primary { background-color: var(--color-blue-main); color: #000; }
+.btn-primary:hover { background-color: #33baff; transform: translateY(-1px); }
+
+.btn-danger, .btn-prestige { background-color: var(--color-red-main); }
+.btn-danger:hover { background-color: #8a0806; transform: translateY(-1px); }
+
+.btn-cancel { background-color: var(--color-neutral-accent); }
+
+/* WICHTIG: Feature Buttons Grid (Mitte) */
+.feature-button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto; /* Fixiert auf 2 Reihen */
+    gap: 10px;
+    margin-bottom: 20px;
+    
+    /* Verhindert das Dehnen */
+    flex-shrink: 0; 
+    height: auto; 
+    align-content: start;
+}
+
+.feature-button-grid button {
+    height: 50px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #444;
+    margin: 0 !important;
+}
+.feature-button-grid button:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--color-accent-blue);
+    transform: translateY(-2px);
+}
+
+#open_diamond_mine_button:hover { color: #009FFD; border-color: #009FFD; }
+#open_guilds_button:hover { color: #f44336; border-color: #f44336; }
+
+/* Upgrade Liste (Mitte) */
 .research-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.05); /* Leicht transparent */
-    border: 1px solid #444;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 8px; /* Abstand zur nächsten Karte */
-    min-height: 60px;   /* Fixe Mindesthöhe */
-    transition: background 0.2s;
+    padding: 10px;
+    margin-bottom: 8px;
+    min-height: 60px;
+    flex-shrink: 0; /* Darf nicht auf 0 schrumpfen */
 }
+.research-item:hover { background-color: rgba(255, 255, 255, 0.08); border-color: #666; }
 
-.research-item:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: #666;
-}
-
-/* Linker Teil: Text */
-.research-content {
-    flex-grow: 1;
-    margin-right: 15px;
-    overflow: hidden;
-}
-
-.research-title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 2px;
-}
-
-.research-group-name {
-    font-size: 0.75rem;
-    color: #009FFD;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
-
-.research-name {
-    font-weight: bold;
-    color: #fff;
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.research-desc {
-    font-size: 0.8rem;
-    color: #aaa;
-    line-height: 1.2;
-}
-
-/* Rechter Teil: Preis & Button */
-.research-action {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    min-width: 90px;
-    flex-shrink: 0;
-}
-
-.research-cost {
-    font-size: 0.9rem;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
+.research-content { flex-grow: 1; margin-right: 10px; overflow: hidden; }
+.research-title-row { display: flex; align-items: baseline; gap: 8px; }
+.research-group-name { font-size: 0.7rem; color: var(--color-accent-blue); text-transform: uppercase; }
+.research-name { font-weight: bold; color: #fff; font-size: 0.9rem; }
+.research-desc { font-size: 0.75rem; color: #aaa; }
 
 .btn-buy-research {
-    flex: 0 0 auto;
-    min-width: 120px;
-    margin-left: auto;
+    background: var(--color-blue-main);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    min-width: 80px;
 }
+.btn-buy-research:disabled { background: #333; color: #777; cursor: not-allowed; }
 
 /* ======================================================= */
-/* 5. MODALS & UI MESSAGES                                */
+/* 6. MODALS & POPUPS                                      */
 /* ======================================================= */
 
 .modal {
-    align-items: center;
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(0,0,0,0.8);
     display: flex;
-    height: 100%;
+    align-items: center;
     justify-content: center;
-    left: 0;
-    padding: 20px;
     position: fixed;
-    top: 0;
-    width: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: 2000;
+    padding: 20px;
 }
 
 .modal-content {
-    background-color: var(--color-primary-dark);
-    border: 2px solid var(--color-accent-blue);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    background-color: #0b1019;
+    border: 1px solid var(--color-accent-blue);
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
     max-height: 90vh;
     max-width: 900px;
-    overflow-y: auto;
-    padding: var(--spacing-lg);
-    position: relative;
-    width: 90%;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
 }
 
 .modal-content.large { max-width: 1000px; }
-.modal-buttons { margin-top: var(--spacing-lg); text-align: right; }
+.modal-content h2 { margin-top: 0; color: var(--color-accent-blue); border-bottom: 1px solid #333; padding-bottom: 10px; }
+.page-container { overflow-y: auto; flex-grow: 1; padding-right: 5px; }
+.modal-buttons { margin-top: 20px; text-align: right; border-top: 1px solid #333; padding-top: 10px; }
 
-/* TOAST NOTIFICATIONS */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10000;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+/* Settings Slider */
+.settings-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+input[type=range] { width: 100%; cursor: pointer; }
+#save-data-textarea { width: 100%; background: #000; color: #009FFD; border: 1px solid #333; padding: 10px; }
 
-.toast {
-    background: rgba(0, 0, 0, 0.9);
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 8px;
-    border-left: 5px solid var(--color-accent-blue);
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.3s ease-out;
-    min-width: 300px;
-    text-align: center;
-}
-
+/* Toast Notifications */
+#toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: rgba(0,0,0,0.9); color: #fff; padding: 12px 24px; border-radius: 8px; border-left: 5px solid var(--color-accent-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.5); opacity: 0; transform: translateY(-20px); transition: all 0.3s; }
 .toast.show { opacity: 1; transform: translateY(0); }
-.toast.success { border-left: 5px solid #FFD700; color: #FFD700; }
+.toast.success { border-color: #FFD700; color: #FFD700; }
 
 /* ======================================================= */
-/* 6. PETS & MINIGAME                                     */
+/* 7. PRESTIGE TREE (DRAG & DROP CANVAS)                   */
 /* ======================================================= */
 
-/* Pet Display Layout */
-#active_pet_display {
-    /* Flexbox ist jetzt inline im HTML definiert, aber wir verfeinern den Inhalt */
-    transition: all 0.3s ease;
-}
-
-/* Das Bild im Pet Display */
-#active_pet_display img.active-pet-img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid #FFD700; /* Goldener Rand */
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); /* Goldener Schein */
-    flex-shrink: 0; /* Verhindert Schrumpfen */
-}
-
-/* Der Text-Container im Pet Display */
-#active_pet_display div {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-}
-
-/* Pet Name & Level */
-#active_pet_display span {
-    font-size: 0.95rem;
-    font-weight: bold;
-    color: #fff;
-    margin-bottom: 2px;
-}
-
-/* Info Icon */
-#active_pet_display .pet-tooltip {
-    font-size: 0.8rem;
-    color: #aaa;
-    cursor: help;
-}
-.pet-item {
-    background: rgba(1, 22, 56, 0.7);
-    border: 2px solid var(--color-neutral-accent);
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-    transition: all 0.2s ease;
-}
-
-.pet-img {
-    border: 3px solid var(--color-accent-blue);
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    height: 60px;
-    margin-bottom: 10px;
-    object-fit: cover;
-    width: 60px;
-}
-
-.btn-pet-active { background-color: var(--color-red-main); }
-.btn-pet-inactive { background-color: var(--color-blue-main); }
-
-.minigame-progress-container { background: #444; border-radius: 4px; height: 20px; margin: 15px 0; overflow: hidden; width: 100%; }
-.progress-bar { background: var(--color-blue-main); border-radius: 4px; height: 100%; width: 100%; }
-
-/* ======================================================= */
-/* 7. PRESTIGE SKILL-TREE (DRAG & DROP SYSTEM)             */
-/* ======================================================= */
-
-/* Haupt-Container (Das "Fenster") */
 #prestige-tree-container {
     position: relative;
     width: 100%;
-    height: 600px; /* Fixe Höhe des Fensters */
-    
-    /* Design: Weltraum-Hintergrund */
+    height: 500px;
     background: radial-gradient(circle at center, #0b0f19 0%, #000 100%);
     border: 1px solid var(--color-accent-blue);
-    border-radius: 12px;
-    box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+    border-radius: 8px;
+    overflow: hidden; /* WICHTIG: Versteckt den Überlauf */
+    cursor: grab;
+    user-select: none;
     
-    /* WICHTIG: Keine Scrollbalken mehr! Wir verstecken alles was übersteht. */
-    overflow: hidden; 
-    
-    /* Zeigt dem Spieler, dass er greifen kann */
-    cursor: grab; 
-    user-select: none; /* Verhindert, dass man Text markiert beim Ziehen */
-
-    /* Holo-Raster (Optional, sieht aber cool aus) */
+    /* Grid Hintergrund */
     background-image: 
-        radial-gradient(circle at center, rgba(1, 22, 56, 0.8) 0%, #000 100%),
         linear-gradient(rgba(0, 159, 253, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 159, 253, 0.05) 1px, transparent 1px);
-    background-size: 100% 100%, 40px 40px, 40px 40px;
+    background-size: 40px 40px;
 }
 
-/* Wenn man klickt und hält */
-#prestige-tree-container:active {
-    cursor: grabbing;
-}
+#prestige-tree-container:active { cursor: grabbing; }
 
-/* Die neue "Welt"-Ebene, die wir per JS verschieben */
+/* Die Welt-Ebene */
 #prestige-tree-world {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 0px;  /* Größe egal, da wir transform nutzen */
-    height: 0px;
-    
-    /* Damit die Bewegung flüssig ist */
+    top: 0; left: 0;
     transform-origin: 0 0;
-    will-change: transform; 
+    will-change: transform;
 }
 
 /* Canvas für Linien */
-#prestige-lines { 
-    position: absolute; 
-    top: 0;
-    left: 0;
-    pointer-events: none; 
-    z-index: 1; 
+#prestige-lines {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none; /* WICHTIG: Maus klickt durch */
+    z-index: 1;
 }
 
-#prestige-tooltip-modal {
-    position: fixed !important;
-    background: rgba(10, 10, 25, 0.98) !important;
-    border: 2px solid #FFD700 !important;
-    padding: 15px !important;
-    border-radius: 8px;
-    z-index: 20000 !important; /* Ganz weit oben */
-    
-    /* WICHTIG: Maus ignoriert den Text -> Kein Flackern mehr! */
-    pointer-events: none; 
-    
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
-    min-width: 250px;
-    max-width: 320px;
-    color: #fff !important;
-    text-align: left;
-    display: none; /* Standardmäßig aus */
-}
-
-/* Nodes Styling */
+/* Nodes */
 .skill-node {
     position: absolute;
-    width: 50px;  /* Feste Größe */
-    height: 50px; /* Feste Größe */
-    border-radius: 50%; /* Macht es zum Kreis */
-    
-    /* Design */
-    background-color: #0b0f19; /* Dunkler Hintergrund */
-    border: 3px solid #6B0504; /* Standard Rand (Rot) */
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background-color: #0b0f19;
+    border: 3px solid #6B0504;
     color: #fff;
-    
-    /* Zentrierung von Text/Icon */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 24px;
-    font-weight: bold;
-    
-    z-index: 10; /* Liegt ÜBER den Linien */
-    transform: translate(-50%, -50%); /* Zentriert den Punkt exakt auf der Koordinate */
-    
-    cursor: pointer; /* Zeigefinger-Maus */
-    transition: transform 0.1s, border-color 0.2s;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
 }
 
-/* Hover-Effekt (Vergrößern) */
-.skill-node:hover {
-    transform: translate(-50%, -50%) scale(1.2); /* Wächst beim Hovern */
-    z-index: 100; /* Kommt ganz nach vorne */
-}
+.skill-node:hover { transform: translate(-50%, -50%) scale(1.2); z-index: 100; }
+.skill-node.purchased { background-color: var(--color-accent-blue); border-color: #fff; box-shadow: 0 0 15px var(--color-accent-blue); }
+.skill-node.available { background-color: var(--color-neutral-olive); border-color: var(--color-accent-blue); }
+.skill-node.locked { opacity: 0.6; border-color: #333; }
 
-/* Status-Farben */
-.skill-node.purchased {
-    background-color: #009ffd;
-    border-color: #fff;
-    box-shadow: 0 0 15px #009ffd;
-}
-
-.skill-node.available {
-    background-color: #3E5641;
-    border-color: #009ffd;
-}
-
-.skill-node.locked {
-    opacity: 0.6;
-    border-color: #333;
-}
-
-/* ======================================================= */
-/* 8. INFO SEITE & WIKI LAYOUT (REDESIGNED)               */
-/* ======================================================= */
-
-.info-page-layout {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-.info-section {
-    background-color: var(--color-box-background);
-    border: 1px solid var(--color-neutral-accent);
-    border-radius: 8px;
-    margin-bottom: var(--spacing-md);
-    padding: 20px;
-    text-align: left;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-.info-section h3 {
-    color: var(--color-accent-blue);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-    text-align: left;
-}
-
-.info-section ul { padding-left: 20px; margin: 0; }
-.info-section ul li { margin-bottom: 8px; color: var(--color-text-secondary); }
-.info-section strong { color: #fff; }
-
-.info-page-layout button {
-    text-align: left;
-    padding-left: 20px;
-    transition: transform 0.2s, background 0.2s;
-}
-.info-page-layout button:hover { transform: translateX(5px); }
-
-.info-grid {
-    display: grid;
-    gap: var(--spacing-md);
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-.info-upgrade-item {
-    background-color: var(--color-box-background);
-    border: 1px solid var(--color-neutral-accent);
-    border-radius: 8px;
+/* Tooltip (JS positioniert) */
+#prestige-tooltip-modal {
+    position: fixed !important;
+    background: rgba(10, 10, 25, 0.95);
+    border: 1px solid #FFD700;
     padding: 15px;
-    text-align: left;
-}
-.info-upgrade-item.bought-upgrade { border-left: 5px solid var(--color-accent-blue); }
-.info-upgrade-item h3 { margin-top: 0; font-size: 1rem; color: #fff; }
-.info-upgrade-item p { color: #ccc; font-size: 0.9rem; }
-
-/* Stats Box */
-.stats-box { background: var(--color-dark-overlay); border: 1px solid var(--color-neutral-accent); border-radius: 10px; margin-bottom: var(--spacing-md); padding: 15px; text-align: left; }
-.stats-box p { color: var(--color-text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; }
-.stats-box span { color: var(--color-text-accent); font-weight: 500; }
-
-/* ========================================= */
-/* 💎 DIAMANTEN-MINE DESIGN                 */
-/* ========================================= */
-
-#diamond-mine-content {
-    background: radial-gradient(circle at center, #1a2639 0%, #080c11 100%);
-    border: 1px solid #304a6e;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
-    color: #e0f7ff;
-    position: relative;
-    overflow: hidden;
-}
-
-.mine-nav { display: flex; gap: 10px; margin-bottom: 30px; position: relative; z-index: 2; }
-.mine-nav button { flex: 1; border-radius: 6px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-.mine-nav button.active { background: #009ffd; color: #000; box-shadow: 0 0 15px rgba(0, 159, 253, 0.4); border: none; }
-.mine-nav button:not(.active) { background: #2f3b2f; color: #8fa38f; border: 1px solid #445544; }
-
-#start-minigame-button {
-    background: linear-gradient(180deg, #2a2a2a, #111);
-    border: 2px solid #ff3333;
+    border-radius: 6px;
+    z-index: 9999;
+    pointer-events: none; /* Kein Flackern */
+    box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    max-width: 300px;
     color: #fff;
-    font-size: 1.1rem;
-    padding: 15px 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
-    box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
-    width: 100%;
-    text-shadow: 0 2px 2px black;
-    position: relative;
-    z-index: 2;
 }
 
-#start-minigame-button:hover { box-shadow: 0 0 20px rgba(255, 51, 51, 0.6); background: linear-gradient(180deg, #331a1a, #220000); transform: translateY(-2px); }
-.pickaxe-icon { font-size: 1.5rem; filter: drop-shadow(0 0 5px red); }
+/* ======================================================= */
+/* 8. FLOATING TEXT & EFFECTS                              */
+/* ======================================================= */
 
-/* =========================================
-   STYLE FÜR SCHWEBENDE ZAHLEN (Floating Text)
-   ========================================= */
-
-.floating-text {
+.floating-text, .click-effect {
     position: fixed;
     pointer-events: none;
-    color: #fff; /* Standard: Weiß/Grün für Einnahmen */
+    color: #fff;
     font-weight: bold;
     font-size: 1.2rem;
     animation: floatUp 1s ease-out forwards;
-    z-index: 10000; /* Ganz oben! */
+    z-index: 5000;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
-/* SPEZIAL-STYLE FÜR BOSS SCHADEN (ROT & GROSS) */
-.floating-text.boss-damage {
-    color: #ff3333; /* Knallrot */
-    font-size: 1.8rem; /* Viel Größer */
-    font-weight: 900; /* Extra Fett */
-    text-shadow: 0 0 5px #550000; /* Rotes Glühen/Schatten */
-    animation: floatUpAggressive 0.6s ease-out forwards; /* Schneller! */
-}
+.click-effect { color: var(--color-accent-blue); font-size: 1.5rem; }
+.click-effect.crit-style { color: #ff3333; font-size: 2.5rem; text-shadow: 0 0 10px red; font-weight: 900; }
 
-/* Style für Boss-Schaden */
-.floating-text.boss-damage {
-    color: #ff0000; /* Knallrot */
-    font-weight: 900; /* Sehr fett */
-    font-size: 1.5rem; /* Größer */
-    text-shadow: 2px 2px 0px #000; /* Schwarzer Rand für Lesbarkeit */
-    animation: floatUp 0.8s ease-out forwards; /* Schnelleres Aufsteigen */
-}
-
-/* Normale Animation (sanft nach oben) */
 @keyframes floatUp {
     0% { opacity: 1; transform: translateY(0) scale(1); }
     100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
 }
 
-/* Aggressive Animation für Boss (schneller & mehr Zoom) */
-@keyframes floatUpAggressive {
-    0% { opacity: 1; transform: translateY(0) scale(0.5); }
-    20% { transform: translateY(-10px) scale(1.5); } /* Pop-Effekt */
-    100% { opacity: 0; transform: translateY(-80px) scale(1); }
+/* ======================================================= */
+/* 9. OTHER MODULES (Mine, Guilds, Info)                   */
+/* ======================================================= */
+
+/* Mine & Guilds Content */
+#diamond-mine-content, #guilds-content {
+    background: radial-gradient(circle at center, #1a2639 0%, #080c11 100%);
+    border: 1px solid #304a6e;
+    border-radius: 8px;
+    padding: 20px;
+    color: #e0f7ff;
 }
 
-/* ========================================= */
-/* 📊 PRESTIGE BALKEN: FIXED SIZE            */
-/* ========================================= */
+.mine-nav button { flex: 1; border-radius: 6px; padding: 10px; margin-right: 5px; cursor: pointer; border: 1px solid #444; background: #222; color: #aaa; }
+.mine-nav button.active { background: #009FFD; color: #000; border-color: #009FFD; }
 
-.prestige-progress-box {
-    margin-top: 15px;
-    margin-bottom: 20px;
-    text-align: center;
-    font-family: sans-serif;
-}
-
-.progress-container {
-    height: 40px;               /* Fixe Höhe */
-    background: #0b0f19;
-    border: 2px solid #555;
-    border-radius: 20px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-}
-
-#prestige-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #009ffd, #00d2ff);
-    width: 0%;
-    transition: width 0.3s ease-out;
-    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
-}
-
-#prestige-percent-text {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    z-index: 10;
-    text-shadow: 1px 1px 2px black, -1px -1px 2px black;
-}
+/* Info Grid */
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+.info-upgrade-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid #333; }
+.info-upgrade-item.bought-upgrade { border-left: 4px solid var(--color-accent-blue); }
 
 /* ======================================================= */
-/* 9. RESPONSIVE DESIGN                                   */
+/* 10. MEDIA QUERIES                                       */
 /* ======================================================= */
 
 @media (max-width: 1400px) {
-    .main-layout {
-        padding: 10px;
-        gap: 15px;
-        grid-template-columns: 300px 1fr 300px; /* Zurück zum flexiblen Layout wenn Platz eng ist */
-    }
+    .main-layout { grid-template-columns: 280px 1fr 280px; gap: 10px; padding: 10px; }
 }
 
-@media (max-width: 900px) {
-    /* Handbuch Layout wird vertikal */
-    .info-page-layout { flex-direction: column; }
-
-    /* Hauptlayout wird 1-Spaltig */
-    .main-layout { grid-template-columns: 1fr; }
-
-    .navbar { position: relative; } /* Scrollt mit auf Handy */
-    main { padding-top: 10px; }
-}
-/* ========================================= */
-/* 🎚️ SETTINGS & SLIDERS (Custom Styling)   */
-/* ========================================= */
-
-.settings-section {
-    background-color: var(--color-box-background);
-    border: 1px solid var(--color-neutral-accent);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.setting-item {
-    margin-bottom: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.setting-item label {
-    color: var(--color-text-primary);
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-/* --- Range Slider Styling (Chrome/Safari/Edge) --- */
-input[type=range] {
-    -webkit-appearance: none; /* Standard-Style entfernen */
-    width: 100%;
-    background: transparent;
-}
-
-input[type=range]:focus {
-    outline: none;
-}
-
-/* Die "Spur" (Track) */
-input[type=range]::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 8px;
-    cursor: pointer;
-    background: #111;
-    border-radius: 4px;
-    border: 1px solid #444;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-}
-
-/* Der "Knopf" (Thumb) */
-input[type=range]::-webkit-slider-thumb {
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: var(--color-accent-blue);
-    cursor: pointer;
-    -webkit-appearance: none;
-    margin-top: -7px; /* Positionierung zentriert zum Track */
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.8); /* Neon-Glühen */
-    border: 2px solid #fff;
-    transition: transform 0.1s;
-}
-
-input[type=range]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    background: #fff;
-}
-
-/* Firefox Support */
-input[type=range]::-moz-range-track {
-    width: 100%;
-    height: 8px;
-    cursor: pointer;
-    background: #111;
-    border-radius: 4px;
-    border: 1px solid #444;
-}
-
-input[type=range]::-moz-range-thumb {
-    height: 20px;
-    width: 20px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    background: var(--color-accent-blue);
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.8);
-}
-
-/* Textarea für Save-Data verschönern */
-#save-data-textarea {
-    width: 100%;
-    height: 100px;
-    background: #0b0f19;
-    color: #009ffd;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 10px;
-    font-family: monospace;
-    resize: none;
-    margin-top: 10px;
-}
-
-/* === NEUES BUTTON GRID IN DER MITTE === */
-.feature-button-grid {
-    display: grid;
-    /* 2 Spalten, 2 Zeilen -> Schönes 2x2 Raster */
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px; /* Abstand zur Upgrade-Liste */
-    flex-shrink: 0; /* Verhindert, dass die Buttons schrumpfen */
-}
-
-.feature-button-grid button {
-    width: 100%;
-    height: 60px; /* Alle exakt gleich hoch */
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 0 !important; /* Überschreibt inline margins */
-    white-space: normal; /* Erlaubt Textumbruch bei langen Namen */
-    line-height: 1.2;
-}
-
-/* --- Klick-Partikel Effekt --- */
-.click-effect {
-    position: absolute;       
-    color: #009ffd;           /* Dein Bright Blue */
-    font-weight: bold;
-    font-size: 1.5rem;
-    pointer-events: none;     /* WICHTIG: Klicks gehen durch den Text durch */
-    user-select: none;
-    animation: floatUp 1s ease-out forwards;
-    z-index: 1000;
-}
-
-/* Zusätzliche Klasse für CRITS (Rot & Groß) */
-.click-effect.crit-style {
-    color: #ff3333;       /* Ein schönes, knalliges Rot */
-    font-size: 2.5rem;    /* Deutlich größer als normal */
-    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); /* Ein kleines rotes Glühen */
-    z-index: 1001;        /* Über den blauen Zahlen liegen */
-    font-weight: 900;     /* Extra fett */
-}
-
-/* --- Squish Animation (Finale Version) --- */
-/* WICHTIG: Wir verbinden ID (#) und Klasse (.), damit dieser Befehl stärker ist als alles andere! */
-#smiley_button.anim-squish {
-    transform: scale(0.90); /* Auf 90% verkleinern (sieht knackig aus) */
-    transition: transform 0.05s ease-out; /* Sehr schnell zusammendrücken */
-}
-
-@keyframes floatUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-50px); /* Schwebt nach oben */
-    }
+@media (max-width: 950px) {
+    .main-layout { grid-template-columns: 1fr; height: auto; overflow-y: auto; }
+    .left-column, .middle-column, .right-column { height: auto; overflow: visible; }
+    .navbar { position: relative; }
+    main { padding-top: 0; }
 }
