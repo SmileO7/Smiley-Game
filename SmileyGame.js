@@ -848,9 +848,19 @@ class SmileyGame {
 
                 // --- VISUALS ---
                 if (e) {
-                    // Floating Text anzeigen
-                    this.spawnFloatingText(e, damage, isCrit ? 'crit' : 'normal');
+                // Wir nutzen formatNumber für hübsche Zahlen (z.B. "500" statt "500.00")
+                let text = this.formatNumber(damage);
+
+                if (isCrit) {
+                    // HIER: Wir rufen die neue Funktion mit 'crit' auf -> ROT
+                    this.showClickEffect(e, text, 'crit');
+                    
+                    // (Die alte spawnFloatingText Zeile kannst du jetzt löschen, die brauchen wir nicht mehr)
+                } else {
+                    // HIER: Normaler Aufruf -> BLAU
+                    this.showClickEffect(e, text, 'normal');
                 }
+            }
 
                 this.checkAchievements();
                 this.updateUI();
@@ -2339,6 +2349,30 @@ class SmileyGame {
         button.style.display = this.gameState.guildsUnlocked ? 'block' : 'none';
     }
 
+    showClickEffect(event, amount, type = 'normal') {
+        const effect = document.createElement('div');
+        
+        // Basis-Klasse (macht es schwebend)
+        effect.className = 'click-effect';
+
+        // Wenn es ein Crit ist, fügen wir die rote Klasse hinzu
+        if (type === 'crit') {
+            effect.classList.add('crit-style');
+            effect.innerText = '💥 ' + amount; // Optional: Ein Icon davor!
+        } else {
+            effect.innerText = '+' + amount;
+        }
+
+        // Position setzen
+        effect.style.left = `${event.clientX}px`;
+        effect.style.top = `${event.clientY}px`;
+
+        document.body.appendChild(effect);
+
+        setTimeout(() => {
+            effect.remove();
+        }, 1000);
+    }
 
     // ================================================================================================================
     // 8. CONTENT RENDERING

@@ -918,3 +918,35 @@ input[type=range]::-moz-range-thumb {
     white-space: normal; /* Erlaubt Textumbruch bei langen Namen */
     line-height: 1.2;
 }
+
+/* --- Klick-Partikel Effekt --- */
+.click-effect {
+    position: absolute;       
+    color: #009ffd;           /* Dein Bright Blue */
+    font-weight: bold;
+    font-size: 1.5rem;
+    pointer-events: none;     /* WICHTIG: Klicks gehen durch den Text durch */
+    user-select: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 1000;
+}
+
+/* Zusätzliche Klasse für CRITS (Rot & Groß) */
+.click-effect.crit-style {
+    color: #ff3333;       /* Ein schönes, knalliges Rot */
+    font-size: 2.5rem;    /* Deutlich größer als normal */
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5); /* Ein kleines rotes Glühen */
+    z-index: 1001;        /* Über den blauen Zahlen liegen */
+    font-weight: 900;     /* Extra fett */
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px); /* Schwebt nach oben */
+    }
+}
