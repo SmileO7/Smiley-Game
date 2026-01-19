@@ -244,6 +244,12 @@ class SmileyGame {
             lastQuestGenTime: 0,
             diamondMinigameRunning: false,
             diamondMinigameTimer: null,
+            activeBuffs: {
+                spsMultiplier: 1,
+                costMultiplier: 1,
+                timerSPS: 0,
+                timerCost:0
+            }
         };
 
         this.productionInterval = null;
@@ -274,6 +280,7 @@ class SmileyGame {
         this.setupSkillTreeControls();
         this.startIntervals();
         this.updatePetInterval();
+        this.updateNewsTicker();
         this.updateUI();
 
         console.log("Spiel initialisiert. Warte auf Autosave...");
@@ -284,22 +291,34 @@ class SmileyGame {
     // ================================================================================================================
 
     startIntervals() {
-        this.productionInterval = setInterval(() => this.produzierePassiveErträge(), 1000);
-        this.saveInterval = setInterval(() => {
-            this.speichereSpiel();
-        }, 10000);
+    // 1. Der Haupt-Loop für SPS (jede Sekunde)
+    setInterval(() => {
+        this.addSmileys(this.gameState.totalSPS);
+        this.updateUI();
+    }, 1000);
 
-        window.addEventListener('beforeunload', () => {
-            this.speichereSpiel();
-        });
+    // 2. Automatisches Speichern (alle 30-60 Sek)
+    setInterval(() => {
+        this.saveGame();
+    }, 60000);
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                console.log("Tab minimiert/versteckt -> Speichere Spiel...");
-                this.speichereSpiel();
-            }
-        });
-    }
+    // 3. NEU: News-Ticker Wechsel (alle 30 Sekunden)
+    setInterval(() => {
+        // Wir prüfen, ob der Ticker gerade einen blauen Alarm-Text zeigt.
+        // Falls nicht, laden wir eine neue zufällige Nachricht.
+        const ticker = this.getById('news-ticker-text');
+        if (ticker && ticker.style.color !== "rgb(0, 159, 253)") { 
+            this.updateNewsTicker();
+        }
+    }, 30000);
+
+    // 4. RNG-Events (Fragezeichen alle 1-3 Minuten)
+    setInterval(() => {
+        if (Math.random() < 0.3) { // 30% Chance alle 60 Sek
+            this.spawnRandomEvent();
+        }
+    }, 60000);
+}
 
     produzierePassiveErträge() {
         const actualSPS = this.computeTotalSPS();
@@ -337,6 +356,8 @@ class SmileyGame {
         this.gameState.petsUnlocked = prestigeEffects.petsUnlocked;
         this.gameState.diamondMineUnlocked = prestigeEffects.mineUnlocked;
         this.gameState.guildsUnlocked = prestigeEffects.guildsUnlocked;
+
+        this.gameState.totalSPS *= this.gameState.activeBuffs.spsMultiplier;
 
         return this.gameState.totalSPS;
     }
@@ -818,83 +839,67 @@ class SmileyGame {
         if (this.gameState.guildCostReduction > 0) {
             multiplier *= (1 - this.gameState.guildCostReduction);
         }
+
+        multiplier *= this.gameState.activeBuffs.costMultiplier;
+
         return multiplier;
     }
 
     updateGlobalUpgradeUI() {
-        const container = this.getById('global-upgrades-container');
-        if (!container) return;
-        container.innerHTML = '';
+    const container = this.getById('global-upgrades-container');
+    if (!container) return;
+    container.innerHTML = '';
 
-        const groups = {};
-        globalUpgrades.forEach(upgrade => {
-            const groupKey = upgrade.buildingIndex !== undefined ? upgrade.buildingIndex : -1;
-            if (!groups[groupKey]) groups[groupKey] = [];
-            groups[groupKey].push(upgrade);
-        });
+    // Wir sammeln alle noch nicht gekauften Upgrades
+    const upgradesToRender = [];
 
-        const upgradesToRender = [];
-        Object.keys(groups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(key => {
-            const groupList = groups[key];
-            groupList.sort((a, b) => a.id - b.id);
-            const nextUpgrade = groupList.find(u => !this.gameState.researchStatus[u.id]);
-            if (nextUpgrade) {
-                const bIndex = nextUpgrade.buildingIndex;
-                const isGlobal = (bIndex === undefined || bIndex === -1);
-                const hasBuilding = bIndex >= 0 && this.gameState.buildingCounts[bIndex] > 0;
-                if (isGlobal || hasBuilding) {
-                    upgradesToRender.push(nextUpgrade);
-                }
+    globalUpgrades.forEach(upgrade => {
+        // Prüfen, ob das Upgrade noch NICHT gekauft wurde
+        if (!this.gameState.researchStatus[upgrade.id]) {
+            const bIndex = upgrade.buildingIndex;
+            
+            // Logik: Anzeigen wenn global (-1/undefined) ODER wenn man das Gebäude besitzt
+            const isGlobal = (bIndex === undefined || bIndex === -1);
+            const hasBuilding = bIndex >= 0 && (this.gameState.buildingCounts[bIndex] > 0);
+
+            if (isGlobal || hasBuilding) {
+                upgradesToRender.push(upgrade);
             }
-        });
-
-        if (upgradesToRender.length === 0) {
-            container.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">Alle verfügbaren Upgrades gekauft!</div>';
-            return;
         }
+    });
 
-        upgradesToRender.forEach(upgrade => {
-            const finalCost = this.getGlobalUpgradeCost(upgrade);
-            const canAfford = this.gameState.aktuelle_smileys >= finalCost;
-            let groupTitle = 'Global / Klick';
-            let typeIcon = '⚡';
-
-            if (upgrade.buildingIndex !== undefined && upgrade.buildingIndex > -1) {
-                if (typeof buildingsData !== 'undefined' && buildingsData[upgrade.buildingIndex]) {
-                    groupTitle = buildingsData[upgrade.buildingIndex].name;
-                    typeIcon = '📈';
-                } else {
-                    groupTitle = 'Gebäude-Upgrade';
-                }
-            } else {
-                if (upgrade.type === 'click_mult') typeIcon = '🖱️';
-                if (upgrade.type === 'cost_reduction_buildings') typeIcon = '💸';
-            }
-
-            const div = document.createElement('div');
-            div.className = 'research-item';
-            div.innerHTML = `
-                <div class="research-content">
-                    <div class="research-title-row">
-                        <span class="research-group-name">${groupTitle}</span>
-                        <span class="research-name">${typeIcon} ${upgrade.name || 'Upgrade'}</span>
-                    </div>
-                    <div class="research-desc">${upgrade.description}</div>
-                </div>
-                <div class="research-action">
-                    <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
-                        ${this.formatNumber(finalCost)}
-                    </span>
-                    <button class="btn-buy-research" data-id="${upgrade.id}" data-amount="1"
-                        ${!canAfford ? 'disabled' : ''}
-                        style="padding: 4px 10px; font-size: 0.8rem; background: ${canAfford ? '#009ffd' : '#333'}; color: ${canAfford ? '#fff' : '#888'}; border: none; border-radius: 4px; cursor: ${canAfford ? 'pointer' : 'not-allowed'}; width: 100%;">
-                        Kaufen
-                    </button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
+    // Wenn gar nichts da ist
+    if (upgradesToRender.length === 0) {
+        container.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">Alle Upgrades erforscht!</div>';
+        return;
     }
+
+    // Nur die ersten 5 anzeigen, damit die Liste nicht den Bildschirm sprengt
+    upgradesToRender.slice(0, 5).forEach(upgrade => {
+        const finalCost = this.getGlobalUpgradeCost(upgrade);
+        const canAfford = this.gameState.aktuelle_smileys >= finalCost;
+
+        const div = document.createElement('div');
+        div.className = 'research-item';
+        div.innerHTML = `
+            <div class="research-content">
+                <div class="research-title-row">
+                    <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
+                </div>
+                <div class="research-desc">${upgrade.description}</div>
+            </div>
+            <div class="research-action">
+                <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
+                    ${this.formatNumber(finalCost)}
+                </span>
+                <button class="btn-buy-research" data-id="${upgrade.id}">
+                    Kaufen
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
     kaufeGlobalUpgrade(id) {
         const upgrade = globalUpgrades.find(u => u.id === id);
@@ -1463,47 +1468,49 @@ class SmileyGame {
     }
 
    updateBuildingUI() {
-        buildingsData.forEach((building, index) => {
-            // 1. Zähler & SPS (Bleibt wie vorher)
-            const baseBuildingSPS = (this.gameState.buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
-            const actualBuildingSPS = baseBuildingSPS * this.gameState.globalerPrestigeMultiplikator;
-            const spsPercentage = this.gameState.totalSPS > 0 ? (actualBuildingSPS / this.gameState.totalSPS * 100) : 0;
+    buildingsData.forEach((building, index) => {
+        // 1. Zähler & SPS (Bleibt wie vorher)
+        const baseBuildingSPS = (this.gameState.buildingCounts[index] || 0) * (building.baseSPS || 0) * (building.prestigeMulti || 1);
+        const actualBuildingSPS = baseBuildingSPS * this.gameState.globalerPrestigeMultiplikator;
+        const spsPercentage = this.gameState.totalSPS > 0 ? (actualBuildingSPS / this.gameState.totalSPS * 100) : 0;
 
-            const countElement = this.getById(`building-count-${index}`);
-            if (countElement) countElement.innerText = this.gameState.buildingCounts[index];
-            const spsElement = this.getById(`building-sps-${index}`);
-            if (spsElement) spsElement.innerText = this.formatNumber(actualBuildingSPS);
-            const spsPctElement = this.getById(`building-sps-pct-${index}`);
-            if (spsPctElement) spsPctElement.innerText = spsPercentage.toFixed(1);
+        const countElement = this.getById(`building-count-${index}`);
+        if (countElement) countElement.innerText = this.gameState.buildingCounts[index];
+        const spsElement = this.getById(`building-sps-${index}`);
+        if (spsElement) spsElement.innerText = this.formatNumber(actualBuildingSPS);
+        const spsPctElement = this.getById(`building-sps-pct-${index}`);
+        if (spsPctElement) spsPctElement.innerText = spsPercentage.toFixed(1);
 
-            // 2. DYNAMISCHE PREISBERECHNUNG (NEU)
-            const amount = this.currentBuyAmount; // 1, 10 oder 100
-            let totalCost = 0;
+        // 2. DYNAMISCHE PREISBERECHNUNG (NEU)
+        const amount = this.currentBuyAmount; // 1, 10 oder 100
+        let totalCost = 0;
+        
+        // Schleife um den Gesamtpreis für X Stück zu berechnen
+        for (let i = 0; i < amount; i++) {
+            totalCost += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
+        }
+
+        // 3. Button & Tooltip aktualisieren
+        const btn = this.getById(`buy-btn-${index}`);
+        const costSpan = this.getById(`buy-cost-${index}`);
+        
+        if (btn && costSpan) {
+            // Text & Preis setzen
+            btn.firstElementChild.innerText = `Kaufen ${amount}x`;
+            costSpan.innerText = this.formatNumber(totalCost);
             
-            // Schleife um den Gesamtpreis für X Stück zu berechnen
-            for (let i = 0; i < amount; i++) {
-                totalCost += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
-            }
+            // Aktiv/Inaktiv setzen
+            btn.disabled = this.gameState.aktuelle_smileys < totalCost;
+            costSpan.style.color = (this.gameState.aktuelle_smileys >= totalCost) ? '#4CAF50' : '#ff5252';
 
-            // 3. Button aktualisieren
-            const btn = this.getById(`buy-btn-${index}`);
-            const costSpan = this.getById(`buy-cost-${index}`); // Preis-Anzeige im Button
-            
-            if (btn && costSpan) {
-                // Text links: "1x", "10x" oder "100x"
-                btn.firstElementChild.innerText = `Kaufen ${amount}x`;
-                
-                // Preis rechts
-                costSpan.innerText = this.formatNumber(totalCost);
-                
-                // Aktiv/Inaktiv setzen
-                btn.disabled = this.gameState.aktuelle_smileys < totalCost;
-                
-                // Farbe des Preises (Grün wenn leistbar, Rot wenn nicht)
-                costSpan.style.color = (this.gameState.aktuelle_smileys >= totalCost) ? '#4CAF50' : '#ff5252';
-            }
-        });
-    }
+            // --- NEU: Detaillierter Tooltip ---
+            const singleSPS = building.baseSPS * (building.prestigeMulti || 1) * this.gameState.globalerPrestigeMultiplikator;
+            const groupSPS = singleSPS * (this.gameState.buildingCounts[index] || 0);
+
+            btn.title = `Wert pro Stück: ${this.formatNumber(singleSPS)} SPS\nGesamtwert dieser Gruppe: ${this.formatNumber(groupSPS)} SPS`;
+        }
+    });
+}
 
     updatePrestigeUI() {
         const currentLevel = this.gameState.prestigeLevel || 0;
@@ -2373,29 +2380,31 @@ class SmileyGame {
     }
 
     createBuildingElements() {
-        const buildingGrid = this.getById('building-grid');
-        if (!buildingGrid) return;
-        buildingGrid.innerHTML = '';
+    const buildingGrid = this.getById('building-grid');
+    if (!buildingGrid) return;
+    buildingGrid.innerHTML = '';
 
-        buildingsData.forEach((building, index) => {
-            const buildingDiv = document.createElement('div');
-            buildingDiv.className = 'building-item';
-            buildingDiv.dataset.index = index;
+    buildingsData.forEach((building, index) => {
+        const buildingDiv = document.createElement('div');
+        buildingDiv.className = 'building-item';
+        buildingDiv.dataset.index = index;
 
-            // Wir erstellen nur noch EINEN Button mit der ID 'buy-btn-index'
-            buildingDiv.innerHTML = `
-                <h3>${building.name} (<span id="building-count-${index}">0</span>)</h3>
-                <p class="production">Produktion: <span id="building-sps-${index}">0</span> SPS (<span id="building-sps-pct-${index}">0.0</span>%)</p>
-                <div class="button-group">
-                    <button id="buy-btn-${index}" class="btn-buy">
-                        <span>Kaufen</span>
-                        <span id="buy-cost-${index}">---</span>
-                    </button>
-                </div>
-            `;
-            buildingGrid.appendChild(buildingDiv);
-        });
-    }
+        // Wir fügen ein 'title' Attribut für den Tooltip hinzu
+        buildingDiv.innerHTML = `
+            <h3 title="Basis-Produktion: ${building.baseSPS} SPS pro Gebäude">
+                ${building.name} (<span id="building-count-${index}">0</span>)
+            </h3>
+            <p class="production">Produktion: <span id="building-sps-${index}">0</span> SPS (<span id="building-sps-pct-${index}">0.0</span>%)</p>
+            <div class="button-group">
+                <button id="buy-btn-${index}" class="btn-buy" title="Klicke hier, um dieses Gebäude zu kaufen">
+                    <span>Kaufen</span>
+                    <span id="buy-cost-${index}">---</span>
+                </button>
+            </div>
+        `;
+        buildingGrid.appendChild(buildingDiv);
+    });
+}
 
     createPrestigeUpgradeElements() {
         const container = this.getById('prestige-tree-container');
@@ -3053,6 +3062,35 @@ class SmileyGame {
             item.innerHTML = html;
             container.appendChild(item);
         });
+        // Balkendiagramm für Produktions-Verteilung hinzufügen
+    const productionHeader = document.createElement('h3');
+    productionHeader.innerText = "Produktions-Anteil";
+    productionHeader.style.gridColumn = "1 / -1";
+    productionHeader.style.marginTop = "20px";
+    container.appendChild(productionHeader);
+
+    buildingsData.forEach((b, i) => {
+    const count = this.gameState.buildingCounts[i] || 0;
+        if (count > 0) {
+            const baseSPS = count * (b.baseSPS || 0) * (b.prestigeMulti || 1);
+            const actualSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
+            const pct = (actualSPS / this.gameState.totalSPS) * 100;
+
+            const barItem = document.createElement('div');
+            barItem.className = 'info-upgrade-item';
+            barItem.style.gridColumn = "1 / -1";
+            barItem.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${b.name} (${count}x)</span>
+                    <span style="color:var(--color-accent-blue); font-weight:bold;">${pct.toFixed(1)}%</span>
+                    </div>
+                <div style="background:#111; height:10px; border-radius:5px; border:1px solid #333; overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #009FFD, #2af5ff); box-shadow: 0 0 10px rgba(0,159,253,0.5);"></div>
+                </div>
+            `;
+                container.appendChild(barItem);
+            }
+        });
     }
 
     getAchievementBonusText(bonus) {
@@ -3149,4 +3187,128 @@ class SmileyGame {
             btnPage.onclick = () => this.zeigePrestigeDetails();
         }
     }
+
+
+// =========================================================
+    // 11.🎲 RNG EVENT SYSTEM (Buffs & Debuffs)
+    // =========================================================
+
+    spawnRandomEvent() {
+        // 1. Element erstellen
+        const eventObj = document.createElement('div');
+        eventObj.className = 'rng-event-object';
+        eventObj.innerText = '❓'; // Das mysteriöse Fragezeichen
+
+        // 2. Zufällige Position (innerhalb des Sichtbereichs, mit etwas Abstand zum Rand)
+        const x = Math.random() * (window.innerWidth - 150) + 75;
+        const y = Math.random() * (window.innerHeight - 150) + 75;
+        eventObj.style.left = x + 'px';
+        eventObj.style.top = y + 'px';
+
+        document.body.appendChild(eventObj);
+
+        // 3. Klick-Event: Effekt auslösen und Smiley entfernen
+        eventObj.onclick = (e) => {
+            e.stopPropagation(); // Verhindert Klick auf Elemente darunter
+            this.triggerRandomEffect();
+            eventObj.remove();
+        };
+
+        // 4. Automatisches Verschwinden nach 12 Sekunden, falls nicht geklickt
+        setTimeout(() => {
+            if (eventObj.parentNode) {
+                eventObj.style.opacity = '0';
+                eventObj.style.transition = 'opacity 0.5s';
+                setTimeout(() => eventObj.remove(), 500);
+            }
+        }, 12000);
+    }
+
+    triggerRandomEffect() {
+        const isPositive = Math.random() < 0.6; // 60% Chance auf einen Buff
+        
+        if (isPositive) {
+            // --- 🟢 BUFFS ---
+            const buffType = Math.random();
+            
+            if (buffType < 0.5) {
+                // Sofort-Gewinn basierend auf Produktion
+                const gain = Math.max(500, this.gameState.totalSPS * 60 * 10); // 10 Min Produktion
+                this.addSmileys(gain);
+                this.showNotification(`🎁 Glückspilz! +${this.formatNumber(gain)} Smileys erhalten.`, 'success');
+            } else {
+                // SPS Boost
+                this.gameState.activeBuffs.spsMultiplier = 2.5;
+                this.showNotification(`⚡ Smiley-Rausch! SPS x2.5 für 30s`, 'success');
+                
+                // Timer zum Zurücksetzen
+                setTimeout(() => {
+                    this.gameState.activeBuffs.spsMultiplier = 1;
+                    this.showNotification(`⌛ Der Rausch ist vorbei.`, 'info');
+                    this.updateUI();
+                }, 30000);
+            }
+        } else {
+            // --- 🔴 DEBUFFS (Deine Ideen) ---
+            const debuffType = Math.random();
+
+            if (debuffType < 0.33) {
+                // Direkter Abzug an Smileys
+                const loss = Math.floor(this.gameState.aktuelle_smileys * 0.10); // 10% Abzug
+                this.gameState.aktuelle_smileys -= loss;
+                this.showNotification(`📉 Pech! -10% Deiner Smileys wurden abgezogen.`, 'error');
+            } else if (debuffType < 0.66) {
+                // SPS Reduktion
+                this.gameState.activeBuffs.spsMultiplier = 0.4; // 60% weniger
+                this.showNotification(`🐢 System-Drosselung! SPS -60% für 30s`, 'error');
+                
+                setTimeout(() => {
+                    this.gameState.activeBuffs.spsMultiplier = 1;
+                    this.showNotification(`🔧 System wieder normal.`, 'info');
+                    this.updateUI();
+                }, 30000);
+            } else {
+                // Inflation: Gebäude werden teurer
+                this.gameState.activeBuffs.costMultiplier = 1.5; // 50% teurer
+                this.showNotification(`💸 Inflation! Preise +50% für 1 Minute`, 'error');
+                
+                setTimeout(() => {
+                    this.gameState.activeBuffs.costMultiplier = 1;
+                    this.showNotification(`⚖️ Preise haben sich stabilisiert.`, 'info');
+                    this.updateUI();
+                }, 60000);
+            }
+        }
+        
+        // UI sofort aktualisieren, um Änderungen zu zeigen
+        this.updateNewsTicker("ALARM: Inflation teibt die Preise hoch!")
+        this.applyAllBoni();
+        this.updateUI();
+    
+    }
+
+// =========================================================
+// 12.News Middle Colum Top
+// // =========================================================
+
+    updateNewsTicker(manualText = null) {
+    const ticker = this.getById('news-ticker-text');
+    if (!ticker) return;
+
+    if (manualText) {
+        ticker.innerText = manualText;
+        ticker.style.color = "#009FFD"; // Blau für Events
+    } else {
+        const news = [
+            "Wissenschaftler entdecken: Smileys machen glücklich!",
+            "Gilden suchen aktive Mitglieder für den nächsten Boss-Raid.",
+            "Diamanten-Mine meldet Rekordfunde in den tiefen Ebenen.",
+            "Ein unbekannter Spender hat tausende Smileys verschenkt!",
+            "Achtung: Geheimnisvolle Fragezeichen fliegen durch die Luft.",
+            "Dein Smiley wurde zum 'Smiley des Monats' gewählt!"
+        ];
+        ticker.innerText = news[Math.floor(Math.random() * news.length)];
+        ticker.style.color = "#ccc";
+    }
+}
 }

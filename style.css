@@ -180,6 +180,36 @@ main {
 ::-webkit-scrollbar-track { background: #222; border-radius: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--color-accent-blue); border-radius: 3px; }
 
+.news-ticker-container {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--color-accent-blue);
+    border-radius: 4px;
+    padding: 5px 10px;
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+}
+
+.ticker-label {
+    color: var(--color-accent-blue);
+    font-weight: bold;
+    margin-right: 10px;
+    border-right: 1px solid #444;
+    padding-right: 10px;
+    white-space: nowrap;
+}
+
+.ticker-text {
+    white-space: nowrap;
+    animation: tickerLoop 25s linear infinite;
+    color: #ccc;
+}
+
+@keyframes tickerLoop {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
 /* ======================================================= */
 /* 3. SMILEY & LINKES DASHBOARD (KOMPAKT)                  */
 /* ======================================================= */
@@ -645,7 +675,42 @@ input[type=range] { width: 100%; cursor: pointer; }
 .info-upgrade-item.bought-upgrade { border-left: 4px solid var(--color-accent-blue); }
 
 /* ======================================================= */
-/* 10. MEDIA QUERIES                                       */
+/* 10. RNG Events                                       */
+/* ======================================================= */
+
+/* === RNG EVENT STYLE === */
+.rng-event-object {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    z-index: 9999;
+    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    animation: bounceAround 10s linear infinite, glowPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes glowPulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px gold); }
+    50% { transform: scale(1.2); filter: drop-shadow(0 0 20px white); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px gold); }
+}
+
+/* Eine einfache Schwebe-Animation */
+@keyframes bounceAround {
+    0% { margin-left: 0px; margin-top: 0px; }
+    25% { margin-left: 50px; margin-top: 100px; }
+    50% { margin-left: -50px; margin-top: 200px; }
+    75% { margin-left: 100px; margin-top: 50px; }
+    100% { margin-left: 0px; margin-top: 0px; }
+}
+
+/* ======================================================= */
+/* 11. MEDIA QUERIES                                       */
 /* ======================================================= */
 
 @media (max-width: 1400px) {
