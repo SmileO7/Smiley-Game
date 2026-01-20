@@ -249,7 +249,17 @@ class SmileyGame {
                 costMultiplier: 1,
                 timerSPS: 0,
                 timerCost:0
-            }
+            },
+            skills:{
+            frenzy: { active: false, cooldown: false, duration: 15000, cooldownTime: 120000, color: '#ff4d4d' },
+            overdrive: { active: false, cooldown: false, duration: 30000, cooldownTime: 300000, color: '#009ffd' },
+            critStorm: { active: false, cooldown: false, duration: 10000, cooldownTime: 180000, color: '#ffcc00' },
+            goldRush: { active: false, cooldown: false, duration: 1000, cooldownTime: 600000, color: '#4CAF50' }, // Sofort-Effekt
+            diamondPulse: { active: false, cooldown: false, duration: 20000, cooldownTime: 420000, color: '#b9f2ff' },
+            efficiency: { active: false, cooldown: false, duration: 45000, cooldownTime: 600000, color: '#a0a0a0' },
+            shards: { active: false, cooldown: false, duration: 20000, cooldownTime: 240000, color: '#e066ff' },
+            hyperMinute: { active: false, cooldown: false, duration: 60000, cooldownTime: 900000, color: '#ff8c00' }
+        }
         };
 
         this.productionInterval = null;
@@ -273,7 +283,8 @@ class SmileyGame {
         if (musicPlayer) {
             musicPlayer.play().catch(e => console.log("Musik wartet:", e));
         }
-
+        this.restoreCooldowns();
+        this.checkSkillUnlocks();
         this.setupMainEventListeners();
         this.setupPrestigeEventListeners();
         this.setupInfoPageEventListeners();
@@ -353,10 +364,15 @@ class SmileyGame {
 
         this.gameState.totalSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
 
+        // --- SKILL BOOSTS ---
+        if (this.gameState.skills.overdrive.active) this.gameState.totalSPS *= 2;
+        if (this.gameState.skills.hyperMinute.active) this.gameState.totalSPS *= 5;
+
         this.gameState.petsUnlocked = prestigeEffects.petsUnlocked;
         this.gameState.diamondMineUnlocked = prestigeEffects.mineUnlocked;
         this.gameState.guildsUnlocked = prestigeEffects.guildsUnlocked;
 
+        // RNG Buffs
         this.gameState.totalSPS *= this.gameState.activeBuffs.spsMultiplier;
 
         return this.gameState.totalSPS;
@@ -740,10 +756,18 @@ class SmileyGame {
     klickeSmiley(e) {
         let damage = this.getClickStrength();
         let isCrit = false;
-        if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
+
+        // --- SKILL CHECK: CRIT STORM ---
+        if (this.gameState.skills && this.gameState.skills.critStorm.active) {
+            isCrit = true;
+            damage *= this.gameState.critDamageMult;
+        } 
+        // Normaler Crit-Check, falls Skill nicht aktiv
+        else if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
             damage *= this.gameState.critDamageMult;
             isCrit = true;
         }
+
         this.addSmileys(damage);
         this.gameState.totalClicksLifetime++;
         this.playClickSound();
@@ -764,16 +788,31 @@ class SmileyGame {
     getClickStrength() {
         let strength = this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
         const prestigeEffects = this.calculatePrestigeEffects();
+        
         if (prestigeEffects) {
             strength *= prestigeEffects.clickMultiplier;
         }
         if (this.gameState.globalerPrestigeMultiplikator > 1) {
             strength *= this.gameState.globalerPrestigeMultiplikator;
         }
+        
         strength *= this.gameState.godModeMultiplier;
+        
+        // --- SKILL BOOSTS FÜR KLICKS ---
+        // Frenzy: 5-facher Schaden
+        if (this.gameState.skills && this.gameState.skills.frenzy.active){
+            strength *= 5;
+        }
+        
+        // Shards: Klicks skalieren zusätzlich mit 20% der aktuellen SPS
+        if (this.gameState.skills && this.gameState.skills.shards.active) {
+            strength += (this.gameState.totalSPS * 0.2);
+        }
+
         if (this.gameState.clickSPSRatio > 0) {
             strength += (this.gameState.totalSPS * this.gameState.clickSPSRatio);
         }
+        
         return Math.floor(strength);
     }
 
@@ -838,6 +877,9 @@ class SmileyGame {
         }
         if (this.gameState.guildCostReduction > 0) {
             multiplier *= (1 - this.gameState.guildCostReduction);
+        }
+        if (this.gameState.skills.efficiency.active){
+            multiplier *= 0.75;
         }
 
         multiplier *= this.gameState.activeBuffs.costMultiplier;
@@ -1465,6 +1507,7 @@ class SmileyGame {
                 this.renderGuildsContent();
             }
         }
+        this.checkSkillUnlocks();
     }
 
    updateBuildingUI() {
@@ -3311,4 +3354,191 @@ class SmileyGame {
         ticker.style.color = "#ccc";
     }
 }
+
+// =========================================================
+// 13. ACTIVE SKILLS SYSTEM
+// =========================================================
+
+    useSkill(skillKey) {
+    const skill = this.gameState.skills[skillKey];
+    if (!skill || skill.active || skill.cooldown) return;
+
+    // --- NEU: Sicherheitsspeicherung (Anti-Cheat) ---
+    // Wir speichern den exakten Zeitpunkt, wann der Skill wieder bereit ist.
+    skill.readyAt = Date.now() + skill.duration + skill.cooldownTime;
+    this.speichereSpiel(); 
+    // ------------------------------------------------
+
+    const btn = this.getById(`btn-skill-${skillKey}`);
+    const timerText = this.getById(`timer-${skillKey}`);
+
+    // --- AKTIVIERUNG ---
+    skill.active = true;
+    if (btn) {
+        btn.classList.remove('ready');
+        btn.classList.add('is-active');
+    }
+    
+    this.handleImmediateSkillEffects(skillKey);
+    this.applyAllBoni();
+    this.updateUI();
+
+    let timeLeft = Math.ceil(skill.duration / 1000);
+    if (timerText) timerText.innerText = timeLeft + "s";
+
+    const activeInterval = setInterval(() => {
+        timeLeft--;
+        if (timerText) timerText.innerText = timeLeft + "s";
+        
+        if (timeLeft <= 0) {
+            clearInterval(activeInterval);
+            
+            // --- COOLDOWN START ---
+            skill.active = false;
+            skill.cooldown = true;
+            if (btn) {
+                btn.classList.remove('is-active');
+                btn.disabled = true;
+            }
+            
+            this.applyAllBoni();
+            this.updateUI();
+            this.startCooldownLogic(skillKey, skill.cooldownTime);
+        }
+    }, 1000);
+}
+
+startCooldownLogic(skillKey, cooldownTime) {
+    const timerText = this.getById(`timer-${skillKey}`);
+    const bar = this.getById(`cooldown-${skillKey}`);
+    const btn = this.getById(`btn-skill-${skillKey}`);
+
+    let cdLeft = Math.ceil(cooldownTime / 1000);
+    if (timerText) timerText.innerText = cdLeft + "s";
+    
+    const cdInterval = setInterval(() => {
+        cdLeft--;
+        if (timerText) timerText.innerText = cdLeft + "s";
+        
+        let progress = (cdLeft / (cooldownTime / 1000)) * 100;
+        if (bar) bar.style.width = progress + "%";
+
+        if (cdLeft <= 0) {
+            clearInterval(cdInterval);
+            this.gameState.skills[skillKey].cooldown = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.add('ready'); // Wieder Blau machen
+            }
+            if (timerText) timerText.innerText = "BEREIT";
+            if (bar) bar.style.width = "0%";
+            this.showNotification(`⭐ ${skillKey.toUpperCase()} wieder einsatzbereit!`, "success");
+        }
+    }, 1000);
+}
+
+    handleImmediateSkillEffects(skillKey) {
+        if (skillKey === 'goldRush') {
+            const gain = this.gameState.totalSPS * 60 * 15;
+            this.addSmileys(gain);
+        }
+        if (skillKey === 'diamondPulse') {
+            const dGain = (this.gameState.buildingCounts[8] || 0) * 5 + 10;
+            this.gameState.diamanten += dGain;
+        }
+    }
+
+    startCooldownVisual(skillKey, time) {
+        const bar = this.getById(`cooldown-${skillKey}`);
+        const btn = this.getById(`btn-skill-${skillKey}`);
+        if (btn) btn.disabled = true;
+
+        const start = Date.now();
+        const interval = setInterval(() => {
+            const elapsed = Date.now() - start;
+            const progress = (elapsed / time) * 100;
+            if (bar) bar.style.width = (100 - progress) + "%";
+            if (elapsed >= time) {
+                clearInterval(interval);
+                this.gameState.skills[skillKey].cooldown = false;
+                if (btn) btn.disabled = false;
+                if (bar) bar.style.width = "0%";
+            }
+        }, 100);
+   }
+   // Prüft, ob Skills basierend auf Resets freigeschaltet sind
+checkSkillUnlocks() {
+    const resets = this.gameState.prestigeResets || 0;
+    
+    // Liste: Welcher Skill braucht wie viele Resets?
+    const unlockMap = {
+        frenzy: 1, 
+        overdrive: 2, 
+        critStorm: 3, 
+        goldRush: 5,
+        diamondPulse: 7, 
+        efficiency: 10, 
+        shards: 15, 
+        hyperMinute: 20
+    };
+
+    Object.keys(unlockMap).forEach(skillKey => {
+        const btn = this.getById(`btn-skill-${skillKey}`);
+        const container = btn ? btn.parentElement : null;
+        
+        if (container) {
+            if (resets >= unlockMap[skillKey]) {
+                container.style.opacity = "1";
+                container.style.pointerEvents = "auto";
+                if(btn) btn.title = btn.title.replace("Gesperrt! ", ""); // Titel säubern
+            } else {
+                container.style.opacity = "0.3";
+                container.style.pointerEvents = "none";
+                // Hinweis im Tooltip, warum es gesperrt ist
+                if(btn && !btn.title.startsWith("Gesperrt")) {
+                    btn.title = `Gesperrt! Benötigt Prestige Level ${unlockMap[skillKey]} - ` + btn.title;
+                }
+            }
+        }
+    });
+}
+
+// Stellt Cooldowns nach dem Neuladen der Seite wieder her
+restoreCooldowns() {
+    const now = Date.now();
+    Object.keys(this.gameState.skills).forEach(key => {
+        const skill = this.gameState.gameState?.skills ? this.gameState.skills[key] : this.gameState.skills[key]; 
+        // Fallback falls Struktur leicht abweicht, aber hier sollte this.gameState.skills[key] reichen.
+        
+        if (skill.readyAt && skill.readyAt > now) {
+            // Cooldown läuft noch
+            const remaining = skill.readyAt - now;
+            skill.cooldown = true;
+            skill.active = false;
+            
+            const btn = this.getById(`btn-skill-${key}`);
+            const timerText = this.getById(`timer-${key}`);
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.remove('is-active', 'ready');
+            }
+            // Starte den visuellen Timer genau dort, wo er aufgehört hat
+            this.startCooldownLogic(key, remaining);
+        } else {
+            // Skill ist bereit
+            skill.cooldown = false;
+            skill.active = false;
+            const btn = this.getById(`btn-skill-${key}`);
+            const timerText = this.getById(`timer-${key}`);
+            
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.add('ready');
+            }
+            if (timerText) timerText.innerText = "BEREIT";
+        }
+    });
+}
+
 }

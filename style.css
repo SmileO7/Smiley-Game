@@ -47,6 +47,7 @@ body, html {
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 body {
@@ -94,6 +95,7 @@ main {
     padding-top: 60px; /* Platz für Navbar */
     width: 100%;
     max-height: 100vh;
+    box-sizing: border-box;
 }
 
 .navbar {
@@ -189,6 +191,7 @@ main {
     overflow: hidden;
     margin-bottom: 10px;
     font-size: 0.85rem;
+    overflow: hidden;
 }
 
 .ticker-label {
@@ -710,7 +713,62 @@ input[type=range] { width: 100%; cursor: pointer; }
 }
 
 /* ======================================================= */
-/* 11. MEDIA QUERIES                                       */
+/* 11. Skills                                       */
+/* ======================================================= */
+
+.btn-skill {
+    width: 100%;
+    min-height: 65px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #333;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Zustand: BEREIT (Blau) */
+.btn-skill.ready {
+    border-color: #009FFD;
+    box-shadow: 0 0 10px rgba(0, 159, 253, 0.3);
+}
+.btn-skill.ready .skill-timer {
+    color: #009FFD;
+}
+
+/* Zustand: AKTIV (Grün) */
+.btn-skill.is-active {
+    border-color: #4CAF50 !important;
+    background: rgba(76, 175, 80, 0.15);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+}
+.btn-skill.is-active .skill-timer {
+    color: #4CAF50 !important;
+}
+
+/* Zustand: COOLDOWN (Rot) */
+.btn-skill:disabled {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+    cursor: not-allowed;
+}
+.btn-skill:disabled .skill-timer {
+    color: #f44336;
+}
+
+.skill-timer {
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+
+/* ======================================================= */
+/* 12. MEDIA QUERIES                                       */
 /* ======================================================= */
 
 @media (max-width: 1400px) {

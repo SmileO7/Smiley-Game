@@ -29,125 +29,186 @@
 </header>
 
 <main>
-        <div id="view-home" class="main-layout">
-            <div class="left-column">
-    <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
-    
-    <button id="smiley_button">
-        <img src="smiley.png.png" alt="Smiley" id="smiley_image">
-    </button>
-
-    <div class="stats-box" style="padding: 10px;">
-        <h2 style="color: var(--color-accent-blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px;">
-            SYSTEM STATUS
-        </h2>
-
-        <div style="text-align: center; margin-bottom: 10px;">
-            <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Gesammelte Daten</div>
-            <div style="font-size: 2.0rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); line-height: 1.1;">
-                <span id="aktuelle_smileys">0</span> ☺
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+    <div id="view-home" class="main-layout">
+        <div class="left-column">
+            <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
             
-            <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
-                <div style="font-size: 0.7rem; color: #aaa;">Klick</div>
-                <div style="font-size: 1.0rem; font-weight: bold; color: var(--color-accent-blue);">
-                    <span id="smileys_pro_klick_anzeige">1</span>
+            <button id="smiley_button">
+                <img src="smiley.png.png" alt="Smiley" id="smiley_image">
+            </button>
+
+            <div class="stats-box" style="padding: 10px;">
+                <h2 style="color: var(--color-accent-blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px;">
+                    SYSTEM STATUS
+                </h2>
+
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Gesammelte Daten</div>
+                    <div style="font-size: 2.0rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); line-height: 1.1;">
+                        <span id="aktuelle_smileys">0</span> ☺
+                    </div>
                 </div>
-                <div style="font-size: 0.65rem; color: #666;">
-                    x<span id="klick_multiplikator_anzeige">1.00</span>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 0.7rem; color: #aaa;">Klick</div>
+                        <div style="font-size: 1.0rem; font-weight: bold; color: var(--color-accent-blue);">
+                            <span id="smileys_pro_klick_anzeige">1</span>
+                        </div>
+                        <div style="font-size: 0.65rem; color: #666;">
+                            x<span id="klick_multiplikator_anzeige">1.00</span>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 0.7rem; color: #aaa;">Auto (SPS)</div>
+                        <div style="font-size: 1.0rem; font-weight: bold; color: #4CAF50;">
+                            <span id="smileys_pro_sekunde_anzeige">0</span>
+                        </div>
+                        <div style="font-size: 0.65rem; color: #666;">
+                            <span id="smileys_pro_minute_anzeige">0</span> /min
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0, 159, 253, 0.1); border: 1px solid var(--color-accent-blue); padding: 4px; border-radius: 4px; text-align: center; margin-bottom: 8px; font-size: 0.8rem;">
+                    <span style="color: var(--color-accent-blue);">GLOBAL BOOST:</span>
+                    <strong id="globaler_multiplikator_anzeige" style="color: #fff;">x1.00</strong>
+                </div>
+
+                <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                    <span style="font-size: 1rem; color: #b9f2ff; text-shadow: 0 0 5px #009ffd; font-weight: bold;">
+                        💎 <span id="diamanten_anzeige">0</span>
+                    </span>
                 </div>
             </div>
 
-            <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
-                <div style="font-size: 0.7rem; color: #aaa;">Auto (SPS)</div>
-                <div style="font-size: 1.0rem; font-weight: bold; color: #4CAF50;">
-                    <span id="smileys_pro_sekunde_anzeige">0</span>
+            <div class="box-style" style="margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                    <span style="font-size: 0.7rem; color: #aaa; text-transform: uppercase;">Evolution</span>
+                    <span id="next-prestige-threshold" style="font-size: 0.7rem; color: var(--color-accent-blue);">100k</span>
                 </div>
-                <div style="font-size: 0.65rem; color: #666;">
-                    <span id="smileys_pro_minute_anzeige">0</span> /min
+                
+                <div style="height: 15px; background: #0b0f19; border: 1px solid #333; border-radius: 8px; position: relative; overflow: hidden;">
+                    <div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-accent-blue), #00d2ff); transition: width 0.5s;"></div>
+                    <div id="prestige-percent-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #fff; font-weight: bold;">0%</div>
                 </div>
+            </div>
+
+            <div id="active_pet_display" style="
+                margin-top: 8px; 
+                display: none; 
+                background: rgba(62, 90, 65, 0.15); 
+                border: 1px solid var(--color-neutral-olive); 
+                padding: 8px; 
+                border-radius: 8px; 
+                align-items: center; 
+                gap: 10px;
+            ">
             </div>
         </div>
 
-        <div style="background: rgba(0, 159, 253, 0.1); border: 1px solid var(--color-accent-blue); padding: 4px; border-radius: 4px; text-align: center; margin-bottom: 8px; font-size: 0.8rem;">
-            <span style="color: var(--color-accent-blue);">GLOBAL BOOST:</span>
-            <strong id="globaler_multiplikator_anzeige" style="color: #fff;">x1.00</strong>
-        </div>
-
-        <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
-            <span style="font-size: 1rem; color: #b9f2ff; text-shadow: 0 0 5px #009ffd; font-weight: bold;">
-                💎 <span id="diamanten_anzeige">0</span>
-            </span>
-        </div>
-    </div>
-
-    <div class="box-style" style="margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
-            <span style="font-size: 0.7rem; color: #aaa; text-transform: uppercase;">Evolution</span>
-            <span id="next-prestige-threshold" style="font-size: 0.7rem; color: var(--color-accent-blue);">100k</span>
-        </div>
-        
-        <div style="height: 15px; background: #0b0f19; border: 1px solid #333; border-radius: 8px; position: relative; overflow: hidden;">
-            <div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-accent-blue), #00d2ff); transition: width 0.5s;"></div>
-            <div id="prestige-percent-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #fff; font-weight: bold;">0%</div>
-        </div>
-    </div>
-
-    <div id="active_pet_display" style="
-        margin-top: 8px; 
-        display: none; 
-        background: rgba(62, 90, 65, 0.15); 
-        border: 1px solid var(--color-neutral-olive); 
-        padding: 8px; 
-        border-radius: 8px; 
-        align-items: center; 
-        gap: 10px;
-    ">
-        </div>
-</div>
-
-            <div class="middle-column">
-                <div class="new-ticker-container">
-                    <div id="news.ticker-text" class="ticker-text">Wilkommen beim Smiley Clicker! Sammel Smiley und werde reich...</div>
-                </div>
-    <div class="feature-button-grid">
-        <button id="open-pet-shop-button" class="btn-feature">
-            <span>🐾</span> PET SHOP
-        </button>
-        <button id="open_diamond_mine_button" class="btn-feature">
-            <span>💎</span> DIAMANTEN-MINE
-        </button>
-        <button id="open_guilds_button" class="btn-feature">
-            <span>⚔️</span> GILDEN
-        </button>
-        <button id="show_achievements_button" class="btn-primary">
-            <span>🏆</span> ERFOLGE
-        </button>
-    </div>
-
-    <div class="box-style" style="margin-top: 10px;">
-        <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px;">Verfügbare Upgrades</h2>
-        <div id="global-upgrades-container">
+        <div class="middle-column">
+            <div class="news-ticker-container">
+                <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smiley und werde reich...</div>
             </div>
+            
+            <div class="skills-container box-style" style="margin-top: 10px; margin-bottom: 10px;">
+                <h2 style="font-size: 1.1rem; margin-bottom: 10px; color: var(--color-accent-blue);">COMMAND CENTER: ACTIVE SKILLS</h2>
+                <div class="skills-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div class="skill-item">
+                        <button id="btn-skill-frenzy" class="btn-skill ready" onclick="gameInstance.useSkill('frenzy')" title="Frenzy: Klickkraft x5 (15 Sek.)">
+                            <span class="skill-icon">🔥</span>
+                            <span id="timer-frenzy" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-frenzy" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-overdrive" class="btn-skill ready" onclick="gameInstance.useSkill('overdrive')" title="Overdrive: Produktion verdoppelt (30 Sek.)">
+                            <span class="skill-icon">⚡</span>
+                            <span id="timer-overdrive" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-overdrive" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-critStorm" class="btn-skill ready" onclick="gameInstance.useSkill('critStorm')" title="Crit-Storm: 100% Kritische Treffer (10 Sek.)">
+                            <span class="skill-icon">🎯</span>
+                            <span id="timer-critStorm" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-critStorm" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-goldRush" class="btn-skill ready" onclick="gameInstance.useSkill('goldRush')" title="Gold-Rausch: Sofort 15 Min. Produktion erhalten">
+                            <span class="skill-icon">💰</span>
+                            <span id="timer-goldRush" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-goldRush" class="cooldown-fill"></div></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <button id="btn-skill-diamondPulse" class="btn-skill ready" onclick="gameInstance.useSkill('diamondPulse')" title="Diamant-Puls: Sofort Diamanten finden">
+                            <span class="skill-icon">💎</span>
+                            <span id="timer-diamondPulse" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-diamondPulse" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-efficiency" class="btn-skill ready" onclick="gameInstance.useSkill('efficiency')" title="Effizienz: -25% Gebäudekosten (45 Sek.)">
+                            <span class="skill-icon">📉</span>
+                            <span id="timer-efficiency" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-efficiency" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-shards" class="btn-skill ready" onclick="gameInstance.useSkill('shards')" title="Shards: Klicks erhalten +20% deiner SPS (20 Sek.)">
+                            <span class="skill-icon">💠</span>
+                            <span id="timer-shards" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-shards" class="cooldown-fill"></div></div>
+                    </div>
+                    <div class="skill-item">
+                        <button id="btn-skill-hyperMinute" class="btn-skill ready" onclick="gameInstance.useSkill('hyperMinute')" title="Hyper-Minute: Produktion x5 (60 Sek.)">
+                            <span class="skill-icon">🚀</span>
+                            <span id="timer-hyperMinute" class="skill-timer">BEREIT</span>
+                        </button>
+                        <div class="skill-cooldown-bar"><div id="cooldown-hyperMinute" class="cooldown-fill"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-button-grid">
+                <button id="open-pet-shop-button" class="btn-feature">
+                    <span>🐾</span> PET SHOP
+                </button>
+                <button id="open_diamond_mine_button" class="btn-feature">
+                    <span>💎</span> DIAMANTEN-MINE
+                </button>
+                <button id="open_guilds_button" class="btn-feature">
+                    <span>⚔️</span> GILDEN
+                </button>
+                <button id="show_achievements_button" class="btn-primary">
+                    <span>🏆</span> ERFOLGE
+                </button>
+            </div>
+
+            <div class="box-style" style="margin-top: 10px;">
+                <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px;">Verfügbare Upgrades</h2>
+                <div id="global-upgrades-container"></div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <h2>Gebäude</h2>
+            
+            <div id="buy-amount-toggles" class="buy-amount-container">
+                <button class="btn-toggle active" data-amount="1">1x</button>
+                <button class="btn-toggle" data-amount="10">10x</button>
+                <button class="btn-toggle" data-amount="100">100x</button>
+            </div>
+
+            <div class="building-grid" id="building-grid"></div>
+        </div>
     </div>
-</div>
-
-<div class="right-column">
-
-            <div class="right-column">
-    <h2>Gebäude</h2>
-    
-    <div id="buy-amount-toggles" class="buy-amount-container">
-        <button class="btn-toggle active" data-amount="1">1x</button>
-        <button class="btn-toggle" data-amount="10">10x</button>
-        <button class="btn-toggle" data-amount="100">100x</button>
-    </div>
-
-    <div class="building-grid" id="building-grid"></div>
-</div>
 </main>
 
 <div id="prestige-shop-modal" class="modal" style="display: none;">
@@ -220,6 +281,22 @@
                         <li>Achte auf <strong>Globale Upgrades</strong> – sie können Gebäude viel günstiger machen!</li>
                     </ul>
                 </div>
+
+                <div class="info-section box-style" style="border-color: #009FFD; margin-top: 15px;">
+                    <h3>✨ AKTIVE FÄHIGKEITEN (SKILLS)</h3>
+                    <p style="font-size: 0.9em; margin-bottom: 10px;">Schalte mächtige Booster durch Prestige-Resets frei!</p>
+                    <ul style="line-height: 1.6; font-size: 0.85em;">
+                        <li><strong>🔥 Frenzy (Ab Reset 1):</strong> Klickkraft x5 für 15 Sekunden.</li>
+                        <li><strong>⚡ Overdrive (Ab Reset 2):</strong> Verdoppelt die passive Produktion (SPS) für 30s.</li>
+                        <li><strong>🎯 Crit-Storm (Ab Reset 3):</strong> Jeder Klick ist ein kritischer Treffer!</li>
+                        <li><strong>💰 Gold-Rausch (Ab Reset 5):</strong> Gibt sofort 15 Minuten deiner Produktion.</li>
+                        <li><strong>💎 Diamant-Puls (Ab Reset 7):</strong> Findet sofort seltene Diamanten.</li>
+                        <li><strong>📉 Effizienz (Ab Reset 10):</strong> Gebäude kosten 25% weniger.</li>
+                        <li><strong>💠 Shards (Ab Reset 15):</strong> Klicks skalieren mit deiner SPS (+20%).</li>
+                        <li><strong>🚀 Hyper-Minute (Ab Reset 20):</strong> Extremer SPS-Boost (x5) für 60 Sekunden.</li>
+                    </ul>
+                </div>
+
             </div>
 
             <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
@@ -293,14 +370,12 @@
         <div class="modal-buttons"><button id="close_guilds_button" class="btn-cancel">Schließen</button></div>
     </div>
 </div>
-
 <div id="achievements_info_modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>Achievements</h2> <div id="info_achievements_container" class="info-grid"></div>
         <div class="modal-buttons"><button id="close_achievements_button" class="btn-cancel">Schließen</button></div>
     </div>
 </div>
-
 <div id="prestige-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <h2>🌌 Prestige: Zeitreise</h2>
@@ -326,18 +401,17 @@
         </div>
     </div>
 </div>
-
 <div id="buildings_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Gebäude-Übersicht</h2><div id="info_buildings_container" class="info-grid"></div><div class="modal-buttons"><button id="close_buildings_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="global_upgrades_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>⚙️ Global Upgrades</h2><div id="info_global_upgrades_container" class="info-grid"></div><div class="modal-buttons"><button id="close_global_upgrades_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="prestige_info_modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>Prestige-Skill-Liste</h2> <div id="info_prestige_container"></div>
-
         <div class="modal-buttons">
             <button id="close_prestige_info_button" class="btn-cancel">Schließen</button>
         </div>
     </div>
-</div><div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
+</div>
+<div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="pets_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>🐶 Pet-Infos</h2><div id="info_pets_container" class="info-grid"></div><div class="modal-buttons"><button id="close_pets_info_button" class="btn-cancel">Schließen</button></div></div></div>
 
 <div id="toast-container"></div>
