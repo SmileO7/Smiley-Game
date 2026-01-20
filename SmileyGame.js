@@ -8,6 +8,7 @@ class SmileyGame {
     // ================================================================================================================
 
     constructor() {
+        // 1. PRESTIGE UPGRADES DEFINITION
         this.prestigeUpgrades = [
             // === START (Mitte Unten) ===
             { 
@@ -25,7 +26,7 @@ class SmileyGame {
             // === TIER 1: KLICK vs IDLE ===
             { 
                 id: 1, 
-                name: "Finger-Training", // Freundlicher Name
+                name: "Finger-Training", 
                 cost: 2, 
                 description: "Deine Muskeln erinnern sich. Klickkraft +25%.", 
                 type: 'click_mult', 
@@ -36,7 +37,7 @@ class SmileyGame {
             },
             { 
                 id: 2, 
-                name: "Automatisierung", // Freundlicher Name
+                name: "Automatisierung", 
                 cost: 2, 
                 description: "Die Maschinen laufen von alleine. SPS +25%.", 
                 type: 'sps_mult', 
@@ -129,7 +130,7 @@ class SmileyGame {
                 type: 'global_mult', 
                 value: 1.0, 
                 x: 50, y: 10,        
-                category: 'qol',    
+                category: 'qol',     
                 parents: [8] 
             },
 
@@ -165,7 +166,7 @@ class SmileyGame {
                 description: "Gebäude bauen sich selbst. Kosten -10%.", 
                 type: 'cost_reduction', 
                 value: 0.10, 
-                x: 50, y: -10,      
+                x: 50, y: -10,       
                 category: 'qol',
                 parents: [10, 11] 
             },
@@ -176,7 +177,7 @@ class SmileyGame {
                 description: "Du beherrschst die Zeit. Prestige-Effizienz +50%.", 
                 type: 'prestige_efficiency', 
                 value: 0.50, 
-                x: 30, y: -25,      
+                x: 30, y: -25,       
                 category: 'idle',
                 parents: [12] 
             },
@@ -190,44 +191,47 @@ class SmileyGame {
                 x: 70, y: -25, 
                 category: 'special',
                 parents: [12] 
-            }
+            },
+
+            // === NEUE ERWEITERUNG (Die Spezialisten) ===
             { 
                 id: 15, 
                 name: "Präzisions-Training", 
                 cost: 25, 
                 description: "Du triffst immer die empfindlichsten Stellen. Kritische Treffer-Chance +5%.", 
-                type: 'crit_chance', // Müssen wir in der Logik noch abfangen (siehe unten)
+                type: 'crit_chance',
                 value: 0.05, 
                 x: 10, y: 70, // Links außen bei Tier 1
                 category: 'click',
-                parents: [1] // Hängt am "Finger-Training"
+                parents: [1] 
             },
             { 
                 id: 16, 
                 name: "Offshore-Konten", 
                 cost: 25, 
                 description: "Deine Smileys arbeiten auch im Schlaf härter. Offline-Gewinn +20%.", 
-                type: 'offline_boost', // Neuer Typ
+                type: 'offline_boost',
                 value: 0.20, 
                 x: 90, y: 70, // Rechts außen bei Tier 1
                 category: 'idle',
-                parents: [2] // Hängt an "Automatisierung"
+                parents: [2] 
             },
             { 
                 id: 17, 
                 name: "Hype-Train", 
                 cost: 75, 
                 description: "Je mehr Gebäude du hast, desto stärker werden deine Klicks.", 
-                type: 'building_synergy', // Neuer Typ
-                value: 0.01, // 1% pro Gebäude
-                x: 50, y: 65, // Genau in der Mitte
+                type: 'building_synergy',
+                value: 0.01, 
+                x: 50, y: 65, // Mitte
                 category: 'special',
-                parents: [3, 4] // Verbindet Tier 2 (Effizientes Bauen & Zeit-Reisender)
+                parents: [3, 4] 
             }
         ];
 
         this.currentBuyAmount = 1;
 
+        // 2. GAME STATE DEFINITION
         this.gameState = {
             aktuelle_smileys: 0,
             lifetime_smileys: 0,
@@ -281,19 +285,19 @@ class SmileyGame {
                 spsMultiplier: 1,
                 costMultiplier: 1,
                 timerSPS: 0,
-                timerCost:0
+                timerCost: 0
             },
-            skills:{
-            frenzy: { active: false, cooldown: false, duration: 15000, cooldownTime: 120000, color: '#ff4d4d' },
-            overdrive: { active: false, cooldown: false, duration: 30000, cooldownTime: 300000, color: '#009ffd' },
-            critStorm: { active: false, cooldown: false, duration: 10000, cooldownTime: 180000, color: '#ffcc00' },
-            goldRush: { active: false, cooldown: false, duration: 1000, cooldownTime: 600000, color: '#4CAF50' }, // Sofort-Effekt
-            diamondPulse: { active: false, cooldown: false, duration: 20000, cooldownTime: 420000, color: '#b9f2ff' },
-            efficiency: { active: false, cooldown: false, duration: 45000, cooldownTime: 600000, color: '#a0a0a0' },
-            shards: { active: false, cooldown: false, duration: 20000, cooldownTime: 240000, color: '#e066ff' },
-            hyperMinute: { active: false, cooldown: false, duration: 60000, cooldownTime: 900000, color: '#ff8c00' }
-        }
-        };
+            skills: {
+                frenzy: { active: false, cooldown: false, duration: 15000, cooldownTime: 120000, color: '#ff4d4d' },
+                overdrive: { active: false, cooldown: false, duration: 30000, cooldownTime: 300000, color: '#009ffd' },
+                critStorm: { active: false, cooldown: false, duration: 10000, cooldownTime: 180000, color: '#ffcc00' },
+                goldRush: { active: false, cooldown: false, duration: 1000, cooldownTime: 600000, color: '#4CAF50' },
+                diamondPulse: { active: false, cooldown: false, duration: 20000, cooldownTime: 420000, color: '#b9f2ff' },
+                efficiency: { active: false, cooldown: false, duration: 45000, cooldownTime: 600000, color: '#a0a0a0' },
+                shards: { active: false, cooldown: false, duration: 20000, cooldownTime: 240000, color: '#e066ff' },
+                hyperMinute: { active: false, cooldown: false, duration: 60000, cooldownTime: 900000, color: '#ff8c00' }
+            }
+        }; // HIER WAR DER FEHLER: Das gameState-Objekt wird hier sauber geschlossen.
 
         this.productionInterval = null;
         this.uiInterval = null;
@@ -698,6 +702,8 @@ class SmileyGame {
                 }
             }
         }
+
+        const prestige = this.calculatePrestigeEffects();
 
         this.gameState.critChance = 0 + (prestige.critChanceBonus || 0);
         this.gameState.critDamageMult = 3;
