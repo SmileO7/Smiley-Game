@@ -191,6 +191,39 @@ class SmileyGame {
                 category: 'special',
                 parents: [12] 
             }
+            { 
+                id: 15, 
+                name: "Präzisions-Training", 
+                cost: 25, 
+                description: "Du triffst immer die empfindlichsten Stellen. Kritische Treffer-Chance +5%.", 
+                type: 'crit_chance', // Müssen wir in der Logik noch abfangen (siehe unten)
+                value: 0.05, 
+                x: 10, y: 70, // Links außen bei Tier 1
+                category: 'click',
+                parents: [1] // Hängt am "Finger-Training"
+            },
+            { 
+                id: 16, 
+                name: "Offshore-Konten", 
+                cost: 25, 
+                description: "Deine Smileys arbeiten auch im Schlaf härter. Offline-Gewinn +20%.", 
+                type: 'offline_boost', // Neuer Typ
+                value: 0.20, 
+                x: 90, y: 70, // Rechts außen bei Tier 1
+                category: 'idle',
+                parents: [2] // Hängt an "Automatisierung"
+            },
+            { 
+                id: 17, 
+                name: "Hype-Train", 
+                cost: 75, 
+                description: "Je mehr Gebäude du hast, desto stärker werden deine Klicks.", 
+                type: 'building_synergy', // Neuer Typ
+                value: 0.01, // 1% pro Gebäude
+                x: 50, y: 65, // Genau in der Mitte
+                category: 'special',
+                parents: [3, 4] // Verbindet Tier 2 (Effizientes Bauen & Zeit-Reisender)
+            }
         ];
 
         this.currentBuyAmount = 1;
@@ -458,7 +491,15 @@ class SmileyGame {
         const currentSPS = this.computeTotalSPS();
         if (currentSPS <= 0) return;
 
-        const earned = currentSPS * diffInSeconds;
+        // WICHTIG: Erst die Effekte laden!
+        const prestige = this.calculatePrestigeEffects();
+        
+        // Dann berechnen (Basis * Boost)
+        let earned = currentSPS * diffInSeconds;
+        if (prestige.offlineBoost > 1) {
+            earned *= prestige.offlineBoost;
+        }
+
         if (earned > 0) {
             this.addSmileys(earned);
             let timeString = "";
@@ -573,7 +614,11 @@ class SmileyGame {
             pointEfficiency: 0.10,
             petsUnlocked: false,
             mineUnlocked: false,
-            guildsUnlocked: false
+            guildsUnlocked: false,
+            // NEU:
+            critChanceBonus: 0.0,
+            offlineBoost: 1.0,
+            buildingSynergy: 0.0
         };
 
         prestigeUpgrades.forEach(upgrade => {
@@ -590,6 +635,11 @@ class SmileyGame {
                         effects.spsMultiplier *= (1 + upgrade.value);
                         effects.clickMultiplier *= (1 + upgrade.value);
                         break;
+                    
+                    // --- NEUE TYPEN ---
+                    case 'crit_chance': effects.critChanceBonus += upgrade.value; break;
+                    case 'offline_boost': effects.offlineBoost += upgrade.value; break;
+                    case 'building_synergy': effects.buildingSynergy += upgrade.value; break;
                 }
             }
         });
@@ -649,7 +699,7 @@ class SmileyGame {
             }
         }
 
-        this.gameState.critChance = 0;
+        this.gameState.critChance = 0 + (prestige.critChanceBonus || 0);
         this.gameState.critDamageMult = 3;
         this.gameState.diamondMineBoost = 0;
         this.gameState.globalCostReduction = 0;
@@ -799,18 +849,24 @@ class SmileyGame {
         strength *= this.gameState.godModeMultiplier;
         
         // --- SKILL BOOSTS FÜR KLICKS ---
-        // Frenzy: 5-facher Schaden
         if (this.gameState.skills && this.gameState.skills.frenzy.active){
             strength *= 5;
         }
         
-        // Shards: Klicks skalieren zusätzlich mit 20% der aktuellen SPS
         if (this.gameState.skills && this.gameState.skills.shards.active) {
             strength += (this.gameState.totalSPS * 0.2);
         }
 
         if (this.gameState.clickSPSRatio > 0) {
             strength += (this.gameState.totalSPS * this.gameState.clickSPSRatio);
+        }
+
+        // --- NEU: Hype-Train (Building Synergy) ---
+        // ID 17: Je mehr Gebäude, desto stärker der Klick
+        if (prestigeEffects.buildingSynergy > 0) {
+            const totalBuildings = this.gameState.buildingCounts.reduce((a, b) => a + b, 0);
+            const synergyMult = 1 + (totalBuildings * prestigeEffects.buildingSynergy);
+            strength *= synergyMult;
         }
         
         return Math.floor(strength);
