@@ -813,6 +813,33 @@ class SmileyGame {
         setTimeout(() => el.remove(), 1000);
     }
 
+    triggerShake(elementId) {
+        const el = this.getById(elementId);
+        if (!el) return;
+        
+        // Klasse entfernen (falls sie noch da ist), um Animation neu zu starten
+        el.classList.remove('shake-effect');
+        el.classList.remove('boss-hit-effect');
+        
+        // Erzwingen eines "Reflows", damit der Browser merkt, dass die Klasse weg war
+        void el.offsetWidth; 
+
+        // Entsprechende Klasse hinzufügen
+        if (elementId === 'guilds-content') { // Boss Container
+            el.classList.add('boss-hit-effect');
+        } else {
+            el.classList.add('shake-effect');
+        }
+
+        // Nach Ablauf der Animation Klasse wieder entfernen
+        setTimeout(() => {
+            if(el) {
+                el.classList.remove('shake-effect');
+                el.classList.remove('boss-hit-effect');
+            }
+        }, 300); // 300ms entspricht der CSS Zeit
+    }
+
     // ================================================================================================================
     // 3. KERNLOGIK (Kauf & Reset)
     // ================================================================================================================
@@ -841,6 +868,7 @@ class SmileyGame {
             let text = this.formatNumber(damage);
             if (isCrit) {
                 this.showClickEffect(e, text, 'crit');
+                this.triggerShake('smiley_button');
             } else {
                 this.showClickEffect(e, text, 'normal');
             }
@@ -1354,6 +1382,7 @@ class SmileyGame {
 
     clickGuildBoss(e) {
         if (!this.gameState.guildBossFighting) return;
+        this.triggerShake('guilds-content');
         let damage = this.getClickStrength();
         let isCrit = false;
         if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
