@@ -417,44 +417,227 @@ const guildUpgradesData = [
 /* ======================================================= */
 
 const achievementsData = [
+    // =========================================================================
+    // 🖱️ KATEGORIE: KLICKER (Aktives Spielen)
+    // =========================================================================
     {
-        id: 0,
-        name: "Erste Schritte",
-        description: "Besitze 10 Auto-Klicker.",
-        requirement: { type: 'building_count', target: 0, value: 10 },
-        bonus: { type: 'sps_mult', value: 0.05 }, // +5% SPS
-        color: 'var(--color-accent-blue)'
-    },
-    {
-        id: 1,
-        name: "Klick-Maschine",
-        description: "Klicke insgesamt 1.000 Mal.",
+        id: 0, name: "Klick-Anfänger", description: "Klicke 1.000 Mal.",
         requirement: { type: 'total_clicks', value: 1000 },
-        bonus: { type: 'click_mult', value: 0.10 }, // +10% Klickkraft
-        color: 'var(--color-accent-blue)'
+        bonus: { type: 'click_mult', value: 0.10 }, color: '#4CAF50'
     },
     {
-        id: 2,
-        name: "Smiley-Millionär",
-        description: "Sammle insgesamt 1 Million Smileys.",
+        id: 1, name: "Finger aus Stahl", description: "Klicke 10.000 Mal.",
+        requirement: { type: 'total_clicks', value: 10000 },
+        bonus: { type: 'click_mult', value: 0.20 }, color: '#009ffd'
+    },
+    {
+        id: 2, name: "Maus-Zerstörer", description: "Klicke 50.000 Mal.",
+        requirement: { type: 'total_clicks', value: 50000 },
+        bonus: { type: 'click_mult', value: 0.50 }, color: '#ff5252'
+    },
+    {
+        id: 3, name: "Finger Gottes", description: "Klicke 100.000 Mal.",
+        requirement: { type: 'total_clicks', value: 100000 },
+        bonus: { type: 'click_mult', value: 2.0 }, color: '#FFD700'
+    },
+    {
+        id: 4, name: "Scharfschütze", description: "Erreiche 25% Kritische Trefferchance.",
+        requirement: { type: 'crit_chance_reach', value: 0.25 },
+        bonus: { type: 'click_mult', value: 0.15 }, color: '#ff5252'
+    },
+    {
+        id: 5, name: "Kritischer Meister", description: "Erreiche 50% Kritische Trefferchance.",
+        requirement: { type: 'crit_chance_reach', value: 0.50 },
+        bonus: { type: 'click_mult', value: 1.0 }, color: '#FFD700'
+    },
+
+    // =========================================================================
+    // 💰 KATEGORIE: SAMMLER (Lifetime Smileys)
+    // =========================================================================
+    {
+        id: 6, name: "Der erste Tausender", description: "Sammle 1.000 Smileys.",
+        requirement: { type: 'lifetime_smileys', value: 1000 },
+        bonus: { type: 'sps_mult', value: 0.05 }, color: '#4CAF50'
+    },
+    {
+        id: 7, name: "Millionär", description: "Sammle 1 Million Smileys.",
         requirement: { type: 'lifetime_smileys', value: 1000000 },
-        bonus: { type: 'prestige_efficiency', value: 0.02 }, // +2% PP-Effekt
-        color: 'var(--color-secondary-red)'
+        bonus: { type: 'prestige_efficiency', value: 0.05 }, color: '#009ffd'
     },
     {
-        id: 3,
-        name: "Minen-Boss",
-        description: "Baue die Diamanten-Mine.",
-        requirement: { type: 'building_count', target: 15, value: 1 },
-        bonus: { type: 'diamond_gain', value: 0.10 }, // +10% Diamanten-Chance/Ertrag
-        color: 'var(--color-accent-blue)'
+        id: 8, name: "Milliardär", description: "Sammle 1 Milliarde Smileys.",
+        requirement: { type: 'lifetime_smileys', value: 1000000000 },
+        bonus: { type: 'sps_mult', value: 0.20 }, color: '#9c27b0'
     },
     {
-        id: 4,
-        name: "Gilden-Gründer",
-        description: "Gründe eine Gilde.",
+        id: 9, name: "Trillionär", description: "Sammle 1 Trillion Smileys.",
+        requirement: { type: 'lifetime_smileys', value: 1000000000000 },
+        bonus: { type: 'prestige_efficiency', value: 0.20 }, color: '#e040fb'
+    },
+    {
+        id: 10, name: "Quadrillionär", description: "Sammle 1 Quadrillion Smileys.",
+        requirement: { type: 'lifetime_smileys', value: 1000000000000000 },
+        bonus: { type: 'global_mult', value: 1.0 }, color: '#FFD700'
+    },
+    {
+        id: 11, name: "DAS ENDE?", description: "Sammle 1 Quintillion Smileys.",
+        requirement: { type: 'lifetime_smileys', value: 1000000000000000000 },
+        bonus: { type: 'global_mult', value: 5.0 }, color: '#000000'
+    },
+
+    // =========================================================================
+    // 🏭 KATEGORIE: INDUSTRIE (Gebäude & SPS)
+    // =========================================================================
+    {
+        id: 12, name: "Aller Anfang", description: "Besitze 10 Auto-Klicker.",
+        requirement: { type: 'building_count', target: 0, value: 10 },
+        bonus: { type: 'sps_mult', value: 0.05 }, color: '#4CAF50'
+    },
+    {
+        id: 13, name: "Bauarbeiter", description: "Besitze insgesamt 50 Gebäude.",
+        requirement: { type: 'total_buildings', value: 50 },
+        bonus: { type: 'cost_reduction_global', value: 0.01 }, color: '#009ffd'
+    },
+    {
+        id: 14, name: "Stadtplaner", description: "Besitze insgesamt 250 Gebäude.",
+        requirement: { type: 'total_buildings', value: 250 },
+        bonus: { type: 'cost_reduction_global', value: 0.02 }, color: '#8d6e63'
+    },
+    {
+        id: 15, name: "Architekt", description: "Besitze insgesamt 600 Gebäude.",
+        requirement: { type: 'total_buildings', value: 600 },
+        bonus: { type: 'cost_reduction_global', value: 0.03 }, color: '#8d6e63'
+    },
+    {
+        id: 16, name: "Metropolis", description: "Besitze insgesamt 1.500 Gebäude.",
+        requirement: { type: 'total_buildings', value: 1500 },
+        bonus: { type: 'cost_reduction_global', value: 0.05 }, color: '#FFD700'
+    },
+    {
+        id: 17, name: "Industrie-Boss", description: "Besitze 50 Fabriken.",
+        requirement: { type: 'building_count', target: 4, value: 50 },
+        bonus: { type: 'sps_mult', value: 0.10 }, color: '#607d8b'
+    },
+    {
+        id: 18, name: "High-Tech", description: "Besitze 50 Alien-Labore.",
+        requirement: { type: 'building_count', target: 6, value: 50 },
+        bonus: { type: 'sps_mult', value: 0.15 }, color: '#607d8b'
+    },
+    {
+        id: 19, name: "Zeit-Herrscher", description: "Besitze 100 Zeitmaschinen.",
+        requirement: { type: 'building_count', target: 7, value: 100 },
+        bonus: { type: 'prestige_efficiency', value: 0.25 }, color: '#e040fb'
+    },
+    {
+        id: 20, name: "Fließbandarbeit", description: "Erreiche 100 Smileys pro Sekunde.",
+        requirement: { type: 'sps_reach', value: 100 },
+        bonus: { type: 'sps_mult', value: 0.05 }, color: '#4CAF50'
+    },
+    {
+        id: 21, name: "Produktions-Gigant", description: "Erreiche 1 Million SPS.",
+        requirement: { type: 'sps_reach', value: 1000000 },
+        bonus: { type: 'sps_mult', value: 0.20 }, color: '#4CAF50'
+    },
+    {
+        id: 22, name: "Lichtgeschwindigkeit", description: "Erreiche 1 Milliarde SPS.",
+        requirement: { type: 'sps_reach', value: 1000000000 },
+        bonus: { type: 'sps_mult', value: 0.50 }, color: '#e040fb'
+    },
+    {
+        id: 23, name: "Warp-Antrieb", description: "Erreiche 1 Billion SPS.",
+        requirement: { type: 'sps_reach', value: 1000000000000 },
+        bonus: { type: 'sps_mult', value: 1.0 }, color: '#FFD700'
+    },
+
+    // =========================================================================
+    // 🟣 KATEGORIE: PRESTIGE (Zeit & Raum)
+    // =========================================================================
+    {
+        id: 24, name: "Neuanfang", description: "Führe deinen ersten Prestige-Reset durch.",
+        requirement: { type: 'prestige_count', value: 1 },
+        bonus: { type: 'global_mult', value: 0.10 }, color: '#9c27b0'
+    },
+    {
+        id: 25, name: "Zeitschleife I", description: "Führe 5 Prestige-Resets durch.",
+        requirement: { type: 'prestige_count', value: 5 },
+        bonus: { type: 'prestige_efficiency', value: 0.10 }, color: '#9c27b0'
+    },
+    {
+        id: 26, name: "Zeitschleife II", description: "Führe 10 Prestige-Resets durch.",
+        requirement: { type: 'prestige_count', value: 10 },
+        bonus: { type: 'global_mult', value: 0.20 }, color: '#e040fb'
+    },
+    {
+        id: 27, name: "Zeitschleife III", description: "Führe 25 Prestige-Resets durch.",
+        requirement: { type: 'prestige_count', value: 25 },
+        bonus: { type: 'global_mult', value: 0.50 }, color: '#e040fb'
+    },
+    {
+        id: 28, name: "Punktesammler", description: "Besitze 10.000 Prestige-Punkte (auf der Hand).",
+        requirement: { type: 'prestige_points_held', value: 10000 },
+        bonus: { type: 'global_mult', value: 0.05 }, color: '#e040fb'
+    },
+    {
+        id: 29, name: "Prestige-Gott", description: "Besitze 1 Million Prestige-Punkte.",
+        requirement: { type: 'prestige_points_held', value: 1000000 },
+        bonus: { type: 'prestige_efficiency', value: 1.0 }, color: '#FFD700'
+    },
+
+    // =========================================================================
+    // 💎 KATEGORIE: REICHTUM (Diamanten)
+    // =========================================================================
+    {
+        id: 30, name: "Minen-Besitzer", description: "Schalte die Diamanten-Mine frei.",
+        requirement: { type: 'building_count', target: 8, value: 1 },
+        bonus: { type: 'sps_mult', value: 0.10 }, color: '#00bcd4'
+    },
+    {
+        id: 31, name: "Schatzsucher I", description: "Besitze 100 Diamanten gleichzeitig.",
+        requirement: { type: 'diamond_count', value: 100 },
+        bonus: { type: 'sps_mult', value: 0.05 }, color: '#00bcd4'
+    },
+    {
+        id: 32, name: "Schatzsucher II", description: "Besitze 1.000 Diamanten gleichzeitig.",
+        requirement: { type: 'diamond_count', value: 1000 },
+        bonus: { type: 'click_mult', value: 0.25 }, color: '#00bcd4'
+    },
+    {
+        id: 33, name: "Schatzsucher III", description: "Besitze 10.000 Diamanten gleichzeitig.",
+        requirement: { type: 'diamond_count', value: 10000 },
+        bonus: { type: 'global_mult', value: 0.10 }, color: '#00bcd4'
+    },
+
+    // =========================================================================
+    // ⚔️ KATEGORIE: GILDEN (Gemeinschaft)
+    // =========================================================================
+    {
+        id: 34, name: "Gilden-Gründer", description: "Gründe eine Gilde oder tritt bei.",
         requirement: { type: 'guild_joined', value: true },
-        bonus: { type: 'global_mult', value: 0.05 }, // +5% auf ALLES
-        color: 'var(--color-secondary-red)'
+        bonus: { type: 'global_mult', value: 0.05 }, color: '#8d6e63'
+    },
+    {
+        id: 35, name: "Gilden-Level I", description: "Erreiche Gilden-Level 2.",
+        requirement: { type: 'guild_level', value: 2 },
+        bonus: { type: 'sps_mult', value: 0.10 }, color: '#ff9800'
+    },
+    {
+        id: 36, name: "Gilden-Level II", description: "Erreiche Gilden-Level 5.",
+        requirement: { type: 'guild_level', value: 5 },
+        bonus: { type: 'global_mult', value: 0.15 }, color: '#ff9800'
+    },
+    {
+        id: 37, name: "Gilden-Level III", description: "Erreiche Gilden-Level 10.",
+        requirement: { type: 'guild_level', value: 10 },
+        bonus: { type: 'global_mult', value: 0.25 }, color: '#ff9800'
+    },
+    {
+        id: 38, name: "Gilden-Level IV", description: "Erreiche Gilden-Level 20.",
+        requirement: { type: 'guild_level', value: 20 },
+        bonus: { type: 'global_mult', value: 0.50 }, color: '#ff9800'
+    },
+    {
+        id: 39, name: "Gilden-Level V", description: "Erreiche Gilden-Level 50.",
+        requirement: { type: 'guild_level', value: 50 },
+        bonus: { type: 'global_mult', value: 2.0 }, color: '#FFD700'
     }
 ];

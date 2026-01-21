@@ -477,6 +477,14 @@ class SmileyGame {
                 ...this.gameState,
                 ...allData.gameState
             };
+
+            if (this.gameState.achievementsUnlocked.length < achievementsData.length) {
+                const diff = achievementsData.length - this.gameState.achievementsUnlocked.length;
+                for (let i = 0; i < diff; i++) {
+                    this.gameState.achievementsUnlocked.push(false);
+                }
+            }
+
             this.applyAllBoni();
             return true;
         } catch (e) {
@@ -671,8 +679,26 @@ class SmileyGame {
         this.gameState.researchStatus.forEach((bought, index) => {
             if (bought) {
                 const upgrade = globalUpgrades[index];
-                if (upgrade && upgrade.type === 'click_mult') {
-                    prestigeClickMultiplier += upgrade.value;
+                if (upgrade) {
+                    switch (upgrade.type) {
+                        case 'click_mult': 
+                            prestigeClickMultiplier += upgrade.value; 
+                            break;
+                        case 'sps_mult': 
+                            this.gameState.globalSPSMultiplier += upgrade.value; 
+                            break;
+                        case 'cost_reduction_global':
+                        case 'cost_reduction_buildings': // Falls global definiert
+                            this.gameState.globalCostReduction += upgrade.value;
+                            break;
+                        case 'global_god_mode':
+                            this.gameState.godModeMultiplier *= (1 + upgrade.value);
+                            break;
+                        // Falls du statische Boni hast (z.B. +10 flach):
+                        case 'click_static':
+                            // Das müsstest du zu baseClick addieren, hier lassen wir es erstmal raus
+                            break;
+                    }
                 }
             }
         });
@@ -1207,18 +1233,62 @@ class SmileyGame {
 
     checkAchievements() {
         achievementsData.forEach((achievement, index) => {
+            // Wenn schon freigeschaltet, überspringen
             if (this.gameState.achievementsUnlocked[index]) return;
+            
             let isMet = false;
             const req = achievement.requirement;
+            
             switch (req.type) {
-                case 'building_count': if (this.gameState.buildingCounts[req.target] >= req.value) isMet = true; break;
-                case 'total_clicks': if (this.gameState.totalClicksLifetime >= req.value) isMet = true; break;
-                case 'lifetime_smileys': if (this.gameState.lifetime_smileys >= req.value) isMet = true; break;
-                case 'guild_joined': if (this.gameState.guildName !== null) isMet = true; break;
+                // --- BASIS ---
+                case 'building_count': 
+                    if (this.gameState.buildingCounts[req.target] >= req.value) isMet = true; 
+                    break;
+                case 'total_clicks': 
+                    if (this.gameState.totalClicksLifetime >= req.value) isMet = true; 
+                    break;
+                case 'lifetime_smileys': 
+                    if (this.gameState.lifetime_smileys >= req.value) isMet = true; 
+                    break;
+                
+                // --- FORTSCHRITT ---
+                case 'sps_reach': 
+                    if (this.gameState.totalSPS >= req.value) isMet = true;
+                    break;
+                case 'total_buildings': // NEU: Summe aller Gebäude
+                    const total = this.gameState.buildingCounts.reduce((a, b) => a + b, 0);
+                    if (total >= req.value) isMet = true;
+                    break;
+
+                // --- PRESTIGE & DIAMANTEN ---
+                case 'prestige_count': 
+                    if (this.gameState.prestigeResets >= req.value) isMet = true; 
+                    break;
+                case 'prestige_points_held': // NEU: Punkte auf der Hand
+                    if (this.gameState.prestige_punkte_verfügbar >= req.value) isMet = true;
+                    break;
+                case 'diamond_count': 
+                    if (this.gameState.diamanten >= req.value) isMet = true; 
+                    break;
+                
+                // --- GILDE ---
+                case 'guild_joined': 
+                    if (this.gameState.guildName !== null) isMet = true; 
+                    break;
+                case 'guild_level': 
+                    if (this.gameState.guildLevel >= req.value) isMet = true; 
+                    break;
+
+                // --- STATS ---
+                case 'crit_chance_reach': // NEU: Kritische Chance
+                    if (this.gameState.critChance >= req.value) isMet = true;
+                    break;
             }
+
             if (isMet) {
                 this.gameState.achievementsUnlocked[index] = true;
-                this.showNotification(`🏆 Meilenstein erreicht: ${achievement.name}`, 'success');
+                this.showNotification(`🏆 ERFOLG: ${achievement.name}`, 'success');
+                this.triggerShake('show_achievements_button');
                 this.applyAllBoni();
                 this.speichereSpiel();
             }
