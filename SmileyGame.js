@@ -266,6 +266,9 @@ class SmileyGame {
             achievementsUnlocked: achievementsData.map(() => false),
             totalClicksLifetime: 0,
             guildName: null,
+            guildLevel: 1,
+            guildXP: 0,
+            guildXPReq: 1000,
             guildUpgradeStatus: guildUpgradesData.map(() => false),
             guildSPSMultiplier: 0,
             guildCostReduction: 0,
@@ -780,6 +783,11 @@ class SmileyGame {
                 }
             }
         });
+
+        if (this.gameState.guildLevel > 1) {
+            const levelBonus = (this.gameState.guildLevel - 1) * 0.10;
+            this.gameState.guildSPSMultiplier += levelBonus;
+        }
 
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
         const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
@@ -1470,6 +1478,32 @@ class SmileyGame {
         this.generateGuildQuests();
         this.renderGuildsContent();
         this.updateUI();
+        this.speichereSpiel();
+    }
+
+    // --- NEUE METHODE: Gilden XP System ---
+    addGuildXP(amount) {
+        if (!this.gameState.guildName) return; // Nur wenn man in einer Gilde ist
+
+        this.gameState.guildXP += amount;
+        
+        // Prüfen, ob wir genug XP für ein Level-Up haben
+        let leveledUp = false;
+        while (this.gameState.guildXP >= this.gameState.guildXPReq) {
+            this.gameState.guildXP -= this.gameState.guildXPReq;
+            this.gameState.guildLevel++;
+            // Nächstes Level wird schwieriger (x1.5 XP nötig)
+            this.gameState.guildXPReq = Math.floor(this.gameState.guildXPReq * 1.5);
+            leveledUp = true;
+        }
+
+        if (leveledUp) {
+            this.showNotification(`🆙 GILDEN LEVEL UP! Stufe ${this.gameState.guildLevel}`, 'success');
+            this.applyAllBoni();   // Bonus neu berechnen
+        }
+        
+        // UI aktualisieren (Balken)
+        this.renderGuildsContent();
         this.speichereSpiel();
     }
 
