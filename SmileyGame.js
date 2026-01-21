@@ -2094,64 +2094,129 @@ class SmileyGame {
     }
 
     checkFeatureUnlocks() {
-        if (typeof prestigeUpgrades === 'undefined') return;
-        const upgrades = this.gameState.prestigeUpgrades || [];
-        const hasPets = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_pets');
-        const hasMine = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_mine');
-        const hasGuilds = upgrades.some(id => prestigeUpgrades.find(u => u.id === id)?.type === 'unlock_guilds');
+        // Wir nutzen einfach die Flags, die wir in applyAllBoni() schon berechnet haben
+        const hasPets = this.gameState.petsUnlocked;
+        const hasMine = this.gameState.diamondMineUnlocked;
+        const hasGuilds = this.gameState.guildsUnlocked;
 
+        // Buttons ein-/ausblenden
         const btnPets = this.getById('open-pet-shop-button');
-        if(btnPets) btnPets.style.display = hasPets ? 'block' : 'none';
+        if (btnPets) {
+            btnPets.style.display = hasPets ? 'flex' : 'none'; // 'flex' für bessere Zentrierung
+            // Falls der Button noch eine 'locked' Klasse hat (optional)
+            if (!hasPets) btnPets.classList.add('locked-feature');
+            else btnPets.classList.remove('locked-feature');
+        }
+
         const btnMine = this.getById('open_diamond_mine_button');
-        if(btnMine) btnMine.style.display = hasMine ? 'block' : 'none';
+        if (btnMine) btnMine.style.display = hasMine ? 'flex' : 'none';
+
         const btnGuilds = this.getById('open_guilds_button');
-        if(btnGuilds) btnGuilds.style.display = hasGuilds ? 'block' : 'none';
+        if (btnGuilds) btnGuilds.style.display = hasGuilds ? 'flex' : 'none';
     }
 
     renderPetShop() {
         const petGrid = this.getById('pet-shop-grid');
+        const lockMessage = this.getById('pet-lock-message');
+        
         if (!petGrid) return;
-        petGrid.innerHTML = '';
+
+        // 1. Prüfen ob gesperrt
+        if (!this.gameState.petsUnlocked) {
+            petGrid.style.display = 'none';
+            if (lockMessage) {
+                lockMessage.style.display = 'block';
+                lockMessage.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#888;">
+                        <h3>🔒 Pet Shop Gesperrt</h3>
+                        <p>Kaufe das Upgrade "Pet Shop Lizenz" im Prestige-Tree (Tier 4), um kleine Begleiter freizuschalten!</p>
+                    </div>`;
+            }
+            return;
+        }
+
+        // 2. Shop anzeigen
+        if (lockMessage) lockMessage.style.display = 'none';
+        petGrid.style.display = 'grid';
+        petGrid.innerHTML = ''; // Leeren vor dem Neu-Zeichnen
+
+        // 3. Pets rendern
+        // Sicherstellen, dass petsData existiert (kommt aus data.js)
+        if (typeof petsData === 'undefined') {
+            petGrid.innerHTML = '<p>Fehler: petsData nicht gefunden!</p>';
+            return;
+        }
 
         petsData.forEach((pet) => {
             const petDiv = document.createElement('div');
-            petDiv.className = 'pet-item';
+            petDiv.className = 'pet-item box-style'; // box-style für konsistenten Look
             petDiv.dataset.id = pet.id;
+            
             const currentLevel = this.gameState.petLevels[pet.id] || 0;
             const stats = this.calculatePetStat(pet, currentLevel);
-            let buyButtonHtml = '';
-            let statusText;
-            let buttonClass = 'btn-buy-pet';
+            const isActive = this.gameState.activePet === pet.id;
 
-            if (currentLevel === pet.maxLevel) {
-                statusText = `Max Level (${pet.maxLevel})`;
-                buyButtonHtml = `<button class="btn-confirm" disabled>Max Level</button>`;
+            // Button Status Logik
+            let actionBtnHtml = '';
+            const canAfford = this.gameState.diamanten >= stats.nextCost;
+            
+            if (currentLevel >= pet.maxLevel) {
+                actionBtnHtml = `<button class="btn-buy-pet" disabled style="background:#555; color:#aaa;">MAX LEVEL</button>`;
             } else {
-                const canAfford = this.gameState.diamanten >= stats.nextCost;
-                statusText = `Level ${currentLevel} -> ${currentLevel + 1}`;
-                buyButtonHtml = `
-                    <button class="${buttonClass}" data-id="${pet.id}" ${canAfford ? '' : 'disabled'}>
-                        ${currentLevel === 0 ? 'Kaufen' : 'Level Up'} (${this.formatNumber(stats.nextCost)} 💎)
+                const btnColor = canAfford ? 'var(--color-primary)' : '#ff5252';
+                const label = currentLevel === 0 ? 'Adoptieren' : 'Level Up';
+                actionBtnHtml = `
+                    <button class="btn-buy-pet" data-id="${pet.id}" ${canAfford ? '' : 'disabled'} style="border-color:${btnColor}">
+                        ${label} <br> <span style="font-size:0.8em">💎 ${this.formatNumber(stats.nextCost)}</span>
                     </button>
                 `;
             }
 
-            const currentEffectDisplay = (stats.currentEffect * 100).toFixed(currentLevel >= 10 ? 1 : 0);
-            let bonusDescription = pet.description.replace('%', currentEffectDisplay);
+            // Aktivieren Button (nur wenn man das Pet besitzt)
+            let activateBtnHtml = '';
+            if (currentLevel > 0) {
+                activateBtnHtml = `
+                    <button class="btn-pet-activate ${isActive ? 'active-state' : ''}" data-id="${pet.id}" style="margin-top:5px; width:100%;">
+                        ${isActive ? '✅ Aktiv' : 'Auswählen'}
+                    </button>
+                `;
+            } else {
+                activateBtnHtml = `<button disabled style="margin-top:5px; width:100%; opacity:0.3;">Gesperrt</button>`;
+            }
+
+            // Werte Berechnung für Anzeige
+            const currentEffectDisplay = (stats.currentEffect * 100).toFixed(1);
+            let desc = pet.description.replace('%', currentEffectDisplay);
+
+            let imageHtml = '';
+            if (pet.img) {
+                // Hier nutzen wir die Klasse .pet-img aus dem CSS oben!
+                imageHtml = `<img src="${pet.img}" alt="${pet.name}" class="pet-img">`;
+            } else {
+                imageHtml = `<div style="font-size:3em; margin-bottom:10px;">${pet.icon || '🐶'}</div>`;
+            }
 
             petDiv.innerHTML = `
-                <img src="${pet.img}" alt="${pet.name}" class="pet-img">
-                <h3>${pet.name} (Lv. ${currentLevel})</h3>
-                <p class="pet-description">Bonus: ${bonusDescription}</p>
-                <p class="pet-status">Nächste Stufe: ${statusText}</p>
-                <div class="pet-actions">
-                    ${buyButtonHtml}
-                    <button class="btn-pet-activate btn-pet-inactive" data-id="${pet.id}"
-                            ${currentLevel === 0 ? 'disabled' : ''}>
-                        Aktivieren
-                    </button>
+                <div style="text-align:center; width:100%;">
+                    ${imageHtml}
+                    <h4 style="margin:5px 0;">${pet.name}</h4>
+                    <span style="font-size:0.8em; color:#888; display:block; margin-bottom:5px;">Level ${currentLevel} / ${pet.maxLevel}</span>
+                </div>
+                
+                <p class="pet-description" style="height:40px; overflow:hidden;">${desc}</p>
+                
+                <div class="pet-actions" style="margin-top:auto; width:100%;">
+                    ${actionBtnHtml}
+                    ${activateBtnHtml}
                 </div>
             `;
+            
+            // Wenn aktiv, grün umranden
+            if (isActive) {
+                petDiv.style.borderColor = '#4CAF50';
+                petDiv.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.3)';
+            }
+
             petGrid.appendChild(petDiv);
         });
     }
@@ -2745,7 +2810,8 @@ class SmileyGame {
                     'prestige-shop-modal', 'skill_tree_modal', 'settings-modal', 
                     'pet-shop-modal', 'diamond-mine-modal', 'guilds-modal',
                     'buildings_info_modal', 'global_upgrades_info_modal', 
-                    'achievements_info_modal', 'stats_info_modal', 'prestige_info_modal'
+                    'achievements_info_modal', 'stats_info_modal', 'prestige_info_modal',
+                    'pets_info_modal'
                 ];
                 modals.forEach(id => {
                     const el = document.getElementById(id);
@@ -2890,7 +2956,7 @@ class SmileyGame {
 
         const achievementsModal = this.getById('achievements_info_modal');
         const openAchievementsButton = this.getById('show_achievements_button');
-        const closeAchievementsButton = this.getById('close_achievements_info_button');
+        const closeAchievementsButton = this.getById('close_achievements_button');
         openAchievementsButton?.addEventListener('click', () => {
             this.createInfoAchievementElements();
             if (achievementsModal) achievementsModal.style.display = 'flex';
@@ -2982,22 +3048,27 @@ class SmileyGame {
     createBuildingInfoElements() {
         const container = this.getById('info_buildings_container');
         if (!container) return;
+        
         container.innerHTML = '';
+        container.className = 'info-grid'; // <--- WICHTIG: Das fehlte!
+
         const allBuildings = [...buildingsData, ...uniqueBuildingsData];
         const globalMulti = this.gameState.globalerPrestigeMultiplikator;
 
         allBuildings.forEach((building, index) => {
             if (index === DIAMOND_MINE_INDEX) return;
             const item = document.createElement('div');
-            item.className = 'info-stats-item building-info-item';
+            item.className = 'info-upgrade-item'; // Einheitliches Styling
+            
             const baseSPSPerUnit = building.baseSPS * (building.prestigeMulti || 1);
             const scaledSPSPerUnit = baseSPSPerUnit * globalMulti;
-            let icon = '🏠';
+            
             item.innerHTML = `
-                <h3>${icon} ${building.name}</h3>
-                <p><strong>Basis SPS pro Stück:</strong> ${this.formatNumber(baseSPSPerUnit)}</p>
-                <p><strong>Aktuelle SPS pro Stück (mit Boni):</strong> ${this.formatNumber(scaledSPSPerUnit)}</p>
-                <p class="small-text">(Beinhaltet Prestige, Pets und Gilden Boni)</p>
+                <h4 style="color:var(--color-accent-blue); margin-bottom:5px;">${building.name}</h4>
+                <div style="font-size:0.9em; color:#ccc;">
+                    <p>Basis: ${this.formatNumber(baseSPSPerUnit)} SPS</p>
+                    <p>Aktuell: <strong style="color:#fff">${this.formatNumber(scaledSPSPerUnit)} SPS</strong></p>
+                </div>
             `;
             container.appendChild(item);
         });
@@ -3006,35 +3077,100 @@ class SmileyGame {
     createInfoGlobalUpgradeElements() {
         const container = this.getById('info_global_upgrades_container');
         if (!container) return;
+        
         container.innerHTML = '';
+        container.className = 'info-grid'; // Gitter-Layout aktivieren
+
         globalUpgrades.forEach(u => {
             const bought = this.gameState.researchStatus[u.id];
-            container.innerHTML += `<div class="info-upgrade-item" style="border-left:5px solid ${bought?'green':'gray'}">
-                <h4>${u.description}</h4><p>${bought?'Gekauft':'Noch offen'}</p></div>`;
+            
+            // 1. Icon auswählen basierend auf dem Typ
+            let icon = '⚙️'; // Standard
+            if (u.type === 'click_mult' || u.type === 'click_static') icon = '👆';
+            if (u.type === 'sps_mult' || u.type === 'sps_static') icon = '⚡';
+            if (u.type === 'cost_reduction_buildings') icon = '📉';
+            if (u.type === 'global_god_mode') icon = '🌟';
+
+            // 2. Element erstellen
+            const item = document.createElement('div');
+            // Basis-Klasse + Status-Klasse
+            item.className = `info-upgrade-item ${bought ? 'purchased' : 'locked'}`;
+            
+            // 3. Styling anpassen (Gekauft = Hell / Nicht gekauft = Dunkel)
+            if (bought) {
+                item.style.borderColor = '#4CAF50';
+                item.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.1)';
+            } else {
+                item.style.borderColor = '#555';
+                item.style.opacity = '0.6';
+            }
+
+            // 4. HTML Inhalt bauen
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">
+                    <span style="font-size:1.5em;">${icon}</span>
+                    <span style="font-size:0.8em; font-weight:bold; color:${bought ? '#4CAF50' : '#ff5252'}; text-transform:uppercase;">
+                        ${bought ? 'AKTIV' : 'OFFEN'}
+                    </span>
+                </div>
+                
+                <h4 style="margin:5px 0; font-size:1rem; color:${bought ? '#fff' : '#aaa'};">
+                    ${u.name || 'Unbekanntes Upgrade'} 
+                </h4>
+                
+                <p style="font-size:0.85em; color:#ccc; min-height:40px; display:flex; align-items:center; justify-content:center;">
+                    ${u.description}
+                </p>
+                
+                ${!bought ? `<div style="margin-top:5px; font-size:0.8em; color:#FFD700;">Kosten: ${this.formatNumber(this.getGlobalUpgradeCost(u))}</div>` : ''}
+            `;
+            container.appendChild(item);
         });
     }
 
     createInfoPetsElements() {
         const container = this.getById('info_pets_container');
         if (!container) return;
+        
         container.innerHTML = '';
+        container.className = 'info-grid'; // <--- WICHTIG
+
         petsData.forEach(p => {
             const lvl = this.gameState.petLevels[p.id] || 0;
-            container.innerHTML += `<div class="info-upgrade-item"><h4>${p.name} (Lv ${lvl})</h4><p>${p.description}</p></div>`;
+            const item = document.createElement('div');
+            item.className = 'info-upgrade-item';
+            
+            item.innerHTML = `
+                <div style="font-size:2em;">${p.icon || '🐶'}</div>
+                <h4>${p.name}</h4>
+                <p>Level: <span style="color:#FFD700">${lvl}</span> / ${p.maxLevel}</p>
+                <p style="font-size:0.8em; margin-top:5px;">${p.description.replace('%', ((lvl*0.1)*100).toFixed(0))}</p>
+            `;
+            container.appendChild(item);
         });
     }
 
     createInfoAchievementElements() {
         const container = this.getById('info_achievements_container');
         if (!container) return;
+        
         container.innerHTML = '';
+        container.className = 'info-grid'; // <--- WICHTIG
+
         achievementsData.forEach((a, i) => {
             const unlocked = this.gameState.achievementsUnlocked[i];
-            container.innerHTML += `<div class="info-upgrade-item" style="opacity:${unlocked?1:0.5}">
-                <h4>${unlocked?'🏆':'🔒'} ${a.name}</h4><p>${a.description}</p></div>`;
+            const item = document.createElement('div');
+            item.className = `info-upgrade-item ${unlocked ? 'purchased' : 'locked'}`;
+            if(!unlocked) item.style.opacity = "0.5";
+
+            item.innerHTML = `
+                <h4 style="color:${unlocked ? '#FFD700' : '#888'}">${unlocked ? '🏆' : '🔒'} ${a.name}</h4>
+                <p>${a.description}</p>
+                ${unlocked ? '<span style="color:#4CAF50; font-size:0.8em">Freigeschaltet!</span>' : ''}
+            `;
+            container.appendChild(item);
         });
     }
-
     createPrestigeInfoList() {
         const container = this.getById('info_prestige_container');
         if (!container) return;
