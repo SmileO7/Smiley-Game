@@ -458,30 +458,32 @@ main {
     width: 100%;
 }
 
+.feature-button-grid {
+    display: flex; /* Flexbox statt Grid */
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
 .feature-button-grid button {
-    height: 60px; /* Etwas höher für Icon oben, Text unten */
-    font-size: 0.7rem; /* Kleinere Schrift */
+    flex: 1; /* Jeder Button nimmt gleich viel Platz */
+    height: 45px;
+    font-size: 0.75rem;
     display: flex;
-    flex-direction: column; /* Icon ÜBER Text */
+    flex-direction: column; /* Icon über Text */
     align-items: center;
     justify-content: center;
-    gap: 3px;
     background: rgba(255,255,255,0.05);
     border: 1px solid #444;
-    margin: 0 !important;
-    white-space: nowrap; /* Text nicht umbrechen */
-    overflow: hidden;
+    padding: 2px;
 }
 
-.feature-button-grid button span {
-    font-size: 1.2rem; /* Icon größer */
-    margin: 0;
-}
-
-.feature-button-grid button:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: var(--color-accent-blue);
-    transform: translateY(-2px);
+/* Falls der Platz zu eng wird, Text ausblenden (optional) */
+@media (max-width: 600px) {
+    .feature-button-grid button { font-size: 0; }
+    .feature-button-grid button span { font-size: 1.2rem; margin-bottom: 0; }
 }
 
 #open_diamond_mine_button:hover { color: #009FFD; border-color: #009FFD; }

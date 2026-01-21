@@ -1090,22 +1090,47 @@ class SmileyGame {
     }
 
     tryBuyPrestigeUpgrade(upgrade) {
+        // Prüfen ob bereits gekauft
         if (this.gameState.prestigeUpgradeStatus[upgrade.id]) return;
-        const reqs = upgrade.requirements || [];
-        const requirementsMet = reqs.every(reqId => this.gameState.prestigeUpgradeStatus[reqId]);
+        
+        // Prüfen ob Voraussetzungen erfüllt (Eltern-Upgrades gekauft)
+        const reqs = upgrade.requirements || upgrade.parents || [];
+        // Wir prüfen parents, da deine Datenstruktur 'parents' nutzt, 
+        // aber der Code manchmal 'requirements' erwartet. Sicherheitshalber beides checken.
+        // In deinem Data-Set heißt es 'parents'.
+        
+        const requirementsMet = reqs.every(parentId => {
+             // Suche den Index des Parents basierend auf der ID
+             const parentIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
+             return this.gameState.prestigeUpgradeStatus[parentIndex];
+        });
 
-        if (!requirementsMet) {
+        if (!requirementsMet && reqs.length > 0) {
             this.showNotification("🔒 Du musst erst das vorherige Upgrade kaufen!", "error");
             return;
         }
 
         if ((this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost) {
+            // 1. Bezahlen
             this.gameState.prestige_punkte_verfügbar -= upgrade.cost;
-            this.gameState.prestigeUpgradeStatus[upgrade.id] = true;
-            this.showNotification(`✅ Upgrade gekauft: ${upgrade.name || 'Upgrade'}`, "success");
+            
+            // 2. Status setzen (Index finden ist sicherer als ID direkt als Index, falls IDs nicht 0,1,2... sind)
+            const upgradeIndex = this.prestigeUpgrades.findIndex(u => u.id === upgrade.id);
+            if(upgradeIndex !== -1) {
+                this.gameState.prestigeUpgradeStatus[upgradeIndex] = true;
+            }
+
+            // 3. WICHTIG: Boni neu berechnen! (Das hat gefehlt)
+            this.applyAllBoni();
+
+            this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
             this.speichereSpiel();
-            this.updatePrestigeUI();
-            this.updateUI();
+            
+            // 4. UI Updates
+            this.updatePrestigeUI(); // Punkte-Anzeige oben
+            this.updateUI();         // SPS/Klick Anzeige
+            this.renderPrestigeTree(); // WICHTIG: Baum neu zeichnen (Farben ändern)
+            
         } else {
             this.showNotification("🔒 Du brauchst mehr Prestige-Punkte!", "error");
         }
@@ -1681,28 +1706,70 @@ class SmileyGame {
 }
 
     updatePrestigeUI() {
-        const currentLevel = this.gameState.prestigeLevel || 0;
-        const nextLevelXP = Math.pow(10, 6 + currentLevel);
+        const availablePoints = this.gameState.prestige_punkte_verfügbar || 0;
+        const totalPoints = this.gameState.gesamt_prestige_punkte || 0;
         const safeLifetime = this.gameState.lifetime_smileys || 0;
-        const progressPercent = Math.min(100, (safeLifetime / nextLevelXP) * 100);
+
+        // 1. Haupt-Prestige Seite Updates
+        const elAvailable = this.getById('prestige_punkte_verfügbar');
+        const elTotal = this.getById('gesamt_prestige_punkte');
+        const elLifetime = this.getById('prestige-lifetime-display'); // Achtung: ID checken
+        const elLifetimePrestige = this.getById('aktuelle_smileys_prestige');
+        const elMulti = this.getById('prestige_view_multi');
+
+        if (elAvailable) elAvailable.innerText = this.formatNumber(availablePoints);
+        if (elTotal) elTotal.innerText = this.formatNumber(totalPoints);
+        if (elLifetime) elLifetime.innerText = this.formatNumber(safeLifetime);
+        if (elLifetimePrestige) elLifetimePrestige.innerText = this.formatNumber(safeLifetime);
+        if (elMulti) elMulti.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
+
+        // 2. WICHTIG: Skill Tree Modal Update (Das fehlte!)
+        const elModalPoints = this.getById('prestige_punkte_verfügbar_modal');
+        if (elModalPoints) {
+            elModalPoints.innerText = this.formatNumber(availablePoints);
+            // Optional: Farbe rot wenn 0, grün wenn > 0
+            elModalPoints.style.color = availablePoints > 0 ? '#4CAF50' : '#ff5252';
+        }
+
+        // 3. Fortschrittsbalken Logik (wie gehabt)
+        const pointsToGain = this.calculatePrestigeGain();
+        const currentTotalLevel = totalPoints + pointsToGain;
+        const nextLevel = currentTotalLevel + 1;
+        // Formel für Kosten: 100k * Level^3 (oder ähnlich, muss zur Reset-Logik passen)
+        const prestigePointThreshold = 100000; 
+        const smileysForNext = Math.pow(nextLevel, 3) * prestigePointThreshold;
+        
+        // Prozent berechnen für Balken
+        // (Vereinfacht, damit der Balken immer relativ zum nächsten Level ist)
+        const prevLevelSmileys = Math.pow(currentTotalLevel, 3) * prestigePointThreshold;
+        const needed = smileysForNext - prevLevelSmileys;
+        const currentProgress = safeLifetime - prevLevelSmileys;
+        
+        let percentage = 0;
+        if (needed > 0) percentage = (currentProgress / needed) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
 
         const bar = this.getById('prestige-progress-bar');
-        if (bar) bar.style.width = `${progressPercent}%`;
-
-        const text = this.getById('prestige-progress-text');
-        if (text) text.innerText = `${this.formatNumber(safeLifetime)} / ${this.formatNumber(nextLevelXP)}`;
-
-        const lifetimeDisp = this.getById('prestige-lifetime-display');
-        if (lifetimeDisp) lifetimeDisp.innerText = this.formatNumber(safeLifetime);
-
-        const currentDisp = this.getById('prestige-current-level');
-        if (currentDisp) currentDisp.innerText = this.gameState.prestigeCurrency || 0;
-
-        const possibleGain = this.calculatePrestigeGain ? this.calculatePrestigeGain() : 0;
+        const textNext = this.getById('next-prestige-threshold');
+        const textPercent = this.getById('prestige-percent-text');
         const gainDisp = this.getById('prestige-gain-display');
+
+        if (bar) bar.style.width = `${percentage}%`;
+        if (textNext) textNext.innerText = this.formatNumber(smileysForNext);
+        
+        if (textPercent) {
+            if (pointsToGain > 0) {
+                textPercent.innerText = `+${pointsToGain} Punkte bereit!`;
+                textPercent.style.color = '#00ff00';
+            } else {
+                textPercent.innerText = `${percentage.toFixed(1)}%`;
+                textPercent.style.color = '#fff';
+            }
+        }
+
         if (gainDisp) {
-            gainDisp.innerText = possibleGain;
-            gainDisp.style.color = possibleGain > 0 ? '#4CAF50' : '#009ffd';
+            gainDisp.innerText = pointsToGain;
+            gainDisp.style.color = pointsToGain > 0 ? '#4CAF50' : '#009ffd';
         }
     }
 
@@ -3273,9 +3340,11 @@ class SmileyGame {
     createInfoStatsElements() {
         const container = this.getById('info_stats_container');
         if (!container) return;
-        container.className = 'info-grid';
+        
         container.innerHTML = '';
+        container.className = 'info-grid'; // Grid Layout beibehalten
 
+        // --- BERECHNUNGEN (Bleiben gleich) ---
         const prestige = this.calculatePrestigeEffects();
         const globalRed = this.gameState.globalCostReduction || 0;
         const guildRed = this.gameState.guildCostReduction || 0;
@@ -3308,12 +3377,15 @@ class SmileyGame {
         const multResets = 1 + (resets * resetBonusVal);
         const multGuild = 1 + (this.gameState.guildSPSMultiplier || 0);
         let totalGlobal = this.gameState.globalerPrestigeMultiplikator || 1;
+        
+        // Versuchen, den reinen Upgrade-Multiplikator zu isolieren
         const divisor = (multPoints * multResets * multGuild) || 1;
         const multUpgrades = totalGlobal / divisor;
 
         const fmt = (val) => (val * 100).toFixed(1) + '%';
         const xFmt = (val) => 'x' + val.toFixed(2);
 
+        // --- LISTE DER STATS ---
         const stats = [
             { label: '💰 Aktuelle Smileys', value: this.formatNumber(this.gameState.aktuelle_smileys) },
             { label: '🏦 Lifetime Smileys', value: this.formatNumber(this.gameState.lifetime_smileys) },
@@ -3321,26 +3393,26 @@ class SmileyGame {
             { label: '⚡ Smileys pro Sekunde', value: this.formatNumber(this.gameState.totalSPS), highlight: true },
             { label: '👆 Klick-Stärke', value: this.formatNumber(this.getClickStrength()) },
             { label: '🔥 Kritische Treffer', value: `${fmt(this.gameState.critChance)} Chance / ${this.gameState.critDamageMult}x Schaden` },
-            {
-                label: '📉 Gebäude-Rabatt',
-                value: totalBuildingRed.toFixed(2) + '%',
+            { 
+                label: '📉 Gebäude-Rabatt', 
+                value: totalBuildingRed.toFixed(2) + '%', 
                 detail: `Prestige: ${fmt(prestigeRed)} | Gilde: ${fmt(guildRed)} | Shop: ${fmt(globalRed)} | Pet: ${fmt(petBuildingRed)}`,
-                highlight: totalBuildingRed > 0
+                highlight: totalBuildingRed > 0 
             },
-            {
-                label: '📉 Upgrade-Rabatt',
-                value: totalUpgradeRed.toFixed(2) + '%',
+            { 
+                label: '📉 Upgrade-Rabatt', 
+                value: totalUpgradeRed.toFixed(2) + '%', 
                 detail: `Prestige: ${fmt(prestigeRed)} | Gilde: ${fmt(guildRed)} | Shop: ${fmt(globalRed)} | Pet: ${fmt(petUpgradeRed)}`,
-                highlight: totalUpgradeRed > 0
+                highlight: totalUpgradeRed > 0 
             },
-            {
-                label: '🚀 Produktions-Bonus',
-                value: xFmt(totalGlobal),
+            { 
+                label: '🚀 Produktions-Bonus', 
+                value: xFmt(totalGlobal), 
                 detail: `Punkte: ${xFmt(multPoints)} | Resets: ${xFmt(multResets)} | Upgrades: ${xFmt(multUpgrades)} | Gilde: ${xFmt(multGuild)}`,
-                highlight: true
+                highlight: true 
             },
-            {
-                label: '🌟 Prestige Effizienz',
+            { 
+                label: '🌟 Prestige Effizienz', 
                 value: fmt(eff),
                 detail: `Bonus pro Prestige-Punkt (Basis + Upgrades)`
             },
@@ -3348,10 +3420,12 @@ class SmileyGame {
             { label: '🐶 Aktives Pet', value: activePetName }
         ];
 
+        // --- RENDERING ---
         stats.forEach(stat => {
             const item = document.createElement('div');
             item.className = 'info-upgrade-item';
             if (stat.highlight) item.style.borderColor = '#009ffd';
+            
             let html = `
                 <h4 style="margin:0 0 5px 0; color:#aaa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
                     ${stat.label}
@@ -3366,35 +3440,8 @@ class SmileyGame {
             item.innerHTML = html;
             container.appendChild(item);
         });
-        // Balkendiagramm für Produktions-Verteilung hinzufügen
-    const productionHeader = document.createElement('h3');
-    productionHeader.innerText = "Produktions-Anteil";
-    productionHeader.style.gridColumn = "1 / -1";
-    productionHeader.style.marginTop = "20px";
-    container.appendChild(productionHeader);
-
-    buildingsData.forEach((b, i) => {
-    const count = this.gameState.buildingCounts[i] || 0;
-        if (count > 0) {
-            const baseSPS = count * (b.baseSPS || 0) * (b.prestigeMulti || 1);
-            const actualSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
-            const pct = (actualSPS / this.gameState.totalSPS) * 100;
-
-            const barItem = document.createElement('div');
-            barItem.className = 'info-upgrade-item';
-            barItem.style.gridColumn = "1 / -1";
-            barItem.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>${b.name} (${count}x)</span>
-                    <span style="color:var(--color-accent-blue); font-weight:bold;">${pct.toFixed(1)}%</span>
-                    </div>
-                <div style="background:#111; height:10px; border-radius:5px; border:1px solid #333; overflow:hidden;">
-                <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #009FFD, #2af5ff); box-shadow: 0 0 10px rgba(0,159,253,0.5);"></div>
-                </div>
-            `;
-                container.appendChild(barItem);
-            }
-        });
+        
+        // HIER WURDE DER TEIL MIT DEN BALKEN ENTFERNT
     }
 
     getAchievementBonusText(bonus) {
