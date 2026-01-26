@@ -425,6 +425,14 @@
 <div id="big-bang-overlay"></div>
 
 <div id="custom-tooltip"></div> 
-
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Service Worker: Registriert (App-Ready!)'))
+        .catch((err) => console.log('Service Worker Fehler:', err));
+    });
+  }
+</script>
 <script src="data.js"></script>       <script src="SmileyGame.js"></script> </body>
 </html>
