@@ -34,6 +34,50 @@
     <div id="view-home" class="main-layout">
         <div class="left-column">
             <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
+            <div id="cloud-controls" style="text-align: center; margin-bottom: 20px;">
+    <button onclick="window.cloudSystem.login()" style="background: #4285F4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">
+        ☁️ Mit Google verbinden
+    </button>
+    
+    <div id="cloud-actions" style="display: none; margin-top: 10px;">
+        <button onclick="saveGameToCloud()" style="background: #0F9D58; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
+            Speichern ⬆️
+        </button>
+        <button onclick="loadGameFromCloud()" style="background: #F4B400; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer;">
+            Laden ⬇️
+        </button>
+    </div>
+</div>
+
+<script>
+    // Hilfsfunktionen für die Buttons
+    function saveGameToCloud() {
+        // Wir rufen die Funktion auf. Da wir "this" benutzen, brauchen wir keine Parameter mehr!
+        const data = gameInstance.saveGame(true); 
+        
+        // Und ab in die Cloud
+        window.cloudSystem.save(data);
+    }
+
+    function loadGameFromCloud() {
+        window.cloudSystem.load().then(data => {
+            if (data) {
+                gameInstance.loadGame(data);
+                alert("Spielstand aus der Cloud geladen!");
+            }
+        });
+    }
+
+    // Wenn der Nutzer sich einloggt, ändern wir die Buttons
+    // Wir fragen alle 1 Sekunde, ob wer eingeloggt ist (einfache Lösung)
+    setInterval(() => {
+        const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
+        if (user) {
+            document.getElementById('cloud-controls').querySelector('button').style.display = 'none'; // Login weg
+            document.getElementById('cloud-actions').style.display = 'block'; // Speichern/Laden her
+        }
+    }, 1000);
+</script>
             
             <button id="smiley_button">
                 <img src="smiley.png.png" alt="Smiley" id="smiley_image">
@@ -434,5 +478,11 @@
     });
   }
 </script>
-<script src="data.js"></script>       <script src="SmileyGame.js"></script> </body>
+
+<script src="data.js"></script> 
+
+<script src="SmileyGame.js"></script>
+
+<script type="module" src="firebase-logic.js"></script>
+</body>
 </html>

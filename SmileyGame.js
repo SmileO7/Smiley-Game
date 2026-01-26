@@ -2,6 +2,25 @@
 // === SmileyGame.js: Hauptspielklasse (Final & Friendly Version) ===
 // ================================================================================================================
 
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Sicherheits-Check: Falls es schon existiert, nicht nochmal starten
+    if (window.gameInstance) {
+        console.log("Spiel läuft bereits.");
+        return;
+    }
+
+    console.log("Starte SmileyGame...");
+
+    // 1. Instanz erstellen
+    const game = new SmileyGame();
+
+    // 2. Global verfügbar machen (WICHTIG für deine Buttons im HTML!)
+    window.gameInstance = game;
+
+    console.log("✅ SmileyGame gestartet und global als 'gameInstance' verfügbar!");
+});
+
 class SmileyGame {
     // ================================================================================================================
     // 0. KLASSE & CONSTRUCTOR
@@ -465,40 +484,155 @@ class SmileyGame {
         }
     }
 
-    saveGame() {
-        this.speichereSpiel();
+    // So muss sie aussehen:
+    // Wir fügen einen zweiten Parameter "externalData" hinzu
+    saveGame(returnOnly = false) {
+        // Wir nutzen "this", weil wir im Spiel sind.
+        // Wir nutzen die DEUTSCHEN Variablennamen aus deinem Screenshot.
+        
+        const saveData = {
+            // --- Basis Währungen ---
+            aktuelle_smileys: this.aktuelle_smileys,
+            lifetime_smileys: this.lifetime_smileys,
+            diamanten: this.diamanten,
+            totalClicksLifetime: this.totalClicksLifetime,
+
+            // --- Gebäude & Upgrades ---
+            buildingCounts: this.buildingCounts,
+            researchStatus: this.researchStatus,
+
+            // --- Prestige System ---
+            prestigeResets: this.prestigeResets,
+            prestige_punkte_verfügbar: this.prestige_punkte_verfügbar,
+            gesamt_prestige_punkte: this.gesamt_prestige_punkte,
+            prestigeUpgradeStatus: this.prestigeUpgradeStatus,
+
+            // --- Features & Fortschritt ---
+            achievementsUnlocked: this.achievementsUnlocked,
+            
+            // Pets
+            petsUnlocked: this.petsUnlocked,
+            petLevels: this.petLevels,
+            activePet: this.activePet,
+
+            // Gilden
+            guildsUnlocked: this.guildsUnlocked,
+            guildName: this.guildName,
+            guildLevel: this.guildLevel,
+            guildXP: this.guildXP,
+            guildUpgradeStatus: this.guildUpgradeStatus,
+            guildBossLevel: this.guildBossLevel,
+
+            // Mine & Shop
+            diamondMineUnlocked: this.diamondMineUnlocked,
+            diamondShopPurchases: this.diamondShopPurchases,
+
+            // Zeitstempel
+            lastSaveTime: Date.now()
+        };
+
+        // Der Cloud-Teil: Gibt das Paket zurück an den Button
+        if (returnOnly) {
+            return saveData;
+        }
+
+        // Der lokale Teil: Speichert im Browser
+        localStorage.setItem('smileyGameSave', JSON.stringify(saveData));
     }
 
-    ladeSpiel(encodedData) {
-        try {
-            let dataToLoad = encodedData || localStorage.getItem('smileyGameSave');
-            if (!dataToLoad) {
-                this.applyAllBoni();
-                return false;
-            }
-            const jsonString = atob(dataToLoad);
-            let allData = JSON.parse(jsonString);
-            this.gameState = {
-                ...this.gameState,
-                ...allData.gameState
-            };
-
-            // FIX: Spielstand an neue Erfolge anpassen (damit es nicht crasht)
-            if (this.gameState.achievementsUnlocked.length < achievementsData.length) {
-                const diff = achievementsData.length - this.gameState.achievementsUnlocked.length;
-                for (let i = 0; i < diff; i++) {
-                    this.gameState.achievementsUnlocked.push(false);
+    // 👇 DIESE FUNKTION EINFÜGEN (Direkt vor loadGame) 👇
+    ladeSpiel() {
+        const savedString = localStorage.getItem('smileyGameSave');
+        
+        if (savedString) {
+            try {
+                // Versuch 1: Neues Format (Einfaches JSON)
+                const parsedData = JSON.parse(savedString);
+                
+                // Check ob es das alte Format ist mit "gameState" Wrapper
+                if (parsedData.gameState) {
+                    this.loadGame(parsedData.gameState);
+                } else {
+                    this.loadGame(parsedData);
+                }
+                
+                console.log("Spielstand erfolgreich aus LocalStorage geladen.");
+            } catch (e) {
+                console.warn("Konnte Spielstand nicht direkt lesen, versuche altes Format (Base64)...");
+                try {
+                    // Versuch 2: Altes Format (Base64 kodiert)
+                    const decoded = atob(savedString);
+                    const parsedOld = JSON.parse(decoded);
+                    if (parsedOld.gameState) {
+                        this.loadGame(parsedOld.gameState);
+                    } else {
+                        this.loadGame(parsedOld);
+                    }
+                } catch (e2) {
+                    console.error("Spielstand konnte nicht geladen werden:", e2);
                 }
             }
-
-            this.applyAllBoni();
-            return true;
-        } catch (e) {
-            console.error("Fehler beim Laden des Spiels:", e);
-            if (encodedData) alert("Fehler beim Importieren. Daten beschädigt.");
-            localStorage.removeItem('smileyGameSave');
-            return false;
         }
+    }
+    // 👆 --------------------------------------------- 👆
+
+    loadGame(saveData) {
+        // Sicherheits-Check: Ist das Paket leer?
+        if (!saveData) {
+            console.log("Keine Speicherdaten gefunden.");
+            return;
+        }
+
+        console.log("Lade Spielstand...", saveData);
+
+        // --- 1. Währungen laden (mit den neuen deutschen Namen) ---
+        // Wir nutzen "|| 0", falls ein Wert fehlen sollte (Fallback)
+        this.aktuelle_smileys = saveData.aktuelle_smileys || 0;
+        this.lifetime_smileys = saveData.lifetime_smileys || 0;
+        this.diamanten = saveData.diamanten || 0;
+        this.totalClicksLifetime = saveData.totalClicksLifetime || 0;
+
+        // --- 2. Gebäude & Forschung ---
+        if (saveData.buildingCounts) {
+            this.buildingCounts = saveData.buildingCounts;
+        }
+        if (saveData.researchStatus) {
+            this.researchStatus = saveData.researchStatus;
+        }
+
+        // --- 3. Prestige ---
+        this.prestigeResets = saveData.prestigeResets || 0;
+        this.prestige_punkte_verfügbar = saveData.prestige_punkte_verfügbar || 0;
+        this.gesamt_prestige_punkte = saveData.gesamt_prestige_punkte || 0;
+        if (saveData.prestigeUpgradeStatus) {
+            this.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
+        }
+
+        // --- 4. Features & Achievements ---
+        if (saveData.achievementsUnlocked) this.achievementsUnlocked = saveData.achievementsUnlocked;
+        
+        // Pets
+        this.petsUnlocked = saveData.petsUnlocked || false;
+        if (saveData.petLevels) this.petLevels = saveData.petLevels;
+        this.activePet = saveData.activePet || null;
+
+        // Gilden
+        this.guildsUnlocked = saveData.guildsUnlocked || false;
+        this.guildName = saveData.guildName || "";
+        this.guildLevel = saveData.guildLevel || 1;
+        this.guildXP = saveData.guildXP || 0;
+        if (saveData.guildUpgradeStatus) this.guildUpgradeStatus = saveData.guildUpgradeStatus;
+        this.guildBossLevel = saveData.guildBossLevel || 1;
+
+        // Mine & Shop
+        this.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
+        if (saveData.diamondShopPurchases) this.diamondShopPurchases = saveData.diamondShopPurchases;
+
+        // WICHTIG: Nach dem Laden müssen wir die Anzeige aktualisieren!
+        this.updateUI(); 
+        
+        // Optional: Toast anzeigen
+        // this.showToast("Spielstand geladen! ✅");
     }
 
     checkOfflineProgress() {
@@ -4258,4 +4392,3 @@ restoreCooldowns() {
 
 }
 
-const gameInstance = new SmileyGame();
