@@ -570,6 +570,16 @@ input[type=range] { width: 100%; cursor: pointer; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { border-color: #FFD700; color: #FFD700; }
 
+.settings-section {
+    margin-bottom: 20px;
+    text-align: center; /* Zentriert die Buttons im Modal */
+}
+
+/* Damit die Cloud Buttons schön nebeneinander stehen */
+#cloud-controls button {
+    margin: 5px;
+    min-width: 120px;
+}
 /* ======================================================= */
 /* 7. PRESTIGE TREE (DRAG & DROP CANVAS)                   */
 /* ======================================================= */

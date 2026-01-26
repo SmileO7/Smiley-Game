@@ -9,14 +9,12 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#009ffd">
     <style>
-        /* Wir brauchen keine View-Section Styles mehr, da jetzt alles Modals sind */
+        /* CSS Fixes für Layout & Modals */
         .main-layout { display: grid; } /* Home ist immer sichtbar */
-
-        /* Container styling für die Modals */
         .page-container { width: 100%; }
-
-        /* Navigation aktiv Status */
         .navbar a.active { border-bottom: 2px solid #009FFD; color: #009FFD; }
+        .settings-section { margin-bottom: 20px; clear: both; }
+        #cloud-controls button { margin: 5px; min-width: 120px; }
     </style>
 </head>
 <body class="home-page">
@@ -32,52 +30,9 @@
 
 <main>
     <div id="view-home" class="main-layout">
+        
         <div class="left-column">
             <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
-            <div id="cloud-controls" style="text-align: center; margin-bottom: 20px;">
-    <button onclick="window.cloudSystem.login()" style="background: #4285F4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">
-        ☁️ Mit Google verbinden
-    </button>
-    
-    <div id="cloud-actions" style="display: none; margin-top: 10px;">
-        <button onclick="saveGameToCloud()" style="background: #0F9D58; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
-            Speichern ⬆️
-        </button>
-        <button onclick="loadGameFromCloud()" style="background: #F4B400; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer;">
-            Laden ⬇️
-        </button>
-    </div>
-</div>
-
-<script>
-    // Hilfsfunktionen für die Buttons
-    function saveGameToCloud() {
-        // Wir rufen die Funktion auf. Da wir "this" benutzen, brauchen wir keine Parameter mehr!
-        const data = gameInstance.saveGame(true); 
-        
-        // Und ab in die Cloud
-        window.cloudSystem.save(data);
-    }
-
-    function loadGameFromCloud() {
-        window.cloudSystem.load().then(data => {
-            if (data) {
-                gameInstance.loadGame(data);
-                alert("Spielstand aus der Cloud geladen!");
-            }
-        });
-    }
-
-    // Wenn der Nutzer sich einloggt, ändern wir die Buttons
-    // Wir fragen alle 1 Sekunde, ob wer eingeloggt ist (einfache Lösung)
-    setInterval(() => {
-        const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
-        if (user) {
-            document.getElementById('cloud-controls').querySelector('button').style.display = 'none'; // Login weg
-            document.getElementById('cloud-actions').style.display = 'block'; // Speichern/Laden her
-        }
-    }, 1000);
-</script>
             
             <button id="smiley_button">
                 <img src="smiley.png.png" alt="Smiley" id="smiley_image">
@@ -108,7 +63,6 @@
 
                     <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;" 
                          data-tooltip-type="stats_sps">
-                        
                         <div style="font-size: 0.7rem; color: #aaa;">Auto (SPS)</div>
                         <div style="font-size: 1.0rem; font-weight: bold; color: #4CAF50;">
                             <span id="smileys_pro_sekunde_anzeige">0</span>
@@ -143,121 +97,51 @@
                 </div>
             </div>
 
-            <div id="active_pet_display" style="
-                margin-top: 8px; 
-                display: none; 
-                background: rgba(62, 90, 65, 0.15); 
-                border: 1px solid var(--color-neutral-olive); 
-                padding: 8px; 
-                border-radius: 8px; 
-                align-items: center; 
-                gap: 10px;
-            ">
+            <div id="active_pet_display" style="margin-top: 8px; display: none; background: rgba(62, 90, 65, 0.15); border: 1px solid var(--color-neutral-olive); padding: 8px; border-radius: 8px; align-items: center; gap: 10px;">
             </div>
-        </div>
-
+        </div> 
         <div class="middle-column">
             <div class="news-ticker-container">
-                <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smiley und werde reich...</div>
+                <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...</div>
             </div>
             
             <div class="skills-container box-style" style="margin-top: 10px; margin-bottom: 10px;">
                 <h2 style="font-size: 1.1rem; margin-bottom: 10px; color: var(--color-accent-blue);">COMMAND CENTER: ACTIVE SKILLS</h2>
                 <div class="skills-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                    <div class="skill-item">
-                        <button id="btn-skill-frenzy" class="btn-skill ready" onclick="gameInstance.useSkill('frenzy')" title="Frenzy: Klickkraft x5 (15 Sek.)">
-                            <span class="skill-icon">🔥</span>
-                            <span id="timer-frenzy" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-frenzy" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-overdrive" class="btn-skill ready" onclick="gameInstance.useSkill('overdrive')" title="Overdrive: Produktion verdoppelt (30 Sek.)">
-                            <span class="skill-icon">⚡</span>
-                            <span id="timer-overdrive" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-overdrive" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-critStorm" class="btn-skill ready" onclick="gameInstance.useSkill('critStorm')" title="Crit-Storm: 100% Kritische Treffer (10 Sek.)">
-                            <span class="skill-icon">🎯</span>
-                            <span id="timer-critStorm" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-critStorm" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-goldRush" class="btn-skill ready" onclick="gameInstance.useSkill('goldRush')" title="Gold-Rausch: Sofort 15 Min. Produktion erhalten">
-                            <span class="skill-icon">💰</span>
-                            <span id="timer-goldRush" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-goldRush" class="cooldown-fill"></div></div>
-                    </div>
-
-                    <div class="skill-item">
-                        <button id="btn-skill-diamondPulse" class="btn-skill ready" onclick="gameInstance.useSkill('diamondPulse')" title="Diamant-Puls: Sofort Diamanten finden">
-                            <span class="skill-icon">💎</span>
-                            <span id="timer-diamondPulse" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-diamondPulse" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-efficiency" class="btn-skill ready" onclick="gameInstance.useSkill('efficiency')" title="Effizienz: -25% Gebäudekosten (45 Sek.)">
-                            <span class="skill-icon">📉</span>
-                            <span id="timer-efficiency" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-efficiency" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-shards" class="btn-skill ready" onclick="gameInstance.useSkill('shards')" title="Shards: Klicks erhalten +20% deiner SPS (20 Sek.)">
-                            <span class="skill-icon">💠</span>
-                            <span id="timer-shards" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-shards" class="cooldown-fill"></div></div>
-                    </div>
-                    <div class="skill-item">
-                        <button id="btn-skill-hyperMinute" class="btn-skill ready" onclick="gameInstance.useSkill('hyperMinute')" title="Hyper-Minute: Produktion x5 (60 Sek.)">
-                            <span class="skill-icon">🚀</span>
-                            <span id="timer-hyperMinute" class="skill-timer">BEREIT</span>
-                        </button>
-                        <div class="skill-cooldown-bar"><div id="cooldown-hyperMinute" class="cooldown-fill"></div></div>
-                    </div>
+                    <div class="skill-item"><button id="btn-skill-frenzy" class="btn-skill ready" onclick="gameInstance.useSkill('frenzy')" title="Frenzy"><span class="skill-icon">🔥</span><span id="timer-frenzy" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-frenzy" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-overdrive" class="btn-skill ready" onclick="gameInstance.useSkill('overdrive')" title="Overdrive"><span class="skill-icon">⚡</span><span id="timer-overdrive" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-overdrive" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-critStorm" class="btn-skill ready" onclick="gameInstance.useSkill('critStorm')" title="CritStorm"><span class="skill-icon">🎯</span><span id="timer-critStorm" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-critStorm" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-goldRush" class="btn-skill ready" onclick="gameInstance.useSkill('goldRush')" title="GoldRush"><span class="skill-icon">💰</span><span id="timer-goldRush" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-goldRush" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-diamondPulse" class="btn-skill ready" onclick="gameInstance.useSkill('diamondPulse')" title="DiamondPulse"><span class="skill-icon">💎</span><span id="timer-diamondPulse" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-diamondPulse" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-efficiency" class="btn-skill ready" onclick="gameInstance.useSkill('efficiency')" title="Efficiency"><span class="skill-icon">📉</span><span id="timer-efficiency" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-efficiency" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-shards" class="btn-skill ready" onclick="gameInstance.useSkill('shards')" title="Shards"><span class="skill-icon">💠</span><span id="timer-shards" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-shards" class="cooldown-fill"></div></div></div>
+                    <div class="skill-item"><button id="btn-skill-hyperMinute" class="btn-skill ready" onclick="gameInstance.useSkill('hyperMinute')" title="HyperMinute"><span class="skill-icon">🚀</span><span id="timer-hyperMinute" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-hyperMinute" class="cooldown-fill"></div></div></div>
                 </div>
             </div>
 
             <div class="feature-button-grid">
-                <button id="open-pet-shop-button" class="btn-feature">
-                    <span>🐾</span> PET SHOP
-                </button>
-                <button id="open_diamond_mine_button" class="btn-feature">
-                    <span>💎</span> DIAMANTEN-MINE
-                </button>
-                <button id="open_guilds_button" class="btn-feature">
-                    <span>⚔️</span> GILDEN
-                </button>
-                <button id="show_achievements_button" class="btn-primary">
-                    <span>🏆</span> ERFOLGE
-                </button>
+                <button id="open-pet-shop-button" class="btn-feature"><span>🐾</span> PET SHOP</button>
+                <button id="open_diamond_mine_button" class="btn-feature"><span>💎</span> DIAMANTEN-MINE</button>
+                <button id="open_guilds_button" class="btn-feature"><span>⚔️</span> GILDEN</button>
+                <button id="show_achievements_button" class="btn-primary"><span>🏆</span> ERFOLGE</button>
             </div>
 
             <div class="box-style" style="margin-top: 10px;">
                 <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px;">Verfügbare Upgrades</h2>
                 <div id="global-upgrades-container"></div>
             </div>
-        </div>
-
+        </div> 
         <div class="right-column">
             <h2>Gebäude</h2>
-            
             <div id="buy-amount-toggles" class="buy-amount-container">
                 <button class="btn-toggle active" data-amount="1">1x</button>
                 <button class="btn-toggle" data-amount="10">10x</button>
                 <button class="btn-toggle" data-amount="100">100x</button>
             </div>
-
             <div class="building-grid" id="building-grid"></div>
         </div>
-    </div>
-</main>
+        </div> 
+    </main>
 
 <div id="prestige-shop-modal" class="modal" style="display: none;">
     <div class="modal-content large">
@@ -272,7 +156,6 @@
                 <p>Aktuelle Smileys: <span id="aktuelle_smileys_prestige">0</span></p>
                 <p>Nächster Punkt bei: <span id="next_prestige_point">1,000,000</span></p>
             </div>
-
             <section class="prestige-info box-style" style="margin-top: 20px;">
                 <h3>Prestige-System</h3>
                 <p>Führe einen Prestige-Reset durch, um deine bisher gesammelten Smileys in wertvolle Smiley Points umzuwandeln.</p>
@@ -299,11 +182,8 @@
 <div id="info-modal" class="modal" style="display: none;">
     <div class="modal-content large">
         <h2>📚 SPIELANLEITUNG</h2>
-
         <div class="page-container info-page-layout">
-
             <div style="flex: 2; display: flex; flex-direction: column; gap: 15px;">
-
                 <div class="info-section box-style">
                     <h3>🚀 DEIN START</h3>
                     <p>Willkommen beim Smiley Clicker! Dein Ziel ist einfach: <strong>Sammle so viele Smileys wie möglich.</strong></p>
@@ -313,45 +193,10 @@
                         <li><strong>Upgrades:</strong> Verbessere deine Klicks und Gebäude im Shop.</li>
                     </ul>
                 </div>
-
-                <div class="info-section box-style">
-                    <h3>💎 BESONDERE FEATURES</h3>
-                    <p><strong>Prestige:</strong> Setze deinen Fortschritt zurück, um <em>Smiley Points</em> zu erhalten. Diese Punkte machen dich dauerhaft stärker!</p>
-                    <p><strong>Pets:</strong> Sammle süße Begleiter im Pet Shop. Sie geben dir Boni, brauchen aber Diamanten zum Leveln.</p>
-                    <p><strong>Gilden:</strong> Gründe eine Gilde und kämpfe gemeinsam gegen Bosse für extra Belohnungen.</p>
                 </div>
-
-                <div class="info-section box-style" style="border-color: #ffd700;">
-                    <h3>💡 TIPPS & TRICKS</h3>
-                    <ul style="margin-left: 20px; color: #fff;">
-                        <li>Warte mit dem ersten Prestige, bis du ca. <strong>10-20 Punkte</strong> bekommen würdest.</li>
-                        <li>Besuche die <strong>Diamanten-Mine</strong>, um Währung für deine Pets zu finden.</li>
-                        <li>Achte auf <strong>Globale Upgrades</strong> – sie können Gebäude viel günstiger machen!</li>
-                    </ul>
-                </div>
-
-                <div class="info-section box-style" style="border-color: #009FFD; margin-top: 15px;">
-                    <h3>✨ AKTIVE FÄHIGKEITEN (SKILLS)</h3>
-                    <p style="font-size: 0.9em; margin-bottom: 10px;">Schalte mächtige Booster durch Prestige-Resets frei!</p>
-                    <ul style="line-height: 1.6; font-size: 0.85em;">
-                        <li><strong>🔥 Frenzy (Ab Reset 1):</strong> Klickkraft x5 für 15 Sekunden.</li>
-                        <li><strong>⚡ Overdrive (Ab Reset 2):</strong> Verdoppelt die passive Produktion (SPS) für 30s.</li>
-                        <li><strong>🎯 Crit-Storm (Ab Reset 3):</strong> Jeder Klick ist ein kritischer Treffer!</li>
-                        <li><strong>💰 Gold-Rausch (Ab Reset 5):</strong> Gibt sofort 15 Minuten deiner Produktion.</li>
-                        <li><strong>💎 Diamant-Puls (Ab Reset 7):</strong> Findet sofort seltene Diamanten.</li>
-                        <li><strong>📉 Effizienz (Ab Reset 10):</strong> Gebäude kosten 25% weniger.</li>
-                        <li><strong>💠 Shards (Ab Reset 15):</strong> Klicks skalieren mit deiner SPS (+20%).</li>
-                        <li><strong>🚀 Hyper-Minute (Ab Reset 20):</strong> Extremer SPS-Boost (x5) für 60 Sekunden.</li>
-                    </ul>
-                </div>
-
-            </div>
-
             <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
                 <div class="info-section box-style" style="text-align: center;">
                     <h3>DATENBANK</h3>
-                    <p style="font-size: 0.9em; color: #aaa; margin-bottom: 15px;">Details & Listen:</p>
-
                     <button id="show_buildings_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🏗️ Gebäude-Liste</button>
                     <button id="show_global_upgrades_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">⚙️ Alle Upgrades</button>
                     <button id="show_prestige_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🌌 Skill-Tree Infos</button>
@@ -359,130 +204,109 @@
                     <button id="show_stats_button" class="btn-primary" style="width: 100%;">📊 Deine Statistik</button>
                 </div>
             </div>
-
         </div>
-
         <div class="modal-buttons">
             <button onclick="document.getElementById('info-modal').style.display='none'" class="btn-cancel">Schließen</button>
         </div>
     </div>
 </div>
 
-<div id="settings-modal" class="modal" style="display: none;">
+<div id="settings-modal" class="modal">
     <div class="modal-content">
+        <span id="close-settings-button" class="close">&times;</span>
         <h2>Einstellungen</h2>
-        <div class="settings-section">
-            <h3>Audio</h3>
-            <div class="setting-item">
-                <label for="music-volume">Musik-Lautstärke</label>
-                <input type="range" id="music-volume" min="0" max="100" value="50">
-            </div>
-            <div class="setting-item">
-                <label for="sound-volume">Sound-Lautstärke</label>
-                <input type="range" id="sound-volume" min="0" max="100" value="80">
+
+        <div class="settings-section" style="border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 15px; text-align: center;">
+            <h3 style="margin-top: 0;">☁️ Cloud Speicher</h3>
+            <p style="font-size: 0.9em; color: #aaa; margin-bottom: 10px;">Verbinde dich, um Spielstände zu sichern.</p>
+            
+            <div id="cloud-controls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;">🔵 Mit Google verbinden</button>
+                <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;">Nicht verbunden</p>
+                <button id="cloud-save-btn" class="btn-confirm" style="display: none;">☁️ Speichern ⬆️</button>
+                <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;">☁️ Laden ⬇️</button>
+                <button id="google-logout-btn" class="btn-cancel" style="display: none;">Logout</button>
             </div>
         </div>
+
         <div class="settings-section">
-            <h3>Spielstand</h3>
-            <div class="save-actions">
-                <button id="export-save-button" class="btn-primary">Exportieren</button>
-                <button id="import-save-button" class="btn-primary">Importieren</button>
-            </div>
-            <textarea id="save-data-textarea" placeholder="Füge hier deine Speicherdaten ein..."></textarea>
+            <h3>🔊 Audio</h3>
+            <div class="setting-row"><label>Musik: <input type="range" id="music-volume" min="0" max="100" value="50"></label></div>
+            <div class="setting-row"><label>SFX: <input type="range" id="sound-volume" min="0" max="100" value="50"></label></div>
         </div>
-        <div class="modal-buttons">
-            <button id="close-settings-button" class="btn-cancel">Schließen</button>
+
+        <div class="settings-section">
+            <h3>💾 Lokaler Speicher (Datei)</h3>
+            <div class="save-management" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="export-save-button" class="btn-primary" style="flex: 1;">Code Exportieren</button>
+                <button id="import-save-button" class="btn-confirm" style="flex: 1;">Code Importieren</button>
+            </div>
+            <textarea id="save-data-textarea" placeholder="Speicher-Code hier einfügen..." style="width: 100%; height: 60px; background: #222; color: #fff; border: 1px solid #444;"></textarea>
         </div>
     </div>
 </div>
 
-<div id="pet-shop-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>Pet Shop</h2>
-        <div id="pet-lock-message" class="info-section"></div>
-        <div class="pet-grid" id="pet-shop-grid"></div>
-        <div class="modal-buttons"><button id="close-pet-shop-button" class="btn-cancel">Schließen</button></div>
-    </div>
-</div>
-<div id="diamond-mine-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>💎 Diamanten-Minispiel</h2>
-        <div id="diamond-mine-content"></div>
-        <div class="modal-buttons"><button id="close_diamond_mine_button" class="btn-cancel">Schließen</button></div>
-    </div>
-</div>
-<div id="guilds-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>⚔️ Gilden-System</h2>
-        <div id="guilds-content"></div>
-        <div class="modal-buttons"><button id="close_guilds_button" class="btn-cancel">Schließen</button></div>
-    </div>
-</div>
-<div id="achievements_info_modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>Achievements</h2> <div id="info_achievements_container" class="info-grid"></div>
-        <div class="modal-buttons"><button id="close_achievements_button" class="btn-cancel">Schließen</button></div>
-    </div>
-</div>
-<div id="prestige-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h2>🌌 Prestige: Zeitreise</h2>
-        <div class="prestige-stats">
-            <p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p>
-            <p>Du erhältst: <strong id="prestige-gain-display" style="color:gold;">0</strong> Punkte</p>
-        </div>
-        <div class="modal-buttons">
-            <button id="btn-do-prestige" class="btn-danger">Reset durchführen</button>
-            <button id="btn-cancel-prestige" class="btn-cancel">Abbrechen</button>
-        </div>
-    </div>
-</div>
-<div id="skill_tree_modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>Prestige Skill-Tree</h2>
-        <div style="margin-bottom:10px;">Verfügbare Punkte: <span id="prestige_punkte_verfügbar_modal">0</span></div>
-        <div id="prestige-tree-container"></div>
-        <div id="prestige-tooltip-modal" style="display:none; position:absolute;"></div>
-        <div class="modal-buttons">
-            <button id="reset_prestige_upgrades_button" class="btn-danger">Punkte zurücksetzen</button>
-            <button id="close_skill_tree_button" class="btn-cancel">Schließen</button>
-        </div>
-    </div>
-</div>
+<div id="pet-shop-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Pet Shop</h2><div id="pet-lock-message" class="info-section"></div><div class="pet-grid" id="pet-shop-grid"></div><div class="modal-buttons"><button id="close-pet-shop-button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="diamond-mine-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>💎 Diamanten-Minispiel</h2><div id="diamond-mine-content"></div><div class="modal-buttons"><button id="close_diamond_mine_button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="guilds-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>⚔️ Gilden-System</h2><div id="guilds-content"></div><div class="modal-buttons"><button id="close_guilds_button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="achievements_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Achievements</h2><div id="info_achievements_container" class="info-grid"></div><div class="modal-buttons"><button id="close_achievements_button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="prestige-modal" class="modal" style="display: none;"><div class="modal-content"><h2>🌌 Prestige: Zeitreise</h2><div class="prestige-stats"><p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p><p>Du erhältst: <strong id="prestige-gain-display" style="color:gold;">0</strong> Punkte</p></div><div class="modal-buttons"><button id="btn-do-prestige" class="btn-danger">Reset durchführen</button><button id="btn-cancel-prestige" class="btn-cancel">Abbrechen</button></div></div></div>
+<div id="skill_tree_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Prestige Skill-Tree</h2><div style="margin-bottom:10px;">Verfügbare Punkte: <span id="prestige_punkte_verfügbar_modal">0</span></div><div id="prestige-tree-container"></div><div id="prestige-tooltip-modal" style="display:none; position:absolute;"></div><div class="modal-buttons"><button id="reset_prestige_upgrades_button" class="btn-danger">Punkte zurücksetzen</button><button id="close_skill_tree_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="buildings_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Gebäude-Übersicht</h2><div id="info_buildings_container" class="info-grid"></div><div class="modal-buttons"><button id="close_buildings_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="global_upgrades_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>⚙️ Global Upgrades</h2><div id="info_global_upgrades_container" class="info-grid"></div><div class="modal-buttons"><button id="close_global_upgrades_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="prestige_info_modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>Prestige-Skill-Liste</h2> <div id="info_prestige_container"></div>
-        <div class="modal-buttons">
-            <button id="close_prestige_info_button" class="btn-cancel">Schließen</button>
-        </div>
-    </div>
-</div>
+<div id="prestige_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Prestige-Skill-Liste</h2><div id="info_prestige_container"></div><div class="modal-buttons"><button id="close_prestige_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="pets_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>🐶 Pet-Infos</h2><div id="info_pets_container" class="info-grid"></div><div class="modal-buttons"><button id="close_pets_info_button" class="btn-cancel">Schließen</button></div></div></div>
 
 <div id="toast-container"></div>
 <audio id="background-music" loop src="music.mp3"></audio>
 <audio id="click-sound" src="click.mp3"></audio>
-
 <div id="big-bang-overlay"></div>
-
 <div id="custom-tooltip"></div> 
+
 <script>
+  // Sicherer Cloud-Check (Verhindert Absturz, falls Modal noch lädt)
+  setInterval(() => {
+    const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
+    
+    // Elemente sicher holen (könnten null sein, wenn Modal zu ist oder Seite lädt)
+    const loginBtn = document.getElementById('google-login-btn');
+    const emailDisp = document.getElementById('user-email-display');
+    const saveBtn = document.getElementById('cloud-save-btn');
+    const loadBtn = document.getElementById('cloud-load-btn');
+    const logoutBtn = document.getElementById('google-logout-btn');
+
+    if (user) {
+        // EINGELOGGT
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (emailDisp) {
+            emailDisp.style.display = 'block';
+            emailDisp.innerText = "Verbunden als: " + user.email;
+        }
+        if (saveBtn) saveBtn.style.display = 'inline-block';
+        if (loadBtn) loadBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    } else {
+        // AUSGELOGGT
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (emailDisp) emailDisp.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (loadBtn) loadBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+  }, 1000);
+
+  // Service Worker (Optional)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('Service Worker: Registriert (App-Ready!)'))
-        .catch((err) => console.log('Service Worker Fehler:', err));
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Fehler:', err));
     });
   }
 </script>
 
 <script src="data.js"></script> 
-
 <script src="SmileyGame.js"></script>
-
 <script type="module" src="firebase-logic.js"></script>
+
 </body>
 </html>
