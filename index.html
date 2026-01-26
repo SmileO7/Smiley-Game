@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smiley Clicker</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css?v=2"> <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#009ffd">
     <style>
         /* CSS Fixes für Layout & Modals */
-        .main-layout { display: grid; } /* Home ist immer sichtbar */
+        .main-layout { display: grid; } 
         .page-container { width: 100%; }
         .navbar a.active { border-bottom: 2px solid #009FFD; color: #009FFD; }
         .settings-section { margin-bottom: 20px; clear: both; }
@@ -100,6 +99,7 @@
             <div id="active_pet_display" style="margin-top: 8px; display: none; background: rgba(62, 90, 65, 0.15); border: 1px solid var(--color-neutral-olive); padding: 8px; border-radius: 8px; align-items: center; gap: 10px;">
             </div>
         </div> 
+        
         <div class="middle-column">
             <div class="news-ticker-container">
                 <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...</div>
@@ -131,6 +131,7 @@
                 <div id="global-upgrades-container"></div>
             </div>
         </div> 
+
         <div class="right-column">
             <h2>Gebäude</h2>
             <div id="buy-amount-toggles" class="buy-amount-container">
@@ -140,8 +141,8 @@
             </div>
             <div class="building-grid" id="building-grid"></div>
         </div>
-        </div> 
-    </main>
+    </div> 
+</main>
 
 <div id="prestige-shop-modal" class="modal" style="display: none;">
     <div class="modal-content large">
@@ -193,7 +194,7 @@
                         <li><strong>Upgrades:</strong> Verbessere deine Klicks und Gebäude im Shop.</li>
                     </ul>
                 </div>
-                </div>
+            </div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
                 <div class="info-section box-style" style="text-align: center;">
                     <h3>DATENBANK</h3>
@@ -258,6 +259,22 @@
 <div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="pets_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>🐶 Pet-Infos</h2><div id="info_pets_container" class="info-grid"></div><div class="modal-buttons"><button id="close_pets_info_button" class="btn-cancel">Schließen</button></div></div></div>
 
+<div id="offline-modal" class="modal" style="display: none; align-items: center; justify-content: center;">
+    <div class="modal-content" style="text-align: center; border: 2px solid #FFD700; max-width: 400px;">
+        <h2 style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">🌙 Willkommen zurück!</h2>
+        <p style="color: #aaa; margin: 15px 0;">Deine Smileys haben fleißig weitergearbeitet.</p>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin: 20px 0;">
+            <div style="font-size: 0.9em; color: #ccc;">Vergangene Zeit:</div>
+            <div id="offline-time-display" style="font-weight: bold; margin-bottom: 10px;">0 Std 0 Min</div>
+            <div style="font-size: 0.9em; color: #ccc;">Gesammelte Smileys:</div>
+            <div id="offline-earnings-display" style="font-size: 1.8em; font-weight: bold; color: #4CAF50;">+0</div>
+        </div>
+        <button id="close-offline-modal" class="btn-confirm" style="width: 100%; font-size: 1.2em; padding: 10px;">
+            Einsammeln 💰
+        </button>
+    </div>
+</div>
+
 <div id="toast-container"></div>
 <audio id="background-music" loop src="music.mp3"></audio>
 <audio id="click-sound" src="click.mp3"></audio>
@@ -265,11 +282,11 @@
 <div id="custom-tooltip"></div> 
 
 <script>
-  // Sicherer Cloud-Check (Verhindert Absturz, falls Modal noch lädt)
+  // 1. Sicheres Cloud-UI Update (ohne Absturz)
   setInterval(() => {
     const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
     
-    // Elemente sicher holen (könnten null sein, wenn Modal zu ist oder Seite lädt)
+    // Elemente sicher holen (nach den neuen IDs im Settings-Modal)
     const loginBtn = document.getElementById('google-login-btn');
     const emailDisp = document.getElementById('user-email-display');
     const saveBtn = document.getElementById('cloud-save-btn');
@@ -296,17 +313,39 @@
     }
   }, 1000);
 
-  // Service Worker (Optional)
+  // 2. Service Worker KILLER (Zwingt Handy-Cache zum Update)
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Fehler:', err));
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.unregister()
+        .then(function() {
+            console.log('✅ Alter Service Worker entfernt. Cache wird umgangen.');
+        });
+      }
     });
+  }
+  
+  // Hilfsfunktionen für die Buttons (bleiben gleich)
+  function saveGameToCloud() {
+        if (!window.gameInstance) return;
+        const data = gameInstance.saveGame(true); 
+        if (window.cloudSystem) window.cloudSystem.save(data);
+  }
+
+  function loadGameFromCloud() {
+        if (!window.cloudSystem) return;
+        window.cloudSystem.load().then(data => {
+            if (data && window.gameInstance) {
+                gameInstance.loadGame(data);
+                if(gameInstance.showNotification) gameInstance.showNotification("☁️ Spielstand geladen!", "success");
+            }
+        });
   }
 </script>
 
-<script src="data.js"></script> 
-<script src="SmileyGame.js"></script>
-<script type="module" src="firebase-logic.js"></script>
+<script src="data.js?v=2"></script> 
+<script src="SmileyGame.js?v=2"></script>
+<script type="module" src="firebase-logic.js?v=2"></script>
 
 </body>
 </html>

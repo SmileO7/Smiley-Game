@@ -637,35 +637,74 @@ class SmileyGame {
 
     checkOfflineProgress() {
         if (!this.gameState.lastSaveTime) return;
+        
         const now = Date.now();
         const diffInMs = now - this.gameState.lastSaveTime;
         const diffInSeconds = Math.floor(diffInMs / 1000);
 
-        if (diffInSeconds < 10) return;
+        // Erst ab 60 Sekunden Abwesenheit anzeigen (nervt sonst beim Neuladen)
+        if (diffInSeconds < 60) return;
 
+        // SPS berechnen (damit wir wissen, wie viel man verdient hätte)
         const currentSPS = this.computeTotalSPS();
         if (currentSPS <= 0) return;
 
         const prestige = this.calculatePrestigeEffects();
         
+        // Berechnung des Gewinns
         let earned = currentSPS * diffInSeconds;
+        
+        // Offline-Boost durch Prestige/Upgrades anwenden
         if (prestige.offlineBoost > 1) {
             earned *= prestige.offlineBoost;
         }
 
         if (earned > 0) {
+            // Smileys gutschreiben
             this.addSmileys(earned);
-            let timeString = "";
-            if (diffInSeconds < 60) timeString = `${diffInSeconds} Sek`;
-            else if (diffInSeconds < 3600) timeString = `${Math.floor(diffInSeconds / 60)} Min`;
-            else timeString = `${(diffInSeconds / 3600).toFixed(1)} Std`;
-
-            setTimeout(() => {
-                this.showNotification(`💤 Offline-Bonus (${timeString}): +${this.formatNumber(earned)} Smileys`, 'success');
-            }, 500);
-
-            this.speichereSpiel();
+            this.speichereSpiel(); // Sofort speichern, damit man nicht neu lädt und nochmal kriegt
             this.updateUI();
+
+            // --- NEU: Modal anzeigen statt nur Toast ---
+            
+            // 1. Zeit formatieren
+            let timeString = "";
+            if (diffInSeconds < 3600) {
+                timeString = `${Math.floor(diffInSeconds / 60)} Minuten`;
+            } else {
+                const hours = Math.floor(diffInSeconds / 3600);
+                const mins = Math.floor((diffInSeconds % 3600) / 60);
+                timeString = `${hours} Std ${mins} Min`;
+            }
+
+            // 2. Texte ins HTML füllen
+            const timeDisplay = document.getElementById('offline-time-display');
+            const earnDisplay = document.getElementById('offline-earnings-display');
+            const modal = document.getElementById('offline-modal');
+            const btn = document.getElementById('close-offline-modal');
+
+            if (timeDisplay) timeDisplay.innerText = timeString;
+            if (earnDisplay) earnDisplay.innerText = "+" + this.formatNumber(earned);
+
+            // 3. Modal öffnen
+            if (modal) {
+                modal.style.display = 'flex';
+                
+                // Sound abspielen (optional, falls du einen hast)
+                if(this.playBuySound) this.playBuySound();
+            }
+
+            // 4. Button Logik (Schließen)
+            if (btn) {
+                // removeEventListener verhindert, dass der Button mehrere Events sammelt
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                
+                newBtn.addEventListener('click', () => {
+                    if (modal) modal.style.display = 'none';
+                    this.showNotification("💰 Willkommens-Bonus eingesammelt!", "success");
+                });
+            }
         }
     }
 
