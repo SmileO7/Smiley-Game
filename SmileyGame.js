@@ -326,6 +326,7 @@ class SmileyGame {
         this.restoreCooldowns();
         this.checkSkillUnlocks();
         this.setupMainEventListeners();
+        this.setupHotkeys();
         this.setupPrestigeEventListeners();
         this.setupInfoPageEventListeners();
         this.setupSkillTreeControls();
@@ -1788,6 +1789,59 @@ class SmileyGame {
             }
         }
         this.checkSkillUnlocks();
+    }
+
+    setupHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            // Ignorieren, wenn man gerade schreibt
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            // LEERTASTE = Smiley Klicken
+            if (e.code === 'Space' || e.key === 'Enter') {
+                e.preventDefault(); 
+                this.klickeSmiley(null); 
+                
+                const btn = this.getById('smiley_button');
+                if(btn) {
+                    btn.classList.add('active-key');
+                    setTimeout(() => btn.classList.remove('active-key'), 100);
+                }
+            }
+
+            // 'S' = Speichern
+            if (e.key === 's' || e.key === 'S') {
+                this.saveGame();
+                this.showNotification("💾 Schnellspeicherung!", "success");
+            }
+
+            // ZAHLEN 1-9 = Gebäude kaufen (jetzt mit e.code!)
+            // e.code ist immer "Digit1", egal ob Shift gedrückt ist oder nicht
+            if (e.code.startsWith('Digit')) {
+                const digit = parseInt(e.code.replace('Digit', '')); // Macht aus "Digit1" eine 1
+                
+                if (!isNaN(digit) && digit >= 1 && digit <= 9) {
+                    const index = digit - 1; // 1 wird Index 0
+                    
+                    // Wir nutzen this.currentBuyAmount. 
+                    // Da deine Shift-Logik diese Variable bereits auf 10/100 setzt,
+                    // wird hier automatisch die richtige Menge gekauft!
+                    
+                    // Sicherheitscheck, ob Gebäude existiert
+                    const maxIndex = buildingsData.length + (typeof uniqueBuildingsData !== 'undefined' ? uniqueBuildingsData.length : 0);
+                    
+                    if (index < maxIndex) {
+                        this.kaufeMehrereGebaeude(index, this.currentBuyAmount);
+                        
+                        // Visuelles Feedback am Button
+                        const buyBtn = this.getById(`buy-btn-${index}`);
+                        if(buyBtn) {
+                            buyBtn.style.transform = "scale(0.95)";
+                            setTimeout(() => buyBtn.style.transform = "scale(1)", 100);
+                        }
+                    }
+                }
+            }
+        });
     }
 
    updateBuildingUI() {
@@ -3938,25 +3992,80 @@ class SmileyGame {
 // // =========================================================
 
     updateNewsTicker(manualText = null) {
-    const ticker = this.getById('news-ticker-text');
-    if (!ticker) return;
+        const ticker = document.getElementById('news-ticker-text');
+        if (!ticker) return;
 
-    if (manualText) {
-        ticker.innerText = manualText;
-        ticker.style.color = "#009FFD"; // Blau für Events
-    } else {
-        const news = [
-            "Wissenschaftler entdecken: Smileys machen glücklich!",
-            "Gilden suchen aktive Mitglieder für den nächsten Boss-Raid.",
-            "Diamanten-Mine meldet Rekordfunde in den tiefen Ebenen.",
-            "Ein unbekannter Spender hat tausende Smileys verschenkt!",
-            "Achtung: Geheimnisvolle Fragezeichen fliegen durch die Luft.",
-            "Dein Smiley wurde zum 'Smiley des Monats' gewählt!"
+        // 1. Priorität: Manuelle Events (z.B. "Inflation!")
+        if (manualText) {
+            ticker.innerText = manualText;
+            ticker.style.color = "#ff5252"; // Alarm-Rot
+            return;
+        }
+
+        // 2. Nachrichten-Pool basierend auf Fortschritt sammeln
+        let newsOptions = [
+            "Wetterbericht: Es regnet Smileys.",
+            "Tipp: Klicke auf den Smiley, um Smileys zu bekommen.",
+            "Wissenschaftler sind sich einig: Smileys sind gut."
         ];
-        ticker.innerText = news[Math.floor(Math.random() * news.length)];
-        ticker.style.color = "#ccc";
+
+        const smileys = this.gameState.aktuelle_smileys;
+        const sps = this.gameState.totalSPS;
+        const clicks = this.gameState.totalClicksLifetime;
+
+        // --- Phase 1: Der Anfang (Armut) ---
+        if (smileys < 100) {
+            newsOptions.push("Spieler sucht Kleingeld unter dem Sofa.");
+            newsOptions.push("Nachbarn beschweren sich über Klick-Geräusche.");
+        }
+
+        // --- Phase 2: Der Aufstieg ---
+        if (smileys > 10000) {
+            newsOptions.push("Lokale Wirtschaft boomt dank Smiley-Export.");
+            newsOptions.push("Smiley-Aktienkurs steigt um 500%.");
+        }
+
+        // --- Phase 3: Reichtum ---
+        if (smileys > 1000000) { // 1 Million
+            newsOptions.push("Spieler kauft sich eine eigene Insel.");
+            newsOptions.push("Forbes Liste: Du bist jetzt unter den Top 100.");
+            newsOptions.push("Regierung erwägt Smiley-Steuer.");
+        }
+
+        // --- Phase 4: Gebäude-Spezifisch ---
+        // Cursor (Index 0)
+        if (this.gameState.buildingCounts[0] > 50) {
+            newsOptions.push("Autonomer Mauszeiger entwickelt Bewusstsein.");
+        }
+        // Oma (Index 1)
+        if (this.gameState.buildingCounts[1] > 0) {
+            newsOptions.push("Omas backen Kekse... äh, Smileys.");
+            newsOptions.push("Keks-Markt bricht ein, Smiley-Markt steigt.");
+        }
+        // Fabrik (Index 4 - Beispiel)
+        if (this.gameState.buildingCounts[4] > 10) {
+            newsOptions.push("Rauchwolken über der Smiley-Fabrik gesichtet.");
+            newsOptions.push("Gewerkschaft der Smileys fordert Urlaub.");
+        }
+
+        // --- Phase 5: Prestige ---
+        if (this.gameState.prestigeResets > 0) {
+            newsOptions.push("Déjà-vu? Wir haben das doch schon mal gemacht...");
+            newsOptions.push("Zeitreisen verursachen Kopfschmerzen, sagen Experten.");
+            newsOptions.push("Das Universum fühlt sich heute anders an.");
+        }
+
+        // 3. Zufällige Nachricht auswählen und anzeigen
+        const randomNews = newsOptions[Math.floor(Math.random() * newsOptions.length)];
+        
+        // Sanfter Übergang (Fade Effect Simulation via CSS opacity wäre ideal, hier direkt Text)
+        ticker.style.opacity = 0;
+        setTimeout(() => {
+            ticker.innerText = randomNews;
+            ticker.style.color = "#009FFD"; // Standard Blau/Cyan
+            ticker.style.opacity = 1;
+        }, 500);
     }
-}
 
 // =========================================================
 // 13. ACTIVE SKILLS SYSTEM

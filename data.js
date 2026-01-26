@@ -207,7 +207,6 @@ const petsData = [
     { id: 'pet_cat', name: 'Miau der SPS-Booster', baseEffect: 0.10, effectType: 'sps_mult', description: '+% SPS-Rate.', img: 'pet_cat.png.png', interval: 0, levelCost: 20, costGrowth: 1.5, maxLevel: 10 },
     { id: 'pet_owl', name: 'Hoot der Taktiker', baseEffect: 0.05, effectType: 'cost_reduction_upgrades', description: '-% Upgrade-Kosten.', img: 'pet_owl.png.png', interval: 0, levelCost: 30, costGrowth: 1.5, maxLevel: 10 },
     { id: 'pet_fish', name: 'Finny der Ökonom', baseEffect: 0.05, effectType: 'cost_reduction_buildings', description: '-% Gebäudekosten.', img: 'pet_fish.png.png', interval: 0, levelCost: 50, costGrowth: 1.5, maxLevel: 10 },
-    { id: 'pet_chameleon', name: 'Tarn-Chamaeleon', baseEffect: 0.01, effectType: 'prestige_point_eff', description: '+% PP-Effektivität.', img: 'pet_chameleon.png.png', interval: 0, levelCost: 100, costGrowth: 1.5, maxLevel: 10 },
 ];
 
 /* ======================================================= */
