@@ -1697,6 +1697,9 @@ class SmileyGame {
     // ================================================================================================================
 
     updateUI() {
+
+        document.title = `${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys - Idle Game`;
+
         this.computeTotalSPS();
 
         const diamantenEl = this.getById('diamanten_anzeige');
