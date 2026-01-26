@@ -924,3 +924,73 @@ input[type=range] { width: 100%; cursor: pointer; }
     border-color: #ff5252 !important; /* Roter Rand beim Treffer */
     background-color: rgba(255, 0, 0, 0.1) !important;
 }
+
+/* ======================================================= */
+/* SYSTEM: VISUAL FX - BIG BANG OVERLAY                    */
+/* ======================================================= */
+
+/* Container für den globalen Lichtblitz */
+#big-bang-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    opacity: 0;
+    pointer-events: none; /* Klicks werden durchgeleitet */
+    z-index: 99999; /* Höchste Ebene (über allen Modals) */
+    transition: opacity 0.1s ease-in;
+}
+
+/* Animations-Definition */
+.flash-bang {
+    animation: flash-animation 2.5s forwards;
+}
+
+@keyframes flash-animation {
+    0% { opacity: 0; }
+    5% { opacity: 1; }   /* Schneller Anstieg auf 100% Deckkraft */
+    20% { opacity: 1; }  /* Haltezeit */
+    100% { opacity: 0; } /* Langsames Ausblenden */
+}
+/* ======================================================= */
+/* SYSTEM: CUSTOM TOOLTIP (Profi-Look)                     */
+/* ======================================================= */
+
+#custom-tooltip {
+    position: fixed;
+    display: none; /* Standardmäßig versteckt */
+    background: rgba(20, 20, 25, 0.95);
+    border: 1px solid #444;
+    border-left: 4px solid var(--color-primary); /* Akzent links */
+    padding: 12px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9rem;
+    pointer-events: none; /* Wichtig: Maus ignoriert das Element */
+    z-index: 100000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    max-width: 300px;
+    white-space: pre-line; /* Damit Zeilenumbrüche funktionieren */
+    backdrop-filter: blur(4px);
+}
+
+#custom-tooltip h4 {
+    margin: 0 0 5px 0;
+    color: var(--color-accent-blue);
+    font-size: 1rem;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+}
+
+#custom-tooltip .tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+}
+
+#custom-tooltip .highlight-green { color: #4CAF50; }
+#custom-tooltip .highlight-red { color: #ff5252; }
+#custom-tooltip .highlight-gold { color: #FFD700; }

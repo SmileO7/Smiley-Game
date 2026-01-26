@@ -60,7 +60,9 @@
                         </div>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;" 
+                         data-tooltip-type="stats_sps">
+                        
                         <div style="font-size: 0.7rem; color: #aaa;">Auto (SPS)</div>
                         <div style="font-size: 1.0rem; font-weight: bold; color: #4CAF50;">
                             <span id="smileys_pro_sekunde_anzeige">0</span>
@@ -418,9 +420,9 @@
 <audio id="background-music" loop src="music.mp3"></audio>
 <audio id="click-sound" src="click.mp3"></audio>
 
-<script src="data.js"></script>
-<script src="SmileyGame.js"></script>
-<script src="main.js"></script>
+<div id="big-bang-overlay"></div>
 
-</body>
+<div id="custom-tooltip"></div> 
+
+<script src="data.js"></script>       <script src="SmileyGame.js"></script> </body>
 </html>

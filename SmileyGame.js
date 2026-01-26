@@ -130,7 +130,7 @@ class SmileyGame {
                 type: 'global_mult', 
                 value: 1.0, 
                 x: 50, y: 10,        
-                category: 'qol',     
+                category: 'qol',      
                 parents: [8] 
             },
 
@@ -188,7 +188,7 @@ class SmileyGame {
                 description: "Ein neues Universum voller Smileys. Multipliziert ALLES mit 5.", 
                 type: 'global_mult', 
                 value: 4.0, 
-                x: 70, y: -25, 
+                x: 70, y: -25,
                 category: 'special',
                 parents: [12] 
             },
@@ -300,7 +300,7 @@ class SmileyGame {
                 shards: { active: false, cooldown: false, duration: 20000, cooldownTime: 240000, color: '#e066ff' },
                 hyperMinute: { active: false, cooldown: false, duration: 60000, cooldownTime: 900000, color: '#ff8c00' }
             }
-        }; // HIER WAR DER FEHLER: Das gameState-Objekt wird hier sauber geschlossen.
+        };
 
         this.productionInterval = null;
         this.uiInterval = null;
@@ -330,6 +330,7 @@ class SmileyGame {
         this.setupInfoPageEventListeners();
         this.setupSkillTreeControls();
         this.startIntervals();
+        this.setupTooltips();
         this.updatePetInterval();
         this.updateNewsTicker();
         this.updateUI();
@@ -342,34 +343,32 @@ class SmileyGame {
     // ================================================================================================================
 
     startIntervals() {
-    // 1. Der Haupt-Loop für SPS (jede Sekunde)
-    setInterval(() => {
-        this.addSmileys(this.gameState.totalSPS);
-        this.updateUI();
-    }, 1000);
+        // 1. Der Haupt-Loop für SPS (jede Sekunde)
+        setInterval(() => {
+            this.addSmileys(this.gameState.totalSPS);
+            this.updateUI();
+        }, 1000);
 
-    // 2. Automatisches Speichern (alle 30-60 Sek)
-    setInterval(() => {
-        this.saveGame();
-    }, 60000);
+        // 2. Automatisches Speichern (alle 60 Sek)
+        setInterval(() => {
+            this.saveGame();
+        }, 60000);
 
-    // 3. NEU: News-Ticker Wechsel (alle 30 Sekunden)
-    setInterval(() => {
-        // Wir prüfen, ob der Ticker gerade einen blauen Alarm-Text zeigt.
-        // Falls nicht, laden wir eine neue zufällige Nachricht.
-        const ticker = this.getById('news-ticker-text');
-        if (ticker && ticker.style.color !== "rgb(0, 159, 253)") { 
-            this.updateNewsTicker();
-        }
-    }, 30000);
+        // 3. News-Ticker Wechsel (alle 30 Sekunden)
+        setInterval(() => {
+            const ticker = this.getById('news-ticker-text');
+            if (ticker && ticker.style.color !== "rgb(0, 159, 253)") { 
+                this.updateNewsTicker();
+            }
+        }, 30000);
 
-    // 4. RNG-Events (Fragezeichen alle 1-3 Minuten)
-    setInterval(() => {
-        if (Math.random() < 0.3) { // 30% Chance alle 60 Sek
-            this.spawnRandomEvent();
-        }
-    }, 60000);
-}
+        // 4. RNG-Events (Fragezeichen alle 1-3 Minuten)
+        setInterval(() => {
+            if (Math.random() < 0.3) { // 30% Chance alle 60 Sek
+                this.spawnRandomEvent();
+            }
+        }, 60000);
+    }
 
     produzierePassiveErträge() {
         const actualSPS = this.computeTotalSPS();
@@ -399,7 +398,8 @@ class SmileyGame {
         const resets = this.gameState.prestigeResets || 0;
         const resetBonus = 1 + (resets * 0.01);
 
-        this.gameState.globalerPrestigeMultiplikator =
+        // Global Multiplier enthält jetzt ALLES (siehe applyAllBoni)
+        this.gameState.globalerPrestigeMultiplikator = 
             prestigeEffects.spsMultiplier * pointsBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + (this.gameState.guildSPSMultiplier || 0));
 
         this.gameState.totalSPS = baseSPS * this.gameState.globalerPrestigeMultiplikator;
@@ -464,6 +464,10 @@ class SmileyGame {
         }
     }
 
+    saveGame() {
+        this.speichereSpiel();
+    }
+
     ladeSpiel(encodedData) {
         try {
             let dataToLoad = encodedData || localStorage.getItem('smileyGameSave');
@@ -478,6 +482,7 @@ class SmileyGame {
                 ...allData.gameState
             };
 
+            // FIX: Spielstand an neue Erfolge anpassen (damit es nicht crasht)
             if (this.gameState.achievementsUnlocked.length < achievementsData.length) {
                 const diff = achievementsData.length - this.gameState.achievementsUnlocked.length;
                 for (let i = 0; i < diff; i++) {
@@ -506,10 +511,8 @@ class SmileyGame {
         const currentSPS = this.computeTotalSPS();
         if (currentSPS <= 0) return;
 
-        // WICHTIG: Erst die Effekte laden!
         const prestige = this.calculatePrestigeEffects();
         
-        // Dann berechnen (Basis * Boost)
         let earned = currentSPS * diffInSeconds;
         if (prestige.offlineBoost > 1) {
             earned *= prestige.offlineBoost;
@@ -630,7 +633,6 @@ class SmileyGame {
             petsUnlocked: false,
             mineUnlocked: false,
             guildsUnlocked: false,
-            // NEU:
             critChanceBonus: 0.0,
             offlineBoost: 1.0,
             buildingSynergy: 0.0
@@ -650,8 +652,6 @@ class SmileyGame {
                         effects.spsMultiplier *= (1 + upgrade.value);
                         effects.clickMultiplier *= (1 + upgrade.value);
                         break;
-                    
-                    // --- NEUE TYPEN ---
                     case 'crit_chance': effects.critChanceBonus += upgrade.value; break;
                     case 'offline_boost': effects.offlineBoost += upgrade.value; break;
                     case 'building_synergy': effects.buildingSynergy += upgrade.value; break;
@@ -662,11 +662,14 @@ class SmileyGame {
     }
 
     applyAllBoni() {
+        // 1. Reset der Basis-Werte
         this.gameState.globalSPSMultiplier = 1;
         this.gameState.prestigePointMultiplier = 0.05;
         this.gameState.prestigeResetBonus = 0;
         this.gameState.guildSPSMultiplier = 0;
         this.gameState.autoDiamondMineUnlocked = false;
+        
+        // Feature Flags zurücksetzen
         this.gameState.petsUnlocked = false;
         this.gameState.diamondMineUnlocked = false;
         this.gameState.guildsUnlocked = false;
@@ -674,8 +677,10 @@ class SmileyGame {
         let baseClickMultiplier = 1;
         let prestigeClickMultiplier = 0;
 
+        // Gebäude-Multiplikatoren zurücksetzen
         buildingsData.forEach(b => { b.prestigeMulti = 1; });
 
+        // 2. Globale Upgrades (Research) anwenden
         this.gameState.researchStatus.forEach((bought, index) => {
             if (bought) {
                 const upgrade = globalUpgrades[index];
@@ -685,24 +690,30 @@ class SmileyGame {
                             prestigeClickMultiplier += upgrade.value; 
                             break;
                         case 'sps_mult': 
-                            this.gameState.globalSPSMultiplier += upgrade.value; 
+                            // WICHTIG: Unterscheidung zwischen Global und Einzel-Gebäude
+                            if (upgrade.buildingIndex !== undefined && upgrade.buildingIndex >= 0) {
+                                // Nur für ein bestimmtes Gebäude (z.B. Smiley Baum)
+                                if (buildingsData[upgrade.buildingIndex]) {
+                                    buildingsData[upgrade.buildingIndex].prestigeMulti *= (1 + upgrade.value);
+                                }
+                            } else {
+                                // Gilt für ALLE (Global)
+                                this.gameState.globalSPSMultiplier += upgrade.value; 
+                            }
                             break;
                         case 'cost_reduction_global':
-                        case 'cost_reduction_buildings': // Falls global definiert
+                        case 'cost_reduction_buildings': 
                             this.gameState.globalCostReduction += upgrade.value;
                             break;
                         case 'global_god_mode':
                             this.gameState.godModeMultiplier *= (1 + upgrade.value);
-                            break;
-                        // Falls du statische Boni hast (z.B. +10 flach):
-                        case 'click_static':
-                            // Das müsstest du zu baseClick addieren, hier lassen wir es erstmal raus
                             break;
                     }
                 }
             }
         });
 
+        // 3. Prestige Upgrades (Unlocks prüfen)
         this.gameState.prestigeUpgradeStatus.forEach((bought, id) => {
             if (bought) {
                 const upgrade = prestigeUpgrades.find(u => u.id === id);
@@ -716,6 +727,7 @@ class SmileyGame {
             }
         });
 
+        // 4. Aktives Pet berechnen
         if (this.gameState.activePet) {
             const pet = petsData.find(p => p.id === this.gameState.activePet);
             if (pet) {
@@ -732,15 +744,18 @@ class SmileyGame {
             }
         }
 
-        const prestige = this.calculatePrestigeEffects();
+        // 5. Prestige Effekte aus dem Tree holen (für die Berechnung am Ende)
+        const prestigeTreeEffects = this.calculatePrestigeEffects();
 
-        this.gameState.critChance = 0 + (prestige.critChanceBonus || 0);
+        // Stats aus dem Tree übernehmen
+        this.gameState.critChance = 0 + (prestigeTreeEffects.critChanceBonus || 0);
         this.gameState.critDamageMult = 3;
         this.gameState.diamondMineBoost = 0;
         this.gameState.globalCostReduction = 0;
         this.gameState.clickSPSRatio = 0;
         this.gameState.godModeMultiplier = 1;
 
+        // 6. Diamanten-Shop Boni
         let diamondStaticClick = 1;
         let diamondStaticSPS = 1;
 
@@ -762,15 +777,17 @@ class SmileyGame {
             }
         });
 
+        // Diamanten-Boni anwenden
         prestigeClickMultiplier += (diamondStaticClick - 1);
         this.gameState.globalSPSMultiplier *= diamondStaticSPS;
         this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier;
 
+        // 7. Gilden Boni
         this.gameState.guildCostReduction = 0;
         this.gameState.guildPrestigeBonus = 0;
         this.gameState.guildGlobalMultiplier = 1;
-        this.gameState.guildSPSMultiplier = 0;
-
+        
+        // Gilden-Mitglieder (Upgrades)
         this.gameState.guildUpgradeStatus.forEach((bought, id) => {
             if (bought) {
                 const member = guildUpgradesData.find(u => u.id === id);
@@ -792,9 +809,17 @@ class SmileyGame {
             }
         });
 
+        // Gilden-Level Bonus (10% pro Level ab Level 2)
+        if (this.gameState.guildLevel > 1) {
+            const levelBonus = (this.gameState.guildLevel - 1) * 0.10;
+            this.gameState.guildSPSMultiplier += levelBonus;
+        }
+
+        // Gilden-Effekte final verrechnen
         this.gameState.prestigePointMultiplier += this.gameState.guildPrestigeBonus;
         this.gameState.globalSPSMultiplier *= this.gameState.guildGlobalMultiplier;
 
+        // 8. Achievements Boni
         achievementsData.forEach((achievement, index) => {
             if (this.gameState.achievementsUnlocked[index]) {
                 const bonus = achievement.bonus;
@@ -806,19 +831,23 @@ class SmileyGame {
                         this.gameState.globalSPSMultiplier += bonus.value;
                         prestigeClickMultiplier += bonus.value;
                         break;
+                    case 'cost_reduction_global':
+                        this.gameState.globalCostReduction += bonus.value;
+                        break;
                 }
             }
         });
 
-        if (this.gameState.guildLevel > 1) {
-            const levelBonus = (this.gameState.guildLevel - 1) * 0.10;
-            this.gameState.guildSPSMultiplier += levelBonus;
-        }
-
+        // 9. Finale Berechnung
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
+
         const prestigeBonus = 1 + (this.gameState.gesamt_prestige_punkte * this.gameState.prestigePointMultiplier);
         const resetBonus = 1 + (this.gameState.prestigeResets * this.gameState.prestigeResetBonus);
-        this.gameState.globalerPrestigeMultiplikator = prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier);
+        
+        // WICHTIG: Hier wird jetzt ALLES zusammengeführt
+        // Global SPS * Gilden SPS * Prestige Punkte * Resets * Skill-Tree (Urknall etc.)
+        this.gameState.globalerPrestigeMultiplikator = 
+            prestigeBonus * resetBonus * this.gameState.globalSPSMultiplier * (1 + this.gameState.guildSPSMultiplier) * prestigeTreeEffects.spsMultiplier;
     }
 
     spawnFloatingText(event, amount, type = 'normal') {
@@ -843,27 +872,54 @@ class SmileyGame {
         const el = this.getById(elementId);
         if (!el) return;
         
-        // Klasse entfernen (falls sie noch da ist), um Animation neu zu starten
         el.classList.remove('shake-effect');
         el.classList.remove('boss-hit-effect');
-        
-        // Erzwingen eines "Reflows", damit der Browser merkt, dass die Klasse weg war
         void el.offsetWidth; 
 
-        // Entsprechende Klasse hinzufügen
-        if (elementId === 'guilds-content') { // Boss Container
+        if (elementId === 'guilds-content') { 
             el.classList.add('boss-hit-effect');
         } else {
             el.classList.add('shake-effect');
         }
 
-        // Nach Ablauf der Animation Klasse wieder entfernen
         setTimeout(() => {
             if(el) {
                 el.classList.remove('shake-effect');
                 el.classList.remove('boss-hit-effect');
             }
-        }, 300); // 300ms entspricht der CSS Zeit
+        }, 300);
+    }
+
+    triggerBigBang() {
+        const overlay = this.getById('big-bang-overlay');
+        if (!overlay) return;
+
+        // 1. Sound (falls vorhanden)
+        if (typeof this.playLevelUpSound === 'function') {
+             this.playLevelUpSound(); 
+        }
+
+        // 2. Visueller Flash (CSS Klasse hinzufügen)
+        overlay.classList.add('flash-bang');
+        
+        // 3. Heftiges Wackeln
+        document.body.classList.add('shake-effect');
+        
+        // 4. Dramatische Nachrichten
+        setTimeout(() => {
+            this.showNotification("🌌 DAS UNIVERSUM WIRD NEU GESCHRIEBEN...", "success");
+        }, 200);
+
+        setTimeout(() => {
+            this.showNotification("🚀 PRODUKTION VERVIELFACHT!", "success");
+            // Shake beenden
+            document.body.classList.remove('shake-effect');
+        }, 2000);
+
+        // 5. Aufräumen (Klasse entfernen für nächsten Reset)
+        setTimeout(() => {
+            overlay.classList.remove('flash-bang');
+        }, 3500);
     }
 
     // ================================================================================================================
@@ -1121,12 +1177,7 @@ class SmileyGame {
         
         // Prüfen ob Voraussetzungen erfüllt (Eltern-Upgrades gekauft)
         const reqs = upgrade.requirements || upgrade.parents || [];
-        // Wir prüfen parents, da deine Datenstruktur 'parents' nutzt, 
-        // aber der Code manchmal 'requirements' erwartet. Sicherheitshalber beides checken.
-        // In deinem Data-Set heißt es 'parents'.
-        
         const requirementsMet = reqs.every(parentId => {
-             // Suche den Index des Parents basierend auf der ID
              const parentIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
              return this.gameState.prestigeUpgradeStatus[parentIndex];
         });
@@ -1140,22 +1191,31 @@ class SmileyGame {
             // 1. Bezahlen
             this.gameState.prestige_punkte_verfügbar -= upgrade.cost;
             
-            // 2. Status setzen (Index finden ist sicherer als ID direkt als Index, falls IDs nicht 0,1,2... sind)
+            // 2. Status setzen
             const upgradeIndex = this.prestigeUpgrades.findIndex(u => u.id === upgrade.id);
             if(upgradeIndex !== -1) {
                 this.gameState.prestigeUpgradeStatus[upgradeIndex] = true;
             }
 
-            // 3. WICHTIG: Boni neu berechnen! (Das hat gefehlt)
+            // 3. Boni neu berechnen
             this.applyAllBoni();
 
+            // ============================================================
+            // 💥 URKNALL CHECK (ID 14)
+            // ============================================================
+            if (upgrade.id === 14) {
+                this.triggerBigBang(); // <--- DAS LÖST DIE ANIMATION AUS
+            }
+            // ============================================================
+
             this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
+            this.playBuySound(); // Sound abspielen (wenn du das Sound-System drin hast)
             this.speichereSpiel();
             
             // 4. UI Updates
-            this.updatePrestigeUI(); // Punkte-Anzeige oben
-            this.updateUI();         // SPS/Klick Anzeige
-            this.renderPrestigeTree(); // WICHTIG: Baum neu zeichnen (Farben ändern)
+            this.updatePrestigeUI();
+            this.updateUI();
+            this.renderPrestigeTree();
             
         } else {
             this.showNotification("🔒 Du brauchst mehr Prestige-Punkte!", "error");
@@ -2761,12 +2821,12 @@ class SmileyGame {
 
         // Wir fügen ein 'title' Attribut für den Tooltip hinzu
         buildingDiv.innerHTML = `
-            <h3 title="Basis-Produktion: ${building.baseSPS} SPS pro Gebäude">
+            <h3>
                 ${building.name} (<span id="building-count-${index}">0</span>)
             </h3>
             <p class="production">Produktion: <span id="building-sps-${index}">0</span> SPS (<span id="building-sps-pct-${index}">0.0</span>%)</p>
-            <div class="button-group">
-                <button id="buy-btn-${index}" class="btn-buy" title="Klicke hier, um dieses Gebäude zu kaufen">
+            
+            <div class="button-group" data-tooltip-type="building" data-index="${index}"> <button id="buy-btn-${index}" class="btn-buy">
                     <span>Kaufen</span>
                     <span id="buy-cost-${index}">---</span>
                 </button>
@@ -3241,6 +3301,114 @@ class SmileyGame {
         });
     }
 
+    setupTooltips() {
+        const tooltip = this.getById('custom-tooltip');
+        if (!tooltip) return;
+
+        // Event-Listener für das ganze Dokument delegieren
+        document.body.addEventListener('mousemove', (e) => {
+            if (tooltip.style.display === 'block') {
+                // Tooltip folgt der Maus (mit etwas Abstand)
+                const offset = 15;
+                let left = e.clientX + offset;
+                let top = e.clientY + offset;
+
+                // Verhindern, dass Tooltip aus dem Bildschirm ragt
+                if (left + tooltip.offsetWidth > window.innerWidth) {
+                    left = e.clientX - tooltip.offsetWidth - offset;
+                }
+                if (top + tooltip.offsetHeight > window.innerHeight) {
+                    top = e.clientY - tooltip.offsetHeight - offset;
+                }
+
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+            }
+        });
+
+        // Mouseover-Logik für Elemente mit 'data-tooltip' Attribut
+        // Wir nutzen Event Delegation, das spart Performance
+        document.body.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('[data-tooltip-type]');
+            if (target) {
+                const type = target.dataset.tooltipType;
+                const index = target.dataset.index; // Optional, für Arrays
+                this.showCustomTooltip(type, index);
+            }
+        });
+
+        document.body.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('[data-tooltip-type]');
+            if (target) {
+                tooltip.style.display = 'none';
+            }
+        });
+    }
+
+    showCustomTooltip(type, index) {
+        const tooltip = this.getById('custom-tooltip');
+        if (!tooltip) return;
+
+        let htmlContent = '';
+
+        // --- TYP 1: GEBÄUDE KAUFEN ---
+        if (type === 'building') {
+            const i = parseInt(index);
+            const building = (i === 8) ? uniqueBuildingsData.find(u => u.id === 'diamond_mine') : buildingsData[i];
+            
+            if (building) {
+                const count = this.gameState.buildingCounts[i];
+                const baseSPS = building.baseSPS * (building.prestigeMulti || 1);
+                const totalSPS = baseSPS * count * this.gameState.globalerPrestigeMultiplikator;
+                
+                // Kosten berechnen
+                let cost = 0;
+                const amount = this.currentBuyAmount || 1;
+                if (i === 8) { // Mine ist unique
+                     cost = this.getBuildingCost(i, count);
+                } else {
+                    for(let k=0; k<amount; k++) cost += this.getBuildingCost(i, count + k);
+                }
+                
+                const canAfford = this.gameState.aktuelle_smileys >= cost;
+
+                htmlContent = `
+                    <h4>${building.name}</h4>
+                    <div class="tooltip-stat"><span>Besitz:</span> <span class="highlight-gold">${count}</span></div>
+                    <div class="tooltip-stat"><span>Produktion (Basis):</span> <span>${this.formatNumber(baseSPS)} SPS</span></div>
+                    <div class="tooltip-stat"><span>Gesamt-Beitrag:</span> <span class="highlight-green">+${this.formatNumber(totalSPS)} SPS</span></div>
+                    <hr style="border-color:#555; margin:5px 0;">
+                    <div class="tooltip-stat">
+                        <span>Kosten (${i===8 ? '1x' : amount+'x'}):</span> 
+                        <span class="${canAfford ? 'highlight-green' : 'highlight-red'}">${this.formatNumber(cost)} Smileys</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#aaa; margin-top:5px; font-style:italic;">
+                        ${i===8 ? 'Produziert Diamanten.' : 'Klicke zum Kaufen.'}
+                    </div>
+                `;
+            }
+        }
+
+        // --- TYP 2: STATS ---
+        else if (type === 'stats_sps') {
+            htmlContent = `
+                <h4>SPS Berechnung</h4>
+                <p>Deine Smileys pro Sekunde setzen sich zusammen aus:</p>
+                <div class="tooltip-stat"><span>1. Gebäude Basis:</span> <span>${this.formatNumber(this.getSmileysPerSecond())}</span></div>
+                <div class="tooltip-stat"><span>2. Globaler Multi:</span> <span class="highlight-gold">x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}</span></div>
+                <hr style="border-color:#555; margin:5px 0;">
+                <div style="font-size:0.8em; color:#ccc;">
+                    Enthält Boni aus Prestige-Punkten, Resets, Upgrades, Gilden und Skills.
+                </div>
+            `;
+        }
+
+        if (htmlContent) {
+            tooltip.innerHTML = htmlContent;
+            tooltip.style.display = 'block';
+        }
+    }
+
     // ================================================================================================================
     // 10. INFO SEITEN RENDERING
     // ================================================================================================================
@@ -3539,30 +3707,87 @@ class SmileyGame {
         const soundVolume = parseFloat(localStorage.getItem('soundVolume') || 100) / 100;
         const musicPlayer = this.getById('background-music');
         if (musicPlayer) musicPlayer.volume = musicVolume;
-        const clickSound = this.getById('click-sound');
-        if (clickSound) clickSound.volume = soundVolume;
+        // Klick-Sound wird live generiert, nutzt soundVolume direkt beim Abspielen
+    }
+
+     // --- AUDIO SYNTHESIZER ---
+    playTone(freq, type, duration, volMult = 1.0) {
+        const soundVolumeSlider = this.getById('sound-volume');
+        const volume = soundVolumeSlider ? (parseInt(soundVolumeSlider.value) / 100) : 0.5;
+        if (volume <= 0) return;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!this.audioCtx) this.audioCtx = new AudioContext();
+        
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(volume * volMult, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + duration);
     }
 
     playClickSound() {
         const soundVolumeSlider = this.getById('sound-volume');
         const volume = soundVolumeSlider ? (parseInt(soundVolumeSlider.value) / 100) : 0.5;
+        
         if (volume <= 0) return;
+
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!this.audioCtx) this.audioCtx = new AudioContext();
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        
+        // Browser Policy Fix: Resume context if suspended
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
         const oscillator = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioCtx.destination);
+
         oscillator.type = 'triangle';
-        const freq = 200 + Math.random() * 50;
+        // Zufällige Pitch-Variation für weniger Monotonie
+        const freq = 200 + Math.random() * 50; 
+        
         oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+        
+        // Kurzer, knackiger Sound
         gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
         gainNode.gain.linearRampToValueAtTime(volume * 0.3, this.audioCtx.currentTime + 0.005);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.05);
+
         oscillator.start();
         oscillator.stop(this.audioCtx.currentTime + 0.06);
     }
+
+    playAchievementSound() {
+        this.playTone(400, 'sine', 0.1);
+        setTimeout(() => this.playTone(600, 'sine', 0.1), 100);
+        setTimeout(() => this.playTone(800, 'square', 0.3, 0.5), 200); 
+    }
+
+    playLevelUpSound() {
+        this.playTone(300, 'triangle', 0.1);
+        setTimeout(() => this.playTone(450, 'triangle', 0.1), 80);
+        setTimeout(() => this.playTone(600, 'triangle', 0.1), 160);
+        setTimeout(() => this.playTone(900, 'triangle', 0.2), 240);
+    }
+
+    playBuySound() {
+        this.playTone(1200, 'sine', 0.05, 0.3); 
+    }
+
+
 
     switchView(viewName) {
         const modals = ['prestige-shop-modal', 'info-modal', 'settings-modal'];
@@ -3920,3 +4145,5 @@ restoreCooldowns() {
 }
 
 }
+
+const gameInstance = new SmileyGame();
