@@ -203,10 +203,54 @@ const prestigeUpgrades = [
 /* ======================================================= */
 
 const petsData = [
-    { id: 'pet_dog', name: 'Fluffy der Klick-Hund', baseEffect: 0.05, effectType: 'auto_click', description: 'Klickt automatisch 1x pro Sekunde für dich (Rate Steigt mit dem Level).', img: 'pet_dog.png.png', interval: 100, levelCost: 10, costGrowth: 1.5, maxLevel: 10 },
-    { id: 'pet_cat', name: 'Miau der SPS-Booster', baseEffect: 0.10, effectType: 'sps_mult', description: '+% SPS-Rate.', img: 'pet_cat.png.png', interval: 0, levelCost: 20, costGrowth: 1.5, maxLevel: 10 },
-    { id: 'pet_owl', name: 'Hoot der Taktiker', baseEffect: 0.05, effectType: 'cost_reduction_upgrades', description: '-% Upgrade-Kosten.', img: 'pet_owl.png.png', interval: 0, levelCost: 30, costGrowth: 1.5, maxLevel: 10 },
-    { id: 'pet_fish', name: 'Finny der Ökonom', baseEffect: 0.05, effectType: 'cost_reduction_buildings', description: '-% Gebäudekosten.', img: 'pet_fish.png.png', interval: 0, levelCost: 50, costGrowth: 1.5, maxLevel: 10 },
+    { 
+        id: 'pet_rock', 
+        name: 'Haustier-Stein', 
+        icon: '🪨', 
+        // Hier haben wir ein zweites % eingefügt
+        description: 'Er tut nichts, aber er motiviert dich. +% % Klick-Stärke.',
+        effectType: 'click_mult', 
+        baseEffect: 0.10,         
+        costGrowth: 1.5,          
+        levelCost: 5,             
+        maxLevel: 10              
+    },
+    { 
+        id: 'pet_dog', 
+        name: 'Büro-Hund', 
+        icon: '🐶', 
+        // Hier lassen wir es so, weil "1.0x" (Mal) Sinn macht
+        description: 'Er bellt Kunden an. Klickt automatisch %x pro Sekunde.',
+        effectType: 'auto_click', 
+        baseEffect: 1,            
+        costGrowth: 1.8,
+        levelCost: 15,
+        maxLevel: 5
+    },
+    { 
+        id: 'pet_cat', 
+        name: 'Manager-Katze', 
+        icon: '😼', 
+        // Hier auch ein zweites %
+        description: 'Sie beurteilt deine Arbeit. +% % auf gesamte SPS Produktion.',
+        effectType: 'sps_mult',   
+        baseEffect: 0.05,         
+        costGrowth: 2.0,
+        levelCost: 25,
+        maxLevel: 20
+    },
+    { 
+        id: 'pet_dragon', 
+        name: 'Gold-Drache', 
+        icon: '🐉', 
+        // Und hier auch
+        description: 'Hortet Schätze. Gebäude sind % % billiger.',
+        effectType: 'cost_reduction_buildings', 
+        baseEffect: 0.02,         
+        costGrowth: 2.5,
+        levelCost: 100,
+        maxLevel: 10
+    }
 ];
 
 /* ======================================================= */

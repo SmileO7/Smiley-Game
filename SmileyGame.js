@@ -277,6 +277,22 @@ class SmileyGame {
             globalCostReduction: 0,
             clickSPSRatio: 0,
             godModeMultiplier: 1,
+            mineGrid: [],
+            mineDepth: 1,
+            mineInventory: {
+                pickaxe: 50,
+                tnt:2,
+                drill:1
+            },
+            fossilien: 0,
+            mineResearch: {
+                durable_picks: 0,
+                explosive_yield: 0,
+                fossil_scanner: 0
+            },
+            selectedTool: 'pickaxe',
+            isTreasureRoom: false,
+            mineArtifacts: [],
             diamondShopPurchases: [],
             diamondMineUnlocked: false,
             petsUnlocked: false,
@@ -331,6 +347,14 @@ class SmileyGame {
 
     init() {
         this.ladeSpiel();
+
+        if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
+            // Prüfen wir den ersten Stein
+            if (this.gameState.mineGrid[0].content === undefined) {
+                console.log("🛠️ Repariere kaputte Mine (Loot fehlt)...");
+                this.generateMineGrid(); 
+            }
+        }
         this.checkOfflineProgress();
         this.createBuildingElements();
         this.renderPetShop();
@@ -366,8 +390,30 @@ class SmileyGame {
         // 1. Der Haupt-Loop für SPS (jede Sekunde)
         setInterval(() => {
             this.addSmileys(this.gameState.totalSPS);
+
+            // 👇👇👇 NEU: AUTO-HACKEN REGENERATION 👇👇👇
+            const inv = this.gameState.mineInventory;
+            const maxPicks = 50; // Limit für Hacken
+            
+            // Logik: Jede Sekunde 10% Chance ODER fester Timer? 
+            // Machen wir es einfach: Alle 5 Sekunden +1 Hacke
+            if (!this.pickaxeTimer) this.pickaxeTimer = 0;
+            this.pickaxeTimer++;
+            
+            if (this.pickaxeTimer >= 5) { // Alle 5 Sekunden
+                if (inv.pickaxe < maxPicks) {
+                    inv.pickaxe++;
+                    // Wenn Mine offen ist, Anzeige updaten
+                    const qEl = document.getElementById('qty-pickaxe');
+                    if(qEl) qEl.innerText = inv.pickaxe;
+                }
+                this.pickaxeTimer = 0;
+            }
+            // 👆👆👆 ENDE NEU 👆👆👆
+
             this.updateUI();
         }, 1000);
+
 
         // 2. Automatisches Speichern (alle 60 Sek)
         setInterval(() => {
@@ -484,16 +530,11 @@ class SmileyGame {
         }
     }
 
-   saveGame(returnOnly = false) {
-        // 🕵️‍♂️ DATEN-DETEKTIV: Wo liegen die echten Zahlen?
-        // Wenn es "this.gameState" gibt und da Smileys drin sind, nehmen wir das.
-        // Sonst nehmen wir "this" (die Haupt-Klasse).
+   // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 330)
+    saveGame(returnOnly = false) {
         let source = this;
         if (this.gameState && this.gameState.aktuelle_smileys !== undefined) {
             source = this.gameState;
-            console.log("💾 Speichere Daten aus 'gameState'-Container.");
-        } else {
-            console.log("💾 Speichere Daten direkt aus der Hauptklasse.");
         }
 
         const saveData = {
@@ -504,7 +545,6 @@ class SmileyGame {
             totalClicksLifetime: source.totalClicksLifetime || 0,
 
             // --- Gebäude & Upgrades ---
-            // Arrays müssen wir manchmal direkt übernehmen
             buildingCounts: source.buildingCounts || this.buildingCounts || [],
             researchStatus: source.researchStatus || this.researchStatus || {},
 
@@ -516,8 +556,6 @@ class SmileyGame {
 
             // --- Features & Fortschritt ---
             achievementsUnlocked: source.achievementsUnlocked || {},
-            
-            // Pets
             petsUnlocked: source.petsUnlocked || false,
             petLevels: source.petLevels || {},
             activePet: source.activePet || null,
@@ -530,22 +568,24 @@ class SmileyGame {
             guildUpgradeStatus: source.guildUpgradeStatus || {},
             guildBossLevel: source.guildBossLevel || 1,
 
-            // Mine & Shop
+            // --- ⛏️ MINE & LABOR (NEU HINZUGEFÜGT) ---
             diamondMineUnlocked: source.diamondMineUnlocked || false,
             diamondShopPurchases: source.diamondShopPurchases || {},
+            mineDepth: source.mineDepth || 1,
+            mineGrid: source.mineGrid || [],
+            mineInventory: source.mineInventory || { pickaxe: 50, tnt: 2, drill: 1 },
+            isTreasureRoom: source.isTreasureRoom || false,
+            fossilien: source.fossilien || 0, // Labor-Währung
+            mineResearch: source.mineResearch || { durable_picks: 0, fossil_scanner: 0, explosive_yield: 0 }, // Labor-Upgrades
 
             // Zeitstempel
             lastSaveTime: Date.now()
         };
 
-        // Der Cloud-Teil: Gibt das Paket zurück an den Button
-        if (returnOnly) {
-            return saveData;
-        }
+        if (returnOnly) return saveData;
 
-        // Der lokale Teil: Speichert im Browser
         localStorage.setItem('smileyGameSave', JSON.stringify(saveData));
-        console.log("💾 Spiel lokal gespeichert. Inhalt:", saveData);
+        console.log("💾 Spiel inkl. Labor-State lokal gespeichert.");
     }
 
     // Diese Funktion sucht den Spielstand und entscheidet, wie er geladen wird
@@ -584,66 +624,53 @@ class SmileyGame {
     }
 
     // Diese Funktion verteilt die Daten wieder in die Variablen
+    // Diese Funktion verteilt die Daten wieder in die Variablen
+    // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 418)
     loadGame(saveData) {
-        // Sicherheits-Check: Ist das Paket leer?
-        if (!saveData) {
-            console.log("Keine Speicherdaten gefunden.");
-            return;
-        }
+        if (!saveData) return;
 
-        console.log("📥 Verteile Spielstand...", saveData);
-
-        // 🕵️‍♂️ ZIEL-DETEKTIV: Wohin müssen die Daten?
-        // Wir spiegeln genau das, was wir beim Speichern gemacht haben.
         let target = this;
-        if (this.gameState) {
-            target = this.gameState;
-            console.log("🎯 Schreibe Daten in 'gameState'-Container.");
-        } else {
-            console.log("🎯 Schreibe Daten direkt in die Hauptklasse.");
-        }
+        if (this.gameState) target = this.gameState;
 
-        // --- 1. Währungen laden ---
+        // --- Basis & Gebäude ---
         target.aktuelle_smileys = saveData.aktuelle_smileys || 0;
         target.lifetime_smileys = saveData.lifetime_smileys || 0;
         target.diamanten = saveData.diamanten || 0;
         target.totalClicksLifetime = saveData.totalClicksLifetime || 0;
-
-        // --- 2. Gebäude & Forschung ---
         if (saveData.buildingCounts) target.buildingCounts = saveData.buildingCounts;
         if (saveData.researchStatus) target.researchStatus = saveData.researchStatus;
 
-        // --- 3. Prestige ---
+        // --- Prestige & Features ---
         target.prestigeResets = saveData.prestigeResets || 0;
         target.prestige_punkte_verfügbar = saveData.prestige_punkte_verfügbar || 0;
         target.gesamt_prestige_punkte = saveData.gesamt_prestige_punkte || 0;
         if (saveData.prestigeUpgradeStatus) target.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
-
-        // --- 4. Features & Achievements ---
         if (saveData.achievementsUnlocked) target.achievementsUnlocked = saveData.achievementsUnlocked;
         
-        // Pets
         target.petsUnlocked = saveData.petsUnlocked || false;
         if (saveData.petLevels) target.petLevels = saveData.petLevels;
         target.activePet = saveData.activePet || null;
 
-        // Gilden
         target.guildsUnlocked = saveData.guildsUnlocked || false;
         target.guildName = saveData.guildName || "";
         target.guildLevel = saveData.guildLevel || 1;
         target.guildXP = saveData.guildXP || 0;
-        if (saveData.guildUpgradeStatus) target.guildUpgradeStatus = saveData.guildUpgradeStatus;
+        if (saveData.guildUpgradeStatus) target.guildUpgradeStatus = saveData.saveData.guildUpgradeStatus;
         target.guildBossLevel = saveData.guildBossLevel || 1;
 
-        // Mine & Shop
+        // --- ⛏️ MINE & LABOR WIEDERHERSTELLEN ---
         target.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
         if (saveData.diamondShopPurchases) target.diamondShopPurchases = saveData.diamondShopPurchases;
-
-        // WICHTIG: UI aktualisieren!
-        this.updateUI(); 
         
-        // Toast zur Bestätigung
-        if(this.showNotification) this.showNotification("☁️ Spielstand erfolgreich geladen!", "success");
+        target.mineDepth = saveData.mineDepth || 1;
+        if (saveData.mineGrid) target.mineGrid = saveData.mineGrid;
+        if (saveData.mineInventory) target.mineInventory = saveData.mineInventory;
+        target.isTreasureRoom = saveData.isTreasureRoom || false;
+        target.fossilien = saveData.fossilien || 0;
+        if (saveData.mineResearch) target.mineResearch = saveData.mineResearch;
+
+        this.updateUI(); 
+        if(this.showNotification) this.showNotification("☁️ Spielstand inkl. Labor geladen!", "success");
     }
 
     checkOfflineProgress() {
@@ -1253,60 +1280,61 @@ class SmileyGame {
     }
 
     updateGlobalUpgradeUI() {
-    const container = this.getById('global-upgrades-container');
-    if (!container) return;
-    container.innerHTML = '';
+        const container = this.getById('global-upgrades-container');
+        if (!container) return;
+        container.innerHTML = '';
 
-    // Wir sammeln alle noch nicht gekauften Upgrades
-    const upgradesToRender = [];
+        // Wir sammeln alle noch nicht gekauften Upgrades
+        const upgradesToRender = [];
 
-    globalUpgrades.forEach(upgrade => {
-        // Prüfen, ob das Upgrade noch NICHT gekauft wurde
-        if (!this.gameState.researchStatus[upgrade.id]) {
-            const bIndex = upgrade.buildingIndex;
-            
-            // Logik: Anzeigen wenn global (-1/undefined) ODER wenn man das Gebäude besitzt
-            const isGlobal = (bIndex === undefined || bIndex === -1);
-            const hasBuilding = bIndex >= 0 && (this.gameState.buildingCounts[bIndex] > 0);
+        globalUpgrades.forEach(upgrade => {
+            // Prüfen, ob das Upgrade noch NICHT gekauft wurde
+            if (!this.gameState.researchStatus[upgrade.id]) {
+                const bIndex = upgrade.buildingIndex;
+                
+                // Logik: Anzeigen wenn global (-1/undefined) ODER wenn man das Gebäude besitzt
+                const isGlobal = (bIndex === undefined || bIndex === -1);
+                const hasBuilding = bIndex >= 0 && (this.gameState.buildingCounts[bIndex] > 0);
 
-            if (isGlobal || hasBuilding) {
-                upgradesToRender.push(upgrade);
+                if (isGlobal || hasBuilding) {
+                    upgradesToRender.push(upgrade);
+                }
             }
+        });
+
+        // Wenn gar nichts da ist
+        if (upgradesToRender.length === 0) {
+            container.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">Alle Upgrades erforscht!</div>';
+            return;
         }
-    });
 
-    // Wenn gar nichts da ist
-    if (upgradesToRender.length === 0) {
-        container.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">Alle Upgrades erforscht!</div>';
-        return;
-    }
+        // Nur die ersten 5 anzeigen, damit die Liste nicht den Bildschirm sprengt
+        upgradesToRender.slice(0, 5).forEach(upgrade => {
+            // HIER WAR DER FEHLER: Wir müssen die Kosten für 'upgrade' berechnen
+            const finalCost = this.getGlobalUpgradeCost(upgrade);
+            const canAfford = this.gameState.aktuelle_smileys >= finalCost;
 
-    // Nur die ersten 5 anzeigen, damit die Liste nicht den Bildschirm sprengt
-    upgradesToRender.slice(0, 5).forEach(upgrade => {
-        const finalCost = this.getGlobalUpgradeCost(upgrade);
-        const canAfford = this.gameState.aktuelle_smileys >= finalCost;
-
-        const div = document.createElement('div');
-        div.className = 'research-item';
-        div.innerHTML = `
-            <div class="research-content">
-                <div class="research-title-row">
-                    <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
+            const div = document.createElement('div');
+            div.className = 'research-item';
+            div.innerHTML = `
+                <div class="research-content">
+                    <div class="research-title-row">
+                        <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
+                    </div>
+                    <div class="research-desc">${upgrade.description}</div>
                 </div>
-                <div class="research-desc">${upgrade.description}</div>
-            </div>
-            <div class="research-action">
-                <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
-                    ${this.formatNumber(finalCost)}
-                </span>
-                <button class="btn-buy-research" data-id="${upgrade.id}">
-                    Kaufen
-                </button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
+                <div class="research-action">
+                    <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
+                        ${this.formatNumber(finalCost)}
+                    </span>
+                    <button class="btn-buy-research" data-id="${upgrade.id}">
+                        Kaufen
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
 
     kaufeGlobalUpgrade(id) {
         const upgrade = globalUpgrades.find(u => u.id === id);
@@ -1585,74 +1613,446 @@ class SmileyGame {
     // 5. DIAMANTEN MINE LOGIK
     // ================================================================================================================
 
-    startDiamondMinigame() {
-        const MINE_INDEX = DIAMOND_MINE_INDEX;
-        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-        const DURATION = 5000;
-        if (this.gameState.diamondMinigameRunning || mineCount === 0) return;
+    // Erstellt ein neues 5x5 Feld mit Zufalls-Loot
+   renderDiamondMineContent() {
+        const container = document.getElementById('diamond-mine-content');
+        if (!container) return;
 
-        this.currentMinigameClicks = 0;
-        this.gameState.diamondMinigameRunning = true;
-        this.updateUI();
+        // 1. Navigation aufbauen (wird nur 1x gemacht, wenn Container leer ist)
+        // Wir prüfen nicht auf innerHTML, sondern ob unsere Struktur da ist
+        if (!document.getElementById('mine-nav-wrapper')) {
+            container.innerHTML = `
+                <div id="mine-nav-wrapper" class="mine-nav" style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button id="tab-mine" class="btn-primary" style="flex:1">⛏️ Mine</button>
+                    <button id="tab-research" class="btn-primary btn-cancel" style="flex:1">🧪 Labor</button>
+                    <button id="tab-shop" class="btn-primary btn-cancel" style="flex:1">💎 Shop</button>
+                </div>
+                
+                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; display:flex; justify-content:space-around; margin-bottom:15px; font-weight:bold;">
+                    <span style="color:#009ffd">💎 <span id="res-dias">0</span></span>
+                    <span style="color:#e0e0e0">🦖 <span id="res-fossil">0</span></span>
+                    <span style="color:#ffeb3b">💰 <span id="res-gold">0</span></span>
+                </div>
 
-        const progressBar = this.getById('minigame-bar');
-        const resultText = this.getById('minigame-result');
-        if (resultText) {
-            resultText.style.color = '#fff';
-            resultText.innerText = 'Hämmer auf den Button! (Klick Klick!)';
+                <div id="mine-sub-content"></div>
+            `;
+
+            // Event Listener für Tabs (nur 1x binden!)
+            document.getElementById('tab-mine').onclick = () => this.switchMineTab('mine');
+            document.getElementById('tab-research').onclick = () => this.switchMineTab('research');
+            document.getElementById('tab-shop').onclick = () => this.switchMineTab('shop');
         }
 
-        if (this.barInterval) clearInterval(this.barInterval);
-        let progress = 0;
-        const step = 100 / (DURATION / 50);
+        // 2. Werte oben immer aktuell halten
+        document.getElementById('res-dias').innerText = this.formatNumber(this.gameState.diamanten);
+        document.getElementById('res-fossil').innerText = this.gameState.fossilien || 0;
+        document.getElementById('res-gold').innerText = this.formatNumber(this.gameState.aktuelle_smileys);
 
-        if (progressBar) {
-            progressBar.style.transition = 'none';
-            progressBar.style.width = '0%';
-            this.barInterval = setInterval(() => {
-                progress += step;
-                if (progress >= 100) progress = 100;
-                progressBar.style.width = `${progress}%`;
-                if (progress >= 100) clearInterval(this.barInterval);
-            }, 50);
+        // 3. Inhalt rendern (je nach View)
+        const contentDiv = document.getElementById('mine-sub-content');
+        const activeTab = this.diamondMineView || 'mine';
+
+        // Styling der Tabs aktualisieren
+        ['mine', 'research', 'shop'].forEach(t => {
+            const btn = document.getElementById(`tab-${t}`);
+            if (activeTab === t) {
+                btn.classList.remove('btn-cancel');
+                btn.style.background = '#009ffd';
+            } else {
+                btn.classList.add('btn-cancel');
+                btn.style.background = '';
+            }
+        });
+
+        // Nur rendern, wenn sich der Tab geändert hat oder leer ist
+        if (activeTab === 'mine') {
+            // Mine braucht Spezialbehandlung wegen Performance
+            if (contentDiv.innerHTML === '' || !document.getElementById('mine-interface-wrapper')) {
+                this.renderDiamondMinigame(contentDiv);
+            } else {
+                // Wenn Mine schon da ist, nur UI updaten
+                this.updateMineVisuals(); 
+            }
+        } else if (activeTab === 'research') {
+            this.renderMineResearch(contentDiv);
+        } else {
+            this.renderDiamondShopContent(contentDiv);
+        }
+    }
+
+    switchMineTab(tabName) {
+        this.diamondMineView = tabName;
+        // Wenn wir den Tab wechseln, leeren wir den Content, damit er neu gebaut wird
+        const contentDiv = document.getElementById('mine-sub-content');
+        if(contentDiv) contentDiv.innerHTML = ''; 
+        this.renderDiamondMineContent();
+    }
+
+    // --- DER BAUARBEITER: Baut das HTML Gerüst ---
+    renderDiamondMinigame(targetContainer) {
+        const container = targetContainer || document.getElementById('minigame-placeholder');
+        if (!container) return;
+
+        if (!this.gameState.mineGrid || this.gameState.mineGrid.length === 0) {
+            this.generateMineGrid();
         }
 
-        this.gameState.diamondMinigameTimer = setTimeout(() => {
-            try {
-                let baseGain = 5 * mineCount;
-                let clickBonus = Math.floor(this.currentMinigameClicks * 0.5 * mineCount);
-                if (this.gameState.activePet) {
-                    const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
-                    if (pet) {
-                        const level = this.gameState.petLevels[pet.id] || 0;
-                        if (level > 0) {
-                            const stats = this.calculatePetStat(pet, level);
-                            baseGain *= (1 + stats.currentEffect);
-                            clickBonus *= (1 + stats.currentEffect);
-                        }
+        const inv = this.gameState.mineInventory;
+
+        // 1. Wrapper bauen (Nur wenn er fehlt!)
+        if (!document.getElementById('mine-interface-wrapper')) {
+            container.innerHTML = `
+                <div id="mine-interface-wrapper">
+                    <div class="mine-grid" id="mine-grid-area"></div>
+                </div>
+            `;
+            
+            // Tool Listener (Das hast du schon)
+            document.getElementById('tool-pickaxe').onclick = () => { this.gameState.selectedTool = 'pickaxe'; this.updateMineVisuals(); };
+            document.getElementById('tool-tnt').onclick = () => { this.gameState.selectedTool = 'tnt'; this.updateMineVisuals(); };
+            document.getElementById('tool-drill').onclick = () => { this.gameState.selectedTool = 'drill'; this.updateMineVisuals(); };
+        }
+
+        // 👇👇👇 HIER IST DER FEHLENDE TEIL! FÜGE DIESEN BLOCK EIN! 👇👇👇
+        
+        // 2. Prüfen, ob das Grid leer ist (z.B. nach Levelwechsel)
+        const gridArea = document.getElementById('mine-grid-area');
+        if (gridArea && gridArea.children.length === 0) {
+            // Grid ist leer -> Steine neu aufbauen!
+            this.gameState.mineGrid.forEach((tile, index) => {
+                const tileDiv = document.createElement('div');
+                tileDiv.id = `mine-tile-${index}`; 
+                tileDiv.className = 'mine-tile';
+                // WICHTIG: Klick-Event anhängen
+                tileDiv.onclick = () => this.handleMineClick(index); 
+                gridArea.appendChild(tileDiv);
+            });
+        }
+        
+        // 👆👆👆 BIS HIER EINFÜGEN 👆👆👆
+
+        // Einmal initial befüllen
+        this.updateMineVisuals();
+    }
+
+    // --- DER MALER: Aktualisiert nur Farben/Texte (Absturzsicher) ---
+    updateMineVisuals() {
+        // Abbruch wenn wir gar nicht in der Mine sind
+        if (this.diamondMineView !== 'mine') return;
+        
+        // Haupt-Check: Ist das Interface überhaupt da?
+        if (!document.getElementById('mine-interface-wrapper')) return;
+
+        const inv = this.gameState.mineInventory;
+        const currentTool = this.gameState.selectedTool || 'pickaxe';
+        const isTreasure = this.gameState.isTreasureRoom;
+
+        // Hilfsfunktion: Text sicher setzen (Verhindert den "null" Fehler)
+        const safeText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
+        // 1. Header
+        const titleEl = document.getElementById('mine-title');
+        const subEl = document.getElementById('mine-subtitle');
+        if(titleEl) {
+            titleEl.innerText = isTreasure ? '👑 SCHATZKAMMER' : `⛏️ Ebene ${this.gameState.mineDepth}`;
+            titleEl.style.color = isTreasure ? '#FFD700' : '#009ffd';
+        }
+        if(subEl) subEl.innerText = isTreasure ? 'Alles einsammeln!' : 'Finde den Ausgang 🚪';
+
+        // 2. Tools (Mengen Update mit Sicherheits-Check)
+        safeText('qty-pickaxe', inv.pickaxe);
+        safeText('qty-tnt', inv.tnt);
+        safeText('qty-drill', inv.drill);
+
+        // Helper für Button Styles
+        const updateToolBtn = (id, toolName) => {
+            const btn = document.getElementById(id);
+            if (!btn) return; // Sicherheits-Check
+            
+            if (currentTool === toolName) {
+                btn.style.border = "2px solid #009ffd";
+                btn.style.backgroundColor = "#444";
+                btn.style.transform = "scale(1.1)";
+            } else {
+                btn.style.border = "1px solid #555";
+                btn.style.backgroundColor = "#333";
+                btn.style.transform = "scale(1)";
+            }
+        };
+        updateToolBtn('tool-pickaxe', 'pickaxe');
+        updateToolBtn('tool-tnt', 'tnt');
+        updateToolBtn('tool-drill', 'drill');
+
+        // 3. Grid Aktualisieren
+        const gridArea = document.getElementById('mine-grid-area');
+        if (gridArea) gridArea.style.borderColor = isTreasure ? "#FFD700" : "transparent";
+
+        this.gameState.mineGrid.forEach((tile, index) => {
+            const tileDiv = document.getElementById(`mine-tile-${index}`);
+            if (!tileDiv) return; // Wenn Kachel nicht da, überspringen
+
+            // Klasse setzen
+            const newClass = `mine-tile ${tile.revealed ? 'revealed' : 'hidden'}`;
+            if (tileDiv.className !== newClass) tileDiv.className = newClass;
+
+            // Inhalt setzen (Nur wenn aufgedeckt)
+            if (tile.revealed) {
+                let symbol = '';
+                let cssClass = '';
+                switch(tile.type) {
+                    case 'stone': symbol = '🪨'; cssClass='loot-stone'; break;
+                    case 'diamond': symbol = '💎'; cssClass='loot-diamond'; break;
+                    case 'gold': symbol = '💰'; cssClass='loot-gold'; break;
+                    case 'treasure': symbol = '🎁'; cssClass='loot-diamond'; break;
+                    case 'passage': symbol = '🚪'; cssClass='loot-passage'; break;
+                    case 'secret_passage': symbol = '🕳️'; cssClass='loot-passage'; break;
+                    case 'tool_tnt': symbol = '🧨'; break;
+                    case 'tool_drill': symbol = '🔩'; break;
+                    case 'fossil': symbol = '🦖'; cssClass='loot-fossil'; break;
+                    case 'artifact': symbol = '🏺'; break;
+                }
+                const newHTML = `<span class="${cssClass}">${symbol}</span>`;
+                // Nur HTML ändern wenn nötig (Performance!)
+                if (tileDiv.innerHTML !== newHTML) tileDiv.innerHTML = newHTML;
+                tileDiv.title = "";
+            } else {
+                if (tileDiv.innerHTML !== '') tileDiv.innerHTML = '';
+                
+                // Tooltips
+                let tip = "";
+                if (currentTool === 'tnt') tip = "Sprengen (3x3)";
+                else if (currentTool === 'drill') tip = "Bohren (Zeile)";
+                
+                if (tileDiv.title !== tip) tileDiv.title = tip;
+            }
+        });
+    }
+
+    // --- KLICK LOGIK (Verwendet updateMineVisuals statt render) ---
+    handleMineClick(index) {
+        const tool = this.gameState.selectedTool || 'pickaxe';
+        if (tool === 'tnt') this.useTNT(index);
+        else if (tool === 'drill') this.useDrill(index);
+        else this.usePickaxe(index);
+    }
+
+    usePickaxe(index) {
+        if (this.gameState.mineInventory.pickaxe <= 0) {
+            this.showNotification("⛏️ Keine Spitzhacken mehr!", "error");
+            return;
+        }
+        const tile = this.gameState.mineGrid[index];
+        if (!tile || tile.revealed) return; // Schon offen
+
+        // Verbrauch berechnen
+        const saveChance = (this.gameState.mineResearch.durable_picks || 0) * 0.10;
+        if (Math.random() > saveChance) {
+            this.gameState.mineInventory.pickaxe--;
+        }
+        
+        this.processTile(index);
+    }
+
+    processTile(index) {
+        const tile = this.gameState.mineGrid[index];
+        if (!tile || tile.revealed) return;
+
+        // 1. Visuelles Aufdecken & Sound
+        tile.revealed = true;
+        this.playClickSound();
+
+        // 🛡️ SICHERHEIT: Falls der Stein "leer" ist, gib ihm mindestens 100 Wert
+        let amount = tile.content;
+        if (!amount || amount <= 0) amount = 100;
+
+        // --- LOOT LOGIK (Ohne schwebende Texte) ---
+        if (tile.type === 'diamond') {
+            this.gameState.diamanten += amount;
+        } 
+        else if (tile.type === 'gold') {
+            this.addSmileys(amount);
+        }
+        else if (tile.type === 'tool_tnt') {
+            this.gameState.mineInventory.tnt++;
+            this.showNotification("🧨 TNT gefunden!", "success");
+        }
+        else if (tile.type === 'tool_drill') {
+            this.gameState.mineInventory.drill++;
+            this.showNotification("🔩 Bohrer gefunden!", "success");
+        }
+        else if (tile.type === 'fossil') {
+            this.gameState.fossilien += amount;
+            this.showNotification(`🦖 +${amount} Fossilien`, "success");
+        }
+        else if (tile.type === 'treasure') {
+            const dia = Math.floor(50 * (1 + this.gameState.mineDepth * 0.1));
+            this.gameState.diamanten += dia;
+            this.showNotification(`🎁 SCHATZ! +${dia} Dias`, "success");
+        }
+        else if (tile.type === 'passage' || tile.type === 'secret_passage') {
+            // Bei Ausgang: Nachricht zeigen & Level wechseln
+            if (this.gameState.isTreasureRoom) {
+                this.gameState.isTreasureRoom = false;
+                this.showNotification("Schatzkammer verlassen.", "info");
+            }
+            if (tile.type === 'secret_passage') this.gameState.isTreasureRoom = true;
+            
+            this.gameState.mineDepth++;
+            
+            // Level sofort im gleichen Fenster neu laden
+            setTimeout(() => {
+                this.reloadMineLevel();
+            }, 500); 
+        }
+
+        this.speichereSpiel();
+        this.updateMineVisuals(); 
+    }
+
+    useTNT(centerIndex) {
+        if (this.gameState.mineInventory.tnt <= 0) {
+            this.showNotification("Kein TNT!", "error"); return;
+        }
+        this.gameState.mineInventory.tnt--;
+        
+        const size = 5;
+        const row = Math.floor(centerIndex / size);
+        const col = centerIndex % size;
+
+        let hit = false;
+        for (let r = row - 1; r <= row + 1; r++) {
+            for (let c = col - 1; c <= col + 1; c++) {
+                if (r >= 0 && r < size && c >= 0 && c < size) {
+                    const idx = r * size + c;
+                    if (!this.gameState.mineGrid[idx].revealed) {
+                        this.processTile(idx);
+                        hit = true;
                     }
                 }
-                let totalGain = Math.floor(baseGain + clickBonus);
-                this.gameState.diamanten += totalGain;
-
-                if (resultText) {
-                    resultText.innerHTML = `
-                        <span style="color: #4CAF50">Erfolg!</span> Basis: ${Math.floor(baseGain)} + Klicks: ${Math.floor(clickBonus)} =
-                        <strong style="color: #009ffd;">+${totalGain} 💎</strong>
-                    `;
-                }
-            } catch (error) {
-                console.error("Fehler im Minigame-Ende:", error);
-            } finally {
-                this.gameState.diamondMinigameRunning = false;
-                this.currentMinigameClicks = 0;
-                setTimeout(() => {
-                    if (progressBar) progressBar.style.width = '0%';
-                }, 1000);
-                this.updateUI();
-                this.speichereSpiel();
             }
-        }, DURATION);
+        }
+        if(hit) this.showNotification("BOOM! 💥", "success");
+        this.updateMineVisuals();
+    }
+
+    useDrill(centerIndex) {
+        if (this.gameState.mineInventory.drill <= 0) {
+            this.showNotification("Kein Bohrer!", "error"); return;
+        }
+        this.gameState.mineInventory.drill--;
+        const row = Math.floor(centerIndex / 5);
+        for (let c = 0; c < 5; c++) {
+            const idx = row * 5 + c;
+            if (!this.gameState.mineGrid[idx].revealed) this.processTile(idx);
+        }
+        this.showNotification("BRRRRRR!", "success");
+        this.updateMineVisuals();
+    }
+
+    // Hilfsfunktion wenn Ebene gewechselt wird (Hier MUSS neu gebaut werden)
+    reloadMineLevel() {
+        // 1. Alte Daten löschen
+        this.gameState.mineGrid = []; 
+        this.generateMineGrid(); // Neue Daten erstellen
+        
+        // 2. Altes Grid im HTML leeren
+        const gridArea = document.getElementById('mine-grid-area');
+        if(gridArea) gridArea.innerHTML = ''; 
+        
+        // 3. Neu rendern (mit explizitem Ziel)
+        const contentDiv = document.getElementById('mine-sub-content');
+        this.renderDiamondMinigame(contentDiv); 
+    }
+    
+    getLootContent(type) {
+        if (type === 'fossil') return Math.floor(Math.random() * 3) + 1;
+        if (type === 'tool_tnt' || type === 'tool_drill') return 1;
+        
+        const depth = this.gameState.mineDepth || 1;
+        const multiplier = 1 + (depth * 0.1); 
+        
+        switch (type) {
+            case 'diamond': 
+                return Math.floor((Math.random() * 5 + 1) * multiplier);
+            case 'gold': 
+                // 🛑 FIX: Mindestens 100 Smileys, auch wenn SPS 0 ist!
+                let base = (this.gameState.totalSPS > 0) ? this.gameState.totalSPS : 10;
+                let amount = Math.floor(base * (Math.random() * 60 + 10));
+                return Math.max(100, amount); 
+            case 'treasure': return 'GIFT';
+            case 'passage': return 'TIEFER';
+            case 'secret_passage': return 'GEHEIM';
+            default: return 0;
+        }
+    }
+
+    // Grid Generierung (Original beibehalten oder hier einfügen)
+    generateMineGrid() {
+       // ... (dein bestehender Code für generateMineGrid hier lassen) ...
+       // Kopiere den Code von vorhin hier rein, falls er nicht schon da ist.
+       // Der Kürze halber nehme ich an, die Funktion existiert noch in deiner Klasse.
+       // Falls nicht, sag Bescheid!
+       
+        const grid = new Array(25).fill(null);
+        const size = 25;
+        
+        // --- 1. SCHATZKAMMER (Bonus-Level) ---
+        if (this.gameState.isTreasureRoom) {
+            this.showNotification("✨ SCHATZKAMMER! ✨", "success");
+            const exitIndex = Math.floor(Math.random() * size);
+            grid[exitIndex] = { id: exitIndex, type: 'passage', revealed: false, content: 'RAUS' };
+
+            for (let i = 0; i < size; i++) {
+                if (grid[i]) continue;
+                const rng = Math.random();
+                let type = 'gold';
+                // In der Schatzkammer gibts viele Fossilien!
+                if (rng > 0.85) type = 'fossil'; 
+                else if (rng > 0.7) type = 'tool_tnt';
+                else if (rng > 0.95) type = 'tool_drill'; 
+                else if (rng > 0.4) type = 'diamond';
+                else if (rng > 0.2) type = 'treasure';
+                
+                grid[i] = { id: i, type: type, revealed: false, content: this.getLootContent(type) };
+            }
+        } 
+        // --- 2. NORMALE EBENE ---
+        else {
+            const exitIndex = Math.floor(Math.random() * size);
+            grid[exitIndex] = { id: exitIndex, type: 'passage', revealed: false, content: 'ABSTIEG' };
+
+            if (Math.random() < 0.05) { 
+                let secretIndex;
+                do { secretIndex = Math.floor(Math.random() * size); } while (secretIndex === exitIndex);
+                grid[secretIndex] = { id: secretIndex, type: 'secret_passage', revealed: false, content: 'GEHEIMNIS' };
+            }
+
+            const depthBonus = Math.min(0.3, (this.gameState.mineDepth - 1) * 0.01); 
+            // Bonus-Chance durch Forschung "Fossil Scanner"
+            const fossilBonus = (this.gameState.mineResearch.fossil_scanner || 0) * 0.02;
+
+            for (let i = 0; i < size; i++) {
+                if (grid[i]) continue;
+
+                const rng = Math.random();
+                let type = 'stone'; 
+                
+                // Fossilien finden (Chance erhöht durch Forschung)
+                if (rng > 0.96 - fossilBonus) type = 'fossil'; 
+                else if (rng > 0.94) type = 'tool_tnt';
+                else if (rng > 0.90 - depthBonus) type = 'treasure';
+                else if (rng > 0.75 - depthBonus) type = 'diamond';
+                else if (rng > 0.40) type = 'gold';
+                
+                grid[i] = { id: i, type: type, revealed: false, content: this.getLootContent(type) };
+            }
+        }
+
+        this.gameState.mineGrid = grid;
+        this.speichereSpiel();
     }
 
     // ================================================================================================================
@@ -2319,12 +2719,14 @@ class SmileyGame {
                 const currentEffectDisplay = (stats.currentEffect * 100).toFixed(1);
 
                 activePetDisplayElement.innerHTML = `
-                    <img src="${pet.img}" alt="${pet.name}" class="active-pet-img">
-                    <div style="display:flex; flex-direction:column; align-items:flex-start;">
-                        <span style="color:#FFD700;">${pet.name} <small style="color:#ccc;">(Lv. ${currentLevel})</small></span>
-                        <small style="color:#aaa; font-size:0.75rem;">${pet.description.replace('%', currentEffectDisplay)}</small>
-                    </div>
-                `;
+    <div style="font-size: 2.5rem; margin-right: 10px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));">
+        ${pet.icon}
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:flex-start;">
+        <span style="color:#FFD700;">${pet.name} <small style="color:#ccc;">(Lv. ${currentLevel})</small></span>
+        <small style="color:#aaa; font-size:0.75rem;">${pet.description.replace('%', currentEffectDisplay)}</small>
+    </div>
+`;
                 activePetDisplayElement.style.display = 'flex';
             } else {
                 activePetDisplayElement.style.display = 'none';
@@ -2707,21 +3109,22 @@ class SmileyGame {
     }
 
     renderPetShop() {
-        const petGrid = this.getById('pet-shop-grid');
-        const lockMessage = this.getById('pet-lock-message');
+        const petGrid = document.getElementById('pet-shop-grid');
+        const lockMessage = document.getElementById('pet-lock-message');
         
         if (!petGrid) return;
 
-        // 1. Prüfen ob gesperrt
+        // 1. Prüfen ob gesperrt (Durch Prestige-Upgrade)
         if (!this.gameState.petsUnlocked) {
             petGrid.style.display = 'none';
             if (lockMessage) {
                 lockMessage.style.display = 'block';
                 lockMessage.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#888;">
-                        <h3>🔒 Pet Shop Gesperrt</h3>
-                        <p>Kaufe das Upgrade "Pet Shop Lizenz" im Prestige-Tree (Tier 4), um kleine Begleiter freizuschalten!</p>
-                    </div>`;
+                    <div style="font-size:3rem; margin-bottom:10px;">🔒</div>
+                    <h3>Zutritt verweigert</h3>
+                    <p>Du musst erst die <strong>"Pet Shop Lizenz"</strong> im Prestige-Shop erwerben!</p>
+                    <p style="font-size:0.8rem; color:#aaa; margin-top:5px;">(Prestige Upgrade ID 6)</p>
+                `;
             }
             return;
         }
@@ -2729,84 +3132,65 @@ class SmileyGame {
         // 2. Shop anzeigen
         if (lockMessage) lockMessage.style.display = 'none';
         petGrid.style.display = 'grid';
-        petGrid.innerHTML = ''; // Leeren vor dem Neu-Zeichnen
+        petGrid.innerHTML = ''; // Sauber machen
 
         // 3. Pets rendern
-        // Sicherstellen, dass petsData existiert (kommt aus data.js)
-        if (typeof petsData === 'undefined') {
-            petGrid.innerHTML = '<p>Fehler: petsData nicht gefunden!</p>';
-            return;
-        }
-
         petsData.forEach((pet) => {
             const petDiv = document.createElement('div');
-            petDiv.className = 'pet-item box-style'; // box-style für konsistenten Look
-            petDiv.dataset.id = pet.id;
-            
-            const currentLevel = this.gameState.petLevels[pet.id] || 0;
-            const stats = this.calculatePetStat(pet, currentLevel);
             const isActive = this.gameState.activePet === pet.id;
-
-            // Button Status Logik
-            let actionBtnHtml = '';
-            const canAfford = this.gameState.diamanten >= stats.nextCost;
+            const currentLevel = this.gameState.petLevels[pet.id] || 0;
+            const isBought = currentLevel > 0;
             
+            // Stats berechnen für Vorschau
+            const stats = this.calculatePetStat(pet, currentLevel);
+            const effectValue = (stats.currentEffect * (pet.effectType === 'auto_click' ? 1 : 100)).toFixed(1);
+            
+            // Klassen setzen
+            petDiv.className = `pet-item ${isActive ? 'active' : ''} ${isBought ? 'bought' : ''}`;
+            petDiv.dataset.id = pet.id;
+
+            // Button Logik
+            let btnHtml = '';
             if (currentLevel >= pet.maxLevel) {
-                actionBtnHtml = `<button class="btn-buy-pet" disabled style="background:#555; color:#aaa;">MAX LEVEL</button>`;
+                btnHtml = `<button disabled style="background:#444; color:#888; border:none;">MAX LEVEL</button>`;
             } else {
-                const btnColor = canAfford ? 'var(--color-primary)' : '#ff5252';
-                const label = currentLevel === 0 ? 'Adoptieren' : 'Level Up';
-                actionBtnHtml = `
-                    <button class="btn-buy-pet" data-id="${pet.id}" ${canAfford ? '' : 'disabled'} style="border-color:${btnColor}">
-                        ${label} <br> <span style="font-size:0.8em">💎 ${this.formatNumber(stats.nextCost)}</span>
+                const canAfford = this.gameState.diamanten >= stats.nextCost;
+                const btnText = isBought ? `Level Up (${stats.nextCost} 💎)` : `Adoptieren (${stats.nextCost} 💎)`;
+                const btnColor = canAfford ? 'var(--color-accent-blue)' : '#ff5252';
+                
+                btnHtml = `
+                    <button class="btn-buy-pet" data-id="${pet.id}" ${canAfford ? '' : 'disabled'} 
+                            style="border: 1px solid ${btnColor}; color: ${canAfford ? '#fff' : '#aaa'}; background: rgba(0,0,0,0.3);">
+                        ${btnText}
                     </button>
                 `;
             }
 
-            // Aktivieren Button (nur wenn man das Pet besitzt)
-            let activateBtnHtml = '';
-            if (currentLevel > 0) {
-                activateBtnHtml = `
-                    <button class="btn-pet-activate ${isActive ? 'active-state' : ''}" data-id="${pet.id}" style="margin-top:5px; width:100%;">
-                        ${isActive ? '✅ Aktiv' : 'Auswählen'}
+            // Equip Button
+            let equipHtml = '';
+            if (isBought) {
+                equipHtml = `
+                    <button class="btn-pet-activate" data-id="${pet.id}" 
+                            style="background: ${isActive ? '#f44336' : '#4CAF50'}; border:none;">
+                        ${isActive ? 'Zurückrufen' : 'Auswählen'}
                     </button>
                 `;
             } else {
-                activateBtnHtml = `<button disabled style="margin-top:5px; width:100%; opacity:0.3;">Gesperrt</button>`;
+                equipHtml = `<button disabled style="opacity:0.3; border:none;">Gesperrt</button>`;
             }
 
-            // Werte Berechnung für Anzeige
-            const currentEffectDisplay = (stats.currentEffect * 100).toFixed(1);
-            let desc = pet.description.replace('%', currentEffectDisplay);
-
-            let imageHtml = '';
-            if (pet.img) {
-                // Hier nutzen wir die Klasse .pet-img aus dem CSS oben!
-                imageHtml = `<img src="${pet.img}" alt="${pet.name}" class="pet-img">`;
-            } else {
-                imageHtml = `<div style="font-size:3em; margin-bottom:10px;">${pet.icon || '🐶'}</div>`;
-            }
-
+            // HTML Zusammenbauen
             petDiv.innerHTML = `
-                <div style="text-align:center; width:100%;">
-                    ${imageHtml}
-                    <h4 style="margin:5px 0;">${pet.name}</h4>
-                    <span style="font-size:0.8em; color:#888; display:block; margin-bottom:5px;">Level ${currentLevel} / ${pet.maxLevel}</span>
-                </div>
+                <div class="pet-icon">${pet.icon}</div>
+                <div class="pet-name">${pet.name}</div>
+                <div style="font-size:0.8rem; color:#FFD700; margin-bottom:5px;">Lvl ${currentLevel} / ${pet.maxLevel}</div>
+                <div class="pet-desc">${pet.description.replace('%', effectValue)}</div>
                 
-                <p class="pet-description" style="height:40px; overflow:hidden;">${desc}</p>
-                
-                <div class="pet-actions" style="margin-top:auto; width:100%;">
-                    ${actionBtnHtml}
-                    ${activateBtnHtml}
+                <div class="pet-actions" style="width:100%;">
+                    ${btnHtml}
+                    ${equipHtml}
                 </div>
             `;
-            
-            // Wenn aktiv, grün umranden
-            if (isActive) {
-                petDiv.style.borderColor = '#4CAF50';
-                petDiv.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.3)';
-            }
 
             petGrid.appendChild(petDiv);
         });
@@ -2814,131 +3198,305 @@ class SmileyGame {
 
     diamondMineView = 'mine';
 
-    renderDiamondMineContent() {
-        const container = this.getById('diamond-mine-content');
+   renderDiamondMineContent() {
+        const container = document.getElementById('diamond-mine-content');
         if (!container) return;
-        const modalTitle = container.closest('.modal-content')?.querySelector('h2');
-        if (modalTitle) modalTitle.innerHTML = `💎 Diamanten-Mine & Shop`;
 
-        const MINE_INDEX = DIAMOND_MINE_INDEX;
-        const mineDefinition = uniqueBuildingsData.find(u => u.id === 'diamond_mine');
-        if (!mineDefinition) return;
-        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-
-        if (mineCount === 0) {
-            const mineCost = this.getBuildingCost(MINE_INDEX, 0);
-            const canAfford = this.gameState.aktuelle_smileys >= mineCost;
+        // 1. Navigation & Header EINMALIG aufbauen
+        if (!document.getElementById('mine-nav-wrapper')) {
             container.innerHTML = `
-                <h3>Schalte die ${mineDefinition.name} frei</h3>
-                <p style="color: #aaa;">Die Mine wird benötigt, um Diamanten zu sammeln und den Shop freizuschalten.</p>
-                <p>Kosten: <span style="color: #fff; font-weight: bold;">${this.formatNumber(mineCost)} Smileys</span></p>
-                <button id="buy-diamond-mine-button" class="btn-buy" data-index="${MINE_INDEX}" ${canAfford ? '' : 'disabled'} style="width: 100%; margin-top: 10px;">
-                    Mine Kaufen
-                </button>
-            `;
-            return;
-        }
-
-        const hasNav = container.querySelector('.mine-nav');
-        if (!hasNav) {
-            container.innerHTML = `
-                <div class="mine-nav">
-                    <button id="mine-tab-mine" class="${this.diamondMineView === 'mine' ? 'active' : ''}">Minispiel</button>
-                    <button id="mine-tab-shop" class="${this.diamondMineView === 'shop' ? 'active' : ''}">Diamanten Shop</button>
+                <div id="mine-nav-wrapper" class="mine-nav" style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button id="tab-mine" class="btn-primary" style="flex:1">⛏️ Mine</button>
+                    <button id="tab-research" class="btn-primary" style="flex:1">🧪 Labor</button>
+                    <button id="tab-shop" class="btn-primary" style="flex:1">💎 Shop</button>
                 </div>
-                <div id="mine-dynamic-content" style="min-height: 200px;"></div>
-                <p style="text-align: center; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
-                    Deine Diamanten: <strong id="shop-diamanten-anzeige" style="color: #009ffd;">${this.formatNumber(this.gameState.diamanten)}</strong> 💎
-                </p>
+                
+                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; display:flex; justify-content:space-around; margin-bottom:15px; font-weight:bold;">
+                    <span style="color:#009ffd">💎 <span id="res-dias">0</span></span>
+                    <span style="color:#e0e0e0">🦖 <span id="res-fossil">0</span></span>
+                    <span style="color:#ffeb3b">💰 <span id="res-gold">0</span></span>
+                </div>
+
+                <div id="mine-sub-content"></div>
             `;
-            this.getById('mine-tab-mine').addEventListener('click', () => {
-                this.diamondMineView = 'mine';
-                container.innerHTML = '';
-                this.renderDiamondMineContent();
-            });
-            this.getById('mine-tab-shop').addEventListener('click', () => {
-                this.diamondMineView = 'shop';
-                container.innerHTML = '';
-                this.renderDiamondMineContent();
-            });
-        } else {
-            const diamDisplay = this.getById('shop-diamanten-anzeige');
-            if(diamDisplay) diamDisplay.innerText = this.formatNumber(this.gameState.diamanten);
+
+            // Listener (Nur einmal!)
+            document.getElementById('tab-mine').onclick = () => this.switchMineTab('mine');
+            document.getElementById('tab-research').onclick = () => this.switchMineTab('research');
+            document.getElementById('tab-shop').onclick = () => this.switchMineTab('shop');
         }
 
-        const dynamicContent = this.getById('mine-dynamic-content');
-        if (dynamicContent) {
-            if (this.diamondMineView === 'mine') {
-                this.renderDiamondMinigame(dynamicContent);
-            } else if (this.diamondMineView === 'shop') {
-                this.renderDiamondShopContent(dynamicContent);
+        // 2. Werte aktualisieren (Das darf ständig passieren, ist billig)
+        const elDias = document.getElementById('res-dias');
+        const elFossil = document.getElementById('res-fossil');
+        const elGold = document.getElementById('res-gold');
+        
+        if(elDias) elDias.innerText = this.formatNumber(this.gameState.diamanten);
+        if(elFossil) elFossil.innerText = this.gameState.fossilien || 0;
+        if(elGold) elGold.innerText = this.formatNumber(this.gameState.aktuelle_smileys);
+
+        // 3. Tab-Styling NUR ändern, wenn nötig (Verhindert Flackern!)
+        // Wir speichern den letzten Tab-Status im DOM, um unnötige Updates zu vermeiden
+        const activeTab = this.diamondMineView || 'mine';
+        const navWrapper = document.getElementById('mine-nav-wrapper');
+        
+        if (navWrapper.dataset.lastActive !== activeTab) {
+            // Nur ausführen, wenn sich der Tab wirklich geändert hat!
+            ['mine', 'research', 'shop'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (activeTab === t) {
+                    btn.style.background = '#009ffd';
+                    btn.style.borderColor = '#009ffd';
+                    btn.style.color = '#fff';
+                    btn.classList.remove('btn-cancel');
+                } else {
+                    btn.style.background = '#333';
+                    btn.style.borderColor = '#444';
+                    btn.style.color = '#aaa';
+                    btn.classList.add('btn-cancel');
+                }
+            });
+            navWrapper.dataset.lastActive = activeTab; // Merken
+        }
+
+        // 4. Inhalt rendern
+        const contentDiv = document.getElementById('mine-sub-content');
+        
+        if (activeTab === 'mine') {
+            // Spezialfall Mine: Nicht neu rendern wenn schon da!
+            if (!document.getElementById('mine-interface-wrapper')) {
+                this.renderDiamondMinigame(contentDiv);
+            } else {
+                this.updateMineVisuals(); // Nur Werte updaten
             }
+        } else if (activeTab === 'research') {
+            // Labor rendern (Kann man bei jedem Frame machen oder optimieren)
+            // Fürs erste lassen wir es so, da man da selten ist
+            if(contentDiv.innerHTML === '' || !document.getElementById('research-grid')) {
+                 this.renderMineResearch(contentDiv);
+            }
+        } else {
+            // Shop rendern
+             if(contentDiv.innerHTML === '' || !document.getElementById('diamond-shop-grid-inner')) {
+                this.renderDiamondShopContent(contentDiv);
+             }
         }
     }
 
-    renderDiamondMinigame(targetContainer) {
-        const container = targetContainer || this.getById('minigame-placeholder');
-        if (!container) return;
-        const MINE_INDEX = DIAMOND_MINE_INDEX;
-        const mineCount = this.gameState.buildingCounts[MINE_INDEX] || 0;
-        let BONUS_DIAMOND = 5 * mineCount;
-        if (this.gameState.activePet) {
-            const pet = petsData.find(p => p.id === this.gameState.activePet && p.effectType === 'prestige_point_eff');
-            if (pet) {
-                const currentLevel = this.gameState.petLevels[pet.id] || 0;
-                if (currentLevel > 0) {
-                    const stats = this.calculatePetStat(pet, currentLevel);
-                    BONUS_DIAMOND *= (1 + stats.currentEffect);
-                }
-            }
-        }
-        BONUS_DIAMOND = Math.floor(BONUS_DIAMOND);
+    switchMineTab(tabName) {
+        this.diamondMineView = tabName;
+        // Inhalt leeren erzwingt Neu-Render des Inhalts beim nächsten Update
+        const contentDiv = document.getElementById('mine-sub-content');
+        if(contentDiv) contentDiv.innerHTML = ''; 
+        
+        // Sofort rendern damit es sich schnell anfühlt
+        this.renderDiamondMineContent();
+    }
 
-        if (!this.getById('start-minigame-button')) {
-            container.innerHTML = `
-                <h3 style="color: #009ffd; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,159,253,0.3);">
-                    Minispiel: Aktive Schürfung
-                </h3>
-                <div style="text-align: left; margin-bottom: 5px; color: #aaa;">
-                    Ertrag pro erfolgreicher Schürfung: <strong id="minigame-base-reward" style="color: #fff;">${BONUS_DIAMOND} 💎</strong>
+    // --- DER BAUARBEITER: Baut das HTML Gerüst ---
+    renderDiamondMinigame(targetContainer) {
+        const container = targetContainer || document.getElementById('minigame-placeholder');
+        // Fallback: Wenn kein Container übergeben wurde, such den richtigen im DOM
+        const finalContainer = container || document.getElementById('mine-sub-content');
+        
+        if (!finalContainer) return;
+
+        // Grid generieren falls leer
+        if (!this.gameState.mineGrid || this.gameState.mineGrid.length === 0) {
+            this.generateMineGrid();
+        }
+
+        const inv = this.gameState.mineInventory;
+
+        // 1. Grundgerüst bauen (nur wenn nicht vorhanden)
+        if (!document.getElementById('mine-interface-wrapper')) {
+            finalContainer.innerHTML = `
+                <div id="mine-interface-wrapper">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div>
+                            <h3 id="mine-title" style="margin:0; color:#009ffd;">Lade...</h3>
+                            <small id="mine-subtitle" style="color:#aaa;">...</small>
+                        </div>
+                    </div>
+
+                    <div class="tool-bar" style="display:flex; gap:10px; justify-content:center; margin-bottom:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px;">
+                        <button id="tool-pickaxe" class="btn-tool" title="Standard">⛏️ <span id="qty-pickaxe">0</span></button>
+                        <button id="tool-tnt" class="btn-tool" title="Sprengt 3x3">🧨 <span id="qty-tnt">0</span></button>
+                        <button id="tool-drill" class="btn-tool" title="Bohrt Zeile">🔩 <span id="qty-drill">0</span></button>
+                    </div>
+                    
+                    <div id="buy-picks-container" style="text-align:center; margin-bottom:10px; height:30px;">
+                         <small style="color:#666;">Hacken regenerieren automatisch...</small>
+                    </div>
+
+                    <div class="mine-grid" id="mine-grid-area"></div>
                 </div>
-                <div class="minigame-progress-container">
-                    <div id="minigame-bar" style="width: 0%;"></div>
-                </div>
-                <div id="minigame-result" style="height: 40px; color: #8fa38f; font-style: italic; margin-bottom: 10px;">
-                    Bereit zum Starten.
-                </div>
-                <button id="start-minigame-button">
-                    <span class="pickaxe-icon">⛏️</span>
-                    <span id="minigame-btn-text">Schürfen starten</span>
-                </button>
             `;
-            const startBtn = this.getById('start-minigame-button');
-            startBtn.addEventListener('click', () => {
-                if (!this.gameState.diamondMinigameRunning) {
-                    this.startDiamondMinigame();
-                } else {
-                    this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
-                    startBtn.style.transform = 'scale(0.95)';
-                    setTimeout(() => startBtn.style.transform = 'scale(1)', 50);
-                    const resultText = this.getById('minigame-result');
-                    if (resultText) {
-                        resultText.style.color = '#fff';
-                        resultText.innerHTML = `Power: <span style="color: #ff3333; font-size: 1.2em;">${this.currentMinigameClicks}</span> 🔥`;
+            
+            // Listener binden
+            document.getElementById('tool-pickaxe').onclick = () => { this.gameState.selectedTool = 'pickaxe'; this.updateMineVisuals(); };
+            document.getElementById('tool-tnt').onclick = () => { this.gameState.selectedTool = 'tnt'; this.updateMineVisuals(); };
+            document.getElementById('tool-drill').onclick = () => { this.gameState.selectedTool = 'drill'; this.updateMineVisuals(); };
+        }
+
+        // 2. Steine rendern (WICHTIG: Auch prüfen ob Container leer ist!)
+        const gridArea = document.getElementById('mine-grid-area');
+        if (gridArea && gridArea.children.length === 0) {
+            this.gameState.mineGrid.forEach((tile, index) => {
+                const tileDiv = document.createElement('div');
+                tileDiv.id = `mine-tile-${index}`;
+                tileDiv.className = 'mine-tile';
+                // Hier wird der Inhalt (falls schon offen) sofort gesetzt
+                if (tile.revealed) {
+                    tileDiv.className += ' revealed';
+                    // Inhalt ermitteln
+                    let symbol = '';
+                    let cssClass = '';
+                    switch(tile.type) {
+                        case 'stone': symbol = '🪨'; cssClass='loot-stone'; break;
+                        case 'diamond': symbol = '💎'; cssClass='loot-diamond'; break;
+                        case 'gold': symbol = '💰'; cssClass='loot-gold'; break;
+                        case 'treasure': symbol = '🎁'; cssClass='loot-diamond'; break;
+                        case 'passage': symbol = '🚪'; cssClass='loot-passage'; break;
+                        case 'secret_passage': symbol = '🕳️'; cssClass='loot-passage'; break;
+                        case 'tool_tnt': symbol = '🧨'; break;
+                        case 'tool_drill': symbol = '🔩'; break;
+                        case 'fossil': symbol = '🦖'; cssClass='loot-fossil'; break;
+                        case 'artifact': symbol = '🏺'; break;
                     }
+                    tileDiv.innerHTML = `<span class="${cssClass}">${symbol}</span>`;
                 }
+                
+                tileDiv.onclick = () => this.handleMineClick(index); 
+                gridArea.appendChild(tileDiv);
             });
         }
 
-        if (!this.gameState.diamondMinigameRunning) {
-            const btnText = this.getById('minigame-btn-text');
-            if (btnText) btnText.innerText = "Schürfen starten";
-        } else {
-            const btnText = this.getById('minigame-btn-text');
-            if (btnText) btnText.innerText = "SCHÜRFE LÄUFT... (KLICK!)";
+        this.updateMineVisuals();
+    }
+
+    // Update NUR für eine einzelne Kachel (Ultra-Schnell) ⚡
+    updateTileVisual(index) {
+        const tile = this.gameState.mineGrid[index];
+        const tileDiv = document.getElementById(`mine-tile-${index}`);
+        
+        if (!tile || !tileDiv) return;
+
+        // 1. Klasse ändern (Visuelles Aufdecken)
+        tileDiv.className = `mine-tile ${tile.revealed ? 'revealed' : 'hidden'}`;
+        
+        // 2. Inhalt setzen (Nur wenn aufgedeckt)
+        if (tile.revealed) {
+            let symbol = '';
+            let cssClass = '';
+            
+            switch(tile.type) {
+                case 'stone': symbol = '🪨'; cssClass='loot-stone'; break;
+                case 'diamond': symbol = '💎'; cssClass='loot-diamond'; break;
+                case 'gold': symbol = '💰'; cssClass='loot-gold'; break;
+                case 'treasure': symbol = '🎁'; cssClass='loot-diamond'; break;
+                case 'passage': symbol = '🚪'; cssClass='loot-passage'; break;
+                case 'secret_passage': symbol = '🕳️'; cssClass='loot-passage'; break;
+                case 'tool_tnt': symbol = '🧨'; break;
+                case 'tool_drill': symbol = '🔩'; break;
+                case 'fossil': symbol = '🦖'; cssClass='loot-fossil'; break;
+                case 'artifact': symbol = '🏺'; break;
+            }
+            
+            tileDiv.innerHTML = `<span class="${cssClass}">${symbol}</span>`;
+            
+            // Tooltip entfernen
+            tileDiv.title = ""; 
         }
-        const rewardDisplay = this.getById('minigame-base-reward');
-        if (rewardDisplay) rewardDisplay.innerText = `${BONUS_DIAMOND} 💎`;
+    }
+
+    // Update für die Zahlen im Header (Werkzeuge, Dias etc.)
+    updateMineStatsUI() {
+        const inv = this.gameState.mineInventory;
+        
+        // Werkzeuge
+        const pEl = document.getElementById('count-pickaxe');
+        const tEl = document.getElementById('count-tnt');
+        const dEl = document.getElementById('count-drill');
+        
+        if(pEl) pEl.innerText = inv.pickaxe;
+        if(tEl) tEl.innerText = inv.tnt;
+        if(dEl) dEl.innerText = inv.drill;
+               
+    }
+
+    renderMineResearch(container) {
+        container.innerHTML = `
+            <h3 style="text-align:center; margin-bottom:10px;">Forschungs-Labor</h3>
+            <p style="text-align:center; font-size:0.9em; color:#aaa; margin-bottom:20px;">
+                Untersuche gefundene Fossilien, um deine Bergbau-Technologie zu verbessern.
+            </p>
+            <div class="info-grid" id="research-grid"></div>
+        `;
+
+        const grid = document.getElementById('research-grid');
+        
+        // Liste der Forschungen
+        const upgrades = [
+            {
+                id: 'durable_picks',
+                name: 'Haltbare Spitzen',
+                desc: '10% Chance pro Level, keine Spitzhacke zu verbrauchen.',
+                icon: '⛏️',
+                max: 5,
+                baseCost: 5 // Fossilien
+            },
+            {
+                id: 'fossil_scanner',
+                name: 'Fossilien-Scanner',
+                desc: 'Erhöht die Chance, Fossilien in Steinen zu finden.',
+                icon: '🦖',
+                max: 5,
+                baseCost: 10
+            },
+            {
+                id: 'explosive_yield',
+                name: 'Sprengmeister',
+                desc: 'TNT deckt Ressourcen besser auf (Test-Upgrade).', 
+                icon: '🧨',
+                max: 3,
+                baseCost: 20
+            }
+        ];
+
+        upgrades.forEach(u => {
+            const currentLvl = this.gameState.mineResearch[u.id] || 0;
+            const cost = Math.floor(u.baseCost * Math.pow(1.5, currentLvl));
+            const isMaxed = currentLvl >= u.max;
+            const canAfford = this.gameState.fossilien >= cost;
+
+            const div = document.createElement('div');
+            div.className = `info-upgrade-item ${isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked')}`;
+            div.innerHTML = `
+                <div style="font-size:2em; margin-bottom:5px;">${u.icon}</div>
+                <h4>${u.name} (Lv. ${currentLvl}/${u.max})</h4>
+                <p style="font-size:0.85em; min-height:40px;">${u.desc}</p>
+                <button class="btn-buy-research" ${isMaxed || !canAfford ? 'disabled' : ''} 
+                        style="width:100%; margin-top:5px; background:${canAfford?'var(--color-primary)':'#444'}">
+                    ${isMaxed ? 'MAX' : `Forschen (${cost} 🦖)`}
+                </button>
+            `;
+            
+            // Klick-Event für den Button
+            div.querySelector('button').onclick = () => {
+                if (!isMaxed && canAfford) {
+                    this.gameState.fossilien -= cost;
+                    if(!this.gameState.mineResearch[u.id]) this.gameState.mineResearch[u.id] = 0;
+                    this.gameState.mineResearch[u.id]++;
+                    this.playBuySound();
+                    this.showNotification("Forschung abgeschlossen! 🧪", "success");
+                    // Ansicht aktualisieren
+                    this.renderDiamondMineContent();
+                    this.speichereSpiel();
+                }
+            };
+            grid.appendChild(div);
+        });
     }
 
     renderDiamondShopContent(targetContainer) {
@@ -4539,6 +5097,4 @@ restoreCooldowns() {
         }
     });
 }
-
 }
-
