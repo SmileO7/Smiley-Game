@@ -484,48 +484,55 @@ class SmileyGame {
         }
     }
 
-    // So muss sie aussehen:
-    // Wir fügen einen zweiten Parameter "externalData" hinzu
-    saveGame(returnOnly = false) {
-        // Wir nutzen "this", weil wir im Spiel sind.
-        // Wir nutzen die DEUTSCHEN Variablennamen aus deinem Screenshot.
-        
+   saveGame(returnOnly = false) {
+        // 🕵️‍♂️ DATEN-DETEKTIV: Wo liegen die echten Zahlen?
+        // Wenn es "this.gameState" gibt und da Smileys drin sind, nehmen wir das.
+        // Sonst nehmen wir "this" (die Haupt-Klasse).
+        let source = this;
+        if (this.gameState && this.gameState.aktuelle_smileys !== undefined) {
+            source = this.gameState;
+            console.log("💾 Speichere Daten aus 'gameState'-Container.");
+        } else {
+            console.log("💾 Speichere Daten direkt aus der Hauptklasse.");
+        }
+
         const saveData = {
             // --- Basis Währungen ---
-            aktuelle_smileys: this.aktuelle_smileys,
-            lifetime_smileys: this.lifetime_smileys,
-            diamanten: this.diamanten,
-            totalClicksLifetime: this.totalClicksLifetime,
+            aktuelle_smileys: source.aktuelle_smileys || 0,
+            lifetime_smileys: source.lifetime_smileys || 0,
+            diamanten: source.diamanten || 0,
+            totalClicksLifetime: source.totalClicksLifetime || 0,
 
             // --- Gebäude & Upgrades ---
-            buildingCounts: this.buildingCounts,
-            researchStatus: this.researchStatus,
+            // Arrays müssen wir manchmal direkt übernehmen
+            buildingCounts: source.buildingCounts || this.buildingCounts || [],
+            researchStatus: source.researchStatus || this.researchStatus || {},
 
             // --- Prestige System ---
-            prestigeResets: this.prestigeResets,
-            prestige_punkte_verfügbar: this.prestige_punkte_verfügbar,
-            gesamt_prestige_punkte: this.gesamt_prestige_punkte,
-            prestigeUpgradeStatus: this.prestigeUpgradeStatus,
+            prestigeResets: source.prestigeResets || 0,
+            prestige_punkte_verfügbar: source.prestige_punkte_verfügbar || 0,
+            gesamt_prestige_punkte: source.gesamt_prestige_punkte || 0,
+            prestigeUpgradeStatus: source.prestigeUpgradeStatus || {},
 
             // --- Features & Fortschritt ---
-            achievementsUnlocked: this.achievementsUnlocked,
+            achievementsUnlocked: source.achievementsUnlocked || {},
             
             // Pets
-            petsUnlocked: this.petsUnlocked,
-            petLevels: this.petLevels,
-            activePet: this.activePet,
+            petsUnlocked: source.petsUnlocked || false,
+            petLevels: source.petLevels || {},
+            activePet: source.activePet || null,
 
             // Gilden
-            guildsUnlocked: this.guildsUnlocked,
-            guildName: this.guildName,
-            guildLevel: this.guildLevel,
-            guildXP: this.guildXP,
-            guildUpgradeStatus: this.guildUpgradeStatus,
-            guildBossLevel: this.guildBossLevel,
+            guildsUnlocked: source.guildsUnlocked || false,
+            guildName: source.guildName || "",
+            guildLevel: source.guildLevel || 1,
+            guildXP: source.guildXP || 0,
+            guildUpgradeStatus: source.guildUpgradeStatus || {},
+            guildBossLevel: source.guildBossLevel || 1,
 
             // Mine & Shop
-            diamondMineUnlocked: this.diamondMineUnlocked,
-            diamondShopPurchases: this.diamondShopPurchases,
+            diamondMineUnlocked: source.diamondMineUnlocked || false,
+            diamondShopPurchases: source.diamondShopPurchases || {},
 
             // Zeitstempel
             lastSaveTime: Date.now()
@@ -538,9 +545,10 @@ class SmileyGame {
 
         // Der lokale Teil: Speichert im Browser
         localStorage.setItem('smileyGameSave', JSON.stringify(saveData));
+        console.log("💾 Spiel lokal gespeichert. Inhalt:", saveData);
     }
 
-    // 👇 DIESE FUNKTION EINFÜGEN (Direkt vor loadGame) 👇
+    // Diese Funktion sucht den Spielstand und entscheidet, wie er geladen wird
     ladeSpiel() {
         const savedString = localStorage.getItem('smileyGameSave');
         
@@ -574,8 +582,8 @@ class SmileyGame {
             }
         }
     }
-    // 👆 --------------------------------------------- 👆
 
+    // Diese Funktion verteilt die Daten wieder in die Variablen
     loadGame(saveData) {
         // Sicherheits-Check: Ist das Paket leer?
         if (!saveData) {
@@ -583,56 +591,59 @@ class SmileyGame {
             return;
         }
 
-        console.log("Lade Spielstand...", saveData);
+        console.log("📥 Verteile Spielstand...", saveData);
 
-        // --- 1. Währungen laden (mit den neuen deutschen Namen) ---
-        // Wir nutzen "|| 0", falls ein Wert fehlen sollte (Fallback)
-        this.aktuelle_smileys = saveData.aktuelle_smileys || 0;
-        this.lifetime_smileys = saveData.lifetime_smileys || 0;
-        this.diamanten = saveData.diamanten || 0;
-        this.totalClicksLifetime = saveData.totalClicksLifetime || 0;
+        // 🕵️‍♂️ ZIEL-DETEKTIV: Wohin müssen die Daten?
+        // Wir spiegeln genau das, was wir beim Speichern gemacht haben.
+        let target = this;
+        if (this.gameState) {
+            target = this.gameState;
+            console.log("🎯 Schreibe Daten in 'gameState'-Container.");
+        } else {
+            console.log("🎯 Schreibe Daten direkt in die Hauptklasse.");
+        }
+
+        // --- 1. Währungen laden ---
+        target.aktuelle_smileys = saveData.aktuelle_smileys || 0;
+        target.lifetime_smileys = saveData.lifetime_smileys || 0;
+        target.diamanten = saveData.diamanten || 0;
+        target.totalClicksLifetime = saveData.totalClicksLifetime || 0;
 
         // --- 2. Gebäude & Forschung ---
-        if (saveData.buildingCounts) {
-            this.buildingCounts = saveData.buildingCounts;
-        }
-        if (saveData.researchStatus) {
-            this.researchStatus = saveData.researchStatus;
-        }
+        if (saveData.buildingCounts) target.buildingCounts = saveData.buildingCounts;
+        if (saveData.researchStatus) target.researchStatus = saveData.researchStatus;
 
         // --- 3. Prestige ---
-        this.prestigeResets = saveData.prestigeResets || 0;
-        this.prestige_punkte_verfügbar = saveData.prestige_punkte_verfügbar || 0;
-        this.gesamt_prestige_punkte = saveData.gesamt_prestige_punkte || 0;
-        if (saveData.prestigeUpgradeStatus) {
-            this.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
-        }
+        target.prestigeResets = saveData.prestigeResets || 0;
+        target.prestige_punkte_verfügbar = saveData.prestige_punkte_verfügbar || 0;
+        target.gesamt_prestige_punkte = saveData.gesamt_prestige_punkte || 0;
+        if (saveData.prestigeUpgradeStatus) target.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
 
         // --- 4. Features & Achievements ---
-        if (saveData.achievementsUnlocked) this.achievementsUnlocked = saveData.achievementsUnlocked;
+        if (saveData.achievementsUnlocked) target.achievementsUnlocked = saveData.achievementsUnlocked;
         
         // Pets
-        this.petsUnlocked = saveData.petsUnlocked || false;
-        if (saveData.petLevels) this.petLevels = saveData.petLevels;
-        this.activePet = saveData.activePet || null;
+        target.petsUnlocked = saveData.petsUnlocked || false;
+        if (saveData.petLevels) target.petLevels = saveData.petLevels;
+        target.activePet = saveData.activePet || null;
 
         // Gilden
-        this.guildsUnlocked = saveData.guildsUnlocked || false;
-        this.guildName = saveData.guildName || "";
-        this.guildLevel = saveData.guildLevel || 1;
-        this.guildXP = saveData.guildXP || 0;
-        if (saveData.guildUpgradeStatus) this.guildUpgradeStatus = saveData.guildUpgradeStatus;
-        this.guildBossLevel = saveData.guildBossLevel || 1;
+        target.guildsUnlocked = saveData.guildsUnlocked || false;
+        target.guildName = saveData.guildName || "";
+        target.guildLevel = saveData.guildLevel || 1;
+        target.guildXP = saveData.guildXP || 0;
+        if (saveData.guildUpgradeStatus) target.guildUpgradeStatus = saveData.guildUpgradeStatus;
+        target.guildBossLevel = saveData.guildBossLevel || 1;
 
         // Mine & Shop
-        this.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
-        if (saveData.diamondShopPurchases) this.diamondShopPurchases = saveData.diamondShopPurchases;
+        target.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
+        if (saveData.diamondShopPurchases) target.diamondShopPurchases = saveData.diamondShopPurchases;
 
-        // WICHTIG: Nach dem Laden müssen wir die Anzeige aktualisieren!
+        // WICHTIG: UI aktualisieren!
         this.updateUI(); 
         
-        // Optional: Toast anzeigen
-        // this.showToast("Spielstand geladen! ✅");
+        // Toast zur Bestätigung
+        if(this.showNotification) this.showNotification("☁️ Spielstand erfolgreich geladen!", "success");
     }
 
     checkOfflineProgress() {
@@ -1965,6 +1976,7 @@ class SmileyGame {
             }
         }
         this.checkSkillUnlocks();
+        this.renderBuffs();
     }
 
     setupHotkeys() {
@@ -2360,6 +2372,95 @@ class SmileyGame {
                 smiley.classList.remove('anim-squish');
             }, 100);
         }
+    }
+
+    // ==========================================
+    // 🛡️ BUFFS ANZEIGE (NEU)
+    // ==========================================
+   renderBuffs() {
+        // Erst prüfen, ob was abgelaufen ist
+        if (this.checkBuffExpiration()) {
+            this.speichereSpiel(); // Speichern, wenn Buff endet
+        }
+
+        const container = document.getElementById('buffs-container');
+        if (!container) return;
+        
+        // Wir nutzen einen String-Builder statt innerHTML='', um unnötige Layout-Reflows zu minimieren,
+        // aber das Entfernen der CSS-Animation ist der wichtigste Schritt gegen das Flackern.
+        let html = '';
+        const now = Date.now();
+
+        // 1. RNG SPS Effekte
+        const spsMult = this.gameState.activeBuffs.spsMultiplier;
+        const spsEnd = this.gameState.activeBuffs.spsEndTime;
+        
+        if (spsMult !== 1 && spsEnd) {
+            const secondsLeft = Math.ceil((spsEnd - now) / 1000);
+            if (secondsLeft > 0) {
+                if (spsMult > 1) {
+                    html += this.getBadgeHtml('⚡ Rausch', `x${spsMult} (${secondsLeft}s)`, 'good');
+                } else {
+                    html += this.getBadgeHtml('🐌 Drosselung', `x${spsMult} (${secondsLeft}s)`, 'bad');
+                }
+            }
+        }
+
+        // 2. RNG Kosten Effekte
+        const costMult = this.gameState.activeBuffs.costMultiplier;
+        const costEnd = this.gameState.activeBuffs.costEndTime;
+
+        if (costMult !== 1 && costEnd) {
+            const secondsLeft = Math.ceil((costEnd - now) / 1000);
+            if (secondsLeft > 0) {
+                if (costMult < 1) {
+                    html += this.getBadgeHtml('📉 Rabatt', `-${Math.round((1-costMult)*100)}% (${secondsLeft}s)`, 'good');
+                } else {
+                    html += this.getBadgeHtml('💸 Inflation', `+${Math.round((costMult-1)*100)}% (${secondsLeft}s)`, 'bad');
+                }
+            }
+        }
+
+        // 3. Aktive Skills (Diese haben eigene Timer Logic, wir zeigen sie nur als Status)
+        if (this.gameState.skills) {
+            Object.entries(this.gameState.skills).forEach(([key, skill]) => {
+                if (skill.active) {
+                    // Restzeit berechnen (Trick: readyAt - cooldown = ende der active phase)
+                    let timeLeft = "?";
+                    if (skill.readyAt) {
+                         const endActive = skill.readyAt - skill.cooldownTime;
+                         const s = Math.ceil((endActive - now) / 1000);
+                         if (s > 0) timeLeft = s + "s";
+                    }
+                    const name = key.charAt(0).toUpperCase() + key.slice(1);
+                    html += this.getBadgeHtml('★ ' + name, timeLeft, 'good');
+                }
+            });
+        }
+        
+        // 4. God Mode
+        if (this.gameState.godModeMultiplier > 1) {
+             html += this.getBadgeHtml('👼 GOD MODE', `x${this.gameState.godModeMultiplier}`, 'good');
+        }
+
+        container.innerHTML = html;
+    }
+
+    // Kleiner Helfer für sauberen HTML Code
+    getBadgeHtml(title, value, type) {
+        return `
+        <div class="buff-badge ${type}">
+            <span>${title}</span> 
+            <small style="opacity:0.8; margin-left:6px; font-family:monospace; font-size:0.9em;">${value}</small>
+        </div>`;
+    }
+
+    // Hilfsfunktion zum Bauen des HTML-Elements
+    createBuffBadge(container, title, value, type) {
+        const div = document.createElement('div');
+        div.className = `buff-badge ${type}`;
+        div.innerHTML = `<span>${title}</span> <small style="opacity:0.8; margin-left:3px;">| ${value}</small>`;
+        container.appendChild(div);
     }
 
     // ================================================================================================================
@@ -4101,66 +4202,76 @@ class SmileyGame {
     }
 
     triggerRandomEffect() {
-        const isPositive = Math.random() < 0.6; // 60% Chance auf einen Buff
+        const isPositive = Math.random() < 0.6; // 60% Chance auf Gut
         
+        // Dauer für Effekte (30 oder 60 Sekunden)
+        const durationShort = 30000; 
+        const durationLong = 60000;
+        const now = Date.now();
+
         if (isPositive) {
             // --- 🟢 BUFFS ---
             const buffType = Math.random();
             
             if (buffType < 0.5) {
-                // Sofort-Gewinn basierend auf Produktion
-                const gain = Math.max(500, this.gameState.totalSPS * 60 * 10); // 10 Min Produktion
+                // Sofort-Gewinn
+                const gain = Math.max(500, this.gameState.totalSPS * 60 * 10); 
                 this.addSmileys(gain);
-                this.showNotification(`🎁 Glückspilz! +${this.formatNumber(gain)} Smileys erhalten.`, 'success');
+                this.showNotification(`🎁 Glückspilz! +${this.formatNumber(gain)} Smileys`, 'success');
             } else {
-                // SPS Boost
+                // SPS Boost (30s)
                 this.gameState.activeBuffs.spsMultiplier = 2.5;
+                // WICHTIG: Wir speichern, WANN es vorbei ist
+                this.gameState.activeBuffs.spsEndTime = now + durationShort; 
                 this.showNotification(`⚡ Smiley-Rausch! SPS x2.5 für 30s`, 'success');
-                
-                // Timer zum Zurücksetzen
-                setTimeout(() => {
-                    this.gameState.activeBuffs.spsMultiplier = 1;
-                    this.showNotification(`⌛ Der Rausch ist vorbei.`, 'info');
-                    this.updateUI();
-                }, 30000);
             }
         } else {
-            // --- 🔴 DEBUFFS (Deine Ideen) ---
+            // --- 🔴 DEBUFFS ---
             const debuffType = Math.random();
 
             if (debuffType < 0.33) {
-                // Direkter Abzug an Smileys
-                const loss = Math.floor(this.gameState.aktuelle_smileys * 0.10); // 10% Abzug
+                // Direkter Abzug
+                const loss = Math.floor(this.gameState.aktuelle_smileys * 0.10); 
                 this.gameState.aktuelle_smileys -= loss;
-                this.showNotification(`📉 Pech! -10% Deiner Smileys wurden abgezogen.`, 'error');
+                this.showNotification(`📉 Pech! -10% Deiner Smileys weg.`, 'error');
             } else if (debuffType < 0.66) {
-                // SPS Reduktion
-                this.gameState.activeBuffs.spsMultiplier = 0.4; // 60% weniger
-                this.showNotification(`🐢 System-Drosselung! SPS -60% für 30s`, 'error');
-                
-                setTimeout(() => {
-                    this.gameState.activeBuffs.spsMultiplier = 1;
-                    this.showNotification(`🔧 System wieder normal.`, 'info');
-                    this.updateUI();
-                }, 30000);
+                // Drosselung (30s)
+                this.gameState.activeBuffs.spsMultiplier = 0.4; 
+                this.gameState.activeBuffs.spsEndTime = now + durationShort;
+                this.showNotification(`🐢 Drosselung! SPS -60% für 30s`, 'error');
             } else {
-                // Inflation: Gebäude werden teurer
-                this.gameState.activeBuffs.costMultiplier = 1.5; // 50% teurer
-                this.showNotification(`💸 Inflation! Preise +50% für 1 Minute`, 'error');
-                
-                setTimeout(() => {
-                    this.gameState.activeBuffs.costMultiplier = 1;
-                    this.showNotification(`⚖️ Preise haben sich stabilisiert.`, 'info');
-                    this.updateUI();
-                }, 60000);
+                // Inflation (60s)
+                this.gameState.activeBuffs.costMultiplier = 1.5; 
+                this.gameState.activeBuffs.costEndTime = now + durationLong;
+                this.showNotification(`💸 Inflation! Preise +50% für 60s`, 'error');
             }
         }
         
-        // UI sofort aktualisieren, um Änderungen zu zeigen
-        this.updateNewsTicker("ALARM: Inflation teibt die Preise hoch!")
-        this.applyAllBoni();
         this.updateUI();
-    
+        this.speichereSpiel();
+    }
+
+    checkBuffExpiration() {
+        const now = Date.now();
+        let changed = false;
+
+        // Prüfe SPS Buffs/Debuffs
+        if (this.gameState.activeBuffs.spsEndTime && now > this.gameState.activeBuffs.spsEndTime) {
+            this.gameState.activeBuffs.spsMultiplier = 1;
+            delete this.gameState.activeBuffs.spsEndTime; // Zeitstempel löschen
+            this.showNotification("System wieder normal (SPS).", "info");
+            changed = true;
+        }
+
+        // Prüfe Kosten Inflation/Rabatt
+        if (this.gameState.activeBuffs.costEndTime && now > this.gameState.activeBuffs.costEndTime) {
+            this.gameState.activeBuffs.costMultiplier = 1;
+            delete this.gameState.activeBuffs.costEndTime;
+            this.showNotification("Preise haben sich normalisiert.", "info");
+            changed = true;
+        }
+
+        return changed;
     }
 
 // =========================================================

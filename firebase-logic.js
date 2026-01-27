@@ -5,7 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 2. Deine Konfiguration (aus deinem Screenshot)
+// 2. Deine Konfiguration
 const firebaseConfig = {
     apiKey: "AIzaSyAXLvyEnTMtVYMa5iOUXUFRoqDRfgClWDU",
     authDomain: "smiley-clicker-idle-empire.firebaseapp.com",
@@ -21,7 +21,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-console.log("Firebase wurde geladen!"); // Zur Kontrolle in der Konsole
+console.log("Firebase wurde geladen!");
 
 // 4. Das System global verfügbar machen
 window.cloudSystem = {
@@ -30,7 +30,7 @@ window.cloudSystem = {
         try {
             const result = await signInWithPopup(auth, provider);
             console.log("Eingeloggt als:", result.user.displayName);
-            alert(`Hallo ${result.user.displayName}! Verbindung steht.`);
+            // Hier kein Alert mehr, wir sehen es ja am UI
         } catch (error) {
             console.error("Login Fehler:", error);
             alert("Fehler: " + error.message);
@@ -40,29 +40,27 @@ window.cloudSystem = {
     // Ausloggen
     logout: async () => {
         await signOut(auth);
-        alert("Ausgeloggt.");
+        console.log("Ausgeloggt.");
     },
 
+    // Speichern (JETZT LEISE! 🤫)
     save: async (jsonData) => {
         const user = auth.currentUser;
-        if (!user) {
-            alert("Nicht eingeloggt!");
-            return;
-        }
+        if (!user) return; // Einfach abbrechen, wenn nicht eingeloggt
 
-        // 👇 DER NEUE WASCHGANG 👇
-        // Das entfernt alle "undefined" Werte, die Firestore nicht mag
+        // Der Waschgang für saubere Daten
         const cleanData = JSON.parse(JSON.stringify(jsonData)); 
 
         try {
             await setDoc(doc(db, "users", user.uid), { 
-                savedGame: cleanData, // 👈 Hier nehmen wir jetzt die sauberen Daten
+                savedGame: cleanData, 
                 date: new Date().toISOString()
             });
-            alert("☁️ Spielstand erfolgreich in der Cloud gesichert!");
+            // HIER WAR DER FEHLER! JETZT NUR NOCH LOG:
+            console.log("✅ Daten erfolgreich an Firestore gesendet.");
         } catch (e) {
-            console.error("Fehler beim Speichern:", e); // Zeigt dir genauere Details im Fehlerfall
-            alert("Speichern fehlgeschlagen: " + e.message);
+            console.error("Fehler beim Speichern:", e);
+            throw e; // Fehler weitergeben, damit index.html ihn sieht
         }
     },
 
@@ -70,14 +68,20 @@ window.cloudSystem = {
     load: async () => {
         const user = auth.currentUser;
         if (!user) {
-            alert("Nicht eingeloggt!");
+            alert("Du bist nicht eingeloggt!");
             return null;
         }
-        const docSnap = await getDoc(doc(db, "users", user.uid));
-        if (docSnap.exists()) {
-            return docSnap.data().savedGame;
-        } else {
-            alert("Kein Spielstand in der Cloud gefunden.");
+        try {
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+            if (docSnap.exists()) {
+                return docSnap.data().savedGame;
+            } else {
+                alert("Kein Spielstand in der Cloud gefunden.");
+                return null;
+            }
+        } catch (e) {
+            console.error("Fehler beim Laden:", e);
+            alert("Laden fehlgeschlagen: " + e.message);
             return null;
         }
     },

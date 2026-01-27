@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smiley Clicker</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=2"> <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css?v=2"> 
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#009ffd">
     <style>
         /* CSS Fixes für Layout & Modals */
@@ -22,8 +23,7 @@
     <nav class="navbar">
         <a href="#" onclick="gameInstance.switchView('home')" class="active" id="nav-home">Start & Shop</a>
         <a href="#" onclick="gameInstance.switchView('prestige')" id="nav-prestige">Prestige Shop</a>
-        <a href="#" onclick="gameInstance.switchView('info')" id="nav-info">Info & Tipps</a>
-        <a href="#" id="open-settings-button">Einstellungen</a>
+        <a href="#" id="nav-info">Info & Tipps</a> <a href="#" id="open-settings-button">Einstellungen</a>
     </nav>
 </header>
 
@@ -105,6 +105,8 @@
                 <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...</div>
             </div>
             
+        <div id="buffs-container" class="buff-bar"></div>
+
             <div class="skills-container box-style" style="margin-top: 10px; margin-bottom: 10px;">
                 <h2 style="font-size: 1.1rem; margin-bottom: 10px; color: var(--color-accent-blue);">COMMAND CENTER: ACTIVE SKILLS</h2>
                 <div class="skills-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
@@ -212,7 +214,7 @@
     </div>
 </div>
 
-<div id="settings-modal" class="modal">
+<div id="settings-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <span id="close-settings-button" class="close">&times;</span>
         <h2>Einstellungen</h2>
@@ -222,12 +224,26 @@
             <p style="font-size: 0.9em; color: #aaa; margin-bottom: 10px;">Verbinde dich, um Spielstände zu sichern.</p>
             
             <div id="cloud-controls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;">🔵 Mit Google verbinden</button>
-                <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;">Nicht verbunden</p>
-                <button id="cloud-save-btn" class="btn-confirm" style="display: none;">☁️ Speichern ⬆️</button>
-                <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;">☁️ Laden ⬇️</button>
-                <button id="google-logout-btn" class="btn-cancel" style="display: none;">Logout</button>
-            </div>
+    <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;">
+        🔵 Mit Google verbinden
+    </button>
+
+    <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;">
+        Nicht verbunden
+    </p>
+
+    <button id="cloud-save-btn" class="btn-confirm" style="display: none;" onclick="saveGameToCloud()">
+        ☁️ Speichern ⬆️
+    </button>
+    
+    <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;" onclick="loadGameFromCloud()">
+        ☁️ Laden ⬇️
+    </button>
+    
+    <button id="google-logout-btn" class="btn-cancel" style="display: none;">
+        Logout
+    </button>
+</div>
         </div>
 
         <div class="settings-section">
@@ -282,11 +298,9 @@
 <div id="custom-tooltip"></div> 
 
 <script>
-  // 1. Sicheres Cloud-UI Update (ohne Absturz)
+  // 1. UI-Update für Login-Status
   setInterval(() => {
     const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
-    
-    // Elemente sicher holen (nach den neuen IDs im Settings-Modal)
     const loginBtn = document.getElementById('google-login-btn');
     const emailDisp = document.getElementById('user-email-display');
     const saveBtn = document.getElementById('cloud-save-btn');
@@ -294,7 +308,6 @@
     const logoutBtn = document.getElementById('google-logout-btn');
 
     if (user) {
-        // EINGELOGGT
         if (loginBtn) loginBtn.style.display = 'none';
         if (emailDisp) {
             emailDisp.style.display = 'block';
@@ -304,7 +317,6 @@
         if (loadBtn) loadBtn.style.display = 'inline-block';
         if (logoutBtn) logoutBtn.style.display = 'inline-block';
     } else {
-        // AUSGELOGGT
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (emailDisp) emailDisp.style.display = 'none';
         if (saveBtn) saveBtn.style.display = 'none';
@@ -313,23 +325,66 @@
     }
   }, 1000);
 
-  // 2. Service Worker KILLER (Zwingt Handy-Cache zum Update)
+  // 2. ⏰ AUTO-SAVE (Alle 60 Sekunden)
+  setInterval(() => {
+      const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
+      // Nur speichern, wenn eingeloggt UND Spiel geladen
+      if (user && window.gameInstance) {
+          saveGameToCloud(true); // <--- TRUE = LEISE (Kein Popup!)
+      }
+  }, 60000); 
+
+  // 3. Service Worker aufräumen
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(registrations) {
       for(let registration of registrations) {
-        registration.unregister()
-        .then(function() {
-            console.log('✅ Alter Service Worker entfernt. Cache wird umgangen.');
-        });
+        registration.unregister();
       }
     });
   }
   
-  // Hilfsfunktionen für die Buttons (bleiben gleich)
-  function saveGameToCloud() {
-        if (!window.gameInstance) return;
+  // 4. Modal Logik
+  function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.style.display = 'flex';
+  }
+  function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.style.display = 'none';
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+      const settingsBtn = document.getElementById('open-settings-button');
+      if (settingsBtn) settingsBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('settings-modal'); });
+      const closeSettingsBtn = document.getElementById('close-settings-button');
+      if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => closeModal('settings-modal'));
+      const infoBtn = document.getElementById('nav-info');
+      if (infoBtn) infoBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('info-modal'); });
+      
+      window.onclick = function(event) {
+          if (event.target.classList.contains('modal')) {
+              event.target.style.display = "none";
+          }
+      }
+  });
+
+  // 5. Cloud Funktionen (OHNE ALERT)
+  function saveGameToCloud(silent = false) {
+        if (!window.gameInstance || !window.cloudSystem) return;
+        
         const data = gameInstance.saveGame(true); 
-        if (window.cloudSystem) window.cloudSystem.save(data);
+        
+        window.cloudSystem.save(data).then(() => {
+            if (silent === false) { 
+                // Nur wenn man klickt: Toast zeigen (KEIN alert!)
+                if(gameInstance.showNotification) gameInstance.showNotification("☁️ In Cloud gespeichert!", "success");
+            } else {
+                console.log("☁️ Auto-Save (Leise): OK");
+            }
+        }).catch(err => {
+            // Nur bei echtem Fehler warnen
+            if (silent === false) alert("Fehler beim Speichern: " + err.message);
+        });
   }
 
   function loadGameFromCloud() {
@@ -337,7 +392,6 @@
         window.cloudSystem.load().then(data => {
             if (data && window.gameInstance) {
                 gameInstance.loadGame(data);
-                if(gameInstance.showNotification) gameInstance.showNotification("☁️ Spielstand geladen!", "success");
             }
         });
   }

@@ -1005,3 +1005,45 @@ input[type=range] { width: 100%; cursor: pointer; }
 #custom-tooltip .highlight-green { color: #4CAF50; }
 #custom-tooltip .highlight-red { color: #ff5252; }
 #custom-tooltip .highlight-gold { color: #FFD700; }
+
+/* --- BUFF LEISTE --- */
+.buff-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+    min-height: 5px; /* Damit das Layout nicht springt */
+}
+
+.buff-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+/* Gut (Grün) */
+.buff-badge.good {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: #4CAF50;
+    color: #4CAF50;
+}
+
+/* Schlecht (Rot) */
+.buff-badge.bad {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: #f44336;
+    color: #f44336;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
