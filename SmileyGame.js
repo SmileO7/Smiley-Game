@@ -29,225 +29,26 @@ class SmileyGame {
     constructor() {
         // 1. PRESTIGE UPGRADES DEFINITION
         this.prestigeUpgrades = [
-            // === START (Mitte Unten) ===
-            { 
-                id: 0, 
-                name: "Genesis Protokoll", 
-                cost: 1, 
-                description: "Der Anfang von allem. Gewährt einen dauerhaften Startbonus auf alle Einnahmen.", 
-                type: 'sps_mult', 
-                value: 0.10, 
-                x: 50, y: 90,        
-                category: 'start',
-                parents: [] 
-            },
-
-            // === TIER 1: KLICK vs IDLE ===
-            { 
-                id: 1, 
-                name: "Finger-Training", 
-                cost: 2, 
-                description: "Deine Muskeln erinnern sich. Klickkraft +25%.", 
-                type: 'click_mult', 
-                value: 0.25, 
-                x: 30, y: 75,        
-                category: 'click',
-                parents: [0] 
-            },
-            { 
-                id: 2, 
-                name: "Automatisierung", 
-                cost: 2, 
-                description: "Die Maschinen laufen von alleine. SPS +25%.", 
-                type: 'sps_mult', 
-                value: 0.25, 
-                x: 70, y: 75,        
-                category: 'idle',
-                parents: [0] 
-            },
-
-            // === TIER 2: SPEZIALISIERUNG ===
-            { 
-                id: 3, 
-                name: "Effizientes Bauen", 
-                cost: 5, 
-                description: "Wir verschwenden kein Material mehr. Alle Gebäude 5% günstiger.", 
-                type: 'cost_reduction', 
-                value: 0.05, 
-                x: 15, y: 60,        
-                category: 'qol',
-                parents: [1] 
-            },
-            { 
-                id: 4, 
-                name: "Zeit-Reisender", 
-                cost: 10, 
-                description: "Du lernst aus der Vergangenheit. Prestige-Punkte sind 10% effektiver.", 
-                type: 'prestige_efficiency', 
-                value: 0.10, 
-                x: 85, y: 60,        
-                category: 'idle',
-                parents: [2] 
-            },
-
-            // === TIER 3: SYNERGIE ===
-            { 
-                id: 5, 
-                name: "Synergie-Effekt", 
-                cost: 15, 
-                description: "Aktives und Passives Spielen greifen ineinander. Klicks skalieren jetzt mit deiner SPS.", 
-                type: 'click_mult', 
-                value: 0.50, 
-                x: 50, y: 55,        
-                category: 'special',
-                parents: [1, 2]      
-            },
-
-            // === TIER 4: FEATURE UNLOCKS ===
-            { 
-                id: 6, 
-                name: "Pet Shop Lizenz", 
-                cost: 50, 
-                description: "Erlaubt dir, kleine Begleiter zu adoptieren. Schaltet den PET SHOP frei.", 
-                type: 'unlock_pets', 
-                value: 0, 
-                x: 35, y: 40,        
-                category: 'special',
-                parents: [5] 
-            },
-            { 
-                id: 7, 
-                name: "Schürfrechte", 
-                cost: 50, 
-                description: "Erlaubt den Abbau von Edelsteinen. Schaltet die DIAMANTEN-MINE frei.", 
-                type: 'unlock_mine', 
-                value: 0, 
-                x: 65, y: 40,        
-                category: 'special',
-                parents: [5] 
-            },
-
-            // === TIER 5: DAS IMPERIUM ===
-            { 
-                id: 8, 
-                name: "Gilden-Gründung", 
-                cost: 100, 
-                description: "Schließe dich mit anderen zusammen. Schaltet das GILDEN-SYSTEM frei.", 
-                type: 'unlock_guilds', 
-                value: 0, 
-                x: 50, y: 25,        
-                category: 'special',
-                parents: [6, 7] 
-            },
-
-            // === TIER 6: GLOBALER BOOST ===
-            { 
-                id: 9, 
-                name: "Marktbeherrschung", 
-                cost: 250, 
-                description: "Dein Imperium ist weltweit bekannt. Verdoppelt die gesamte Produktion (x2).", 
-                type: 'global_mult', 
-                value: 1.0, 
-                x: 50, y: 10,        
-                category: 'qol',      
-                parents: [8] 
-            },
-
-            // === ENDGAME ===
-            { 
-                id: 10, 
-                name: "Klick-Gott", 
-                cost: 500, 
-                description: "Deine Finger bewegen sich mit Lichtgeschwindigkeit. Verdreifacht Klickkraft (+200%).", 
-                type: 'click_mult', 
-                value: 2.0, 
-                x: 20, y: 15,        
-                category: 'click',
-                parents: [9] 
-            },
-            { 
-                id: 11, 
-                name: "Industrie-Gigant", 
-                cost: 500, 
-                description: "Fabriken so weit das Auge reicht. Verdreifacht passive SPS (+200%).", 
-                type: 'sps_mult', 
-                value: 2.0, 
-                x: 80, y: 15,        
-                category: 'idle',
-                parents: [9] 
-            },
-
-            // === ULTIMATE ===
-            { 
-                id: 12, 
-                name: "Nano-Technologie", 
-                cost: 1500, 
-                description: "Gebäude bauen sich selbst. Kosten -10%.", 
-                type: 'cost_reduction', 
-                value: 0.10, 
-                x: 50, y: -10,       
-                category: 'qol',
-                parents: [10, 11] 
-            },
-            { 
-                id: 13, 
-                name: "Chronos-Meister", 
-                cost: 5000, 
-                description: "Du beherrschst die Zeit. Prestige-Effizienz +50%.", 
-                type: 'prestige_efficiency', 
-                value: 0.50, 
-                x: 30, y: -25,       
-                category: 'idle',
-                parents: [12] 
-            },
-            { 
-                id: 14, 
-                name: "Der Urknall", 
-                cost: 10000, 
-                description: "Ein neues Universum voller Smileys. Multipliziert ALLES mit 5.", 
-                type: 'global_mult', 
-                value: 4.0, 
-                x: 70, y: -25,
-                category: 'special',
-                parents: [12] 
-            },
-
-            // === NEUE ERWEITERUNG (Die Spezialisten) ===
-            { 
-                id: 15, 
-                name: "Präzisions-Training", 
-                cost: 25, 
-                description: "Du triffst immer die empfindlichsten Stellen. Kritische Treffer-Chance +5%.", 
-                type: 'crit_chance',
-                value: 0.05, 
-                x: 10, y: 70, // Links außen bei Tier 1
-                category: 'click',
-                parents: [1] 
-            },
-            { 
-                id: 16, 
-                name: "Offshore-Konten", 
-                cost: 25, 
-                description: "Deine Smileys arbeiten auch im Schlaf härter. Offline-Gewinn +20%.", 
-                type: 'offline_boost',
-                value: 0.20, 
-                x: 90, y: 70, // Rechts außen bei Tier 1
-                category: 'idle',
-                parents: [2] 
-            },
-            { 
-                id: 17, 
-                name: "Hype-Train", 
-                cost: 75, 
-                description: "Je mehr Gebäude du hast, desto stärker werden deine Klicks.", 
-                type: 'building_synergy',
-                value: 0.01, 
-                x: 50, y: 65, // Mitte
-                category: 'special',
-                parents: [3, 4] 
-            }
+            { id: 0, name: "Genesis Protokoll", cost: 1, description: "Dauerhafter Startbonus auf alle Einnahmen.", type: 'sps_mult', value: 0.10, x: 50, y: 90, category: 'start', parents: [] },
+            { id: 1, name: "Finger-Training", cost: 2, description: "Klickkraft +25%.", type: 'click_mult', value: 0.25, x: 30, y: 75, category: 'click', parents: [0] },
+            { id: 2, name: "Automatisierung", cost: 2, description: "SPS +25%.", type: 'sps_mult', value: 0.25, x: 70, y: 75, category: 'idle', parents: [0] },
+            { id: 3, name: "Effizientes Bauen", cost: 5, description: "Alle Gebäude 5% günstiger.", type: 'cost_reduction', value: 0.05, x: 15, y: 60, category: 'qol', parents: [1] },
+            { id: 4, name: "Zeit-Reisender", cost: 10, description: "Prestige-Punkte sind 10% effektiver.", type: 'prestige_efficiency', value: 0.10, x: 85, y: 60, category: 'idle', parents: [2] },
+            { id: 5, name: "Synergie-Effekt", cost: 15, description: "Klicks skalieren mit deiner SPS.", type: 'click_mult', value: 0.50, x: 50, y: 55, category: 'special', parents: [1, 2] },
+            { id: 6, name: "Pet Shop Lizenz", cost: 50, description: "Schaltet den PET SHOP frei.", type: 'unlock_pets', value: 0, x: 35, y: 40, category: 'special', parents: [5] },
+            { id: 7, name: "Schürfrechte", cost: 50, description: "Schaltet die DIAMANTEN-MINE frei.", type: 'unlock_mine', value: 0, x: 65, y: 40, category: 'special', parents: [5] },
+            { id: 8, name: "Gilden-Gründung", cost: 100, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 50, y: 25, category: 'special', parents: [6, 7] },
+            { id: 9, name: "Marktbeherrschung", cost: 250, description: "Verdoppelt die gesamte Produktion (x2).", type: 'global_mult', value: 1.0, x: 50, y: 10, category: 'qol', parents: [8] },
+            { id: 10, name: "Klick-Gott", cost: 500, description: "Verdreifacht Klickkraft (+200%).", type: 'click_mult', value: 2.0, x: 20, y: 15, category: 'click', parents: [9] },
+            { id: 11, name: "Industrie-Gigant", cost: 500, description: "Verdreifacht passive SPS (+200%).", type: 'sps_mult', value: 2.0, x: 80, y: 15, category: 'idle', parents: [9] },
+            { id: 12, name: "Nano-Technologie", cost: 1500, description: "Gebäude Kosten -10%.", type: 'cost_reduction', value: 0.10, x: 50, y: -10, category: 'qol', parents: [10, 11] },
+            { id: 13, name: "Chronos-Meister", cost: 5000, description: "Prestige-Effizienz +50%.", type: 'prestige_efficiency', value: 0.50, x: 30, y: -25, category: 'idle', parents: [12] },
+            { id: 14, name: "Der Urknall", cost: 10000, description: "Multipliziert ALLES mit 5.", type: 'global_mult', value: 4.0, x: 70, y: -25, category: 'special', parents: [12] },
+            { id: 15, name: "Präzisions-Training", cost: 25, description: "Kritische Treffer-Chance +5%.", type: 'crit_chance', value: 0.05, x: 10, y: 70, category: 'click', parents: [1] },
+            { id: 16, name: "Offshore-Konten", cost: 25, description: "Offline-Gewinn +20%.", type: 'offline_boost', value: 0.20, x: 90, y: 70, category: 'idle', parents: [2] },
+            { id: 17, name: "Hype-Train", cost: 75, description: "Klicks skalieren mit Gebäudekanzahl.", type: 'building_synergy', value: 0.01, x: 50, y: 65, category: 'special', parents: [3, 4] }
         ];
-
+        
         this.currentBuyAmount = 1;
 
         // 2. GAME STATE DEFINITION
@@ -255,12 +56,15 @@ class SmileyGame {
             aktuelle_smileys: 0,
             lifetime_smileys: 0,
             diamanten: 0,
+            playerName: "Smiley_Gast", // Standard-Placeholder
+            playerId: null,
             prestige_punkte_verfügbar: 0,
             gesamt_prestige_punkte: 0,
             prestigeResets: 0,
             klickKraft: 2,
             klickKraftMultiplier: 1,
             globalerPrestigeMultiplikator: 1,
+            // Arrays werden basierend auf den Daten in data.js initialisiert
             buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
             buildingPrices: [...buildingsData.map(item => item.basePrice), ...uniqueBuildingsData.map(item => item.basePrice)],
             researchStatus: globalUpgrades.map(() => false),
@@ -279,20 +83,11 @@ class SmileyGame {
             godModeMultiplier: 1,
             mineGrid: [],
             mineDepth: 1,
-            mineInventory: {
-                pickaxe: 50,
-                tnt:2,
-                drill:1
-            },
+            mineInventory: { pickaxe: 50, tnt: 2, drill: 1 },
             fossilien: 0,
-            mineResearch: {
-                durable_picks: 0,
-                explosive_yield: 0,
-                fossil_scanner: 0
-            },
+            mineResearch: { durable_picks: 0, explosive_yield: 0, fossil_scanner: 0 },
             selectedTool: 'pickaxe',
             isTreasureRoom: false,
-            mineArtifacts: [],
             diamondShopPurchases: [],
             diamondMineUnlocked: false,
             petsUnlocked: false,
@@ -316,15 +111,7 @@ class SmileyGame {
             guildBossTimer: 0,
             guildAvailableQuests: [],
             guildActiveQuests: [],
-            lastQuestGenTime: 0,
-            diamondMinigameRunning: false,
-            diamondMinigameTimer: null,
-            activeBuffs: {
-                spsMultiplier: 1,
-                costMultiplier: 1,
-                timerSPS: 0,
-                timerCost: 0
-            },
+            activeBuffs: { spsMultiplier: 1, costMultiplier: 1, timerSPS: 0, timerCost: 0 },
             skills: {
                 frenzy: { active: false, cooldown: false, duration: 15000, cooldownTime: 120000, color: '#ff4d4d' },
                 overdrive: { active: false, cooldown: false, duration: 30000, cooldownTime: 300000, color: '#009ffd' },
@@ -341,12 +128,38 @@ class SmileyGame {
         this.uiInterval = null;
         this.saveInterval = null;
 
+        // 3. UI EVENT LISTENERS (GLOBAL)
         this.setupSettingsModalListeners();
+        
+        // Chat Toggle Logik (direkt im Constructor, da es UI-Grundgerüst ist)
+        const chatToggleBtn = document.getElementById('btn-chat-toggle');
+        if (chatToggleBtn) {
+            chatToggleBtn.onclick = () => {
+                const container = document.getElementById('main-chat-container');
+                if (container) {
+                    container.classList.toggle('chat-minimized');
+                    chatToggleBtn.innerText = container.classList.contains('chat-minimized') ? '➕' : '➖';
+                }
+            };
+        }
+
+        // 4. INITIALISIERUNG STARTEN
         this.init();
     }
 
     init() {
         this.ladeSpiel();
+
+        if (!this.gameState.playerId) {
+            // Eine zufällige ID aus Zeitstempel und Zufallszahl
+            this.gameState.playerId = 'uid_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+            console.log("🆔 Neue Spieler-ID generiert:", this.gameState.playerId);
+        }
+
+        // 2. Zufallsnamen geben, falls er noch "Smiley_Gast" heißt (aber ID behalten)
+        if (this.gameState.playerName === "Smiley_Gast") {
+            this.gameState.playerName = "Smiley_" + Math.floor(Math.random() * 9999);
+        }
 
         if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
             // Prüfen wir den ersten Stein
@@ -378,6 +191,8 @@ class SmileyGame {
         this.updatePetInterval();
         this.updateNewsTicker();
         this.updateUI();
+        this.initChat();
+        this.setupChatNameChange();
 
         console.log("Spiel initialisiert. Warte auf Autosave...");
     }
@@ -590,88 +405,70 @@ class SmileyGame {
 
     // Diese Funktion sucht den Spielstand und entscheidet, wie er geladen wird
     ladeSpiel() {
-        const savedString = localStorage.getItem('smileyGameSave');
-        
-        if (savedString) {
-            try {
-                // Versuch 1: Neues Format (Einfaches JSON)
-                const parsedData = JSON.parse(savedString);
-                
-                // Check ob es das alte Format ist mit "gameState" Wrapper
-                if (parsedData.gameState) {
-                    this.loadGame(parsedData.gameState);
-                } else {
-                    this.loadGame(parsedData);
-                }
-                
-                console.log("Spielstand erfolgreich aus LocalStorage geladen.");
-            } catch (e) {
-                console.warn("Konnte Spielstand nicht direkt lesen, versuche altes Format (Base64)...");
-                try {
-                    // Versuch 2: Altes Format (Base64 kodiert)
-                    const decoded = atob(savedString);
-                    const parsedOld = JSON.parse(decoded);
-                    if (parsedOld.gameState) {
-                        this.loadGame(parsedOld.gameState);
-                    } else {
-                        this.loadGame(parsedOld);
-                    }
-                } catch (e2) {
-                    console.error("Spielstand konnte nicht geladen werden:", e2);
-                }
-            }
+    const savedString = localStorage.getItem('smileyGameSave');
+    if (!savedString) return;
+
+    try {
+        // Versuch 1: Neues Format (JSON)
+        const parsedData = JSON.parse(savedString);
+        this.loadGame(parsedData.gameState || parsedData);
+        console.log("💾 Spielstand geladen (JSON)");
+    } catch (e) {
+        try {
+            // Versuch 2: Altes Format (Base64)
+            const decoded = atob(savedString);
+            const parsedOld = JSON.parse(decoded);
+            this.loadGame(parsedOld.gameState || parsedOld);
+            console.log("💾 Spielstand geladen (Base64)");
+        } catch (e2) {
+            console.error("❌ Kritischer Fehler beim Laden:", e2);
+            this.showNotification("Fehler beim Laden! Spielstand beschädigt.", "error");
         }
     }
+}
 
     // Diese Funktion verteilt die Daten wieder in die Variablen
     // Diese Funktion verteilt die Daten wieder in die Variablen
     // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 418)
     loadGame(saveData) {
-        if (!saveData) return;
+    if (!saveData) return;
 
-        let target = this;
-        if (this.gameState) target = this.gameState;
+    let target = this;
+    if (this.gameState) target = this.gameState;
 
-        // --- Basis & Gebäude ---
-        target.aktuelle_smileys = saveData.aktuelle_smileys || 0;
-        target.lifetime_smileys = saveData.lifetime_smileys || 0;
-        target.diamanten = saveData.diamanten || 0;
-        target.totalClicksLifetime = saveData.totalClicksLifetime || 0;
-        if (saveData.buildingCounts) target.buildingCounts = saveData.buildingCounts;
-        if (saveData.researchStatus) target.researchStatus = saveData.researchStatus;
+    // --- Basis Daten ---
+    target.aktuelle_smileys = saveData.aktuelle_smileys || 0;
+    target.lifetime_smileys = saveData.lifetime_smileys || 0;
+    target.diamanten = saveData.diamanten || 0;
+    target.playerName = saveData.playerName || target.playerName; // Chat-Name
 
-        // --- Prestige & Features ---
-        target.prestigeResets = saveData.prestigeResets || 0;
-        target.prestige_punkte_verfügbar = saveData.prestige_punkte_verfügbar || 0;
-        target.gesamt_prestige_punkte = saveData.gesamt_prestige_punkte || 0;
-        if (saveData.prestigeUpgradeStatus) target.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
-        if (saveData.achievementsUnlocked) target.achievementsUnlocked = saveData.achievementsUnlocked;
-        
-        target.petsUnlocked = saveData.petsUnlocked || false;
-        if (saveData.petLevels) target.petLevels = saveData.petLevels;
-        target.activePet = saveData.activePet || null;
+    // --- Gebäude & Forschung ---
+    if (saveData.buildingCounts) target.buildingCounts = saveData.buildingCounts;
+    if (saveData.researchStatus) target.researchStatus = saveData.researchStatus;
 
-        target.guildsUnlocked = saveData.guildsUnlocked || false;
-        target.guildName = saveData.guildName || "";
-        target.guildLevel = saveData.guildLevel || 1;
-        target.guildXP = saveData.guildXP || 0;
-        if (saveData.guildUpgradeStatus) target.guildUpgradeStatus = saveData.saveData.guildUpgradeStatus;
-        target.guildBossLevel = saveData.guildBossLevel || 1;
+    // --- Gilden System (HIER WAR DER FEHLER) ---
+    target.guildsUnlocked = saveData.guildsUnlocked || false;
+    target.guildName = saveData.guildName || null;
+    target.guildLevel = saveData.guildLevel || 1;
+    target.guildXP = saveData.guildXP || 0;
+    
+    // Wir prüfen erst, ob saveData.guildUpgradeStatus überhaupt existiert
+    if (saveData.guildUpgradeStatus) {
+        target.guildUpgradeStatus = saveData.guildUpgradeStatus;
+    } 
+    // Falls nicht, behalten wir die Standard-Werte aus dem Constructor bei
 
-        // --- ⛏️ MINE & LABOR WIEDERHERSTELLEN ---
-        target.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
-        if (saveData.diamondShopPurchases) target.diamondShopPurchases = saveData.diamondShopPurchases;
-        
-        target.mineDepth = saveData.mineDepth || 1;
-        if (saveData.mineGrid) target.mineGrid = saveData.mineGrid;
-        if (saveData.mineInventory) target.mineInventory = saveData.mineInventory;
-        target.isTreasureRoom = saveData.isTreasureRoom || false;
-        target.fossilien = saveData.fossilien || 0;
-        if (saveData.mineResearch) target.mineResearch = saveData.mineResearch;
+    // --- Mine & Labor ---
+    target.diamondMineUnlocked = saveData.diamondMineUnlocked || false;
+    target.mineDepth = saveData.mineDepth || 1;
+    if (saveData.mineGrid) target.mineGrid = saveData.mineGrid;
+    if (saveData.mineInventory) target.mineInventory = saveData.mineInventory;
+    target.fossilien = saveData.fossilien || 0;
+    if (saveData.mineResearch) target.mineResearch = saveData.mineResearch;
 
-        this.updateUI(); 
-        if(this.showNotification) this.showNotification("☁️ Spielstand inkl. Labor geladen!", "success");
-    }
+    this.updateUI();
+    console.log("📥 Spielstand erfolgreich validiert und geladen.");
+}
 
     checkOfflineProgress() {
         if (!this.gameState.lastSaveTime) return;
@@ -3970,7 +3767,36 @@ class SmileyGame {
                 });
             }
         });
+        // --- CHAT UI LOGIK ---
+        const chatContainer = document.getElementById('main-chat-container');
+        const chatToggle = document.getElementById('btn-chat-toggle');
+        const btnGlobal = document.getElementById('btn-chat-global');
+        const btnGuild = document.getElementById('btn-chat-guild');
+
+        // Minimieren / Maximieren
+            chatToggle.onclick = () => {
+            chatContainer.classList.toggle('chat-minimized');
+            chatToggle.innerText = chatContainer.classList.contains('chat-minimized') ? '➕' : '➖';
+        };
+
+        // Switch zwischen Global und Gilde
+            btnGlobal.onclick = () => {
+            this.currentChatChannel = 'global';
+            btnGlobal.classList.add('active');
+            btnGuild.classList.remove('active');
+            // Hier später: Nachrichten filtern
+    };
+
+btnGuild.onclick = () => {
+    if (!this.gameState.guildName) {
+        this.showNotification("Du bist in keiner Gilde!", "error");
+        return;
     }
+    this.currentChatChannel = 'guild';
+    btnGuild.classList.add('active');
+    btnGlobal.classList.remove('active');
+    };
+}
 
     // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
     highlightToggle(amount) {
@@ -5097,4 +4923,175 @@ restoreCooldowns() {
         }
     });
 }
+
+// === DEBUG VERSION START ===
+
+initChat() {
+    // 1. Firebase Check
+    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+        console.warn("Chat deaktiviert: Firebase nicht gefunden.");
+        return;
+    }
+
+    // 2. Tab-Buttons Logik
+    const btnGlobal = document.getElementById('btn-chat-global');
+    const btnGuild = document.getElementById('btn-chat-guild');
+
+    if (btnGlobal && btnGuild) {
+        btnGlobal.onclick = () => {
+            this.switchChatChannel('global');
+            btnGlobal.classList.add('active');
+            btnGuild.classList.remove('active');
+        };
+
+        btnGuild.onclick = () => {
+            if (!this.gameState.guildName) {
+                this.showNotification("Du bist in keiner Gilde!", "error");
+                return;
+            }
+            this.switchChatChannel('guild');
+            btnGuild.classList.add('active');
+            btnGlobal.classList.remove('active');
+        };
+    }
+
+    // 3. Senden-Button & Enter-Taste
+    const sendBtn = document.getElementById('btn-chat-send');
+    const inputField = document.getElementById('chat-input');
+
+    if (sendBtn) {
+        sendBtn.onclick = () => this.sendChatMessage();
+    }
+
+    // Enter-Taste (Senden) & TAB-Taste (Kanal wechseln)
+    if (inputField) {
+        inputField.onkeydown = (e) => {
+            // 1. ENTER: Senden
+            if (e.key === 'Enter') {
+                this.sendChatMessage();
+            }
+
+            // 2. TAB: Kanal wechseln
+            if (e.key === 'Tab') {
+                e.preventDefault(); // Verhindert, dass der Fokus aus dem Feld springt
+
+                if (this.currentChatChannel === 'global') {
+                    // Von Global -> Zu Gilde wechseln (wenn möglich)
+                    if (this.gameState.guildName) {
+                        this.switchChatChannel('guild');
+                        // Buttons visuell umschalten
+                        btnGuild.classList.add('active');
+                        btnGlobal.classList.remove('active');
+                    } else {
+                        // Kleines Feedback, warum es nicht geht
+                        this.spawnFloatingText(inputField, "Keine Gilde!", "error"); 
+                    }
+                } else {
+                    // Von Gilde -> Zu Global wechseln
+                    this.switchChatChannel('global');
+                    // Buttons visuell umschalten
+                    btnGlobal.classList.add('active');
+                    btnGuild.classList.remove('active');
+                }
+            }
+        };
+    }
+
+    // 4. Starten
+    this.setupChatNameChange();
+    this.switchChatChannel('global'); 
+}
+
+switchChatChannel(type) {
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) chatContainer.innerHTML = ''; // Fenster leeren
+
+    // Alten Listener stoppen
+    if (this.chatRef) {
+        this.chatRef.off();
+    }
+
+    // Pfad bestimmen
+    let path = 'chat/global';
+    if (type === 'guild') {
+        const safeName = this.gameState.guildName.replace(/\s+/g, '_');
+        path = `chat/guilds/${safeName}`;
+    }
+
+    this.currentChatChannel = type;
+    this.chatRef = firebase.database().ref(path);
+
+    // Auf Nachrichten hören (nur die letzten 20)
+    this.chatRef.limitToLast(20).on('child_added', (snapshot) => {
+        const data = snapshot.val();
+        this.displayChatMessage(data.user, data.text, type);
+    });
+}
+// === DEBUG VERSION ENDE ===
+
+// === DIAGNOSE VERSION ===
+sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+
+    if (text === "" || !this.chatRef) return;
+
+    const msgData = {
+        user: this.gameState.playerName, // Der sichtbare Name
+        userId: this.gameState.playerId, // Die feste ID (NEU)
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    this.chatRef.push(msgData).catch((err) => {
+        console.error("Fehler beim Senden:", err);
+        this.showNotification("Verbindungsfehler!", "error");
+    });
+    
+    input.value = "";
+}
+
+displayChatMessage(user, text, type) {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${type}`;
+    const isMe = user === this.gameState.playerName;
+    
+    msgDiv.innerHTML = `<strong style="color:${isMe ? '#009ffd' : '#aaa'}">${user}:</strong> ${text}`;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+setupChatNameChange() {
+    const nameSpan = document.getElementById('current-player-name');
+    
+    // 1. Sofort den geladenen Namen anzeigen
+    if (nameSpan && this.gameState.playerName) {
+        nameSpan.innerText = this.gameState.playerName;
+    }
+
+    // 2. Klick-Event zum Ändern
+    const displayElement = document.getElementById('chat-user-display');
+    if (displayElement) {
+        displayElement.onclick = () => {
+            const newName = prompt("Wie möchtest du heißen?", this.gameState.playerName);
+            
+            // Validierung: Nicht leer, nicht zu lang
+            if (newName && newName.trim().length > 0) {
+                // Begrenze auf 15 Zeichen
+                this.gameState.playerName = newName.trim().substring(0, 15);
+                
+                // UI Update
+                if (nameSpan) nameSpan.innerText = this.gameState.playerName;
+                
+                // WICHTIG: Sofort speichern, damit der Name beim Reload bleibt!
+                this.speichereSpiel(); 
+                this.showNotification("Name geändert!", "success");
+            }
+        };
+    }
+}
+
 }

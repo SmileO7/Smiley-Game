@@ -397,9 +397,52 @@
   }
 </script>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // Falls du die Config schon in firebase-logic.js hast, 
+  // musst du sie hier einmalig initialisieren, damit sie global verfügbar ist:
+  if (!firebase.apps.length) {
+ const firebaseConfig = {
+  apiKey: "AIzaSyAXLvyEnTMtVYMa5iOUXUFRoqDRfgClWDU",
+  authDomain: "smiley-clicker-idle-empire.firebaseapp.com",
+  databaseURL: "https://smiley-clicker-idle-empire-default-rtdb.europe-west1.firebasedatabase.app/",
+  projectId: "smiley-clicker-idle-empire",
+  storageBucket: "smiley-clicker-idle-empire.firebasestorage.app",
+  messagingSenderId: "883649043348",
+  appId: "1:883649043348:web:daf31892a0d6d639ec8d81"
+};
+    firebase.initializeApp(firebaseConfig);
+  }
+</script>
+
 <script src="data.js?v=2"></script> 
 <script src="SmileyGame.js?v=2"></script>
 <script type="module" src="firebase-logic.js?v=2"></script>
 
+<div id="main-chat-container" class="chat-minimized">
+    <div class="chat-header">
+    <div class="chat-tabs">
+        <button id="btn-chat-global" class="active">Global</button>
+        <button id="btn-chat-guild">Gilde</button>
+    </div>
+    <div id="chat-user-display" title="Klicken zum Namen ändern" style="cursor:pointer; color:#009ffd; font-size:0.8rem; display:flex; align-items:center;">
+        👤 <span id="current-player-name">Lade...</span>
+    </div>
+    <button id="btn-chat-toggle">➖</button>
+</div>
+    
+    <div id="chat-content-wrapper">
+        <div id="chat-messages" class="chat-display">
+            <div class="chat-msg system">Willkommen im Chat! 👋</div>
+        </div>
+        
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Nachricht schreiben..." maxlength="100">
+            <button id="btn-chat-send">🚀</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
