@@ -423,23 +423,19 @@
 
 <div id="main-chat-container" class="chat-minimized">
     <div class="chat-header">
-        
         <div class="chat-tabs">
-            <button id="btn-chat-global" class="btn-chat-tab active">
-                Global
-                <span class="notification-dot"></span> </button>
-            
-            <button id="btn-chat-guild" class="btn-chat-tab">
-                Gilde
-                <span class="notification-dot"></span> </button>
-
-            <button id="btn-chat-mute" class="btn-mute" title="Kanal stumm schalten">🔔</button>
+            <button id="btn-chat-global" class="btn-chat-tab active">Global<span class="notification-dot"></span></button>
+            <button id="btn-chat-guild" class="btn-chat-tab">Gilde<span class="notification-dot"></span></button>
         </div>
 
-        <div id="chat-user-display" title="Klicken zum Namen ändern" style="cursor:pointer; color:#009ffd; font-size:0.8rem; display:flex; align-items:center;">
+        <div id="chat-user-display" title="Klicken zum Namen ändern">
             👤 <span id="current-player-name">Lade...</span>
         </div>
-        <button id="btn-chat-toggle">➖</button>
+
+        <div class="header-controls">
+            <button id="btn-chat-mute" class="btn-mute" title="Stummschalten">🔔</button>
+            <button id="btn-chat-toggle" title="Minimieren">➖</button>
+        </div>
     </div>
     
     <div id="chat-content-wrapper">
@@ -452,6 +448,7 @@
             <button id="btn-chat-send">🚀</button>
         </div>
     </div>
+</div>
 </div>
 </div>
 </body>

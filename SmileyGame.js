@@ -4,7 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Sicherheits-Check: Falls es schon existiert, nicht nochmal starten
+    // Sicherheits-Check
     if (window.gameInstance) {
         console.log("Spiel läuft bereits.");
         return;
@@ -12,11 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Starte SmileyGame...");
 
-    // 1. Instanz erstellen
-    const game = new SmileyGame();
-
-    // 2. Global verfügbar machen (WICHTIG für deine Buttons im HTML!)
-    window.gameInstance = game;
+    // 👇 KORREKTUR: Nur EINMAL 'new' aufrufen und direkt global speichern!
+    window.gameInstance = new SmileyGame();
 
     console.log("✅ SmileyGame gestartet und global als 'gameInstance' verfügbar!");
 });
@@ -331,6 +328,33 @@ class SmileyGame {
     // 2. SPEICHERUNG & HILFSFUNKTIONEN
     // ================================================================================================================
 
+    // Funkt "Status-Update" an die Gilde (für die Mitglieder-Liste)
+    syncGuildStats() {
+        // 1. Checks: Haben wir überhaupt eine Gilde und Firebase?
+        if (!this.gameState.guildName || !this.gameState.playerId || typeof firebase === 'undefined') {
+            return; 
+        }
+
+        // 2. Pfad bestimmen: chat/guilds/NAME/members/MEINE_ID
+        const safeGuildName = this.gameState.guildName.replace(/\s+/g, '_');
+        const myMemberRef = firebase.database().ref(`chat/guilds/${safeGuildName}/members/${this.gameState.playerId}`);
+
+        // 3. Das Daten-Paket schnüren
+        const myStats = {
+            name: this.gameState.playerName,
+            // Math.floor, damit wir keine Kommazahlen in der Liste haben
+            smileys: Math.floor(this.gameState.aktuelle_smileys || 0), 
+            // Zeitstempel, damit man sieht, ob du "Online" (grüner Punkt) bist
+            lastSeen: firebase.database.ServerValue.TIMESTAMP 
+        };
+
+        // 4. Hochladen (ohne das Spiel zu blockieren)
+        myMemberRef.update(myStats).catch(err => {
+            // Fehler nur leise in die Konsole, damit der Spieler nicht gestört wird
+            console.warn("Gilden-Sync nicht möglich:", err);
+        });
+    }
+    
     speichereSpiel() {
         try {
             this.gameState.lastSaveTime = Date.now();
@@ -343,6 +367,7 @@ class SmileyGame {
         } catch (e) {
             console.error("Fehler beim Speichern des Spiels:", e);
         }
+        this.syncGuildStats();
     }
 
    // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 330)
@@ -2071,6 +2096,80 @@ class SmileyGame {
         // UI aktualisieren (Balken)
         this.renderGuildsContent();
         this.speichereSpiel();
+    }
+
+    // Startet das Live-Update der Liste
+    startGuildMemberListener() {
+        if (!this.gameState.guildName) return;
+
+        const safeGuildName = this.gameState.guildName.replace(/\s+/g, '_');
+        const membersRef = firebase.database().ref(`chat/guilds/${safeGuildName}/members`);
+
+        // Jedes Mal, wenn sich Daten ändern (jemand speichert), updaten wir die Liste
+        membersRef.on('value', (snapshot) => {
+            const members = [];
+            snapshot.forEach((child) => {
+                members.push(child.val());
+            });
+
+            // Sortieren: Wer hat die meisten Smileys? (Absteigend)
+            members.sort((a, b) => b.smileys - a.smileys);
+
+            this.renderGuildMemberList(members);
+        });
+    }
+
+    // Malt die Tabelle
+    renderGuildMemberList(members) {
+        const listBody = document.getElementById('guild-list-body');
+        if (!listBody) return;
+
+        listBody.innerHTML = ''; // Liste leeren
+
+        members.forEach((member, index) => {
+            const row = document.createElement('div');
+            row.className = 'guild-member-row';
+
+            // Online Check (letzte 5 Minuten aktiv)
+            const isOnline = (Date.now() - member.lastSeen) < 5 * 60 * 1000;
+            const statusIcon = isOnline ? '🟢' : '⚫';
+            
+            // Formatieren (Millionen/Milliarden)
+            let scoreDisplay = member.smileys;
+            if (member.smileys >= 1000000) scoreDisplay = (member.smileys / 1000000).toFixed(2) + 'M';
+            else if (member.smileys >= 1000) scoreDisplay = (member.smileys / 1000).toFixed(1) + 'k';
+
+            // Ist das der Spieler selbst?
+            const isMe = member.name === this.gameState.playerName ? 'highlight-me' : '';
+
+            row.innerHTML = `
+                <span class="rank">#${index + 1}</span>
+                <span class="name ${isMe}">
+                    ${statusIcon} ${member.name}
+                </span>
+                <span class="score">🪙 ${scoreDisplay}</span>
+            `;
+            listBody.appendChild(row);
+        });
+    }
+
+    // Schaltet zwischen Chat und Liste um
+    toggleGuildView() {
+        const chatView = document.getElementById('chat-messages');
+        const listView = document.getElementById('guild-member-view');
+        const btnList = document.getElementById('btn-guild-list');
+
+        if (listView.style.display === 'none') {
+            // Liste ANZEIGEN
+            chatView.style.display = 'none';
+            listView.style.display = 'flex';
+            btnList.classList.add('active'); // Button leuchten lassen
+        } else {
+            // Chat ANZEIGEN
+            listView.style.display = 'none';
+            chatView.style.display = 'flex'; // oder block/flex je nach CSS
+            btnList.classList.remove('active');
+        }
     }
 
     // ================================================================================================================
@@ -4927,21 +5026,38 @@ restoreCooldowns() {
 // === DEBUG VERSION START ===
 
 initChat() {
-    // 1. Firebase Check
+    console.log("🔧 Chat System: Start...");
+
+    if (!this.gameState.chatSettings) {
+        this.gameState.chatSettings = {
+            muteGlobal: false,
+            muteGuild: false
+        };
+        console.log("⚙️ Neue Chat-Einstellungen initialisiert.");
+    }
+
     if (typeof firebase === 'undefined' || !firebase.apps.length) {
-        console.warn("Chat deaktiviert: Firebase nicht gefunden.");
+        console.warn("Chat deaktiviert: Firebase fehlt.");
         return;
     }
 
-    // 2. Tab-Buttons Logik
+    // Variablen
+    this.currentChatChannel = 'global';
+    this.chatListeners = {}; 
+
     const btnGlobal = document.getElementById('btn-chat-global');
     const btnGuild = document.getElementById('btn-chat-guild');
+    const btnMute = document.getElementById('btn-chat-mute');
+    const sendBtn = document.getElementById('btn-chat-send');
+    const inputField = document.getElementById('chat-input');
+    const toggleBtn = document.getElementById('btn-chat-toggle');
 
+    // 1. Tab-Logik
     if (btnGlobal && btnGuild) {
         btnGlobal.onclick = () => {
-            this.switchChatChannel('global');
-            btnGlobal.classList.add('active');
-            btnGuild.classList.remove('active');
+            this.currentChatChannel = 'global';
+            this.updateChatTabsUI(); 
+            this.renderChatHistory('global');
         };
 
         btnGuild.onclick = () => {
@@ -4949,58 +5065,131 @@ initChat() {
                 this.showNotification("Du bist in keiner Gilde!", "error");
                 return;
             }
-            this.switchChatChannel('guild');
-            btnGuild.classList.add('active');
-            btnGlobal.classList.remove('active');
+            this.currentChatChannel = 'guild';
+            this.updateChatTabsUI();
+            this.renderChatHistory('guild');
         };
     }
 
-    // 3. Senden-Button & Enter-Taste
-    const sendBtn = document.getElementById('btn-chat-send');
-    const inputField = document.getElementById('chat-input');
-
-    if (sendBtn) {
-        sendBtn.onclick = () => this.sendChatMessage();
+    // 2. Mute-Logik (🔔)
+    if (btnMute) {
+        this.updateMuteButtonUI(); 
+        btnMute.onclick = () => {
+            if (this.currentChatChannel === 'global') {
+                this.gameState.chatSettings.muteGlobal = !this.gameState.chatSettings.muteGlobal;
+                this.showNotification(this.gameState.chatSettings.muteGlobal ? "Global stumm 🔕" : "Global aktiv 🔔", "info");
+            } else {
+                this.gameState.chatSettings.muteGuild = !this.gameState.chatSettings.muteGuild;
+                this.showNotification(this.gameState.chatSettings.muteGuild ? "Gilde stumm 🔕" : "Gilde aktiv 🔔", "info");
+            }
+            this.updateMuteButtonUI();
+            this.speichereSpiel();
+        };
     }
 
-    // Enter-Taste (Senden) & TAB-Taste (Kanal wechseln)
+    // 3. Minimieren (➖)
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            const container = document.getElementById('main-chat-container');
+            if (container) {
+                container.classList.toggle('chat-minimized');
+                toggleBtn.innerText = container.classList.contains('chat-minimized') ? '➕' : '➖';
+            }
+        };
+    }
+
+    // 4. Senden & Enter/Tab Taste
+    if (sendBtn) sendBtn.onclick = () => this.sendChatMessage();
+
     if (inputField) {
         inputField.onkeydown = (e) => {
-            // 1. ENTER: Senden
-            if (e.key === 'Enter') {
-                this.sendChatMessage();
-            }
-
-            // 2. TAB: Kanal wechseln
+            if (e.key === 'Enter') this.sendChatMessage();
             if (e.key === 'Tab') {
-                e.preventDefault(); // Verhindert, dass der Fokus aus dem Feld springt
-
+                e.preventDefault();
                 if (this.currentChatChannel === 'global') {
-                    // Von Global -> Zu Gilde wechseln (wenn möglich)
-                    if (this.gameState.guildName) {
-                        this.switchChatChannel('guild');
-                        // Buttons visuell umschalten
-                        btnGuild.classList.add('active');
-                        btnGlobal.classList.remove('active');
-                    } else {
-                        // Kleines Feedback, warum es nicht geht
-                        this.spawnFloatingText(inputField, "Keine Gilde!", "error"); 
-                    }
+                    if (this.gameState.guildName && btnGuild) btnGuild.click();
+                    else this.spawnFloatingText(inputField, "Keine Gilde!", "error");
                 } else {
-                    // Von Gilde -> Zu Global wechseln
-                    this.switchChatChannel('global');
-                    // Buttons visuell umschalten
-                    btnGlobal.classList.add('active');
-                    btnGuild.classList.remove('active');
+                    if (btnGlobal) btnGlobal.click();
                 }
             }
         };
     }
 
-    // 4. Starten
-    this.setupChatNameChange();
-    this.switchChatChannel('global'); 
+    // 5. Starten
+    this.setupChatNameChange();     
+    this.startBackgroundListeners(); // Rote Punkte bleiben aktiv!
+    
+    // Standard: Global laden
+    if (btnGlobal) btnGlobal.click(); 
 }
+
+updateMuteButtonUI() {
+        const btnMute = document.getElementById('btn-chat-mute');
+        if (!btnMute) return;
+
+        // Prüfen: Ist der AKTUELLE Kanal stumm?
+        let isMuted = false;
+        if (this.currentChatChannel === 'global') {
+            isMuted = this.gameState.chatSettings ? this.gameState.chatSettings.muteGlobal : false;
+        } else {
+            isMuted = this.gameState.chatSettings ? this.gameState.chatSettings.muteGuild : false;
+        }
+
+        // Icon und Style ändern
+        if (isMuted) {
+            btnMute.innerText = "🔕";
+            btnMute.classList.add('muted');
+            btnMute.title = "Stummschaltung aufheben";
+        } else {
+            btnMute.innerText = "🔔";
+            btnMute.classList.remove('muted');
+            btnMute.title = "Kanal stumm schalten";
+        }
+    }
+
+    // 2. Aktualisiert die Tabs (Blau färben & Roten Punkt entfernen)
+    updateChatTabsUI() {
+        const btnGlobal = document.getElementById('btn-chat-global');
+        const btnGuild = document.getElementById('btn-chat-guild');
+
+        if (this.currentChatChannel === 'global') {
+            if(btnGlobal) {
+                btnGlobal.classList.add('active');
+                btnGlobal.classList.remove('has-notification'); // Punkt weg, da wir es lesen
+            }
+            if(btnGuild) btnGuild.classList.remove('active');
+        } else {
+            if(btnGuild) {
+                btnGuild.classList.add('active');
+                btnGuild.classList.remove('has-notification'); // Punkt weg
+            }
+            if(btnGlobal) btnGlobal.classList.remove('active');
+        }
+        
+        // Mute Button passend zum Kanal updaten
+        this.updateMuteButtonUI();
+    }
+
+    // 3. Zeigt den Chat-Verlauf beim Tab-Wechsel an
+    renderChatHistory(channel) {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
+        
+        container.innerHTML = ''; // Leer machen
+
+        // Prüfen ob wir Daten im Speicher haben
+        if (this.chatHistory && this.chatHistory[channel]) {
+            this.chatHistory[channel].forEach(msg => {
+                // Wir nutzen deine existierende displayChatMessage Funktion
+                // Falls du die nicht hast, sag Bescheid!
+                this.displayChatMessage(msg.user, msg.text, channel);
+            });
+        }
+        
+        // Scroll nach unten
+        container.scrollTop = container.scrollHeight;
+    }
 
 switchChatChannel(type) {
     const chatContainer = document.getElementById('chat-messages');
@@ -5093,5 +5282,65 @@ setupChatNameChange() {
         };
     }
 }
+
+startBackgroundListeners() {
+        // Lokaler Speicher initialisieren
+        this.chatHistory = { global: [], guild: [] };
+
+        // 1. Global Listener
+        const globalRef = firebase.database().ref('chat/global');
+        globalRef.limitToLast(20).on('child_added', (snapshot) => {
+            this.handleIncomingMessage('global', snapshot.val());
+        });
+
+        // 2. Gilden Listener (Nur wenn Gilde vorhanden)
+        if (this.gameState.guildName) {
+            const safeName = this.gameState.guildName.replace(/\s+/g, '_');
+            const guildRef = firebase.database().ref(`chat/guilds/${safeName}`);
+            // Wir hören auf den Haupt-Pfad der Gilde (Nachrichten)
+            // Achtung: Wir filtern "members" raus, falls die da auch liegen
+            guildRef.limitToLast(20).on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                // Sicherstellen, dass es eine Chat-Nachricht ist (hat 'text')
+                if (data && data.text) {
+                    this.handleIncomingMessage('guild', data);
+                }
+            });
+        }
+    }
+
+    // Entscheidet: Direkt anzeigen oder Roter Punkt?
+    handleIncomingMessage(channel, data) {
+        if (!data) return;
+
+        // 1. Mute Check: Wenn gemutet, ignorieren wir es komplett
+        const isGlobalMuted = this.gameState.chatSettings ? this.gameState.chatSettings.muteGlobal : false;
+        const isGuildMuted = this.gameState.chatSettings ? this.gameState.chatSettings.muteGuild : false;
+
+        if (channel === 'global' && isGlobalMuted) return;
+        if (channel === 'guild' && isGuildMuted) return;
+
+        // 2. Im Verlauf speichern (für späteres Umschalten)
+        if (!this.chatHistory[channel]) this.chatHistory[channel] = [];
+        this.chatHistory[channel].push(data);
+        
+        // Speicher begrenzen (nur die letzten 50 merken)
+        if (this.chatHistory[channel].length > 50) this.chatHistory[channel].shift();
+
+        // 3. Anzeige-Logik
+        if (this.currentChatChannel === channel) {
+            // User guckt gerade hin -> Nachricht anzeigen
+            // Prüfen ob Listen-Ansicht aktiv ist, wenn ja, vielleicht doch Dot?
+            // Fürs erste: Einfach anzeigen.
+            this.displayChatMessage(data.user, data.text, channel);
+        } else {
+            // User guckt woanders hin -> ROTER PUNKT 🔴
+            const btnId = channel === 'global' ? 'btn-chat-global' : 'btn-chat-guild';
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.classList.add('has-notification');
+            }
+        }
+    }
 
 }
