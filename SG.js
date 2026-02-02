@@ -2533,6 +2533,11 @@ class SmileyGame {
     // ================================================================================================================
 
     setupMainEventListeners() {
+
+        window.addEventListener('beforeunload', () => {
+            this.saveGame();
+        });
+
         // 1. SMILEY KLICKEN
         this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
 
@@ -3877,10 +3882,15 @@ class DiamondMine {
         if (type === 'tool_tnt' || type === 'tool_drill') return 1;
 
         const depth = state.mineDepth || 1;
-        const multiplier = 1 + (depth * 0.1);
+        // Je tiefer, desto mehr Loot
+        const multiplier = 1 + (depth * 0.15); 
 
         switch (type) {
-            case 'diamond': return Math.floor((Math.random() * 5 + 1) * multiplier);
+            case 'emerald': 
+                // Smaragde sind 5x bis 10x wertvoller als Diamanten
+                return Math.floor((Math.random() * 25 + 50) * multiplier);
+            case 'diamond': 
+                return Math.floor((Math.random() * 5 + 1) * multiplier);
             case 'gold':
                 let base = (state.totalSPS > 0) ? state.totalSPS : 10;
                 let amount = Math.floor(base * (Math.random() * 60 + 10));
@@ -3896,8 +3906,12 @@ class DiamondMine {
         const state = this.game.gameState; 
         const grid = new Array(25).fill(null);
         const size = 25;
+        const depth = state.mineDepth || 1;
+        
+        // Smaragd-Zone ab Tiefe 5
+        const isEmeraldLayer = depth >= 5; 
 
-        // 1. SCHATZKAMMER
+        // 1. SCHATZKAMMER (Bleibt gleich, evtl. mehr Gold)
         if (state.isTreasureRoom) {
             this.game.showNotification("✨ SCHATZKAMMER! ✨", "success");
             const exitIndex = Math.floor(Math.random() * size);
@@ -3907,7 +3921,9 @@ class DiamondMine {
                 if (grid[i]) continue;
                 const rng = Math.random();
                 let type = 'gold';
-                if (rng > 0.85) type = 'fossil';
+                // In der Schatzkammer gibts jetzt auch Chance auf Smaragde
+                if (isEmeraldLayer && rng > 0.90) type = 'emerald';
+                else if (rng > 0.85) type = 'fossil';
                 else if (rng > 0.7) type = 'tool_tnt';
                 else if (rng > 0.95) type = 'tool_drill';
                 else if (rng > 0.4) type = 'diamond';
@@ -3920,24 +3936,31 @@ class DiamondMine {
             const exitIndex = Math.floor(Math.random() * size);
             grid[exitIndex] = { id: exitIndex, type: 'passage', revealed: false, content: 'ABSTIEG' };
 
+            // Geheimgang
             if (Math.random() < 0.05) {
                 let secretIndex;
                 do { secretIndex = Math.floor(Math.random() * size); } while (secretIndex === exitIndex);
                 grid[secretIndex] = { id: secretIndex, type: 'secret_passage', revealed: false, content: 'GEHEIMNIS' };
             }
 
-            const depthBonus = Math.min(0.3, (state.mineDepth - 1) * 0.01);
+            // Boni berechnen
+            const depthBonus = Math.min(0.3, (depth - 1) * 0.01);
             const fossilBonus = (state.mineResearch.fossil_scanner || 0) * 0.02;
 
             for (let i = 0; i < size; i++) {
                 if (grid[i]) continue;
                 const rng = Math.random();
-                let type = 'stone';
-                if (rng > 0.96 - fossilBonus) type = 'fossil';
-                else if (rng > 0.94) type = 'tool_tnt';
-                else if (rng > 0.90 - depthBonus) type = 'treasure';
-                else if (rng > 0.75 - depthBonus) type = 'diamond';
-                else if (rng > 0.40) type = 'gold';
+                let type = 'stone'; // Das ist die "Niete"
+                
+                // Wahrscheinlichkeiten
+                if (rng > 0.98 - fossilBonus) type = 'fossil';
+                else if (rng > 0.95) type = 'tool_tnt';   // 5% Chance auf TNT
+                else if (rng > 0.93) type = 'tool_drill'; // 2% Chance auf Bohrer
+                else if (isEmeraldLayer && rng > 0.88) type = 'emerald'; // Smaragde nur tief unten!
+                else if (rng > 0.85 - depthBonus) type = 'treasure';
+                else if (rng > 0.70 - depthBonus) type = 'diamond';
+                else if (rng > 0.45) type = 'gold';
+                
                 grid[i] = { id: i, type: type, revealed: false, content: this.getLootContent(type) };
             }
         }
@@ -3979,24 +4002,39 @@ class DiamondMine {
         let amount = tile.content;
         if (!amount || amount <= 0) amount = 100;
 
-        if (tile.type === 'diamond') state.diamanten += amount;
-        else if (tile.type === 'gold') this.game.addSmileys(amount);
-        else if (tile.type === 'tool_tnt') {
-            state.mineInventory.tnt++;
-            this.game.showNotification("🧨 TNT gefunden!", "success");
+        // --- LOOT LOGIK MIT FLOATING TEXT ---
+        
+        if (tile.type === 'emerald') {
+            state.diamanten += amount;
+            this.showLootText(index, `+${amount} 💚`, '#00ff88'); // Hellgrün
+            this.game.triggerShake('diamanten_anzeige');
         }
-        else if (tile.type === 'tool_drill') {
-            state.mineInventory.drill++;
-            this.game.showNotification("🔩 Bohrer gefunden!", "success");
+        else if (tile.type === 'diamond') {
+            state.diamanten += amount;
+            this.showLootText(index, `+${amount} 💎`, '#009ffd'); // Blau
+        }
+        else if (tile.type === 'gold') {
+            this.game.addSmileys(amount);
+            // Wir nutzen game.formatNumber für schöne Zahlen (z.B. 1.5k)
+            this.showLootText(index, `+${this.game.formatNumber(amount)} 💰`, '#ffeb3b'); // Gelb
         }
         else if (tile.type === 'fossil') {
             state.fossilien += amount;
-            this.game.showNotification(`🦖 +${amount} Fossilien`, "success");
+            this.showLootText(index, `+${amount} 🦖`, '#e0e0e0'); // Grau/Weiß
+        }
+        else if (tile.type === 'tool_tnt') {
+            state.mineInventory.tnt++;
+            this.showLootText(index, "+1 🧨", '#ff5252'); // Rot
+        }
+        else if (tile.type === 'tool_drill') {
+            state.mineInventory.drill++;
+            this.showLootText(index, "+1 🔩", '#ffa726'); // Orange
         }
         else if (tile.type === 'treasure') {
             const dia = Math.floor(50 * (1 + state.mineDepth * 0.1));
             state.diamanten += dia;
-            this.game.showNotification(`🎁 SCHATZ! +${dia} Dias`, "success");
+            this.showLootText(index, `+${dia} 💎`, '#FFD700'); // Gold
+            this.game.showNotification(`🎁 SCHATZ GEFUNDEN!`, "success");
         }
         else if (tile.type === 'passage' || tile.type === 'secret_passage') {
             if (state.isTreasureRoom) {
@@ -4004,9 +4042,10 @@ class DiamondMine {
                 this.game.showNotification("Schatzkammer verlassen.", "info");
             }
             if (tile.type === 'secret_passage') state.isTreasureRoom = true;
-            state.mineDepth++;
             
-            // Level neu laden
+            state.mineDepth++;
+            this.showLootText(index, "ABSTIEG!", '#ffffff');
+
             setTimeout(() => { this.reloadMineLevel(); }, 500); 
         }
 
@@ -4366,6 +4405,7 @@ class DiamondMine {
     getTileSymbol(type) {
         switch(type) {
             case 'stone': return '<span class="loot-stone">🪨</span>';
+            case 'emerald': return '<span class="loot-emerald">💚</span>'; // <-- NEU
             case 'diamond': return '<span class="loot-diamond">💎</span>';
             case 'gold': return '<span class="loot-gold">💰</span>';
             case 'treasure': return '<span class="loot-diamond">🎁</span>';
@@ -4377,6 +4417,36 @@ class DiamondMine {
             case 'artifact': return '<span>🏺</span>';
             default: return '';
         }
+    }
+
+    // Zeigt Text genau über einem Stein an
+    showLootText(index, text, color) {
+        const tile = document.getElementById(`mine-tile-${index}`);
+        if (!tile) return;
+        
+        const rect = tile.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'floating-text'; // Nutzt dein existierendes CSS
+        el.innerText = text;
+        
+        // Positionierung: Mitte des Steins
+        el.style.left = (rect.left + rect.width / 2) + 'px';
+        el.style.top = (rect.top + rect.height / 2) + 'px';
+        el.style.color = color || '#fff';
+        el.style.zIndex = "2000"; // Über allem anderen
+        
+        document.body.appendChild(el);
+        
+        // Animation (hochschweben und verblassen)
+        el.animate([
+            { transform: 'translate(-50%, -50%) translateY(0)', opacity: 1 },
+            { transform: 'translate(-50%, -50%) translateY(-40px)', opacity: 0 }
+        ], {
+            duration: 1000,
+            easing: 'ease-out'
+        });
+
+        setTimeout(() => el.remove(), 1000);
     }
 }
 

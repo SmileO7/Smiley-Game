@@ -766,19 +766,12 @@ input[type=range] { width: 100%; cursor: pointer; }
 .btn-tool:hover { background: #444; border-color: #777; }
 .btn-tool:active { background: #222; }
 
-#buy-picks-btn {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    border: 1px solid #45a049 !important;
-    padding: 8px 16px !important;
-    border-radius: 5px !important;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: transform 0.1s, filter 0.1s;
+.loot-emerald {
+    color: #00ff88;
+    text-shadow: 0 0 10px #00ff88;
+    font-size: 1.5em;
+    animation: pulse 1s infinite alternate;
 }
-#buy-picks-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
-#buy-picks-btn:active { transform: scale(0.95); }
 
 /* Info Grid */
 .info-grid {
