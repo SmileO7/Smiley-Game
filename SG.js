@@ -59,6 +59,7 @@ class SmileyGame {
         this.guildSystem = new GuildSystem(this);
         this.chatSystem = new ChatSystem(this);
         this.petSystem = new PetSystem(this);
+        this.soundSystem = new SoundSystem(this);
 
 
         // 2. GAME STATE DEFINITION
@@ -1500,6 +1501,85 @@ class SmileyGame {
     // 7. RENDERING & UI-UPDATES
     // ================================================================================================================
 
+    renderArtifactShowcase() {
+        // 1. Container suchen oder erstellen (falls noch nicht da)
+        let showcase = document.getElementById('artifact-showcase');
+        if (!showcase) {
+            // Wir fügen es VOR dem Gebäude-Gitter ein
+            const grid = document.getElementById('building-grid');
+            if (grid && grid.parentNode) {
+                showcase = document.createElement('div');
+                showcase.id = 'artifact-showcase';
+                showcase.style.cssText = `
+                    display: flex; 
+                    gap: 10px; 
+                    justify-content: center; 
+                    margin: 15px 0; 
+                    padding: 10px; 
+                    background: rgba(0, 0, 0, 0.2); 
+                    border-radius: 10px;
+                    border: 1px solid #333;
+                    min-height: 50px;
+                    flex-wrap: wrap;
+                `;
+                grid.parentNode.insertBefore(showcase, grid);
+                
+                // Titel hinzufügen (optional)
+                const title = document.createElement('div');
+                title.style.cssText = "width:100%; text-align:center; font-size:0.8em; color:#666; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;";
+                title.innerText = "Sammlung";
+                showcase.appendChild(title);
+            } else {
+                return; // UI noch nicht geladen
+            }
+        }
+
+        // 2. Inhalt nur aktualisieren, wenn sich was geändert hat
+        const currentCount = this.gameState.collectedArtifacts ? this.gameState.collectedArtifacts.length : 0;
+        if (showcase.dataset.count == currentCount) return; // Performance-Optimierung
+        showcase.dataset.count = currentCount;
+
+        // Header wiederherstellen (da wir gleich innerHTML clearen)
+        showcase.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8em; color:#aaa; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Ausstellung</div>';
+
+        // 3. Icons zuordnen (Damit es hübsch aussieht)
+        const icons = {
+            'art_coin': '🪙',
+            'art_fossil': '🐚',
+            'art_compass': '🧭',
+            'art_pickaxe': '⛏️',
+            'art_crystal': '🔮',
+            'art_crown': '👑'
+        };
+
+        // 4. Artefakte rendern
+        const collected = this.gameState.collectedArtifacts || [];
+        
+        if (collected.length === 0) {
+            showcase.innerHTML += '<div style="color:#444; font-size:0.9em; font-style:italic;">Die Vitrine ist leer...</div>';
+            return;
+        }
+
+        collected.forEach(id => {
+            const art = this.artifactsData.find(a => a.id === id);
+            if (art) {
+                const item = document.createElement('div');
+                item.className = 'artifact-badge';
+                item.innerHTML = icons[id] || '🏺';
+                item.title = `${art.name}\n${art.desc}`; // Tooltip
+                item.style.cssText = `
+                    font-size: 1.5rem; 
+                    cursor: help; 
+                    filter: drop-shadow(0 0 5px rgba(255,215,0,0.3));
+                    transition: transform 0.2s;
+                `;
+                item.onmouseover = () => item.style.transform = "scale(1.2)";
+                item.onmouseout = () => item.style.transform = "scale(1.0)";
+                showcase.appendChild(item);
+            }
+        });
+    }
+    
     updateUI() {
 
         document.title = `${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys - Idle Game`;
@@ -1597,6 +1677,7 @@ class SmileyGame {
         }
         this.checkSkillUnlocks();
         this.renderBuffs();
+        this.renderArtifactShowcase();
     }
 
     setupHotkeys() {
@@ -3499,51 +3580,15 @@ btnGuild.onclick = () => {
     }
 
     playClickSound() {
-        const soundVolumeSlider = this.getById('sound-volume');
-        const volume = soundVolumeSlider ? (parseInt(soundVolumeSlider.value) / 100) : 0.5;
-        
-        if (volume <= 0) return;
-
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!this.audioCtx) this.audioCtx = new AudioContext();
-        
-        // Browser Policy Fix: Resume context if suspended
-        if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume();
-        }
-
-        const oscillator = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioCtx.destination);
-
-        oscillator.type = 'triangle';
-        // Zufällige Pitch-Variation für weniger Monotonie
-        const freq = 200 + Math.random() * 50; 
-        
-        oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-        
-        // Kurzer, knackiger Sound
-        gainNode.gain.setValueAtTime(0, this.audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(volume * 0.3, this.audioCtx.currentTime + 0.005);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.05);
-
-        oscillator.start();
-        oscillator.stop(this.audioCtx.currentTime + 0.06);
+        this.soundSystem.playClickSound();
     }
 
     playAchievementSound() {
-        this.playTone(400, 'sine', 0.1);
-        setTimeout(() => this.playTone(600, 'sine', 0.1), 100);
-        setTimeout(() => this.playTone(800, 'square', 0.3, 0.5), 200); 
+        this.soundSystem.playAchievementSound(); 
     }
 
     playLevelUpSound() {
-        this.playTone(300, 'triangle', 0.1);
-        setTimeout(() => this.playTone(450, 'triangle', 0.1), 80);
-        setTimeout(() => this.playTone(600, 'triangle', 0.1), 160);
-        setTimeout(() => this.playTone(900, 'triangle', 0.2), 240);
+        this.soundSystem.playLevelUp();
     }
 
     playBuySound() {
@@ -5705,5 +5750,111 @@ class PetSystem {
             `;
             container.appendChild(item);
         });
+    }
+}
+
+// ================================================================================================================
+// === SUB-SYSTEM: AUDIO & SFX (Retro Synthesizer) ===
+// ================================================================================================================
+class SoundSystem {
+    constructor(gameInstance) {
+        this.game = gameInstance;
+        this.ctx = null; // AudioContext
+        this.masterGain = null;
+        this.sfxVolume = 0.5;
+        this.musicVolume = 0.3;
+        this.init();
+        console.log("🔊 SoundSystem (Arcade Synth) geladen.");
+    }
+
+    init() {
+        // Lautstärke laden
+        const storedSfx = localStorage.getItem('soundVolume');
+        if (storedSfx !== null) this.sfxVolume = parseInt(storedSfx) / 100;
+        
+        // AudioContext darf erst nach User-Interaktion starten (Browser-Regel)
+        window.addEventListener('mousedown', () => this.checkContext(), { once: true });
+        window.addEventListener('keydown', () => this.checkContext(), { once: true });
+    }
+
+    checkContext() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.connect(this.ctx.destination);
+        } else if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    // Hilfsfunktion: Spielt einen Ton
+    playTone(freq, type, duration, volRel = 1.0, slideTo = null) {
+        if (!this.ctx || this.sfxVolume <= 0) return;
+        
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type; // 'sine', 'square', 'triangle', 'sawtooth'
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        
+        // Pitch-Slide Effekt (z.B. für "Pew"-Sounds)
+        if (slideTo) {
+            osc.frequency.exponentialRampToValueAtTime(slideTo, this.ctx.currentTime + duration);
+        }
+
+        const vol = this.sfxVolume * volRel;
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    // --- DIE SOUND EFFEKTE ---
+
+    playClick() {
+        // Sanftes "Plop"
+        this.playTone(400, 'sine', 0.1, 0.5, 200); 
+    }
+
+    playCrit() {
+        // Wuchtigeres "Zack!"
+        this.playTone(150, 'square', 0.15, 0.4, 50); 
+        setTimeout(() => this.playTone(200, 'sawtooth', 0.1, 0.2), 10); // Layering
+    }
+
+    playBuy() {
+        // Klassisches "Ka-Ching" (Münze)
+        this.playTone(1200, 'sine', 0.1, 0.4);
+        setTimeout(() => this.playTone(2000, 'sine', 0.2, 0.4), 80);
+    }
+
+    playError() {
+        // Dumpfes "Buzz"
+        this.playTone(150, 'sawtooth', 0.2, 0.3, 100);
+    }
+
+    playLevelUp() {
+        // Fanfare "Ta-Da!"
+        this.playTone(440, 'triangle', 0.1, 0.4); // A4
+        setTimeout(() => this.playTone(554, 'triangle', 0.1, 0.4), 100); // C#5
+        setTimeout(() => this.playTone(659, 'triangle', 0.2, 0.4), 200); // E5
+        setTimeout(() => this.playTone(880, 'square', 0.4, 0.3, 1200), 300); // A5 (lang)
+    }
+
+    playLegendary() {
+        // Epischer Sound für Artefakte/Legendäres
+        [300, 400, 500, 600, 800].forEach((f, i) => {
+            setTimeout(() => this.playTone(f, 'sine', 0.3, 0.3), i * 60);
+        });
+    }
+
+    updateVolume(val) {
+        this.sfxVolume = val / 100;
+        this.checkContext();
     }
 }
