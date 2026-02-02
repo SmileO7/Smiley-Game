@@ -45,6 +45,14 @@ class SmileyGame {
             { id: 16, name: "Offshore-Konten", cost: 25, description: "Offline-Gewinn +20%.", type: 'offline_boost', value: 0.20, x: 90, y: 70, category: 'idle', parents: [2] },
             { id: 17, name: "Hype-Train", cost: 75, description: "Klicks skalieren mit Gebäudekanzahl.", type: 'building_synergy', value: 0.01, x: 50, y: 65, category: 'special', parents: [3, 4] }
         ];
+        this.artifactsData = [
+            { id: 'art_coin', name: 'Antike Münze', desc: '+5% Globaler SPS Bonus', rarity: 'common', bonusType: 'sps_mult', value: 0.05 },
+            { id: 'art_fossil', name: 'Versteinerter Smiley', desc: '+10% Klick-Stärke', rarity: 'common', bonusType: 'click_mult', value: 0.10 },
+            { id: 'art_compass', name: 'Rostiger Kompass', desc: '+2% Prestige Punkte', rarity: 'rare', bonusType: 'prestige_efficiency', value: 0.02 },
+            { id: 'art_pickaxe', name: 'Goldene Spitzhacke', desc: '-10% Minen-Upgrade Kosten', rarity: 'rare', bonusType: 'mine_cost', value: 0.10 },
+            { id: 'art_crystal', name: 'Mana Kristall', desc: '-5% Cooldown für Skills', rarity: 'epic', bonusType: 'cooldown_red', value: 0.05 },
+            { id: 'art_crown', name: 'Krone des Gierigen', desc: 'Verdoppelt alle Offline-Einnahmen', rarity: 'legendary', bonusType: 'offline_boost', value: 1.0 }
+        ];
         
         this.currentBuyAmount = 1;
         this.mineSystem = new DiamondMine(this);
@@ -515,6 +523,7 @@ class SmileyGame {
         target.mineGrid = Array.isArray(saveData.mineGrid) ? saveData.mineGrid : [];
         target.mineInventory = saveData.mineInventory || { pickaxe: 50, tnt: 2, drill: 1 };
         target.fossilien = Number(saveData.fossilien) || 0;
+        target.collectedArtifacts = Array.isArray(saveData.collectedArtifacts) ? saveData.collectedArtifacts : []; 
         target.mineResearch = saveData.mineResearch || { durable_picks: 0, fossil_scanner: 0, explosive_yield: 0 };
         target.diamondShopPurchases = saveData.diamondShopPurchases || {};
 
@@ -876,6 +885,28 @@ class SmileyGame {
                 }
             }
         });
+
+        // 8.5 Artefakt Boni (NEU - WICHTIG FÜR DAS MUSEUM)
+        this.gameState.artifactMineCostRed = 0; // Spezieller Stat für Mine
+        
+        // Sicherstellen, dass das Array existiert
+        if (this.gameState.collectedArtifacts && this.artifactsData) {
+             this.gameState.collectedArtifacts.forEach(artId => {
+                const art = this.artifactsData.find(a => a.id === artId);
+                if (art) {
+                    switch (art.bonusType) {
+                        case 'sps_mult': this.gameState.globalSPSMultiplier += art.value; break;
+                        case 'click_mult': prestigeClickMultiplier += art.value; break;
+                        case 'prestige_efficiency': this.gameState.prestigePointMultiplier += art.value; break;
+                        case 'mine_cost': this.gameState.artifactMineCostRed += art.value; break;
+                        case 'offline_boost': 
+                            // Offline Boost ist kein globaler Multiplier, sondern wirkt beim Laden.
+                            // Wir speichern ihn hier nicht, sondern nutzen ihn in checkOfflineProgress.
+                            break;
+                    }
+                }
+            });
+        }
 
         // 9. Finale Berechnung
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
@@ -2379,73 +2410,101 @@ class SmileyGame {
     }
 
     renderMineResearch(container) {
-        container.innerHTML = `
+        // --- 1. Header & Grid ---
+        let html = `
             <h3 style="text-align:center; margin-bottom:10px;">Forschungs-Labor</h3>
             <p style="text-align:center; font-size:0.9em; color:#aaa; margin-bottom:20px;">
-                Untersuche gefundene Fossilien, um deine Bergbau-Technologie zu verbessern.
+                Untersuche Fossilien, um deine Ausrüstung zu verbessern.
             </p>
-            <div class="info-grid" id="research-grid"></div>
+            <div class="info-grid" id="research-grid" style="margin-bottom:30px;"></div>
         `;
 
-        const grid = document.getElementById('research-grid');
+        // --- 2. Drop-Chancen Berechnung (Dynamisch) ---
+        const state = this.game.gameState;
+        const depth = state.mineDepth || 1;
+        const depthBonus = Math.min(0.3, (depth - 1) * 0.01); // Max 30% Bonus
+        const fossilBonus = (state.mineResearch.fossil_scanner || 0) * 0.02;
+        const isEmerald = depth >= 5;
+
+        // Wir berechnen die Wahrscheinlichkeiten basierend auf deiner generateMineGrid Logik
+        const chanceArt = 1; // 1%
+        const chanceFossil = Math.round((0.99 - (0.98 - fossilBonus)) * 100); // 1% Basis + Bonus
+        const chanceTNT = 3; 
+        const chanceDrill = 2;
+        const chanceEmerald = isEmerald ? 5 : 0;
         
-        // Liste der Forschungen
+        // Schätzung für die variablen Werte
+        const chanceTreasure = Math.round((0.15 + depthBonus) * 100) - 10; 
+        const chanceDiamond = Math.round((0.25 + depthBonus) * 100) - 10; 
+        const chanceGold = 25;
+        
+        // Der Rest ist Stein
+        let sumChance = chanceArt + chanceFossil + chanceTNT + chanceDrill + chanceEmerald + chanceTreasure + chanceDiamond + chanceGold;
+        let chanceStone = Math.max(0, 100 - sumChance);
+
+        // --- 3. Drop-Chancen Tabelle (HTML) ---
+        html += `
+            <div style="background:rgba(255,255,255,0.05); border-radius:10px; padding:15px; border:1px solid #444;">
+                <h4 style="margin-top:0; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:10px;">
+                    Analyse: Ebene ${depth}
+                </h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.9em;">
+                    <div style="color:#FFD700">🏺 Artefakte: <strong>${chanceArt}%</strong></div>
+                    <div style="color:#e0e0e0">🦖 Fossilien: <strong>${chanceFossil}%</strong></div>
+                    <div style="color:#ff5252">🧨 Werkzeuge: <strong>${chanceTNT + chanceDrill}%</strong></div>
+                    <div style="color:#00ff88">💚 Smaragde: <strong>${chanceEmerald}%</strong> ${!isEmerald ? '<small>(ab Ebene 5)</small>' : ''}</div>
+                    <div style="color:#009ffd">🎁 Schätze: <strong>~${chanceTreasure}%</strong></div>
+                    <div style="color:#009ffd">💎 Diamanten: <strong>~${chanceDiamond}%</strong></div>
+                    <div style="color:#ffeb3b">💰 Goldadern: <strong>${chanceGold}%</strong></div>
+                    <div style="color:#888">🪨 Gestein: <strong>~${chanceStone}%</strong></div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // --- 4. Upgrades Rendern (Logik wie vorher) ---
+        const grid = document.getElementById('research-grid');
         const upgrades = [
-            {
-                id: 'durable_picks',
-                name: 'Haltbare Spitzen',
-                desc: '10% Chance pro Level, keine Spitzhacke zu verbrauchen.',
-                icon: '⛏️',
-                max: 5,
-                baseCost: 5 // Fossilien
-            },
-            {
-                id: 'fossil_scanner',
-                name: 'Fossilien-Scanner',
-                desc: 'Erhöht die Chance, Fossilien in Steinen zu finden.',
-                icon: '🦖',
-                max: 5,
-                baseCost: 10
-            },
-            {
-                id: 'explosive_yield',
-                name: 'Sprengmeister',
-                desc: 'TNT deckt Ressourcen besser auf (Test-Upgrade).', 
-                icon: '🧨',
-                max: 3,
-                baseCost: 20
-            }
+            { id: 'durable_picks', name: 'Haltbare Spitzen', desc: 'Chance, keine Spitzhacke zu verbrauchen.', icon: '⛏️', max: 5, baseCost: 5 },
+            { id: 'fossil_scanner', name: 'Fossilien-Scanner', desc: 'Erhöht die Chance auf Fossilien drastisch.', icon: '🦖', max: 5, baseCost: 10 },
+            { id: 'explosive_yield', name: 'Sprengmeister', desc: 'TNT deckt Ressourcen besser auf.', icon: '🧨', max: 3, baseCost: 20 }
         ];
 
         upgrades.forEach(u => {
-            const currentLvl = this.gameState.mineResearch[u.id] || 0;
+            const currentLvl = this.game.gameState.mineResearch[u.id] || 0;
             const cost = Math.floor(u.baseCost * Math.pow(1.5, currentLvl));
             const isMaxed = currentLvl >= u.max;
-            const canAfford = this.gameState.fossilien >= cost;
+            const canAfford = this.game.gameState.fossilien >= cost;
+            
+            // Effekt-Beschreibung dynamisch
+            let effectInfo = "";
+            if (u.id === 'durable_picks') effectInfo = `Aktuell: ${(currentLvl*10)}%`;
+            if (u.id === 'fossil_scanner') effectInfo = `Aktuell: +${(currentLvl*2)}% Chance`;
+            if (u.id === 'explosive_yield') effectInfo = `Aktuell: Stufe ${currentLvl}`;
 
             const div = document.createElement('div');
             div.className = `info-upgrade-item ${isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked')}`;
             div.innerHTML = `
                 <div style="font-size:2em; margin-bottom:5px;">${u.icon}</div>
                 <h4>${u.name} (Lv. ${currentLvl}/${u.max})</h4>
-                <p style="font-size:0.85em; min-height:40px;">${u.desc}</p>
+                <p style="font-size:0.8em; min-height:30px;">${u.desc}</p>
+                <div style="font-size:0.75em; color:#009ffd; margin-bottom:5px;">${effectInfo}</div>
                 <button class="btn-buy-research" ${isMaxed || !canAfford ? 'disabled' : ''} 
                         style="width:100%; margin-top:5px; background:${canAfford?'var(--color-primary)':'#444'}">
                     ${isMaxed ? 'MAX' : `Forschen (${cost} 🦖)`}
                 </button>
             `;
             
-            // Klick-Event für den Button
             div.querySelector('button').onclick = () => {
                 if (!isMaxed && canAfford) {
-                    this.gameState.fossilien -= cost;
-                    if(!this.gameState.mineResearch[u.id]) this.gameState.mineResearch[u.id] = 0;
-                    this.gameState.mineResearch[u.id]++;
-                    this.playBuySound();
-                    this.showNotification("Forschung abgeschlossen! 🧪", "success");
-                    // Ansicht aktualisieren
-                    this.renderDiamondMineContent();
-                    this.speichereSpiel();
+                    this.game.gameState.fossilien -= cost;
+                    if(!this.game.gameState.mineResearch[u.id]) this.game.gameState.mineResearch[u.id] = 0;
+                    this.game.gameState.mineResearch[u.id]++;
+                    this.game.playBuySound();
+                    this.game.showNotification("Forschung abgeschlossen! 🧪", "success");
+                    this.renderDiamondMineContent(); // Refresh für Drop-Chancen Update
+                    this.game.speichereSpiel();
                 }
             };
             grid.appendChild(div);
