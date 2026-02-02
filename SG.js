@@ -153,18 +153,15 @@ class SmileyGame {
         this.ladeSpiel();
 
         if (!this.gameState.playerId) {
-            // Eine zufällige ID aus Zeitstempel und Zufallszahl
             this.gameState.playerId = 'uid_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
             console.log("🆔 Neue Spieler-ID generiert:", this.gameState.playerId);
         }
 
-        // 2. Zufallsnamen geben, falls er noch "Smiley_Gast" heißt (aber ID behalten)
         if (this.gameState.playerName === "Smiley_Gast") {
             this.gameState.playerName = "Smiley_" + Math.floor(Math.random() * 9999);
         }
 
         if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
-            // Prüfen wir den ersten Stein
             if (this.gameState.mineGrid[0].content === undefined) {
                 console.log("🛠️ Repariere kaputte Mine (Loot fehlt)...");
                 this.mineSystem.generateMineGrid(); 
@@ -194,7 +191,6 @@ class SmileyGame {
         this.updateNewsTicker();
         this.updateUI();
         this.initChat();
-        this.setupChatNameChange();
 
         console.log("Spiel initialisiert. Warte auf Autosave...");
     }
@@ -1384,69 +1380,7 @@ class SmileyGame {
 
     // Erstellt ein neues 5x5 Feld mit Zufalls-Loot
    renderDiamondMineContent() {
-        const container = document.getElementById('diamond-mine-content');
-        if (!container) return;
-
-        // 1. Navigation aufbauen (wird nur 1x gemacht, wenn Container leer ist)
-        // Wir prüfen nicht auf innerHTML, sondern ob unsere Struktur da ist
-        if (!document.getElementById('mine-nav-wrapper')) {
-            container.innerHTML = `
-                <div id="mine-nav-wrapper" class="mine-nav" style="display:flex; gap:10px; margin-bottom:15px;">
-                    <button id="tab-mine" class="btn-primary" style="flex:1">⛏️ Mine</button>
-                    <button id="tab-research" class="btn-primary btn-cancel" style="flex:1">🧪 Labor</button>
-                    <button id="tab-shop" class="btn-primary btn-cancel" style="flex:1">💎 Shop</button>
-                </div>
-                
-                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; display:flex; justify-content:space-around; margin-bottom:15px; font-weight:bold;">
-                    <span style="color:#009ffd">💎 <span id="res-dias">0</span></span>
-                    <span style="color:#e0e0e0">🦖 <span id="res-fossil">0</span></span>
-                    <span style="color:#ffeb3b">💰 <span id="res-gold">0</span></span>
-                </div>
-
-                <div id="mine-sub-content"></div>
-            `;
-
-            // Event Listener für Tabs (nur 1x binden!)
-            document.getElementById('tab-mine').onclick = () => this.switchMineTab('mine');
-            document.getElementById('tab-research').onclick = () => this.switchMineTab('research');
-            document.getElementById('tab-shop').onclick = () => this.switchMineTab('shop');
-        }
-
-        // 2. Werte oben immer aktuell halten
-        document.getElementById('res-dias').innerText = this.formatNumber(this.gameState.diamanten);
-        document.getElementById('res-fossil').innerText = this.gameState.fossilien || 0;
-        document.getElementById('res-gold').innerText = this.formatNumber(this.gameState.aktuelle_smileys);
-
-        // 3. Inhalt rendern (je nach View)
-        const contentDiv = document.getElementById('mine-sub-content');
-        const activeTab = this.diamondMineView || 'mine';
-
-        // Styling der Tabs aktualisieren
-        ['mine', 'research', 'shop'].forEach(t => {
-            const btn = document.getElementById(`tab-${t}`);
-            if (activeTab === t) {
-                btn.classList.remove('btn-cancel');
-                btn.style.background = '#009ffd';
-            } else {
-                btn.classList.add('btn-cancel');
-                btn.style.background = '';
-            }
-        });
-
-        // Nur rendern, wenn sich der Tab geändert hat oder leer ist
-        if (activeTab === 'mine') {
-            // Mine braucht Spezialbehandlung wegen Performance
-            if (contentDiv.innerHTML === '' || !document.getElementById('mine-interface-wrapper')) {
-                this.renderDiamondMinigame(contentDiv);
-            } else {
-                // Wenn Mine schon da ist, nur UI updaten
-                this.updateMineVisuals(); 
-            }
-        } else if (activeTab === 'research') {
-            this.renderMineResearch(contentDiv);
-        } else {
-            this.renderDiamondShopContent(contentDiv);
-        }
+        this.mineSystem.renderDiamondMinigame();
     }
 
     switchMineTab(tabName) {
