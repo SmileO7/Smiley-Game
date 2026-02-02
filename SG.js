@@ -1375,20 +1375,15 @@ class SmileyGame {
     }
 
     // ================================================================================================================
-    // 5. DIAMANTEN MINE LOGIK
+    // 5. DIAMANTEN MINE LOGIK (Delegation an MineSystem)
     // ================================================================================================================
 
-    // Erstellt ein neues 5x5 Feld mit Zufalls-Loot
-   renderDiamondMineContent() {
-        this.mineSystem.renderDiamondMinigame();
+    renderDiamondMineContent() {
+        this.mineSystem.renderDiamondMineContent();
     }
 
     switchMineTab(tabName) {
-        this.diamondMineView = tabName;
-        // Wenn wir den Tab wechseln, leeren wir den Content, damit er neu gebaut wird
-        const contentDiv = document.getElementById('mine-sub-content');
-        if(contentDiv) contentDiv.innerHTML = ''; 
-        this.renderDiamondMineContent();
+        this.mineSystem.switchMineTab(tabName);
     }
 
     renderDiamondMinigame(targetContainer) {
@@ -1397,8 +1392,8 @@ class SmileyGame {
 
     updateMineVisuals() {
         this.mineSystem.updateMineVisuals();
-    } 
-    // --- KLICK LOGIK (Verwendet updateMineVisuals statt render) ---
+    }
+    
     handleMineClick(index) {
         this.mineSystem.handleMineClick(index);
     }
@@ -2186,91 +2181,6 @@ class SmileyGame {
     }
 
     diamondMineView = 'mine';
-
-   renderDiamondMineContent() {
-        const container = document.getElementById('diamond-mine-content');
-        if (!container) return;
-
-        // 1. Navigation & Header EINMALIG aufbauen
-        if (!document.getElementById('mine-nav-wrapper')) {
-            container.innerHTML = `
-                <div id="mine-nav-wrapper" class="mine-nav" style="display:flex; gap:10px; margin-bottom:15px;">
-                    <button id="tab-mine" class="btn-primary" style="flex:1">⛏️ Mine</button>
-                    <button id="tab-research" class="btn-primary" style="flex:1">🧪 Labor</button>
-                    <button id="tab-shop" class="btn-primary" style="flex:1">💎 Shop</button>
-                </div>
-                
-                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; display:flex; justify-content:space-around; margin-bottom:15px; font-weight:bold;">
-                    <span style="color:#009ffd">💎 <span id="res-dias">0</span></span>
-                    <span style="color:#e0e0e0">🦖 <span id="res-fossil">0</span></span>
-                    <span style="color:#ffeb3b">💰 <span id="res-gold">0</span></span>
-                </div>
-
-                <div id="mine-sub-content"></div>
-            `;
-
-            // Listener (Nur einmal!)
-            document.getElementById('tab-mine').onclick = () => this.switchMineTab('mine');
-            document.getElementById('tab-research').onclick = () => this.switchMineTab('research');
-            document.getElementById('tab-shop').onclick = () => this.switchMineTab('shop');
-        }
-
-        // 2. Werte aktualisieren (Das darf ständig passieren, ist billig)
-        const elDias = document.getElementById('res-dias');
-        const elFossil = document.getElementById('res-fossil');
-        const elGold = document.getElementById('res-gold');
-        
-        if(elDias) elDias.innerText = this.formatNumber(this.gameState.diamanten);
-        if(elFossil) elFossil.innerText = this.gameState.fossilien || 0;
-        if(elGold) elGold.innerText = this.formatNumber(this.gameState.aktuelle_smileys);
-
-        // 3. Tab-Styling NUR ändern, wenn nötig (Verhindert Flackern!)
-        // Wir speichern den letzten Tab-Status im DOM, um unnötige Updates zu vermeiden
-        const activeTab = this.diamondMineView || 'mine';
-        const navWrapper = document.getElementById('mine-nav-wrapper');
-        
-        if (navWrapper.dataset.lastActive !== activeTab) {
-            // Nur ausführen, wenn sich der Tab wirklich geändert hat!
-            ['mine', 'research', 'shop'].forEach(t => {
-                const btn = document.getElementById(`tab-${t}`);
-                if (activeTab === t) {
-                    btn.style.background = '#009ffd';
-                    btn.style.borderColor = '#009ffd';
-                    btn.style.color = '#fff';
-                    btn.classList.remove('btn-cancel');
-                } else {
-                    btn.style.background = '#333';
-                    btn.style.borderColor = '#444';
-                    btn.style.color = '#aaa';
-                    btn.classList.add('btn-cancel');
-                }
-            });
-            navWrapper.dataset.lastActive = activeTab; // Merken
-        }
-
-        // 4. Inhalt rendern
-        const contentDiv = document.getElementById('mine-sub-content');
-        
-        if (activeTab === 'mine') {
-            // Spezialfall Mine: Nicht neu rendern wenn schon da!
-            if (!document.getElementById('mine-interface-wrapper')) {
-                this.renderDiamondMinigame(contentDiv);
-            } else {
-                this.updateMineVisuals(); // Nur Werte updaten
-            }
-        } else if (activeTab === 'research') {
-            // Labor rendern (Kann man bei jedem Frame machen oder optimieren)
-            // Fürs erste lassen wir es so, da man da selten ist
-            if(contentDiv.innerHTML === '' || !document.getElementById('research-grid')) {
-                 this.renderMineResearch(contentDiv);
-            }
-        } else {
-            // Shop rendern
-             if(contentDiv.innerHTML === '' || !document.getElementById('diamond-shop-grid-inner')) {
-                this.renderDiamondShopContent(contentDiv);
-             }
-        }
-    }
 
     switchMineTab(tabName) {
         this.diamondMineView = tabName;
@@ -4096,7 +4006,7 @@ class DiamondMine {
             if (tile.type === 'secret_passage') state.isTreasureRoom = true;
             state.mineDepth++;
             
-            // Level neu laden (Interne Funktion aufrufen)
+            // Level neu laden
             setTimeout(() => { this.reloadMineLevel(); }, 500); 
         }
 
@@ -4145,7 +4055,181 @@ class DiamondMine {
         this.updateMineVisuals();
     }
 
-    // --- RENDERING (Verschoben aus SmileyGame) ---
+    // --- RENDERING & TABS (DAS HIER FEHLTE!) ---
+
+    renderDiamondMineContent() {
+        const container = document.getElementById('diamond-mine-content');
+        if (!container) return;
+
+        // 1. Navigation & Header EINMALIG aufbauen
+        if (!document.getElementById('mine-nav-wrapper')) {
+            container.innerHTML = `
+                <div id="mine-nav-wrapper" class="mine-nav" style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button id="tab-mine" class="btn-primary" style="flex:1">⛏️ Mine</button>
+                    <button id="tab-research" class="btn-primary" style="flex:1">🧪 Labor</button>
+                    <button id="tab-shop" class="btn-primary" style="flex:1">💎 Shop</button>
+                </div>
+                
+                <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; display:flex; justify-content:space-around; margin-bottom:15px; font-weight:bold;">
+                    <span style="color:#009ffd">💎 <span id="res-dias">0</span></span>
+                    <span style="color:#e0e0e0">🦖 <span id="res-fossil">0</span></span>
+                    <span style="color:#ffeb3b">💰 <span id="res-gold">0</span></span>
+                </div>
+
+                <div id="mine-sub-content"></div>
+            `;
+
+            // Listener (Nur einmal!)
+            document.getElementById('tab-mine').onclick = () => this.switchMineTab('mine');
+            document.getElementById('tab-research').onclick = () => this.switchMineTab('research');
+            document.getElementById('tab-shop').onclick = () => this.switchMineTab('shop');
+        }
+
+        // 2. Werte oben immer aktuell halten
+        const elDias = document.getElementById('res-dias');
+        const elFossil = document.getElementById('res-fossil');
+        const elGold = document.getElementById('res-gold');
+        
+        if(elDias) elDias.innerText = this.game.formatNumber(this.game.gameState.diamanten);
+        if(elFossil) elFossil.innerText = this.game.gameState.fossilien || 0;
+        if(elGold) elGold.innerText = this.game.formatNumber(this.game.gameState.aktuelle_smileys);
+
+        // 3. Tab-Styling
+        const activeTab = this.game.diamondMineView || 'mine';
+        const navWrapper = document.getElementById('mine-nav-wrapper');
+        
+        if (navWrapper.dataset.lastActive !== activeTab) {
+            ['mine', 'research', 'shop'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (activeTab === t) {
+                    btn.style.background = '#009ffd';
+                    btn.style.borderColor = '#009ffd';
+                    btn.style.color = '#fff';
+                    btn.classList.remove('btn-cancel');
+                } else {
+                    btn.style.background = '#333';
+                    btn.style.borderColor = '#444';
+                    btn.style.color = '#aaa';
+                    btn.classList.add('btn-cancel');
+                }
+            });
+            navWrapper.dataset.lastActive = activeTab;
+        }
+
+        // 4. Inhalt rendern
+        const contentDiv = document.getElementById('mine-sub-content');
+        
+        if (activeTab === 'mine') {
+            if (!document.getElementById('mine-interface-wrapper')) {
+                this.renderDiamondMinigame(contentDiv);
+            } else {
+                this.updateMineVisuals(); 
+            }
+        } else if (activeTab === 'research') {
+            if(contentDiv.innerHTML === '' || !document.getElementById('research-grid')) {
+                 this.renderMineResearch(contentDiv);
+            }
+        } else {
+             if(contentDiv.innerHTML === '' || !document.getElementById('diamond-shop-grid-inner')) {
+                this.renderDiamondShopContent(contentDiv);
+             }
+        }
+    }
+
+    switchMineTab(tabName) {
+        this.game.diamondMineView = tabName;
+        const contentDiv = document.getElementById('mine-sub-content');
+        if(contentDiv) contentDiv.innerHTML = ''; 
+        this.renderDiamondMineContent();
+    }
+
+    renderMineResearch(container) {
+        container.innerHTML = `
+            <h3 style="text-align:center; margin-bottom:10px;">Forschungs-Labor</h3>
+            <p style="text-align:center; font-size:0.9em; color:#aaa; margin-bottom:20px;">
+                Untersuche gefundene Fossilien, um deine Bergbau-Technologie zu verbessern.
+            </p>
+            <div class="info-grid" id="research-grid"></div>
+        `;
+
+        const grid = document.getElementById('research-grid');
+        const upgrades = [
+            { id: 'durable_picks', name: 'Haltbare Spitzen', desc: '10% Chance pro Level, keine Spitzhacke zu verbrauchen.', icon: '⛏️', max: 5, baseCost: 5 },
+            { id: 'fossil_scanner', name: 'Fossilien-Scanner', desc: 'Erhöht die Chance, Fossilien in Steinen zu finden.', icon: '🦖', max: 5, baseCost: 10 },
+            { id: 'explosive_yield', name: 'Sprengmeister', desc: 'TNT deckt Ressourcen besser auf (Test-Upgrade).', icon: '🧨', max: 3, baseCost: 20 }
+        ];
+
+        upgrades.forEach(u => {
+            const currentLvl = this.game.gameState.mineResearch[u.id] || 0;
+            const cost = Math.floor(u.baseCost * Math.pow(1.5, currentLvl));
+            const isMaxed = currentLvl >= u.max;
+            const canAfford = this.game.gameState.fossilien >= cost;
+
+            const div = document.createElement('div');
+            div.className = `info-upgrade-item ${isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked')}`;
+            div.innerHTML = `
+                <div style="font-size:2em; margin-bottom:5px;">${u.icon}</div>
+                <h4>${u.name} (Lv. ${currentLvl}/${u.max})</h4>
+                <p style="font-size:0.85em; min-height:40px;">${u.desc}</p>
+                <button class="btn-buy-research" ${isMaxed || !canAfford ? 'disabled' : ''} 
+                        style="width:100%; margin-top:5px; background:${canAfford?'var(--color-primary)':'#444'}">
+                    ${isMaxed ? 'MAX' : `Forschen (${cost} 🦖)`}
+                </button>
+            `;
+            
+            div.querySelector('button').onclick = () => {
+                if (!isMaxed && canAfford) {
+                    this.game.gameState.fossilien -= cost;
+                    if(!this.game.gameState.mineResearch[u.id]) this.game.gameState.mineResearch[u.id] = 0;
+                    this.game.gameState.mineResearch[u.id]++;
+                    this.game.playBuySound();
+                    this.game.showNotification("Forschung abgeschlossen! 🧪", "success");
+                    this.renderDiamondMineContent();
+                    this.game.speichereSpiel();
+                }
+            };
+            grid.appendChild(div);
+        });
+    }
+
+    renderDiamondShopContent(targetContainer) {
+        const container = targetContainer;
+        if (!container) return;
+        const diamondDisplay = this.game.getById('shop-diamanten-anzeige');
+        if (diamondDisplay) diamondDisplay.innerText = this.game.formatNumber(this.game.gameState.diamanten);
+
+        container.innerHTML = `<div class="info-grid" id="diamond-shop-grid-inner"></div>`;
+        const innerGrid = this.game.getById('diamond-shop-grid-inner');
+        if (!innerGrid) return;
+
+        let shopHtml = '';
+        diamondShopUpgrades.forEach((upgrade, index) => {
+            const count = this.game.gameState.diamondShopPurchases[index] || 0;
+            const isPurchased = count > 0;
+            const isMaxed = upgrade.maxPurchases && count >= upgrade.maxPurchases;
+            const canAfford = this.game.gameState.diamanten >= upgrade.cost;
+            const stateClass = isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked');
+            const buttonText = isMaxed ? 'Gekauft' : `Kaufen (${this.game.formatNumber(upgrade.cost)} 💎)`;
+
+            shopHtml += `
+                <div class="info-upgrade-item ${stateClass}" data-id="${upgrade.id}">
+                    <h4>${upgrade.name}</h4>
+                    <p>${upgrade.description}</p>
+                    <p>Status: ${isMaxed ? 'Permanent' : 'Verfügbar'}</p>
+                    <button class="btn-buy-diamond" data-id="${upgrade.id}" ${isMaxed || !canAfford ? 'disabled' : ''}>
+                        ${buttonText}
+                    </button>
+                </div>
+            `;
+        });
+        innerGrid.innerHTML = shopHtml;
+        innerGrid.querySelectorAll('.btn-buy-diamond').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const id = parseInt(e.target.dataset.id, 10);
+                this.game.buyDiamondShopUpgrade(id);
+            });
+        });
+    }
 
     renderDiamondMinigame(targetContainer) {
         const container = targetContainer || document.getElementById('minigame-placeholder');
