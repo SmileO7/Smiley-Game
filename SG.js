@@ -199,6 +199,7 @@ class SmileyGame {
         this.checkOfflineProgress();
         this.createBuildingElements();
         this.renderPetShop(); // Neue Pet-System Weiterleitung
+        this.renderSkillUI();
         this.updateGlobalUpgradeUI();
         this.updatePrestigeUI();
         this.ladeAudioEinstellungen();
@@ -286,18 +287,14 @@ class SmileyGame {
         if (actualSPS > 0) {
             this.addSmileys(actualSPS);
         }
-
-        const MINE_INDEX = 8;
-        if (this.gameState.diamondMineUnlocked && this.gameState.buildingCounts[MINE_INDEX] > 0) {
-            const mineData = (typeof uniqueBuildingsData !== 'undefined')
-                ? uniqueBuildingsData.find(u => u.id === 'diamond_mine')
-                : null;
-
-            if (mineData) {
-                const autoDiamondRate = mineData.baseDPS * (mineData.diamondMultiplier || 1) * 0.1;
-                this.gameState.diamanten += autoDiamondRate;
-            }
+        
+        // Falls du eine "Automatische Diamanten-Generierung" hast (z.B. durch ein Shop-Upgrade),
+        // gehört die Logik hier hin, aber NICHT basierend auf Gebäude-Index 8.
+        if (this.gameState.autoDiamondMineUnlocked) {
+             // Beispiel: 1 Diamant pro Sekunde (oder mehr)
+             this.gameState.diamanten += 1; 
         }
+
         this.updateUI();
     }
 
@@ -1092,6 +1089,27 @@ class SmileyGame {
         }
     }
 
+    getBuildingIcon(index) {
+        const icons = [
+            '👆', // 0: Auto-Klicker
+            '🌳', // 1: Smiley-Baum
+            '🏭', // 2: Smiley-Fabrik
+            '⛏️', // 3: Smiley-Mine (Die normale für Smileys)
+            '🔩', // 4: Smiley-Bohrer
+            '⚛️', // 5: Smiley-Kernkraftwerk
+            '🌌', // 6: Smiley-Galaxie
+            '🌀', // 7: Dimensionsportal
+            '⏳', // 8: Zeitmaschine
+            '🦾', // 9: Meta-Klicker
+            '🔗', // 10: Quanten-Netzwerk
+            '💾', // 11: Endloser Speicher
+            '🥚', // 12: Ursprung
+            '☯️', // 13: Kosmische Einheit
+            '👑'  // 14: Absoluter Schöpfer
+        ];
+        return icons[index] || '❓';
+    }
+
     getBuildingCost(index, count) {
         const buildingData = [...buildingsData, ...uniqueBuildingsData][index];
         if (!buildingData) return Infinity;
@@ -1680,6 +1698,44 @@ class SmileyGame {
         this.renderArtifactShowcase();
     }
 
+    renderSkillUI() {
+        // Definition der Texte und Icons für jeden Skill
+        const skillDetails = {
+            frenzy:       { name: "Klick-Wut",      desc: "x5 Klick-Stärke (15s)",      icon: "🔥" },
+            overdrive:    { name: "Overdrive",      desc: "x2 Produktion (30s)",        icon: "⚡" },
+            critStorm:    { name: "Krit-Sturm",     desc: "100% Krit-Chance (10s)",     icon: "🎯" },
+            goldRush:     { name: "Goldrausch",     desc: "+15 Min. Produktion",        icon: "💰" },
+            diamondPulse: { name: "Diamant-Puls",   desc: "Sofortige Diamanten",        icon: "💎" },
+            efficiency:   { name: "Effizienz",      desc: "-25% Gebäudekosten (45s)",   icon: "📉" },
+            shards:       { name: "Splitter",       desc: "Klicks ernten SPS (20s)",    icon: "♦️" },
+            hyperMinute:  { name: "Hyper-Zeit",     desc: "x5 Produktion (60s)",        icon: "🚀" }
+        };
+
+        // Wir gehen alle Skills durch und bauen das HTML der Buttons neu auf
+        Object.keys(skillDetails).forEach(key => {
+            const btn = document.getElementById(`btn-skill-${key}`);
+            if (btn) {
+                const info = skillDetails[key];
+                
+                // Wir setzen den HTML-Inhalt neu, behalten aber die IDs für Timer und Cooldown bei!
+                btn.innerHTML = `
+                    <div style="font-size:1.8em; margin-bottom:2px;">${info.icon}</div>
+                    <div style="font-weight:bold; font-size:0.9em; margin-bottom:2px; color:#fff;">${info.name}</div>
+                    <div style="font-size:0.7em; color:#aaa; margin-bottom:5px; min-height:2.4em; line-height:1.2;">${info.desc}</div>
+                    
+                    <div id="timer-${key}" style="font-weight:bold; color:#4CAF50; font-size:0.9em;">BEREIT</div>
+                    
+                    <div style="position:absolute; bottom:0; left:0; width:100%; height:4px; background:rgba(0,0,0,0.5);">
+                        <div id="cooldown-${key}" style="width:0%; height:100%; background:#fff; transition: width 0.1s linear;"></div>
+                    </div>
+                `;
+
+                // Tooltip für Details
+                btn.title = `${info.name}: ${info.desc}\nCooldown: ${this.gameState.skills[key].cooldownTime / 1000} Sekunden`;
+            }
+        });
+    }
+        
     setupHotkeys() {
         document.addEventListener('keydown', (e) => {
             // Ignorieren, wenn man gerade schreibt
@@ -2249,13 +2305,21 @@ class SmileyGame {
     }
 
     getUpgradeIcon(type) {
-        if (type === 'click_mult') return '👆';
-        if (type === 'sps_mult') return '⚡';
-        if (type === 'cost_reduction') return '📉';
-        if (type === 'unlock_pets') return '🐾';
-        if (type === 'unlock_mine') return '💎';
-        if (type === 'unlock_guilds') return '🏰';
-        return '★';
+        switch (type) {
+            case 'click_mult': 
+            case 'click_static': return '👆'; // Klick
+            case 'sps_mult': 
+            case 'sps_static': return '⚡'; // Energie/SPS
+            case 'cost_reduction_buildings': 
+            case 'cost_reduction_global': return '📉'; // Rabatt
+            case 'global_god_mode': return '🌟'; // Gott
+            case 'unlock_pets': return '🐾';
+            case 'unlock_mine': return '💎';
+            case 'unlock_guilds': return '🏰';
+            case 'crit_chance': return '🎯';
+            case 'offline_boost': return '💤';
+            default: return '⚙️'; // Standard Zahnrad
+        }
     }
 
     showPrestigeTooltip(e, upgrade, isBought, isLocked) {
@@ -2547,9 +2611,24 @@ class SmileyGame {
         // --- 4. Upgrades Rendern (Logik wie vorher) ---
         const grid = document.getElementById('research-grid');
         const upgrades = [
-            { id: 'durable_picks', name: 'Haltbare Spitzen', desc: 'Chance, keine Spitzhacke zu verbrauchen.', icon: '⛏️', max: 5, baseCost: 5 },
-            { id: 'fossil_scanner', name: 'Fossilien-Scanner', desc: 'Erhöht die Chance auf Fossilien drastisch.', icon: '🦖', max: 5, baseCost: 10 },
-            { id: 'explosive_yield', name: 'Sprengmeister', desc: 'TNT deckt Ressourcen besser auf.', icon: '🧨', max: 3, baseCost: 20 }
+            { 
+                id: 'durable_picks', 
+                name: 'Titan-Spitzen', // Klingt stärker als "Haltbare Spitzen"
+                desc: 'Verstärkte Legierung. 10% Chance, dass die Hacke nicht zerbricht.', 
+                icon: '⛏️', max: 5, baseCost: 5 
+            },
+            { 
+                id: 'fossil_scanner', 
+                name: 'Röntgen-Brille', // Cooler als "Scanner"
+                desc: 'Lässt dich durch Steine sehen. Erhöht Fossilien-Chance massiv.', 
+                icon: '🥽', max: 5, baseCost: 10 
+            },
+            { 
+                id: 'explosive_yield', 
+                name: 'Big Bada Boom', // Referenz :)
+                desc: 'TNT deckt mehr Ressourcen auf und sieht cooler aus.', 
+                icon: '🧨', max: 3, baseCost: 20 
+            }
         ];
 
         upgrades.forEach(u => {
@@ -2638,31 +2717,49 @@ class SmileyGame {
     }
 
     createBuildingElements() {
-    const buildingGrid = this.getById('building-grid');
-    if (!buildingGrid) return;
-    buildingGrid.innerHTML = '';
+        const buildingGrid = this.getById('building-grid');
+        if (!buildingGrid) return;
+        buildingGrid.innerHTML = '';
 
-    buildingsData.forEach((building, index) => {
-        const buildingDiv = document.createElement('div');
-        buildingDiv.className = 'building-item';
-        buildingDiv.dataset.index = index;
+        // Wir rendern NUR die normalen Gebäude aus buildingsData
+        buildingsData.forEach((building, index) => {
+            const buildingDiv = document.createElement('div');
+            buildingDiv.className = 'building-item';
+            buildingDiv.dataset.index = index;
 
-        // Wir fügen ein 'title' Attribut für den Tooltip hinzu
-        buildingDiv.innerHTML = `
-            <h3>
-                ${building.name} (<span id="building-count-${index}">0</span>)
-            </h3>
-            <p class="production">Produktion: <span id="building-sps-${index}">0</span> SPS (<span id="building-sps-pct-${index}">0.0</span>%)</p>
-            
-            <div class="button-group" data-tooltip-type="building" data-index="${index}"> <button id="buy-btn-${index}" class="btn-buy">
-                    <span>Kaufen</span>
-                    <span id="buy-cost-${index}">---</span>
-                </button>
-            </div>
-        `;
-        buildingGrid.appendChild(buildingDiv);
-    });
-}
+            const icon = this.getBuildingIcon(index);
+
+            // Modernes Layout: Icon links, Info rechts, Kaufen-Button unten volle Breite
+            buildingDiv.innerHTML = `
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                    <div style="font-size: 2.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); min-width: 50px; text-align:center;">
+                        ${icon}
+                    </div>
+                    <div style="flex:1; overflow:hidden;">
+                        <h3 style="margin:0; font-size:1.0rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${building.name}">
+                            ${building.name} 
+                        </h3>
+                        <div style="font-size:0.85em; color:#FFD700; margin-top:2px;">
+                            Besitz: <span id="building-count-${index}" style="font-weight:bold;">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="production" style="font-size:0.8em; color:#aaa; margin-bottom:8px; border-top:1px solid #444; padding-top:5px; display:flex; justify-content:space-between;">
+                    <span>Prod: <span id="building-sps-${index}" style="color:#fff;">0</span> SPS</span>
+                    <small style="color:#666;">(<span id="building-sps-pct-${index}">0.0</span>%)</small>
+                </div>
+                
+                <div class="button-group" data-tooltip-type="building" data-index="${index}"> 
+                    <button id="buy-btn-${index}" class="btn-buy" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:8px 12px;">
+                        <span>Kaufen</span>
+                        <span id="buy-cost-${index}" style="font-weight:bold;">---</span>
+                    </button>
+                </div>
+            `;
+            buildingGrid.appendChild(buildingDiv);
+        });
+    }
 
     createPrestigeUpgradeElements() {
         const container = this.getById('prestige-tree-container');
@@ -3280,24 +3377,52 @@ btnGuild.onclick = () => {
         if (!container) return;
         
         container.innerHTML = '';
-        container.className = 'info-grid'; // <--- WICHTIG: Das fehlte!
+        container.className = 'info-grid'; 
 
-        const allBuildings = [...buildingsData, ...uniqueBuildingsData];
+        // Wir nutzen die Standard-Liste
+        const allBuildings = buildingsData; 
         const globalMulti = this.gameState.globalerPrestigeMultiplikator;
 
         allBuildings.forEach((building, index) => {
-            if (index === DIAMOND_MINE_INDEX) return;
             const item = document.createElement('div');
-            item.className = 'info-upgrade-item'; // Einheitliches Styling
+            item.className = 'info-upgrade-item'; 
             
+            // Icon & Besitz abrufen
+            const icon = this.getBuildingIcon(index);
+            const count = this.gameState.buildingCounts[index] || 0;
+
+            // Werte berechnen
             const baseSPSPerUnit = building.baseSPS * (building.prestigeMulti || 1);
             const scaledSPSPerUnit = baseSPSPerUnit * globalMulti;
+            const totalSPSFromBuilding = scaledSPSPerUnit * count;
             
+            // Layout analog zum Hauptmenü, aber mit mehr Details
             item.innerHTML = `
-                <h4 style="color:var(--color-accent-blue); margin-bottom:5px;">${building.name}</h4>
-                <div style="font-size:0.9em; color:#ccc;">
-                    <p>Basis: ${this.formatNumber(baseSPSPerUnit)} SPS</p>
-                    <p>Aktuell: <strong style="color:#fff">${this.formatNumber(scaledSPSPerUnit)} SPS</strong></p>
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                    <div style="font-size: 2.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); min-width: 50px; text-align:center;">
+                        ${icon}
+                    </div>
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:1.1rem; color:var(--color-accent-blue);">${building.name}</h4>
+                        <div style="font-size:0.85em; color:#FFD700; margin-top:2px;">
+                            Im Besitz: <strong>${this.formatNumber(count)}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size:0.85em; color:#ccc; border-top:1px solid #444; padding-top:8px; margin-top:5px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#888;">Basis SPS:</span>
+                        <span>${this.formatNumber(baseSPSPerUnit)}</span>
+                    </div>
+                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>Aktuell (Buffed):</span>
+                        <span style="color:#fff; font-weight:bold;">${this.formatNumber(scaledSPSPerUnit)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px dashed #555; padding-top:4px; margin-top:4px; color:#4CAF50;">
+                        <span>Gesamt-Ertrag:</span>
+                        <strong>${this.formatNumber(totalSPSFromBuilding)} SPS</strong>
+                    </div>
                 </div>
             `;
             container.appendChild(item);
@@ -3309,50 +3434,60 @@ btnGuild.onclick = () => {
         if (!container) return;
         
         container.innerHTML = '';
-        container.className = 'info-grid'; // Gitter-Layout aktivieren
+        container.className = 'info-grid';
 
         globalUpgrades.forEach(u => {
             const bought = this.gameState.researchStatus[u.id];
             
-            // 1. Icon auswählen basierend auf dem Typ
-            let icon = '⚙️'; // Standard
-            if (u.type === 'click_mult' || u.type === 'click_static') icon = '👆';
-            if (u.type === 'sps_mult' || u.type === 'sps_static') icon = '⚡';
-            if (u.type === 'cost_reduction_buildings') icon = '📉';
-            if (u.type === 'global_god_mode') icon = '🌟';
-
-            // 2. Element erstellen
-            const item = document.createElement('div');
-            // Basis-Klasse + Status-Klasse
-            item.className = `info-upgrade-item ${bought ? 'purchased' : 'locked'}`;
+            // 1. Passendes Icon holen
+            let icon = this.getUpgradeIcon(u.type);
             
-            // 3. Styling anpassen (Gekauft = Hell / Nicht gekauft = Dunkel)
-            if (bought) {
-                item.style.borderColor = '#4CAF50';
-                item.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.1)';
-            } else {
-                item.style.borderColor = '#555';
-                item.style.opacity = '0.6';
+            // 2. Name Fallback (Falls in data.js kein Name steht)
+            let name = u.name;
+            if (!name || name === "Unbekanntes Upgrade") {
+                // Versuch, einen Namen aus der Beschreibung zu erraten oder generisch zu benennen
+                if(u.type.includes('click')) name = "Klick-Booster";
+                else if(u.type.includes('sps')) name = "Produktions-Boost";
+                else name = "Technologie";
             }
 
-            // 4. HTML Inhalt bauen
+            // 3. Karte erstellen
+            const item = document.createElement('div');
+            item.className = `info-upgrade-item ${bought ? 'purchased' : 'locked'}`;
+            
+            // Styling für Status
+            const statusColor = bought ? '#4CAF50' : '#ff5252';
+            const statusText = bought ? 'ERFORSCHT' : 'OFFEN';
+            
+            if (bought) {
+                item.style.borderColor = '#4CAF50';
+                item.style.background = 'rgba(76, 175, 80, 0.05)';
+            } else {
+                item.style.borderColor = '#555';
+                item.style.opacity = '0.8';
+            }
+
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:5px;">
-                    <span style="font-size:1.5em;">${icon}</span>
-                    <span style="font-size:0.8em; font-weight:bold; color:${bought ? '#4CAF50' : '#ff5252'}; text-transform:uppercase;">
-                        ${bought ? 'AKTIV' : 'OFFEN'}
-                    </span>
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:10px;">
+                    <div style="font-size:2em;">${icon}</div>
+                    <div style="font-size:0.7em; font-weight:bold; color:${statusColor}; border:1px solid ${statusColor}; padding:2px 6px; border-radius:4px;">
+                        ${statusText}
+                    </div>
                 </div>
                 
-                <h4 style="margin:5px 0; font-size:1rem; color:${bought ? '#fff' : '#aaa'};">
-                    ${u.name || 'Unbekanntes Upgrade'} 
+                <h4 style="margin:0 0 5px 0; font-size:1rem; color:#fff; min-height:1.2em;">
+                    ${name}
                 </h4>
                 
-                <p style="font-size:0.85em; color:#ccc; min-height:40px; display:flex; align-items:center; justify-content:center;">
+                <p style="font-size:0.85em; color:#ccc; min-height:40px; margin-bottom:10px;">
                     ${u.description}
                 </p>
                 
-                ${!bought ? `<div style="margin-top:5px; font-size:0.8em; color:#FFD700;">Kosten: ${this.formatNumber(this.getGlobalUpgradeCost(u))}</div>` : ''}
+                ${!bought ? `
+                <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; font-size:0.9em; color:#FFD700; display:flex; justify-content:space-between;">
+                    <span>Kosten:</span>
+                    <strong>${this.formatNumber(this.getGlobalUpgradeCost(u))}</strong>
+                </div>` : ''}
             `;
             container.appendChild(item);
         });
@@ -3768,9 +3903,16 @@ btnGuild.onclick = () => {
 
         // 2. Nachrichten-Pool basierend auf Fortschritt sammeln
         let newsOptions = [
-            "Wetterbericht: Es regnet Smileys.",
-            "Tipp: Klicke auf den Smiley, um Smileys zu bekommen.",
-            "Wissenschaftler sind sich einig: Smileys sind gut."
+            "Eilmeldung: Smileys zur neuen Weltwährung erklärt!",
+            "Wissenschaftler bestätigen: Lächeln verlängert das Leben, Klicken verkürzt die Maus-Lebensdauer.",
+            "Lokaler Spieler bekommt Finger-Krampf – verklagt Maushersteller.",
+            "Börsen-Crash: Investoren verkaufen Gold und kaufen gelbe Pixel.",
+            "Gerücht: Gibt es ein geheimes Kuh-Level? Der Entwickler schweigt.",
+            "Wettervorhersage: Heiter bis wolkig mit Aussicht auf Diamanten.",
+            "Vermisst: Ein trauriges Gesicht. Wurde zuletzt in der Mine gesehen.",
+            "Studie: 9 von 10 Zahnärzten empfehlen, mehr Smileys zu sammeln.",
+            "Breaking: Unbekanntes Artefakt im Museum fängt an zu leuchten!",
+            "Tipp: Iss zwischendurch mal einen Apfel. Das ist gesund."
         ];
 
         const smileys = this.gameState.aktuelle_smileys;
@@ -4672,7 +4814,16 @@ class GuildSystem {
         // Max 4 Quests gleichzeitig zur Auswahl
         if (state.guildAvailableQuests.length >= 4) return;
 
-        const questNames = ["Ork-Lager räumen", "Königin eskortieren", "Drachen-Schatz", "Verlorene Mine", "Geister-Wald", "Banditen-Überfall"];
+        const questNames = [
+            "Troll-Höhle ausräuchern",       // Statt Ork-Lager
+            "Meme-Archiv bergen",            // Statt Schatz
+            "Die 'Sad Face' Gang verjagen",  // Statt Banditen
+            "Emoji-Datenbank reparieren",    // Passt zum Thema
+            "Den 'Lachenden König' eskortieren",
+            "Verlorene Pixel suchen",
+            "Server-Raum kühlen",
+            "Glitzer-Staub sammeln"
+        ];
         const rarities = [
             { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6 },
             { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3 },
