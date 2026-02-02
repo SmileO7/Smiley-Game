@@ -684,4 +684,3 @@ const achievementsData = [
         bonus: { type: 'global_mult', value: 2.0 }, color: '#FFD700'
     }
 ];
-

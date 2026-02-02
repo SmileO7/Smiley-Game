@@ -183,38 +183,44 @@ main {
 ::-webkit-scrollbar-track { background: #222; border-radius: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--color-accent-blue); border-radius: 3px; }
 
-.news-ticker-container {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--color-accent-blue);
-    border-radius: 4px;
-    padding: 5px 10px;
+/* ======================================================= */
+/* 2a. NEWS TICKER (Fixed Top)                             */
+/* ======================================================= */
+
+#news-ticker-container {
+    position: fixed;
+    top: 60px; /* Unter Navbar */
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background-color: var(--color-primary-dark);
+    border-bottom: 1px solid var(--color-accent-blue);
+    z-index: 900;
     display: flex;
-    overflow: hidden;
-    margin-bottom: 10px;
-    font-size: 0.85rem;
-    overflow: hidden;
-    transition: opacity 0.5s ease-in-out;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-.ticker-label {
-    color: var(--color-accent-blue);
-    font-weight: bold;
-    margin-right: 10px;
-    border-right: 1px solid #444;
-    padding-right: 10px;
-    white-space: nowrap;
+#news-ticker-bar {
+    background-color: #111;       /* Fast schwarz */
+    border-bottom: 2px solid #009ffd; /* Blaue Linie unten */
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    font-family: monospace;       /* Computer-Schrift */
+    white-space: nowrap;          /* Text in einer Zeile */
+    overflow: hidden;             /* Was zu lang ist, abschneiden */
+    text-align: center;
 }
 
-.ticker-text {
-    white-space: nowrap;
-    animation: tickerLoop 25s linear infinite;
-    color: #ccc;
+#news-ticker-text {
+    display: inline-block;
+    transition: opacity 0.5s ease-in-out; /* Weiches Einblenden */
+    color: #FFD700;               /* Goldene Schrift */
 }
 
-@keyframes tickerLoop {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
 /* ======================================================= */
 /* 3. SMILEY & LINKES DASHBOARD (KOMPAKT)                  */
 /* ======================================================= */
@@ -258,7 +264,6 @@ main {
 
 /* Pet Display in der Sidebar */
 #active_pet_display {
-    /* Flexbox ist jetzt inline im HTML definiert */
     transition: all 0.3s ease;
 }
 
@@ -288,14 +293,29 @@ main {
 
 /* Einzelne Gebäude-Karte */
 .building-item {
-    background-color: rgba(255, 255, 255, 0.05); /* Transparenter Hintergrund */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Feiner Rahmen */
-    border-radius: 8px;
-    padding: 10px;
-    transition: all 0.2s ease;
+    /* Dunkelblauer Hintergrund wie im Bild */
+    background-color: #0b1629; 
+    border: 1px solid #005a8d;  /* Dunkleres Blau für den Rand */
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    
     display: flex;
     flex-direction: column;
     gap: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.building-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+}
+
+.building-name {
+    font-weight: bold;
+    color: #fff;
+    font-size: 1.0rem;
 }
 
 .building-item:hover {
@@ -338,19 +358,24 @@ main {
     display: flex;
     gap: 4px;
     margin-top: auto;
+    width: 100%;
 }
 
+/* === EINZELNER KAUF-BUTTON IN DER KARTE === */
 .building-item .btn-buy {
-    flex: 1;
-    font-size: 0.7rem;
-    padding: 4px 0;
-    min-height: 28px;
+    width: 100%; /* Volle Breite */
+    height: 35px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between; /* Text links, Preis rechts */
+    padding: 0 10px;
     background-color: rgba(0, 0, 0, 0.3);
     border: 1px solid #444;
     color: #ccc;
-    border-radius: 4px;
     cursor: pointer;
     transition: all 0.1s;
+    align-items: center;
 }
 
 /* Aktive Buttons */
@@ -411,23 +436,7 @@ main {
     box-shadow: 0 0 10px rgba(0, 159, 253, 0.4);
 }
 
-/* === EINZELNER KAUF-BUTTON IN DER KARTE === */
-/* Da wir nur noch einen Button haben, soll der die volle Breite nutzen */
-.building-item .button-group {
-    width: 100%;
-    margin-top: 5px;
-}
-
-.building-item .btn-buy {
-    width: 100%; /* Volle Breite */
-    height: 35px; /* Etwas höher als vorher */
-    font-size: 0.9rem;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between; /* Text links, Preis rechts */
-    padding: 0 10px;
-}
-
+/* Globale Buttons */
 .btn-primary, .btn-confirm, .btn-danger, .btn-prestige, .btn-cancel, .btn-feature {
     border: none;
     border-radius: 6px;
@@ -447,20 +456,9 @@ main {
 
 .btn-cancel { background-color: var(--color-neutral-accent); }
 
-/* WICHTIG: Feature Buttons Grid (Mitte) */
+/* WICHTIG: Feature Buttons Grid (Mitte) - Bereinigt */
 .feature-button-grid {
-    display: grid;
-    /* ÄNDERUNG: 4 Spalten statt 2 -> Buttons nebeneinander */
-    grid-template-columns: repeat(4, 1fr); 
-    gap: 8px;
-    margin-bottom: 15px;
-    
-    flex-shrink: 0; 
-    width: 100%;
-}
-
-.feature-button-grid {
-    display: flex; /* Flexbox statt Grid */
+    display: flex; /* Flexbox */
     justify-content: space-between;
     gap: 5px;
     margin-bottom: 15px;
@@ -523,8 +521,6 @@ main {
 }
 .btn-buy-research:disabled { background: #333; color: #777; cursor: not-allowed; }
 
-
-
 /* ======================================================= */
 /* 6. MODALS & POPUPS                                      */
 /* ======================================================= */
@@ -560,7 +556,7 @@ main {
 .modal-buttons { margin-top: 20px; text-align: right; border-top: 1px solid #333; padding-top: 10px; }
 
 /* Settings Slider */
-.settings-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+.settings-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
 input[type=range] { width: 100%; cursor: pointer; }
 #save-data-textarea { width: 100%; background: #000; color: #009FFD; border: 1px solid #333; padding: 10px; }
 
@@ -570,16 +566,11 @@ input[type=range] { width: 100%; cursor: pointer; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { border-color: #FFD700; color: #FFD700; }
 
-.settings-section {
-    margin-bottom: 20px;
-    text-align: center; /* Zentriert die Buttons im Modal */
-}
-
-/* Damit die Cloud Buttons schön nebeneinander stehen */
 #cloud-controls button {
     margin: 5px;
     min-width: 120px;
 }
+
 /* ======================================================= */
 /* 7. PRESTIGE TREE (DRAG & DROP CANVAS)                   */
 /* ======================================================= */
@@ -591,11 +582,9 @@ input[type=range] { width: 100%; cursor: pointer; }
     background: radial-gradient(circle at center, #0b0f19 0%, #000 100%);
     border: 1px solid var(--color-accent-blue);
     border-radius: 8px;
-    overflow: hidden; /* WICHTIG: Versteckt den Überlauf */
+    overflow: hidden;
     cursor: grab;
     user-select: none;
-    
-    /* Grid Hintergrund */
     background-image: 
         linear-gradient(rgba(0, 159, 253, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 159, 253, 0.05) 1px, transparent 1px);
@@ -604,7 +593,6 @@ input[type=range] { width: 100%; cursor: pointer; }
 
 #prestige-tree-container:active { cursor: grabbing; }
 
-/* Die Welt-Ebene */
 #prestige-tree-world {
     position: absolute;
     top: 0; left: 0;
@@ -612,15 +600,13 @@ input[type=range] { width: 100%; cursor: pointer; }
     will-change: transform;
 }
 
-/* Canvas für Linien */
 #prestige-lines {
     position: absolute;
     top: 0; left: 0;
-    pointer-events: none; /* WICHTIG: Maus klickt durch */
+    pointer-events: none;
     z-index: 1;
 }
 
-/* Nodes */
 .skill-node {
     position: absolute;
     width: 50px; height: 50px;
@@ -642,7 +628,6 @@ input[type=range] { width: 100%; cursor: pointer; }
 .skill-node.available { background-color: var(--color-neutral-olive); border-color: var(--color-accent-blue); }
 .skill-node.locked { opacity: 0.6; border-color: #333; }
 
-/* Tooltip (JS positioniert) */
 #prestige-tooltip-modal {
     position: fixed !important;
     background: rgba(10, 10, 25, 0.95);
@@ -650,7 +635,7 @@ input[type=range] { width: 100%; cursor: pointer; }
     padding: 15px;
     border-radius: 6px;
     z-index: 9999;
-    pointer-events: none; /* Kein Flackern */
+    pointer-events: none;
     box-shadow: 0 5px 20px rgba(0,0,0,0.8);
     max-width: 300px;
     color: #fff;
@@ -683,11 +668,7 @@ input[type=range] { width: 100%; cursor: pointer; }
 /* 9. OTHER MODULES (Mine, Guilds, Info)                   */
 /* ======================================================= */
 
-/* =========================================
-   ⛏️ DIAMANTEN MINE - FINAL & STABIL
-   ========================================= */
-
-/* Das Spielfeld */
+/* === ⛏️ DIAMANTEN MINE === */
 .mine-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -695,11 +676,10 @@ input[type=range] { width: 100%; cursor: pointer; }
     margin: 20px auto;
     max-width: 400px;
     aspect-ratio: 1 / 1;
-    user-select: none; /* Wichtig: Verhindert Markieren beim Spam-Klicken */
+    user-select: none;
     -webkit-user-select: none;
 }
 
-/* Die einzelne Kachel (Stein) */
 .mine-tile {
     background: #444;
     border: 2px solid #222;
@@ -711,46 +691,20 @@ input[type=range] { width: 100%; cursor: pointer; }
     font-size: 1.5rem;
     position: relative;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    
-    /* 🛑 WICHTIG: KEINE Transition für Instant-Reaktion! */
     transition: none !important; 
     transform: none !important;
 }
 
-/* Kachel: Verdeckt */
-.mine-tile.hidden {
-    background: linear-gradient(135deg, #5a5a5a, #3a3a3a);
-}
+.mine-tile.hidden { background: linear-gradient(135deg, #5a5a5a, #3a3a3a); }
+.mine-tile.revealed { background: #222; border-color: #111; cursor: default; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8); }
+.mine-tile:hover { filter: brightness(1.2); background-color: #555; z-index: 1; }
+.mine-tile:active { filter: brightness(0.8); background-color: #333; border-color: #000; }
 
-/* Kachel: Aufgedeckt */
-.mine-tile.revealed {
-    background: #222;
-    border-color: #111;
-    cursor: default;
-    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8);
-}
-
-/* Hover: Nur Helligkeit ändern (Super schnell) */
-.mine-tile:hover {
-    filter: brightness(1.2); 
-    background-color: #555; /* Fallback */
-    z-index: 1;
-}
-
-/* Active: Dunkler werden beim Klicken */
-.mine-tile:active {
-    filter: brightness(0.8);
-    background-color: #333;
-    border-color: #000;
-}
-
-/* --- LOOT FARBEN --- */
 .loot-stone { color: #666; font-size: 1.2rem; }
-.loot-diamond { color: #009ffd; text-shadow: 0 0 8px rgba(0, 159, 253, 0.6); font-weight: bold; }
-.loot-gold { color: #ffeb3b; text-shadow: 0 0 5px rgba(255, 235, 59, 0.5); }
-.loot-fossil { color: #e0e0e0; text-shadow: 0 0 5px rgba(255, 255, 255, 0.4); font-weight: bold; }
+.loot-diamond { color: #00e5ff !important; text-shadow: 0 0 8px rgba(0, 159, 253, 0.6); font-weight: bold; }
+.loot-gold { color: #FFD700 !important; text-shadow: 0 0 5px rgba(255, 235, 59, 0.5); }
+.loot-fossil { color: #e0e0e0 !important; text-shadow: 0 0 5px rgba(255, 255, 255, 0.4); font-weight: bold; }
 
-/* Pulsierende Ausgänge */
 .loot-passage { 
     font-size: 2rem; 
     animation: pulse 1.5s infinite ease-in-out; 
@@ -763,15 +717,12 @@ input[type=range] { width: 100%; cursor: pointer; }
     100% { transform: scale(1); filter: brightness(1); }
 }
 
-/* --- UI ELEMENTE (Buttons & Nav) --- */
-
 .mine-nav {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
     border-bottom: 1px solid #444;
     padding-bottom: 10px;
-    /* Verhindert Layout-Verschiebungen */
     min-height: 45px; 
 }
 
@@ -783,50 +734,24 @@ input[type=range] { width: 100%; cursor: pointer; }
     background: #222;
     color: #aaa;
     border-radius: 6px;
-    
-    /* 🛑 WICHTIG: Keine Transform-Transition! */
     transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-    transform: none !important; /* Bleibt fest stehen */
+    transform: none !important;
 }
 
-/* Hover Zustand */
-.mine-nav button:hover {
-    background: #333;
-    color: #fff;
-    border-color: #666;
-}
-
-/* Aktiver Zustand (wird per JS Klasse gesteuert, aber hier erzwingen wir Stabilität) */
+.mine-nav button:hover { background: #333; color: #fff; border-color: #666; }
 .mine-nav button:not(.btn-cancel) {
     background: #009ffd !important;
-    color: #000 !important; /* Schwarzer Text auf Blau für Lesbarkeit */
+    color: #000 !important;
     font-weight: bold;
     border-color: #009ffd !important;
     box-shadow: 0 0 10px rgba(0, 159, 253, 0.4);
 }
 
-.mine-tile > * {
-    pointer-events: none !important;
-}
+.mine-tile > * { pointer-events: none !important; }
+.mine-grid, .mine-nav { user-select: none; -webkit-user-select: none; }
+.mine-nav button { border: 1px solid transparent; transform: translateZ(0); }
 
-/* Verhindert, dass man beim schnellen Klicken Text markiert */
-.mine-grid, .mine-nav {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-/* Nav Button Stabilisierung */
-.mine-nav button {
-    /* Verhindert Flackern durch Größenänderung */
-    border: 1px solid transparent; 
-    transform: translateZ(0); /* Hardware-Beschleunigung */
-}
-
-/* Werkzeuge */
-.tool-bar {
-    transition: all 0.2s ease;
-}
-
+.tool-bar { transition: all 0.2s ease; }
 .btn-tool {
     padding: 8px 12px;
     border-radius: 6px;
@@ -835,42 +760,27 @@ input[type=range] { width: 100%; cursor: pointer; }
     cursor: pointer;
     font-size: 1.1rem;
     min-width: 60px;
-    
-    /* Keine Bewegung, nur Farbe */
     transition: background 0.1s, border-color 0.1s;
     transform: none !important;
 }
+.btn-tool:hover { background: #444; border-color: #777; }
+.btn-tool:active { background: #222; }
 
-.btn-tool:hover {
-    background: #444;
-    border-color: #777;
+#buy-picks-btn {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    border: 1px solid #45a049 !important;
+    padding: 8px 16px !important;
+    border-radius: 5px !important;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.1s, filter 0.1s;
 }
-
-.btn-tool:active {
-    background: #222;
-}
-
-/* Notfall Kauf Button */
-#buy-picks-btn:hover {
-    filter: brightness(1.2);
-}
-#buy-picks-btn:active {
-    transform: scale(0.98);
-}
-
-.floating-text, 
-.click-effect,
-.loot-stone, 
-.loot-diamond, 
-.loot-gold,
-.loot-passage,
-.mine-tile span {
-    pointer-events: none !important; /* Maus ignoriert den Text */
-    user-select: none !important;    /* Text kann nicht markiert werden */
-}
+#buy-picks-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+#buy-picks-btn:active { transform: scale(0.95); }
 
 /* Info Grid */
-/* Info Grid Styling */
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -887,61 +797,19 @@ input[type=range] { width: 100%; cursor: pointer; }
 }
 .info-upgrade-item.bought-upgrade { border-left: 4px solid var(--color-accent-blue); }
 
-/* --- FIX: SCROLLING FÜR LANGE LISTEN --- */
-
-/* Sorgt dafür, dass die Upgrade-Liste im Modal scrollbar ist */
-#info_global_upgrades_container {
-    overflow-y: auto;       /* Vertikales Scrollen erlauben */
-    flex: 1;                /* Füllt den verfügbaren Platz im Modal aus */
-    min-height: 0;          /* Wichtig: Verhindert, dass Flexbox den Container sprengt */
-    
-    /* Optik */
-    padding-right: 5px;     /* Etwas Platz für den Scrollbalken */
-    margin-bottom: 10px;    /* Abstand zu den Buttons unten */
-    border-bottom: 1px solid #333; /* Trennlinie unten */
-}
-
-/* Das Gleiche machen wir sicherheitshalber auch für die Gebäude-Info und Achievements */
-#info_buildings_container, 
-#info_achievements_container,
-#info_pets_container {
+#info_global_upgrades_container, #info_buildings_container, #info_achievements_container, #info_pets_container {
     overflow-y: auto;
     flex: 1;
     min-height: 0;
     padding-right: 5px;
     margin-bottom: 10px;
+    border-bottom: 1px solid #333;
 }
 
-/* --- 🛒 STYLING FÜR DEN NACHKAUF-BUTTON --- */
-#buy-picks-btn {
-    background-color: #4CAF50 !important; /* Schön Grün */
-    color: white !important;
-    border: 1px solid #45a049 !important;
-    padding: 8px 16px !important;
-    border-radius: 5px !important;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: transform 0.1s, filter 0.1s;
-}
-
-#buy-picks-btn:hover {
-    filter: brightness(1.2); /* Heller beim Hover */
-    transform: scale(1.05);  /* Leicht vergrößern */
-}
-
-#buy-picks-btn:active {
-    transform: scale(0.95);  /* Klick-Effekt */
-}
-
-.loot-gold { color: #FFD700 !important; font-weight: bold; text-shadow: 0 0 5px black; }
-.loot-diamond { color: #00e5ff !important; font-weight: bold; text-shadow: 0 0 5px black; }
-.loot-fossil { color: #e0e0e0 !important; font-weight: bold; text-shadow: 0 0 5px black; }
 /* ======================================================= */
-/* 10. RNG Events                                       */
+/* 10. RNG Events                                          */
 /* ======================================================= */
 
-/* === RNG EVENT STYLE === */
 .rng-event-object {
     position: fixed;
     width: 60px;
@@ -963,7 +831,6 @@ input[type=range] { width: 100%; cursor: pointer; }
     100% { transform: scale(1); filter: drop-shadow(0 0 5px gold); }
 }
 
-/* Eine einfache Schwebe-Animation */
 @keyframes bounceAround {
     0% { margin-left: 0px; margin-top: 0px; }
     25% { margin-left: 50px; margin-top: 100px; }
@@ -973,7 +840,7 @@ input[type=range] { width: 100%; cursor: pointer; }
 }
 
 /* ======================================================= */
-/* 11. Skills                                       */
+/* 11. Skills                                              */
 /* ======================================================= */
 
 .btn-skill {
@@ -990,44 +857,19 @@ input[type=range] { width: 100%; cursor: pointer; }
     transition: all 0.3s ease;
 }
 
-/* Zustand: BEREIT (Blau) */
-.btn-skill.ready {
-    border-color: #009FFD;
-    box-shadow: 0 0 10px rgba(0, 159, 253, 0.3);
-}
-.btn-skill.ready .skill-timer {
-    color: #009FFD;
-}
+.btn-skill.ready { border-color: #009FFD; box-shadow: 0 0 10px rgba(0, 159, 253, 0.3); }
+.btn-skill.ready .skill-timer { color: #009FFD; }
 
-/* Zustand: AKTIV (Grün) */
-.btn-skill.is-active {
-    border-color: #4CAF50 !important;
-    background: rgba(76, 175, 80, 0.15);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-}
-.btn-skill.is-active .skill-timer {
-    color: #4CAF50 !important;
-}
+.btn-skill.is-active { border-color: #4CAF50 !important; background: rgba(76, 175, 80, 0.15); box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+.btn-skill.is-active .skill-timer { color: #4CAF50 !important; }
 
-/* Zustand: COOLDOWN (Rot) */
-.btn-skill:disabled {
-    border-color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
-    cursor: not-allowed;
-}
-.btn-skill:disabled .skill-timer {
-    color: #f44336;
-}
+.btn-skill:disabled { border-color: #f44336; background: rgba(244, 67, 54, 0.1); cursor: not-allowed; }
+.btn-skill:disabled .skill-timer { color: #f44336; }
 
-.skill-timer {
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-top: 4px;
-    letter-spacing: 1px;
-}
+.skill-timer { font-size: 0.75rem; font-weight: bold; margin-top: 4px; letter-spacing: 1px; }
 
 /* ======================================================= */
-/* 12. Pets                                       */
+/* 12. Pets                                                */
 /* ======================================================= */
 
 .pet-grid {
@@ -1049,52 +891,16 @@ input[type=range] { width: 100%; cursor: pointer; }
     align-items: center;
     position: relative;
 }
+.pet-item:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.08); }
 
-.pet-item:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
-}
+.pet-item.active { border: 2px solid #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.3); background: rgba(76, 175, 80, 0.05); }
+.pet-item.bought { border-color: #009ffd; }
 
-/* Wenn das Pet aktiv ist (ausgerüstet) */
-.pet-item.active {
-    border: 2px solid #4CAF50;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
-    background: rgba(76, 175, 80, 0.05);
-}
+.pet-icon { font-size: 3rem; margin-bottom: 10px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+.pet-name { font-weight: bold; color: #fff; margin-bottom: 5px; font-size: 1.1rem; }
+.pet-desc { font-size: 0.8rem; color: #aaa; min-height: 40px; margin-bottom: 10px; }
+.pet-actions button { width: 100%; margin-top: 5px; font-size: 0.85rem; padding: 6px; }
 
-/* Wenn das Pet gekauft wurde, aber nicht aktiv ist */
-.pet-item.bought {
-    border-color: #009ffd;
-}
-
-.pet-icon {
-    font-size: 3rem;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
-}
-
-.pet-name {
-    font-weight: bold;
-    color: #fff;
-    margin-bottom: 5px;
-    font-size: 1.1rem;
-}
-
-.pet-desc {
-    font-size: 0.8rem;
-    color: #aaa;
-    min-height: 40px; /* Einheitliche Höhe */
-    margin-bottom: 10px;
-}
-
-.pet-actions button {
-    width: 100%;
-    margin-top: 5px;
-    font-size: 0.85rem;
-    padding: 6px;
-}
-
-/* Der Sperrbildschirm (falls noch nicht freigeschaltet) */
 #pet-lock-message {
     text-align: center;
     padding: 40px;
@@ -1138,147 +944,64 @@ input[type=range] { width: 100%; cursor: pointer; }
     100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
-.shake-effect {
-    animation: shake-animation 0.3s; /* Kurz und knackig */
-    animation-iteration-count: 1;
-}
+.shake-effect { animation: shake-animation 0.3s; animation-iteration-count: 1; }
 
-/* Spezieller Shake für den Boss-Container */
 .boss-hit-effect {
     animation: shake-animation 0.2s;
-    border-color: #ff5252 !important; /* Roter Rand beim Treffer */
+    border-color: #ff5252 !important;
     background-color: rgba(255, 0, 0, 0.1) !important;
 }
 
-/* ======================================================= */
-/* SYSTEM: VISUAL FX - BIG BANG OVERLAY                    */
-/* ======================================================= */
-
-/* Container für den globalen Lichtblitz */
 #big-bang-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: white;
-    opacity: 0;
-    pointer-events: none; /* Klicks werden durchgeleitet */
-    z-index: 99999; /* Höchste Ebene (über allen Modals) */
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: white; opacity: 0; pointer-events: none; z-index: 99999;
     transition: opacity 0.1s ease-in;
 }
 
-/* Animations-Definition */
-.flash-bang {
-    animation: flash-animation 2.5s forwards;
-}
+.flash-bang { animation: flash-animation 2.5s forwards; }
 
 @keyframes flash-animation {
-    0% { opacity: 0; }
-    5% { opacity: 1; }   /* Schneller Anstieg auf 100% Deckkraft */
-    20% { opacity: 1; }  /* Haltezeit */
-    100% { opacity: 0; } /* Langsames Ausblenden */
+    0% { opacity: 0; } 5% { opacity: 1; } 20% { opacity: 1; } 100% { opacity: 0; }
 }
+
 /* ======================================================= */
-/* SYSTEM: CUSTOM TOOLTIP (Profi-Look)                     */
+/* 15. SYSTEM: CUSTOM TOOLTIP & BUFF BAR                   */
 /* ======================================================= */
 
 #custom-tooltip {
-    position: fixed;
-    display: none; /* Standardmäßig versteckt */
-    background: rgba(20, 20, 25, 0.95);
-    border: 1px solid #444;
-    border-left: 4px solid var(--color-primary); /* Akzent links */
-    padding: 12px;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 0.9rem;
-    pointer-events: none; /* Wichtig: Maus ignoriert das Element */
-    z-index: 100000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    max-width: 300px;
-    white-space: pre-line; /* Damit Zeilenumbrüche funktionieren */
-    backdrop-filter: blur(4px);
+    position: fixed; display: none; background: rgba(20, 20, 25, 0.95);
+    border: 1px solid #444; border-left: 4px solid var(--color-primary-dark);
+    padding: 12px; border-radius: 4px; color: #fff; font-size: 0.9rem;
+    pointer-events: none; z-index: 100000; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    max-width: 300px; white-space: pre-line; backdrop-filter: blur(4px);
 }
 
-#custom-tooltip h4 {
-    margin: 0 0 5px 0;
-    color: var(--color-accent-blue);
-    font-size: 1rem;
-    border-bottom: 1px solid #444;
-    padding-bottom: 4px;
-}
-
-#custom-tooltip .tooltip-stat {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    margin-bottom: 2px;
-}
-
+#custom-tooltip h4 { margin: 0 0 5px 0; color: var(--color-accent-blue); font-size: 1rem; border-bottom: 1px solid #444; padding-bottom: 4px; }
+#custom-tooltip .tooltip-stat { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 2px; }
 #custom-tooltip .highlight-green { color: #4CAF50; }
 #custom-tooltip .highlight-red { color: #ff5252; }
 #custom-tooltip .highlight-gold { color: #FFD700; }
 
-/* --- BUFF LEISTE --- */
-.buff-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 10px;
-    min-height: 5px; /* Damit das Layout nicht springt */
-}
+.buff-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; min-height: 5px; }
+.buff-badge { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 1px solid transparent; transition: all 0.2s; }
+.buff-badge.good { background: rgba(76, 175, 80, 0.15); border-color: #4CAF50; color: #4CAF50; }
+.buff-badge.bad { background: rgba(244, 67, 54, 0.15); border-color: #f44336; color: #f44336; }
 
-.buff-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    border: 1px solid transparent;
-    transition: all 0.2s;
-}
-
-/* Gut (Grün) */
-.buff-badge.good {
-    background: rgba(76, 175, 80, 0.15);
-    border-color: #4CAF50;
-    color: #4CAF50;
-}
-
-/* Schlecht (Rot) */
-.buff-badge.bad {
-    background: rgba(244, 67, 54, 0.15);
-    border-color: #f44336;
-    color: #f44336;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* =========================================
-   💬 CHAT SYSTEM (Final Theme Version)
-   ========================================= */
+/* ======================================================= */
+/* 16. CHAT SYSTEM (Final Theme Version)                   */
+/* ======================================================= */
 
 /* 1. Haupt-Container */
 #main-chat-container {
     position: fixed;
     bottom: 20px;
     left: 20px;
-    width: 360px; /* Breiter für besseres Layout */
+    width: 360px;
     height: 380px;
-    
-    /* DEIN FARBSCHEMA: Oxford Blue Hintergrund */
     background-color: rgba(1, 22, 56, 0.95); 
-    border: 1px solid #009ffd; /* Azure Rand */
+    border: 1px solid #009ffd;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
-    
     display: flex;
     flex-direction: column;
     z-index: 9999;
@@ -1287,313 +1010,101 @@ input[type=range] { width: 100%; cursor: pointer; }
     transition: all 0.3s ease;
 }
 
-/* Zustand: Minimiert */
-#main-chat-container.chat-minimized {
-    height: 42px;
-    width: 280px; 
-    border-color: #444; /* Dezenter wenn zu */
-}
+#main-chat-container.chat-minimized { height: 42px; width: 280px; border-color: #444; }
 
-/* 2. Der Header */
+/* 2. Header */
 .chat-header {
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    height: 42px;
-    
-    /* Etwas dunkleres Blau für den Header */
-    background: rgba(0, 0, 0, 0.4); 
-    border-bottom: 1px solid rgba(0, 159, 253, 0.3);
-    gap: 10px; 
+    display: flex; align-items: center; padding: 0 10px; height: 42px;
+    background: rgba(0, 0, 0, 0.4); border-bottom: 1px solid rgba(0, 159, 253, 0.3); gap: 10px; 
 }
 
-/* 3. Tabs (Links) */
-.chat-tabs {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
+/* 3. Tabs */
+.chat-tabs { display: flex; gap: 4px; flex-shrink: 0; }
 .btn-chat-tab {
-    position: relative;
-    background: transparent;
-    border: 1px solid transparent;
-    color: #889;
-    padding: 4px 8px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
-    font-family: inherit;
+    position: relative; background: transparent; border: 1px solid transparent; color: #889;
+    padding: 4px 8px; font-size: 0.85rem; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-family: inherit;
 }
+.btn-chat-tab:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+.btn-chat-tab.active { background: rgba(0, 159, 253, 0.2); border: 1px solid #009ffd; color: #fff; text-shadow: 0 0 5px rgba(0, 159, 253, 0.5); }
 
-.btn-chat-tab:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-/* Aktiver Tab: Dein Azure Blau */
-.btn-chat-tab.active {
-    background: rgba(0, 159, 253, 0.2);
-    border: 1px solid #009ffd;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(0, 159, 253, 0.5);
-}
-
-/* 4. Spieler Name (Mitte) - Ohne Kasten! */
+/* 4. Name */
 #chat-user-display {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    /* WICHTIG: Hintergrund entfernen */
-    background: transparent !important; 
-    border: none !important;
-    box-shadow: none !important;
-    
-    font-size: 0.8rem;
-    color: #aaa;
-    white-space: nowrap;
-    overflow: hidden;
-    cursor: pointer;
+    flex-grow: 1; display: flex; justify-content: center; align-items: center;
+    background: transparent !important; border: none !important; box-shadow: none !important;
+    font-size: 0.8rem; color: #aaa; white-space: nowrap; overflow: hidden; cursor: pointer;
 }
+#current-player-name { color: #009ffd; font-weight: bold; margin-left: 5px; }
+#chat-user-display:hover #current-player-name { text-decoration: underline; color: #fff; }
 
-#current-player-name {
-    color: #009ffd; /* Azure für den Namen */
-    font-weight: bold;
-    margin-left: 5px;
-}
-
-#chat-user-display:hover #current-player-name {
-    text-decoration: underline;
-    color: #fff;
-}
-
-/* 5. Controls (Rechts) */
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-#btn-chat-mute {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0;
-    opacity: 0.6;
-    color: #fff;
-    transition: transform 0.2s;
-}
+/* 5. Controls */
+.header-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+#btn-chat-mute { background: transparent; border: none; cursor: pointer; font-size: 1rem; padding: 0; opacity: 0.6; color: #fff; transition: transform 0.2s; }
 #btn-chat-mute:hover { opacity: 1; transform: scale(1.1); }
-
-/* Wenn gemutet: Rot (oder dein Blood Red #6b0504, aber heller für Sichtbarkeit) */
-#btn-chat-mute.muted {
-    color: #ff4444; 
-    opacity: 1;
-}
-
-#btn-chat-toggle {
-    background: transparent;
-    border: none;
-    color: #aaa;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1.2rem;
-    line-height: 1;
-    padding: 0;
-}
+#btn-chat-mute.muted { color: #ff4444; opacity: 1; }
+#btn-chat-toggle { background: transparent; border: none; color: #aaa; font-weight: bold; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0; }
 #btn-chat-toggle:hover { color: #fff; }
 
-/* 6. Content Bereich */
+/* 6. Content */
 #chat-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    flex: 1;
-    min-height: 0;
-    /* Leicht transparenter Hintergrund */
-    background: rgba(0, 0, 0, 0.2); 
-    overflow: hidden;
+    display: flex; flex-direction: column; height: 100%; flex: 1; min-height: 0;
+    background: rgba(0, 0, 0, 0.2); overflow: hidden;
 }
 
-#chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+#chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
 
-/* Nachrichten */
-.chat-msg {
-    font-size: 0.85rem;
-    line-height: 1.35;
-    word-wrap: break-word;
-    color: #e0e0e0;
-    padding: 2px 0;
-}
+.chat-msg { font-size: 0.85rem; line-height: 1.35; word-wrap: break-word; color: #e0e0e0; padding: 2px 0; }
+.chat-msg strong { color: #009ffd; cursor: pointer; }
+.chat-msg.system { color: #ffd700; font-style: italic; font-size: 0.8rem; border-bottom: 1px solid rgba(255, 215, 0, 0.2); padding-bottom: 4px; margin-bottom: 4px; }
+.chat-msg.guild { border-left: 3px solid #3e5641; padding-left: 8px; background: rgba(62, 86, 65, 0.1); }
 
-/* User Name in Nachrichten */
-.chat-msg strong { 
-    color: #009ffd; /* Azure */
-    cursor: pointer;
-}
+/* 7. Input */
+.chat-input-area { display: flex; padding: 10px; background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(0, 159, 253, 0.2); gap: 8px; flex-shrink: 0; }
+#chat-input { flex: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid #444; color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 0.9rem; outline: none; font-family: inherit; }
+#chat-input:focus { border-color: #009ffd; box-shadow: 0 0 5px rgba(0, 159, 253, 0.3); }
 
-/* System Nachrichten (Gelb/Gold) */
-.chat-msg.system { 
-    color: #ffd700; 
-    font-style: italic; 
-    font-size: 0.8rem;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-    padding-bottom: 4px;
-    margin-bottom: 4px;
-}
-
-/* Gilden Nachrichten (Dein Grün: #3e5641 - etwas aufgehellt für Lesbarkeit) */
-.chat-msg.guild {
-    border-left: 3px solid #3e5641;
-    padding-left: 8px;
-    background: rgba(62, 86, 65, 0.1);
-}
-
-/* 7. Input Bereich */
-.chat-input-area {
-    display: flex;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid rgba(0, 159, 253, 0.2);
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-#chat-input {
-    flex: 1;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid #444;
-    color: #fff;
-    padding: 8px 10px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    outline: none;
-    font-family: inherit;
-}
-
-#chat-input:focus {
-    border-color: #009ffd;
-    box-shadow: 0 0 5px rgba(0, 159, 253, 0.3);
-}
-
-/* Senden Button */
 #btn-chat-send {
-    width: 40px;
-    /* Verlauf mit deiner Azure Farbe */
-    background: linear-gradient(135deg, #009ffd, #0077c2);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    width: 40px; background: linear-gradient(135deg, #009ffd, #0077c2); border: none; border-radius: 4px; cursor: pointer;
+    font-size: 1.1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
-#btn-chat-send:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-}
-#btn-chat-send:active {
-    transform: translateY(1px);
-}
+#btn-chat-send:hover { filter: brightness(1.1); transform: translateY(-1px); }
+#btn-chat-send:active { transform: translateY(1px); }
 
-/* Scrollbars im Theme Look */
 #chat-messages::-webkit-scrollbar { width: 6px; }
 #chat-messages::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
 #chat-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 #chat-messages::-webkit-scrollbar-thumb:hover { background: #009ffd; }
 
-/* Roter Punkt (Benachrichtigung) */
 .notification-dot {
-    display: none;
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 9px;
-    height: 9px;
-    /* Signalrot für Sichtbarkeit, passt aber als Komplementärkontrast */
-    background-color: #ff3333; 
-    border-radius: 50%;
-    box-shadow: 0 0 4px #ff0000;
-    z-index: 10;
+    display: none; position: absolute; top: -3px; right: -3px; width: 9px; height: 9px;
+    background-color: #ff3333; border-radius: 50%; box-shadow: 0 0 4px #ff0000; z-index: 10;
 }
 .btn-chat-tab.has-notification .notification-dot { display: block; }
 
-/* Container für die Liste */
-.guild-list-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-}
-
-/* Tabellen-Kopf */
-.guild-list-header {
-    display: grid;
-    grid-template-columns: 40px 1fr 1fr; /* Spaltenbreiten */
-    padding: 8px;
-    background: rgba(0, 159, 253, 0.2);
-    font-weight: bold;
-    color: #009ffd;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #333;
-}
-
-/* Listen-Körper (Scrollbar) */
-#guild-list-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 5px;
-}
-
-/* Einzelne Zeile */
-.guild-member-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 1fr;
-    align-items: center;
-    padding: 6px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.85rem;
-    color: #ccc;
-}
-
-.guild-member-row:hover {
-    background: rgba(255,255,255,0.05);
-}
-
-/* Spalten Styles */
+/* 8. Gilden-Liste (Styling für zukünftige Nutzung) */
+.guild-list-container { flex: 1; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.3); overflow: hidden; }
+.guild-list-header { display: grid; grid-template-columns: 40px 1fr 1fr; padding: 8px; background: rgba(0, 159, 253, 0.2); font-weight: bold; color: #009ffd; font-size: 0.8rem; border-bottom: 1px solid #333; }
+#guild-list-body { flex: 1; overflow-y: auto; padding: 5px; }
+.guild-member-row { display: grid; grid-template-columns: 40px 1fr 1fr; align-items: center; padding: 6px 4px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; color: #ccc; }
+.guild-member-row:hover { background: rgba(255,255,255,0.05); }
 .rank { color: #666; font-size: 0.75rem; text-align: center; }
 .score { color: #ffd700; text-align: right; font-family: monospace; }
 .name { display: flex; align-items: center; gap: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.highlight-me { color: #009ffd; font-weight: bold; }
 
-/* Wenn ich das selbst bin */
-.highlight-me {
-    color: #009ffd;
-    font-weight: bold;
-}
-
-/* Button für die Liste */
-#btn-guild-list {
-    background: transparent;
-    border: 1px solid #444;
-    color: #ddd;
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 2px 6px;
-}
+#btn-guild-list { background: transparent; border: 1px solid #444; color: #ddd; cursor: pointer; border-radius: 4px; padding: 2px 6px; }
 #btn-guild-list:hover { background: rgba(255,255,255,0.1); }
 #btn-guild-list.active { background: #009ffd; color: #fff; border-color: #009ffd; }
+
+#building-tooltip {
+    background-color: rgba(15, 20, 30, 0.95); /* Fast schwarzer Hintergrund, 95% deckend */
+    border: 2px solid #009ffd;               /* Dein typischer blauer Rand */
+    border-radius: 8px;                      /* Abgerundete Ecken */
+    padding: 12px;                           /* Platz innen */
+    color: #ffffff;                          /* Weiße Schrift */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);  /* Schatten für 3D-Effekt */
+    pointer-events: none;                    /* WICHTIG: Damit die Maus durchklicken kann */
+    font-size: 0.9rem;                       /* Lesbare Größe */
+    min-width: 220px;                        /* Mindestbreite */
+    z-index: 9999;                           /* Immer ganz oben */
+    backdrop-filter: blur(5px);              /* Leichter Milchglas-Effekt (optional) */
+}
