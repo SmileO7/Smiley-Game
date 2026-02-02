@@ -150,26 +150,46 @@ class SmileyGame {
     }
 
     init() {
+        // 1. Spielstand laden (Gebäude, Smileys, etc.)
         this.ladeSpiel();
 
-        if (!this.gameState.playerId) {
-            this.gameState.playerId = 'uid_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
-            console.log("🆔 Neue Spieler-ID generiert:", this.gameState.playerId);
+        // =========================================================
+        // 🛡️ ANTI-SPAM ID SYSTEM (Geräte-Bindung)
+        // =========================================================
+        // Wir suchen eine ID, die den "Reset" überlebt hat (im LocalStorage, nicht im SaveGame)
+        let storedId = localStorage.getItem('smiley_device_id');
+
+        if (!storedId) {
+            // Fall A: Spieler ist wirklich komplett neu auf diesem Gerät
+            storedId = 'uid_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+            localStorage.setItem('smiley_device_id', storedId);
+            console.log("🆕 Neue Geräte-ID erstellt & gespeichert:", storedId);
+        } else {
+            // Fall B: Spieler war schon mal da -> Wir nutzen die alte ID wieder!
+            console.log("📱 Bekanntes Gerät erkannt. ID wiederhergestellt:", storedId);
         }
 
+        // WICHTIG: Wir überschreiben die ID im GameState mit der festen Geräte-ID.
+        // So bleibt man in der Gilde, auch wenn man den Spielstand resettet.
+        this.gameState.playerId = storedId;
+        // =========================================================
+
+        // Fallback für Namen
         if (this.gameState.playerName === "Smiley_Gast") {
             this.gameState.playerName = "Smiley_" + Math.floor(Math.random() * 9999);
         }
 
+        // Mine Reparieren falls nötig
         if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
             if (this.gameState.mineGrid[0].content === undefined) {
                 console.log("🛠️ Repariere kaputte Mine (Loot fehlt)...");
                 this.mineSystem.generateMineGrid(); 
             }
         }
+
         this.checkOfflineProgress();
         this.createBuildingElements();
-        this.renderPetShop();
+        this.renderPetShop(); // Neue Pet-System Weiterleitung
         this.updateGlobalUpgradeUI();
         this.updatePrestigeUI();
         this.ladeAudioEinstellungen();
@@ -178,6 +198,7 @@ class SmileyGame {
         if (musicPlayer) {
             musicPlayer.play().catch(e => console.log("Musik wartet:", e));
         }
+
         this.restoreCooldowns();
         this.checkSkillUnlocks();
         this.setupMainEventListeners();
@@ -187,12 +208,14 @@ class SmileyGame {
         this.setupSkillTreeControls();
         this.startIntervals();
         this.setupTooltips();
-        this.updatePetInterval();
+        this.updatePetInterval(); // Neue Pet-System Weiterleitung
         this.updateNewsTicker();
         this.updateUI();
+        
+        // Chat starten (Firebase)
         this.initChat();
 
-        console.log("Spiel initialisiert. Warte auf Autosave...");
+        console.log("✅ Spiel initialisiert. PlayerID:", this.gameState.playerId);
     }
 
     // ================================================================================================================
@@ -767,38 +790,22 @@ class SmileyGame {
         this.gameState.globalSPSMultiplier *= diamondStaticSPS;
         this.gameState.globalSPSMultiplier *= this.gameState.godModeMultiplier;
 
-        // 7. Gilden Boni
+        // 7. Gilden Boni (NEU: Basierend auf Gilden-Level!)
         this.gameState.guildCostReduction = 0;
         this.gameState.guildPrestigeBonus = 0;
         this.gameState.guildGlobalMultiplier = 1;
-        
-        // Gilden-Mitglieder (Upgrades)
-        this.gameState.guildUpgradeStatus.forEach((bought, id) => {
-            if (bought) {
-                const member = guildUpgradesData.find(u => u.id === id);
-                if (member) {
-                    if (member.isClickMultiplier) {
-                        prestigeClickMultiplier += (member.spsMultiplier - 1);
-                    } else if (member.spsMultiplier > 1 && !member.specialEffect) {
-                        this.gameState.guildSPSMultiplier += (member.spsMultiplier - 1);
-                    }
-                    if (member.specialEffect) {
-                        switch (member.specialEffect) {
-                            case "cost_reduction_2": this.gameState.guildCostReduction += 0.02; break;
-                            case "cost_reduction_5": this.gameState.guildCostReduction += 0.05; break;
-                            case "prestige_boost_10": this.gameState.guildPrestigeBonus += 0.10; break;
-                            case "global_god_boost": this.gameState.guildGlobalMultiplier *= member.spsMultiplier; break;
-                        }
-                    }
-                }
-            }
-        });
+        this.gameState.guildSPSMultiplier = 0;
 
-        // Gilden-Level Bonus (10% pro Level ab Level 2)
-        if (this.gameState.guildLevel > 1) {
-            const levelBonus = (this.gameState.guildLevel - 1) * 0.10;
-            this.gameState.guildSPSMultiplier += levelBonus;
-        }
+        const gLevel = this.gameState.guildLevel || 1;
+
+        // Automatische Boni pro Level
+        if (gLevel >= 2) this.gameState.guildSPSMultiplier += 0.10;      // Lv 2: +10% SPS
+        if (gLevel >= 3) prestigeClickMultiplier += 0.10;                // Lv 3: +10% Klick
+        if (gLevel >= 5) this.gameState.guildCostReduction += 0.05;      // Lv 5: -5% Kosten
+        if (gLevel >= 7) this.gameState.guildPrestigeBonus += 0.10;      // Lv 7: +10% Prestige Punkte
+        if (gLevel >= 10) this.gameState.guildGlobalMultiplier *= 2.0;   // Lv 10: VERDOPPELUNG (x2)
+        if (gLevel >= 15) this.gameState.guildSPSMultiplier += 0.50;     // Lv 15: +50% SPS
+        if (gLevel >= 20) this.gameState.guildGlobalMultiplier *= 5.0;   // Lv 20: x5 Global!
 
         // Gilden-Effekte final verrechnen
         this.gameState.prestigePointMultiplier += this.gameState.guildPrestigeBonus;
@@ -4697,139 +4704,208 @@ class GuildSystem {
         if (!container) return;
         const state = this.game.gameState;
 
+        // 1. Keine Gilde? -> Gründungs-Bildschirm
         if (!state.guildName) {
             const COST = 500000000;
             const canAfford = state.aktuelle_smileys >= COST;
             container.innerHTML = `
-                <h3>Gilde Gründen</h3>
-                <p>Gründe Deine eigene Gilde für Bosse und Quests.</p>
-                <p><strong>Kosten:</strong> ${this.game.formatNumber(COST)} Smileys</p>
-                <input type="text" id="guild-name-input" placeholder="Gildenname eingeben" maxlength="20">
-                <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'}>Gilde Gründen</button>
+                <div style="text-align:center; padding:20px;">
+                    <div style="font-size:4rem; margin-bottom:10px;">🏰</div>
+                    <h3>Gilde Gründen</h3>
+                    <p style="color:#aaa;">Erstelle eine Allianz für Bosse, Quests und globale Boni.</p>
+                    <div style="margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px;">
+                        <p><strong>Kosten:</strong> <span style="color:#FFD700">${this.game.formatNumber(COST)}</span> Smileys</p>
+                    </div>
+                    <input type="text" id="guild-name-input" placeholder="Name deiner Gilde" maxlength="20" style="padding:10px; border-radius:5px; border:1px solid #555; background:#222; color:#fff; width:70%; margin-bottom:10px;">
+                    <br>
+                    <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'} style="width:70%;">Gilde Gründen</button>
+                </div>
             `;
             this.game.getById('found-guild-button')?.addEventListener('click', () => {
                 const val = this.game.getById('guild-name-input').value;
                 if(val.length > 2) this.foundGuild(val);
+                else this.game.showNotification("Name zu kurz!", "error");
             });
             return;
         }
 
+        // 2. Navigation Tabs
+        let tabsHtml = `
+            <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
+                <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Zentrale</button>
+                <button id="tab-guild-boss" class="btn-primary ${this.guildView==='boss'?'':'btn-cancel'}" style="flex:1">Boss Raid</button>
+                <button id="tab-guild-quests" class="btn-primary ${this.guildView==='quests'?'':'btn-cancel'}" style="flex:1">Quests</button>
+            </div>
+            <div style="text-align:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#009ffd;">${state.guildName}</h3>
+                <small style="color:#aaa;">Level ${state.guildLevel}</small>
+            </div>
+        `;
+
         let contentHtml = '';
+
+        // --- VIEW: ZENTRALE (Mitglieder + Level Status) ---
         if (this.guildView === 'shop') {
-            let listHtml = '';
-            guildUpgradesData.forEach((u, i) => {
-                const bought = state.guildUpgradeStatus[i];
-                const cost = u.baseCost;
-                const can = state.aktuelle_smileys >= cost;
-                const icon = u.icon || '👤';
-                listHtml += `
-                    <div class="guild-upgrade-item ${bought ? 'purchased' : (can ? 'available' : 'locked')}">
-                        <div style="font-size:1.5em">${icon}</div>
-                        <div>
-                            <h4>${u.name}</h4>
-                            <small>${u.description}</small>
-                        </div>
-                        <button class="btn-buy-guild" data-id="${u.id}" ${bought||!can?'disabled':''}>
-                            ${bought ? 'Aktiv' : this.game.formatNumber(cost)}
-                        </button>
+            // A) Mitglieder Liste (Oben)
+            let listHtml = `
+                <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:20px;">
+                    <h4 style="margin:0 0 10px 0; border-bottom:1px solid #444; padding-bottom:5px;">
+                        Mitglieder (${state.guildName})
+                    </h4>
+                    <div id="guild-list-body" class="custom-scrollbar" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:2px; min-height:50px;">
+                        <div style="text-align:center; padding:10px; color:#666;">Lade... 📡</div>
+                    </div>
+                </div>
+            `;
+
+            // B) Gilden-Level Fortschritt (Mitte)
+            const progressPct = Math.min(100, (state.guildXP / state.guildXPReq) * 100);
+            let progressHtml = `
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <strong>Gilden-Level ${state.guildLevel}</strong>
+                        <span style="color:#aaa;">${this.game.formatNumber(state.guildXP)} / ${this.game.formatNumber(state.guildXPReq)} XP</span>
+                    </div>
+                    <div style="background:#222; height:10px; border-radius:5px; overflow:hidden; border:1px solid #444;">
+                        <div style="width:${progressPct}%; height:100%; background:#009ffd; transition:width 0.3s;"></div>
+                    </div>
+                    <small style="color:#666;">Erledige Quests & Bosse für XP!</small>
+                </div>
+            `;
+
+            // C) Aktive Boni Liste (Unten - Nur Info, kein Kauf!)
+            let boniList = [
+                { lvl: 2, txt: "+10% SPS" },
+                { lvl: 3, txt: "+10% Klickkraft" },
+                { lvl: 5, txt: "-5% Gebäudekosten" },
+                { lvl: 7, txt: "+10% Prestige-Punkte" },
+                { lvl: 10, txt: "x2 AUF ALLES (Global)" },
+                { lvl: 20, txt: "x5 AUF ALLES (Global)" }
+            ];
+
+            let bonusesHtml = `<h4 style="margin-bottom:10px;">Gilden-Boni</h4><div class="info-grid">`;
+            
+            boniList.forEach(b => {
+                const isUnlocked = state.guildLevel >= b.lvl;
+                const color = isUnlocked ? '#4CAF50' : '#444';
+                const opacity = isUnlocked ? '1' : '0.5';
+                const icon = isUnlocked ? '✅' : '🔒';
+                
+                bonusesHtml += `
+                    <div style="border:1px solid ${color}; padding:8px; border-radius:5px; opacity:${opacity}; background:rgba(0,0,0,0.2);">
+                        <div style="font-size:0.8em; color:#aaa;">Ab Level ${b.lvl}</div>
+                        <div style="font-weight:bold; color:#fff;">${b.txt}</div>
+                        <div style="text-align:right;">${icon}</div>
                     </div>
                 `;
             });
-            contentHtml = `<div class="info-grid">${listHtml}</div>`;
-        } else if (this.guildView === 'boss') {
+            bonusesHtml += `</div>`;
+
+            contentHtml = listHtml + progressHtml + bonusesHtml;
+
+            // Trigger für ChatSystem, die Liste zu füllen
+            setTimeout(() => {
+                if(this.game.chatSystem) {
+                    this.game.chatSystem.startGuildMemberListener();
+                }
+            }, 50);
+        } 
+        
+        // --- VIEW: BOSS ---
+        else if (this.guildView === 'boss') {
             if (state.guildBossFighting) {
                 const pct = Math.max(0, (state.guildBossHP / state.guildBossMaxHP) * 100);
                 contentHtml = `
                     <div class="boss-arena active" style="text-align:center;">
-                        <h3>Boss Kampf läuft!</h3>
-                        <div style="font-size:2em; color:red; font-weight:bold;"><span id="boss-timer-display">${state.guildBossTimer}s</span></div>
-                        <div style="background:#333; height:20px; border-radius:10px; overflow:hidden; margin:10px 0; border:1px solid #555;">
-                            <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:#d32f2f; transition:width 0.1s linear;"></div>
+                        <h3 style="color:#ff5252;">🔥 RAID LÄUFT! 🔥</h3>
+                        <div style="font-size:3em; color:#fff; font-weight:bold; margin:10px 0;">
+                            <span id="boss-timer-display">${state.guildBossTimer}s</span>
                         </div>
-                        <p><span id="boss-hp-text">${this.game.formatNumber(state.guildBossHP)} / ${this.game.formatNumber(state.guildBossMaxHP)}</span> HP</p>
-                        <div id="guild-boss-clicker" style="font-size:80px; cursor:crosshair; user-select:none;">👹</div>
-                        <p>Klicken zum Angreifen!</p>
+                        <div style="background:#222; height:25px; border-radius:15px; overflow:hidden; margin:10px auto; width:80%; border:2px solid #555; position:relative;">
+                            <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:linear-gradient(90deg, #d32f2f, #ff5252); transition:width 0.1s linear;"></div>
+                            <span id="boss-hp-text" style="position:absolute; width:100%; text-align:center; top:0; line-height:25px; color:#fff; text-shadow:1px 1px 2px #000; font-size:0.8em;">
+                                ${this.game.formatNumber(state.guildBossHP)} / ${this.game.formatNumber(state.guildBossMaxHP)}
+                            </span>
+                        </div>
+                        <div id="guild-boss-clicker" style="font-size:100px; cursor:pointer; user-select:none; margin:20px 0; transition:transform 0.05s;">👹</div>
+                        <p style="color:#aaa;">KLICKE DEN BOSS!</p>
                     </div>`;
             } else {
                 const nextHp = Math.floor(1000 * Math.pow(1.5, state.guildBossLevel - 1));
                 contentHtml = `
-                    <div class="boss-lobby" style="text-align:center; padding:20px;">
-                        <div style="font-size: 60px; margin-bottom:10px;">🏰</div>
-                        <h3>Gilden-Raid (Level ${state.guildBossLevel})</h3>
-                        <p>Besiege den Boss für Diamanten!</p>
-                        <p>Boss HP: ${this.game.formatNumber(nextHp)}</p>
-                        <button id="start-boss-btn" class="btn-danger" style="margin-top:15px; font-size:1.2em;">Kampf starten</button>
+                    <div class="boss-lobby" style="text-align:center; padding:40px;">
+                        <div style="font-size: 80px; margin-bottom:20px; opacity:0.8;">💀</div>
+                        <h3>Gilden-Raid (Stufe ${state.guildBossLevel})</h3>
+                        <p style="color:#aaa; max-width:300px; margin:0 auto 20px auto;">
+                            Der Boss wird mit jedem Sieg stärker. Besiege ihn, um Diamanten für die ganze Gilde zu verdienen!
+                        </p>
+                        <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:5px; display:inline-block; margin-bottom:20px;">
+                            Boss HP: <strong style="color:#ff5252;">${this.game.formatNumber(nextHp)}</strong>
+                        </div>
+                        <br>
+                        <button id="start-boss-btn" class="btn-danger" style="padding:15px 40px; font-size:1.2em;">KAMPF STARTEN</button>
                     </div>`;
             }
-        } else if (this.guildView === 'quests') {
+        } 
+        
+        // --- VIEW: QUESTS ---
+        else if (this.guildView === 'quests') {
             this.generateGuildQuests();
             let activeHtml = '';
             const activeQuests = state.guildActiveQuests || [];
             const isQuestLimitReached = activeQuests.length >= 3;
 
             if (activeQuests.length > 0) {
-                activeHtml += `<h4>Laufende Missionen (${activeQuests.length} / 3)</h4>`;
+                activeHtml += `<h4 style="margin-top:0;">Laufende Missionen</h4>`;
                 activeQuests.forEach(q => {
                     const elapsed = (Date.now() - q.startTime) / 1000;
                     const progress = Math.min(100, (elapsed / q.duration) * 100);
                     const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
                     const isDone = timeLeft <= 0;
                     activeHtml += `
-                        <div style="background:rgba(255,255,255,0.05); border:1px solid #555; padding:10px; margin-bottom:10px; border-radius:8px;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong>${q.name}</strong>
-                                <span>${isDone ? 'Fertig!' : timeLeft + 's'}</span>
+                        <div style="background:rgba(0,0,0,0.3); border:1px solid #555; padding:10px; margin-bottom:10px; border-radius:8px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <strong style="color:${q.rarity.color}">${q.name}</strong>
+                                <span style="font-family:monospace;">${isDone ? '✅' : timeLeft + 's'}</span>
                             </div>
-                            <div style="background:#222; height:10px; border-radius:5px; margin:5px 0; overflow:hidden;">
-                                <div style="width:${progress}%; height:100%; background:${isDone ? '#4CAF50' : '#009ffd'}; transition:width 1s linear;"></div>
+                            <div style="background:#222; height:6px; border-radius:3px; overflow:hidden;">
+                                <div style="width:${progress}%; height:100%; background:${isDone ? '#4CAF50' : '#009ffd'};"></div>
                             </div>
-                            ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}" style="width:100%; padding:5px; margin-top:5px;">Belohnung abholen</button>` : ''}
+                            ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}" style="width:100%; padding:8px; margin-top:10px;">Belohnung: ${q.isDiamond?q.reward+'💎':this.game.formatNumber(q.reward)}</button>` : ''}
                         </div>
                     `;
                 });
             } else {
-                activeHtml = `<p style="color:#888; font-style:italic; text-align:center; padding:10px;">Keine Gildenmitglieder sind unterwegs.</p>`;
+                activeHtml = `<div style="text-align:center; padding:20px; color:#666; border:1px dashed #444; border-radius:10px;">Keine aktiven Missionen.</div>`;
             }
 
-            let availableHtml = `<h4>Verfügbare Aufträge</h4><div class="info-grid">`;
+            let availableHtml = `<h4 style="margin-top:20px;">Schwarzes Brett</h4><div class="info-grid">`;
             const availQuests = state.guildAvailableQuests || [];
             availQuests.forEach(q => {
-                const rewardText = q.isDiamond ? `${q.reward} 💎` : `${this.game.formatNumber(q.reward)} Smileys`;
+                const rewardText = q.isDiamond ? `${q.reward} 💎` : `${this.game.formatNumber(q.reward)}`;
                 const btnState = isQuestLimitReached ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
                 const btnText = isQuestLimitReached ? 'Gilde voll' : 'Starten';
                 availableHtml += `
-                    <div class="guild-upgrade-item" style="border-color:${q.rarity.color}">
-                        <h4 style="color:${q.rarity.color}">${q.name}</h4>
-                        <p style="font-size:0.9em">${q.rarity.name}</p>
-                        <p>⏳ ${Math.ceil(q.duration / 60)} Min</p>
-                        <p>💰 ${rewardText}</p>
-                        <button class="btn-primary btn-start-quest" data-id="${q.id}" ${btnState}>${btnText}</button>
+                    <div class="guild-upgrade-item" style="border-left: 3px solid ${q.rarity.color}; text-align:left; padding:10px;">
+                        <div style="color:${q.rarity.color}; font-weight:bold;">${q.name}</div>
+                        <div style="font-size:0.8em; color:#aaa; margin-bottom:5px;">${q.rarity.name} • ⏳ ${Math.ceil(q.duration / 60)} Min</div>
+                        <div style="font-size:0.9em; margin-bottom:10px;">Belohnung: <strong>${rewardText}</strong></div>
+                        <button class="btn-primary btn-start-quest" data-id="${q.id}" ${btnState} style="width:100%; font-size:0.8em;">Starten</button>
                     </div>
                 `;
             });
             availableHtml += `</div>`;
-            contentHtml = `<div style="padding:10px;">${activeHtml}<hr style="border-color:#444; margin:20px 0;">${availableHtml}</div>`;
+            contentHtml = activeHtml + availableHtml;
         }
 
-        container.innerHTML = `
-            <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
-                <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Mitglieder</button>
-                <button id="tab-guild-boss" class="btn-primary ${this.guildView==='boss'?'':'btn-cancel'}" style="flex:1">Boss Raid</button>
-                <button id="tab-guild-quests" class="btn-primary ${this.guildView==='quests'?'':'btn-cancel'}" style="flex:1">Quests</button>
-            </div>
-            <h3>Gilde: ${state.guildName}</h3>
-            ${contentHtml}
-        `;
+        container.innerHTML = tabsHtml + contentHtml;
 
+        // --- Event Listeners binden ---
         this.game.getById('tab-guild-shop')?.addEventListener('click', () => { this.guildView='shop'; this.renderGuildsContent(); });
         this.game.getById('tab-guild-boss')?.addEventListener('click', () => { this.guildView='boss'; this.renderGuildsContent(); });
         this.game.getById('tab-guild-quests')?.addEventListener('click', () => { this.guildView='quests'; this.renderGuildsContent(); });
 
-        if (this.guildView === 'shop') {
-             container.querySelectorAll('.btn-buy-guild').forEach(btn => {
-                btn.addEventListener('click', (e) => this.buyGuildUpgrade(parseInt(e.target.dataset.id)));
-            });
-        }
+        // Quest Buttons (nur wenn View aktiv)
         if (this.guildView === 'quests') {
             container.querySelectorAll('.btn-start-quest').forEach(btn => {
                 btn.addEventListener('click', (e) => this.startQuest(parseFloat(e.target.dataset.id)));
@@ -4838,6 +4914,7 @@ class GuildSystem {
                 btn.addEventListener('click', (e) => this.claimQuest(parseFloat(e.target.dataset.id)));
             });
         }
+        // Boss Logic (nur wenn View aktiv)
         if (this.guildView === 'boss') {
              this.game.getById('start-boss-btn')?.addEventListener('click', () => this.startGuildBoss());
              const bossClicker = this.game.getById('guild-boss-clicker');
