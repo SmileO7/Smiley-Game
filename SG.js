@@ -995,37 +995,48 @@ class SmileyGame {
     // ================================================================================================================
 
     klickeSmiley(e) {
-        let damage = this.getClickStrength();
+        // --- 1. COMBO LOGIK ---
+        if (!this.comboCount) this.comboCount = 0;
+        
+        this.comboCount++;
+        // Multiplikator: +1% pro Klick, maximal x3.00 (dreifacher Gewinn!)
+        this.comboMulti = Math.min(3.0, 1 + (this.comboCount * 0.01));
+
+        // Combo-Reset Timer: Nach 2 Sekunden ohne Klick ist die Combo weg
+        clearTimeout(this.comboTimer);
+        this.comboTimer = setTimeout(() => {
+            this.comboCount = 0;
+            this.comboMulti = 1.0;
+            this.updateUI(); 
+        }, 2000);
+
+        // --- 2. BERECHNUNG MIT COMBO ---
+        let damage = this.getClickStrength() * this.comboMulti;
         let isCrit = false;
 
-        // --- SKILL CHECK: CRIT STORM ---
+        // Crit Check
         if (this.gameState.skills && this.gameState.skills.critStorm.active) {
             isCrit = true;
             damage *= this.gameState.critDamageMult;
-        } 
-        else if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
+        } else if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
             damage *= this.gameState.critDamageMult;
             isCrit = true;
         }
 
+        // Gutschrift
         this.addSmileys(damage);
         this.gameState.totalClicksLifetime++;
         this.playClickSound();
 
+        // Animationen & Effekte
         if (e) {
             this.animateSmiley();
-            
-            // 👇 NEU: Partikel-Effekt aufrufen
             this.createClickParticles(e); 
-            
             let text = this.formatNumber(damage);
-            if (isCrit) {
-                this.showClickEffect(e, text, 'crit');
-                this.triggerShake('smiley_button');
-            } else {
-                this.showClickEffect(e, text, 'normal');
-            }
+            this.showClickEffect(e, text, isCrit ? 'crit' : 'normal');
+            if (isCrit) this.triggerShake('smiley_button');
         }
+        
         this.checkAchievements();
         this.updateUI();
     }
@@ -1735,6 +1746,18 @@ class SmileyGame {
         this.checkSkillUnlocks();
         this.renderBuffs();
         this.renderArtifactShowcase();
+    
+        const comboEl = document.getElementById('combo-display');
+        const comboVal = document.getElementById('combo-value');
+
+        if (comboEl && comboVal) {
+            if (this.comboCount >= 5) { // Erscheint erst ab 5 schnellen Klicks
+                comboEl.classList.add('active');
+                comboVal.innerText = `x${this.comboMulti.toFixed(2)}`;
+            } else {
+                comboEl.classList.remove('active');
+            }
+        }
     }
 
     renderSkillUI() {
