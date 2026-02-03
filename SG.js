@@ -1003,7 +1003,6 @@ class SmileyGame {
             isCrit = true;
             damage *= this.gameState.critDamageMult;
         } 
-        // Normaler Crit-Check, falls Skill nicht aktiv
         else if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
             damage *= this.gameState.critDamageMult;
             isCrit = true;
@@ -1015,6 +1014,10 @@ class SmileyGame {
 
         if (e) {
             this.animateSmiley();
+            
+            // 👇 NEU: Partikel-Effekt aufrufen
+            this.createClickParticles(e); 
+            
             let text = this.formatNumber(damage);
             if (isCrit) {
                 this.showClickEffect(e, text, 'crit');
@@ -1025,6 +1028,42 @@ class SmileyGame {
         }
         this.checkAchievements();
         this.updateUI();
+    }
+
+    // 👇 NEUE METHODE UNTER klickeSmiley EINFÜGEN:
+    createClickParticles(e) {
+        // Deine Branding-Farben: Rot (#6b0504), Hellblau (#009ffd), Dunkelblau (#011638)
+        const colors = ['#6b0504', '#009ffd', '#011638', '#ffffff']; 
+        const particleCount = 6; // Anzahl der Teilchen pro Klick
+
+        for (let i = 0; i < particleCount; i++) {
+            const p = document.createElement('div');
+            p.className = 'click-particle';
+            
+            // Zufälliges Icon (Punkt, kleiner Smiley oder Stern)
+            const icons = ['•', '😊', '✨'];
+            p.innerText = icons[Math.floor(Math.random() * icons.length)];
+            
+            // Zufällige Flugrichtung berechnen
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 40 + Math.random() * 80;
+            const tx = (Math.cos(angle) * dist) + "px";
+            const ty = (Math.sin(angle) * dist) + "px";
+            
+            // CSS Variablen setzen
+            p.style.setProperty('--tw-x', tx);
+            p.style.setProperty('--tw-y', ty);
+            
+            // Startposition am Mauszeiger
+            p.style.left = e.clientX + 'px';
+            p.style.top = e.clientY + 'px';
+            p.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            document.body.appendChild(p);
+            
+            // Nach der Animation löschen
+            setTimeout(() => p.remove(), 800);
+        }
     }
 
     getClickStrength() {
@@ -1810,6 +1849,15 @@ class SmileyGame {
         // Schleife um den Gesamtpreis für X Stück zu berechnen
         for (let i = 0; i < amount; i++) {
             totalCost += this.getBuildingCost(index, this.gameState.buildingCounts[index] + i);
+        }
+
+        const buildingCard = document.querySelector(`.building-item[data-index="${index}"]`);
+        if (buildingCard) {
+            if (this.gameState.aktuelle_smileys >= totalCost) {
+                buildingCard.classList.add('affordable');
+            } else {
+                buildingCard.classList.remove('affordable');
+            }
         }
 
         // 3. Button & Tooltip aktualisieren
