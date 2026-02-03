@@ -591,6 +591,24 @@ main {
 .research-name { font-weight: bold; color: #fff; font-size: 0.9rem; }
 .research-desc { font-size: 0.75rem; color: #aaa; }
 
+/* Glow für kaufbare Upgrades in der Mitte */
+.research-item.affordable {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
+    background-color: rgba(0, 159, 253, 0.08); /* Leicht helleres Blau im Hintergrund */
+}
+
+/* Pulsieren für kaufbare Upgrades */
+.research-item.affordable:not(:hover) {
+    animation: upgrade-glow-pulse 2s infinite ease-in-out;
+}
+
+@keyframes upgrade-glow-pulse {
+    0% { box-shadow: 0 0 5px rgba(0, 159, 253, 0.2); }
+    50% { box-shadow: 0 0 15px rgba(0, 159, 253, 0.5); }
+    100% { box-shadow: 0 0 5px rgba(0, 159, 253, 0.2); }
+}
+
 .btn-buy-research {
     background: var(--color-blue-main);
     color: #000; /* Schwarz auf Blau für bessere Lesbarkeit */
@@ -1355,4 +1373,95 @@ input[type=range] { width: 100%; cursor: pointer; }
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Cloud Status Styles */
+#cloud-save-status.saving {
+    color: #009ffd;
+    text-shadow: 0 0 10px #009ffd;
+    animation: cloud-pulse 1s infinite alternate;
+}
+
+#cloud-save-status.success {
+    color: #4CAF50;
+    text-shadow: 0 0 8px #4CAF50;
+}
+
+#cloud-save-status.error {
+    color: #ff5252;
+    animation: shake-effect 0.3s ease-in-out;
+}
+
+@keyframes cloud-pulse {
+    from { opacity: 0.5; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.1); }
+}
+
+/* Museum Modal Layout */
+.museum-layout {
+    max-width: 900px;
+    background: radial-gradient(circle at center, #011638 0%, #000 100%); /* Dunkles Blau zu Schwarz */
+    border: 2px solid #333;
+}
+
+.museum-info-banner {
+    background: rgba(0, 159, 253, 0.1);
+    border: 1px solid var(--color-accent-blue);
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: #ccc;
+    font-style: italic;
+}
+
+/* Artefakt Karten */
+.artifact-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #444;
+}
+
+.artifact-card.owned {
+    border-color: #ffd700; /* Gold für gefundene Stücke */
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.artifact-card.missing {
+    opacity: 0.6;
+    filter: grayscale(1);
+}
+
+.artifact-card.owned:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+}
+
+/* Seltenheits-Glanz */
+.artifact-card.owned::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: shine 4s infinite;
+}
+
+@keyframes shine {
+    0% { left: -150%; }
+    20% { left: 150%; }
+    100% { left: 150%; }
+}
+
+.artifact-icon {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
 }

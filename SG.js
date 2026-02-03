@@ -196,6 +196,11 @@ class SmileyGame {
             }
         }
 
+        this.clickSound = document.getElementById('click-sound');
+    
+        const storedSfx = localStorage.getItem('soundVolume');
+        if (storedSfx !== null) this.sfxVolume = parseInt(storedSfx) / 100;
+
         this.checkOfflineProgress();
         this.createBuildingElements();
         this.renderPetShop(); // Neue Pet-System Weiterleitung
@@ -1257,31 +1262,32 @@ class SmileyGame {
 
         // Nur die ersten 5 anzeigen, damit die Liste nicht den Bildschirm sprengt
         upgradesToRender.slice(0, 5).forEach(upgrade => {
-            // HIER WAR DER FEHLER: Wir müssen die Kosten für 'upgrade' berechnen
-            const finalCost = this.getGlobalUpgradeCost(upgrade);
-            const canAfford = this.gameState.aktuelle_smileys >= finalCost;
+        const finalCost = this.getGlobalUpgradeCost(upgrade);
+        const canAfford = this.gameState.aktuelle_smileys >= finalCost;
 
-            const div = document.createElement('div');
-            div.className = 'research-item';
-            div.innerHTML = `
-                <div class="research-content">
-                    <div class="research-title-row">
-                        <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
-                    </div>
-                    <div class="research-desc">${upgrade.description}</div>
+        const div = document.createElement('div');
+        // 👇 HIER DIE ÄNDERUNG: 'affordable' Klasse hinzufügen, wenn genug Smileys da sind
+        div.className = `research-item ${canAfford ? 'affordable' : ''}`;
+        
+        div.innerHTML = `
+            <div class="research-content">
+                <div class="research-title-row">
+                    <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
                 </div>
-                <div class="research-action">
-                    <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
-                        ${this.formatNumber(finalCost)}
-                    </span>
-                    <button class="btn-buy-research" data-id="${upgrade.id}">
-                        Kaufen
-                    </button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
+                <div class="research-desc">${upgrade.description}</div>
+            </div>
+            <div class="research-action">
+                <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
+                    ${this.formatNumber(finalCost)}
+                </span>
+                <button class="btn-buy-research" data-id="${upgrade.id}" ${canAfford ? '' : 'disabled'}>
+                    Kaufen
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
     kaufeGlobalUpgrade(id) {
         const upgrade = globalUpgrades.find(u => u.id === id);
@@ -1589,6 +1595,44 @@ class SmileyGame {
     // 7. RENDERING & UI-UPDATES
     // ================================================================================================================
 
+    renderMuseum() {
+    const container = document.getElementById('museum_grid');
+    if (!container) return;
+    container.innerHTML = '';
+
+    this.artifactsData.forEach(art => {
+        const isOwned = this.gameState.collectedArtifacts.includes(art.id);
+        const card = document.createElement('div');
+        
+        // Verschiedene Styles für 'Besessen' und 'Unbekannt'
+        card.className = `info-upgrade-item artifact-card ${art.rarity} ${isOwned ? 'owned' : 'missing'}`;
+        
+        // Icons für Seltenheit definieren
+        const rarityStars = { common: '⭐', rare: '⭐⭐', epic: '⭐⭐⭐', legendary: '🌟🌟🌟' };
+
+        card.innerHTML = `
+            <div class="artifact-icon" style="font-size: 3rem; filter: ${isOwned ? 'none' : 'brightness(0) invert(0.2)'};">
+                ${isOwned ? this.getArtifactIcon(art.id) : '❓'}
+            </div>
+            <h4>${isOwned ? art.name : 'Unbekanntes Relikt'}</h4>
+            <p style="font-size: 0.8rem; color: #aaa;">${rarityStars[art.rarity]}</p>
+            <div class="artifact-bonus" style="color: #4CAF50; font-weight: bold; margin-top: 5px;">
+                ${isOwned ? 'Bonus: ' + art.desc : 'Sammle es in der Mine'}
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// Helfer für Icons (kannst du in deine getTileSymbol Logik integrieren)
+getArtifactIcon(id) {
+    const icons = {
+        'art_coin': '🪙', 'art_fossil': '🐚', 'art_compass': '🧭',
+        'art_pickaxe': '⛏️', 'art_crystal': '🔮', 'art_crown': '👑'
+    };
+    return icons[id] || '🏺';
+}
+
     renderArtifactShowcase() {
         // 1. Container suchen oder erstellen (falls noch nicht da)
         let showcase = document.getElementById('artifact-showcase');
@@ -1764,6 +1808,7 @@ class SmileyGame {
             }
         }
         this.checkSkillUnlocks();
+        this.updateGlobalUpgradeUI();
         this.renderBuffs();
         this.renderArtifactShowcase();
     
@@ -1777,6 +1822,10 @@ class SmileyGame {
             } else {
                 comboEl.classList.remove('active');
             }
+        }
+        const skillModal = document.getElementById('skill_tree_modal');
+        if (skillModal && skillModal.style.display === 'flex') {
+            this.renderPrestigeTree(); 
         }
     }
 
@@ -3274,6 +3323,22 @@ btnGuild.onclick = () => {
         closeAchievementsButton?.addEventListener('click', () => {
             if (achievementsModal) achievementsModal.style.display = 'none';
         });
+        // In setupInfoPageEventListeners()
+        const museumModal = this.getById('museum_modal');
+        const openMuseumBtn = this.getById('show_museum_button');
+        const closeMuseumBtn = this.getById('close_museum_button');
+
+            if (openMuseumBtn && museumModal) {
+            openMuseumBtn.addEventListener('click', () => {
+            this.renderMuseum(); // Befüllt das Grid vor dem Öffnen
+            museumModal.style.display = 'flex';
+            });
+        }
+            if (closeMuseumBtn && museumModal) {
+            closeMuseumBtn.addEventListener('click', () => {
+            museumModal.style.display = 'none';
+            });
+        }
     }
 
     setupSettingsModalListeners() {

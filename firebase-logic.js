@@ -2,17 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// --- KONFIGURATION ---
-const firebaseConfig = {
-    apiKey: "AIzaSyAXLvyEnTMtVYMa5iOUXUFRoqDRfgClWDU",
-    authDomain: "smiley-clicker-idle-empire.firebaseapp.com",
-    databaseURL: "https://smiley-clicker-idle-empire-default-rtdb.europe-west1.firebasedatabase.app/",
-    projectId: "smiley-clicker-idle-empire",
-    storageBucket: "smiley-clicker-idle-empire.firebasestorage.app",
-    messagingSenderId: "883649043348",
-    appId: "1:883649043348:web:daf31892a0d6d639ec8d81"
-};
+import firebaseConfig from './config.js';
 
 // 1. Initialisierung Modern (für Cloud Save & Auth)
 const app = initializeApp(firebaseConfig);
@@ -52,23 +42,42 @@ window.cloudSystem = {
 
     // Speichern (Leise)
     save: async (jsonData) => {
-        const user = auth.currentUser;
-        if (!user) return; 
+    const user = auth.currentUser;
+    const cloudIcon = document.getElementById('cloud-save-status');
+    if (!user) return; 
 
-        // Deep Copy um Referenzen zu brechen
-        const cleanData = JSON.parse(JSON.stringify(jsonData)); 
+    // Visuelles Feedback: Start
+    if (cloudIcon) {
+        cloudIcon.className = 'saving';
+        cloudIcon.title = "Speichere in Cloud...";
+    }
 
-        try {
-            await setDoc(doc(db, "users", user.uid), { 
-                savedGame: cleanData, 
-                date: new Date().toISOString()
-            });
-            console.log("☁️ Gespeichert in Firestore.");
-        } catch (e) {
-            console.error("Fehler beim Speichern:", e);
-            throw e; 
+    const cleanData = JSON.parse(JSON.stringify(jsonData)); 
+
+    try {
+        await setDoc(doc(db, "users", user.uid), { 
+            savedGame: cleanData, 
+            date: new Date().toISOString()
+        });
+        
+        // Visuelles Feedback: Erfolg
+        if (cloudIcon) {
+            cloudIcon.className = 'success';
+            cloudIcon.title = "Cloud-Sync: OK";
+            // Nach 3 Sekunden zurück auf neutral
+            setTimeout(() => { cloudIcon.className = ''; }, 3000);
         }
-    },
+        console.log("☁️ Gespeichert in Firestore.");
+    } catch (e) {
+        // Visuelles Feedback: Fehler
+        if (cloudIcon) {
+            cloudIcon.className = 'error';
+            cloudIcon.title = "Cloud-Sync Fehler!";
+        }
+        console.error("Fehler beim Speichern:", e);
+        throw e; 
+    }
+},
 
     // Laden
     load: async () => {
