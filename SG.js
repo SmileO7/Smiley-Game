@@ -5939,6 +5939,22 @@ class SoundSystem {
         }
     }
 
+    playClickSound() {
+        if (!this.clickSound) return;
+        
+        // Lautstärke anpassen (0.0 bis 1.0)
+        this.clickSound.volume = this.sfxVolume / 100;
+        
+        // Sound zurückspulen, damit man schnell hintereinander klicken kann
+        this.clickSound.currentTime = 0;
+        
+        // Abspielen mit Fehler-Abfangung (Browser blockieren Autoplay manchmal)
+        this.clickSound.play().catch(e => {
+            // Ignorieren oder Loggen, wenn Audio noch nicht erlaubt ist
+            // console.warn("Audio konnte nicht abgespielt werden:", e);
+        });
+    }
+
     // Hilfsfunktion: Spielt einen Ton
     playTone(freq, type, duration, volRel = 1.0, slideTo = null) {
         if (!this.ctx || this.sfxVolume <= 0) return;
