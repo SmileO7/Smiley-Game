@@ -4,20 +4,21 @@
 
 const buildingsData = [
     { name: "Auto-Klicker", basePrice: 20, growthRate: 1.10, baseSPS: 2, prestigeMulti: 1},
-    { name: "Smiley-Baum", basePrice: 100, growthRate: 1.15, baseSPS: 20, prestigeMulti: 1},
-    { name: "Smiley-Fabrik", basePrice: 1000, growthRate: 1.20, baseSPS: 250, prestigeMulti: 1},
-    { name: "Smiley-Mine", basePrice: 10000, growthRate: 1.25, baseSPS: 1800, prestigeMulti: 1},
-    { name: "Smiley-Bohrer", basePrice: 50000, growthRate: 1.30, baseSPS: 5000, prestigeMulti: 1},
-    { name: "Smiley-Kernkraftwerk", basePrice: 250000, growthRate: 1.35, baseSPS: 25000, prestigeMulti: 1},
-    { name: "Smiley-Galaxie", basePrice: 1250000, growthRate: 1.40, baseSPS: 125000, prestigeMulti: 1},
-    { name: "Dimensionsportal", basePrice: 6250000, growthRate: 1.45, baseSPS: 625000, prestigeMulti: 1},
-    { name: "Zeitmaschine", basePrice: 31250000, growthRate: 1.50, baseSPS: 5000000, prestigeMulti: 1},
-    { name: "Meta-Klicker", basePrice: 156250000, growthRate: 1.55, baseSPS: 15625000, prestigeMulti: 1},
-    { name: "Quanten-Netzwerk", basePrice: 781250000, growthRate: 1.60, baseSPS: 78125000, prestigeMulti: 1},
-    { name: "Endloser Speicher", basePrice: 3906250000, growthRate: 1.65, baseSPS: 390625000, prestigeMulti: 1},
-    { name: "Ursprung", basePrice: 19531250000, growthRate: 1.70, baseSPS: 1953125000, prestigeMulti: 1},
-    { name: "Kosmische Einheit", basePrice: 97656250000, growthRate: 1.75, baseSPS: 9765625000, prestigeMulti: 1},
-    { name: "Absoluter Schöpfer", basePrice: 488281250000, growthRate: 1.80, baseSPS: 70000000000, prestigeMulti: 1},
+    { name: "Smiley-Baum", basePrice: 150, growthRate: 1.12, baseSPS: 12, prestigeMulti: 1}, // Preis hoch, Rate runter
+    { name: "Smiley-Fabrik", basePrice: 1200, growthRate: 1.14, baseSPS: 80, prestigeMulti: 1},
+    { name: "Smiley-Mine", basePrice: 12000, growthRate: 1.15, baseSPS: 550, prestigeMulti: 1},
+    { name: "Smiley-Bohrer", basePrice: 100000, growthRate: 1.15, baseSPS: 3200, prestigeMulti: 1},
+    { name: "Smiley-Kernkraftwerk", basePrice: 850000, growthRate: 1.16, baseSPS: 20000, prestigeMulti: 1},
+    { name: "Smiley-Galaxie", basePrice: 7500000, growthRate: 1.16, baseSPS: 140000, prestigeMulti: 1},
+    { name: "Dimensionsportal", basePrice: 65000000, growthRate: 1.17, baseSPS: 950000, prestigeMulti: 1},
+    { name: "Zeitmaschine", basePrice: 500000000, growthRate: 1.17, baseSPS: 6000000, prestigeMulti: 1},
+    // Ab hier glätten wir die hohen Raten auf max 1.20 ab:
+    { name: "Meta-Klicker", basePrice: 4000000000, growthRate: 1.18, baseSPS: 45000000, prestigeMulti: 1},
+    { name: "Quanten-Netzwerk", basePrice: 35000000000, growthRate: 1.18, baseSPS: 380000000, prestigeMulti: 1},
+    { name: "Endloser Speicher", basePrice: 250000000000, growthRate: 1.19, baseSPS: 2500000000, prestigeMulti: 1},
+    { name: "Ursprung", basePrice: 2000000000000, growthRate: 1.19, baseSPS: 18000000000, prestigeMulti: 1},
+    { name: "Kosmische Einheit", basePrice: 15000000000000, growthRate: 1.20, baseSPS: 120000000000, prestigeMulti: 1},
+    { name: "Absoluter Schöpfer", basePrice: 100000000000000, growthRate: 1.20, baseSPS: 850000000000, prestigeMulti: 1},
 ];
 
 const uniqueBuildingsData = [
@@ -174,6 +175,23 @@ const globalUpgrades = [
     { id: 107, cost: 20000000000000, description: "Schöpfer: Die Antwort 42 (+200%)", type: "building_mult", value: 2.0, buildingIndex: 14 },
     { id: 108, cost: 50000000000000, description: "Schöpfer: Game Overdrive (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 14 },
     { id: 109, cost: 150000000000000, description: "Schöpfer: Developer Mode (+500%)", type: "building_mult", value: 5.0, buildingIndex: 14 },
+
+    {
+    id: 110,
+    name: "Rhythmische Ausdauer",
+    description: "Verlängert das Combo-Zeitfenster auf 4 Sekunden.",
+    cost: 2500000, // Von 500k auf 2.5M erhöht
+    type: 'combo_time',
+    value: 4000 
+},
+{
+    id: 111,
+    name: "Combo-Limit-Break",
+    description: "Erhöht das maximale Combo-Limit auf x5.00!",
+    cost: 25000000, // Von 2.5M auf 25M erhöht
+    type: 'combo_max',
+    value: 5.0
+}
 ];
 
 /* ======================================================= */
@@ -184,18 +202,31 @@ const prestigeUpgrades = [
     { id: 0, name: "Genesis", cost: 1, description: "Startbonus: +10% passive SPS.", type: 'sps_mult', value: 0.10, x: 0, y: 0, requirements: [] },
     { id: 1, name: "Aktive Finger", cost: 2, description: "Klickkraft +25%.", type: 'click_mult', value: 0.25, x: -100, y: 100, requirements: [0] },
     { id: 2, name: "Passive Macht", cost: 2, description: "SPS +25%.", type: 'sps_mult', value: 0.25, x: 100, y: 100, requirements: [0] },
-    { id: 3, name: "Bau-Rabatt", cost: 5, description: "Alle Gebäude sind 5% günstiger.", type: 'cost_reduction', value: 0.05, x: -150, y: 200, requirements: [1] },
+    
+    // --- NEU: Combo Fokus ---
+    { id: 15, name: "Combo-Rausch", cost: 5, description: "Die Combo steigt 50% schneller.", type: 'combo_speed', value: 0.50, x: -50, y: 150, requirements: [1] },
+    
+    { id: 3, name: "Bau-Rabatt", cost: 8, description: "Alle Gebäude sind 5% günstiger.", type: 'cost_reduction', value: 0.05, x: -150, y: 200, requirements: [1] },
     { id: 4, name: "Prestige-Experte", cost: 10, description: "Prestige-Punkte sind 10% effektiver.", type: 'prestige_efficiency', value: 0.10, x: 150, y: 200, requirements: [2] },
-    { id: 5, name: "Synergie", cost: 15, description: "Klicks geben kurzzeitig SPS-Boost (Simuliert: Klickkraft +50%)", type: 'click_mult', value: 0.50, x: 0, y: 300, requirements: [1, 2] },
+    { id: 5, name: "Synergie", cost: 20, description: "Klicks skalieren mit 1% deiner SPS.", type: 'click_sps_ratio', value: 0.01, x: 0, y: 300, requirements: [1, 2] },
+    
     { id: 6, name: "Süße Begleiter", cost: 50, description: "Schaltet das PET-SYSTEM frei.", type: 'unlock_pets', value: 0, x: -100, y: 400, requirements: [5] },
     { id: 7, name: "Tiefbau", cost: 50, description: "Schaltet die DIAMANTEN-MINE frei.", type: 'unlock_mine', value: 0, x: 100, y: 400, requirements: [5] },
-    { id: 8, name: "Imperium", cost: 100, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [6, 7] },
-    { id: 9, name: "Globaler Reichtum", cost: 250, description: "Verdoppelt deine gesamte SPS-Produktion (x2).", type: 'global_mult', value: 1.0, x: 0, y: 600, requirements: [8] },
-    { id: 10, name: "Klick-Titan", cost: 500, description: "Verdreifacht deine Klickkraft (+200%).", type: 'click_mult', value: 2.0, x: -150, y: 700, requirements: [9] },
-    { id: 11, name: "Industrie-Gigant", cost: 500, description: "Verdreifacht deine passive SPS (+200%).", type: 'sps_mult', value: 2.0, x: 150, y: 700, requirements: [9] },
-    { id: 12, name: "Massenproduktion", cost: 1500, description: "Reduziert alle Gebäudekosten um weitere 10%.", type: 'cost_reduction', value: 0.10, x: 0, y: 800, requirements: [10, 11] },
-    { id: 13, name: "Zeitreise-Meister", cost: 5000, description: "Prestige-Punkte sind 50% effektiver.", type: 'prestige_efficiency', value: 0.50, x: -100, y: 900, requirements: [12] },
-    { id: 14, name: "Big Bang", cost: 10000, description: "Multipliziert ALLES mit 5.", type: 'global_mult', value: 4.0, x: 100, y: 900, requirements: [12] }
+    
+    // --- NEU: Diamanten Fokus ---
+    { id: 16, name: "Glitzer-Gier", cost: 75, description: "Minen-Erträge +20%.", type: 'mine_boost', value: 0.20, x: 150, y: 450, requirements: [7] },
+    
+    { id: 8, name: "Imperium", cost: 150, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [6, 7] },
+    { id: 9, name: "Globaler Reichtum", cost: 400, description: "Verdoppelt deine gesamte SPS-Produktion (x2).", type: 'global_mult', value: 1.0, x: 0, y: 600, requirements: [8] },
+    
+    // --- NEU: End-Game Combo ---
+    { id: 17, name: "Ewige Combo", cost: 750, description: "Combo-Zeitfenster +2 Sekunden.", type: 'combo_time_add', value: 2000, x: -200, y: 650, requirements: [9] },
+
+    { id: 10, name: "Klick-Titan", cost: 1000, description: "Verdreifacht deine Klickkraft (+200%).", type: 'click_mult', value: 2.0, x: -150, y: 700, requirements: [9] },
+    { id: 11, name: "Industrie-Gigant", cost: 1000, description: "Verdreifacht deine passive SPS (+200%).", type: 'sps_mult', value: 2.0, x: 150, y: 700, requirements: [9] },
+    { id: 12, name: "Massenproduktion", cost: 2500, description: "Reduziert alle Gebäudekosten um weitere 10%.", type: 'cost_reduction', value: 0.10, x: 0, y: 800, requirements: [10, 11] },
+    { id: 13, name: "Zeitreise-Meister", cost: 7500, description: "Prestige-Punkte sind 50% effektiver.", type: 'prestige_efficiency', value: 0.50, x: -100, y: 900, requirements: [12] },
+    { id: 14, name: "Big Bang", cost: 15000, description: "Multipliziert ALLES mit 5.", type: 'global_mult', value: 4.0, x: 100, y: 900, requirements: [12] }
 ];
 
 /* ======================================================= */

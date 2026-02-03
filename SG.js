@@ -995,23 +995,43 @@ class SmileyGame {
     // ================================================================================================================
 
     klickeSmiley(e) {
-        // --- 1. COMBO LOGIK ---
+        // --- 1. COMBO LOGIK & PRESTIGE CHECKS ---
         if (!this.comboCount) this.comboCount = 0;
         
-        this.comboCount++;
-        // Multiplikator: +1% pro Klick, maximal x3.00 (dreifacher Gewinn!)
-        this.comboMulti = Math.min(3.0, 1 + (this.comboCount * 0.01));
+        let maxCombo = 3.0;
+        let comboTime = 2000;
+        let comboGain = 1; // Basis: 1 Klick = 1 Combo-Punkt
 
-        // Combo-Reset Timer: Nach 2 Sekunden ohne Klick ist die Combo weg
+        // Check: Prestige ID 15 (Combo-Rausch) -> Combo steigt 50% schneller
+        if (this.gameState.prestigeUpgradeStatus[15]) comboGain = 1.5;
+        
+        // Check: Global Upgrade IDs (aus data.js)
+        if (this.gameState.researchStatus[110]) comboTime = 4000; 
+        if (this.gameState.researchStatus[111]) maxCombo = 5.0;
+
+        // Check: Prestige ID 17 (Ewige Combo) -> +2 Sek Zeitfenster
+        if (this.gameState.prestigeUpgradeStatus[17]) comboTime += 2000;
+
+        this.comboCount += comboGain;
+        this.comboMulti = Math.min(maxCombo, 1 + (Math.sqrt(this.comboCount) * 0.15));
+
+        // Combo-Reset Timer
         clearTimeout(this.comboTimer);
         this.comboTimer = setTimeout(() => {
             this.comboCount = 0;
             this.comboMulti = 1.0;
             this.updateUI(); 
-        }, 2000);
+        }, comboTime);
 
-        // --- 2. BERECHNUNG MIT COMBO ---
-        let damage = this.getClickStrength() * this.comboMulti;
+        // --- 2. BERECHNUNG ---
+        let baseClick = this.getClickStrength();
+        
+        // Check: Prestige ID 5 (Synergie) -> 1% der SPS zum Klick addieren
+        if (this.gameState.prestigeUpgradeStatus[5]) {
+            baseClick += (this.gameState.totalSPS * 0.01);
+        }
+
+        let damage = baseClick * this.comboMulti;
         let isCrit = false;
 
         // Crit Check
@@ -4363,66 +4383,74 @@ class DiamondMine {
     }
 
     processTile(index) {
-        const state = this.game.gameState;
-        const tile = state.mineGrid[index];
-        if (!tile || tile.revealed) return;
+    const state = this.game.gameState;
+    const tile = state.mineGrid[index];
+    if (!tile || tile.revealed) return;
 
-        tile.revealed = true;
-        this.game.playClickSound();
+    tile.revealed = true;
+    this.game.playClickSound();
 
-        let amount = tile.content;
-        if (!amount || amount <= 0) amount = 100;
+    let amount = tile.content;
+    if (!amount || amount <= 0) amount = 100;
 
-        // --- LOOT LOGIK MIT FLOATING TEXT ---
-        
-        if (tile.type === 'emerald') {
-            state.diamanten += amount;
-            this.showLootText(index, `+${amount} 💚`, '#00ff88'); // Hellgrün
-            this.game.triggerShake('diamanten_anzeige');
-        }
-        else if (tile.type === 'diamond') {
-            state.diamanten += amount;
-            this.showLootText(index, `+${amount} 💎`, '#009ffd'); // Blau
-        }
-        else if (tile.type === 'gold') {
-            this.game.addSmileys(amount);
-            // Wir nutzen game.formatNumber für schöne Zahlen (z.B. 1.5k)
-            this.showLootText(index, `+${this.game.formatNumber(amount)} 💰`, '#ffeb3b'); // Gelb
-        }
-        else if (tile.type === 'fossil') {
-            state.fossilien += amount;
-            this.showLootText(index, `+${amount} 🦖`, '#e0e0e0'); // Grau/Weiß
-        }
-        else if (tile.type === 'tool_tnt') {
-            state.mineInventory.tnt++;
-            this.showLootText(index, "+1 🧨", '#ff5252'); // Rot
-        }
-        else if (tile.type === 'tool_drill') {
-            state.mineInventory.drill++;
-            this.showLootText(index, "+1 🔩", '#ffa726'); // Orange
-        }
-        else if (tile.type === 'treasure') {
-            const dia = Math.floor(50 * (1 + state.mineDepth * 0.1));
-            state.diamanten += dia;
-            this.showLootText(index, `+${dia} 💎`, '#FFD700'); // Gold
-            this.game.showNotification(`🎁 SCHATZ GEFUNDEN!`, "success");
-        }
-        else if (tile.type === 'passage' || tile.type === 'secret_passage') {
-            if (state.isTreasureRoom) {
-                state.isTreasureRoom = false;
-                this.game.showNotification("Schatzkammer verlassen.", "info");
-            }
-            if (tile.type === 'secret_passage') state.isTreasureRoom = true;
-            
-            state.mineDepth++;
-            this.showLootText(index, "ABSTIEG!", '#ffffff');
+    // --- PRESTIGE CHECK (ID 16: Glitzer-Gier) ---
+    // Falls das Upgrade gekauft wurde, erhöhen wir die Ausbeute von Edelsteinen um 20%
+    const hasMineBuff = this.game.gameState.prestigeUpgradeStatus[16];
+    const lootMultiplier = hasMineBuff ? 1.20 : 1.0;
 
-            setTimeout(() => { this.reloadMineLevel(); }, 500); 
-        }
-
-        this.game.speichereSpiel();
-        this.updateMineVisuals();
+    // --- LOOT LOGIK MIT FLOATING TEXT ---
+    
+    if (tile.type === 'emerald') {
+        const finalAmount = Math.ceil(amount * lootMultiplier);
+        state.diamanten += finalAmount;
+        this.showLootText(index, `+${finalAmount} 💚`, '#00ff88'); // Hellgrün
+        this.game.triggerShake('diamanten_anzeige');
     }
+    else if (tile.type === 'diamond') {
+        const finalAmount = Math.ceil(amount * lootMultiplier);
+        state.diamanten += finalAmount;
+        this.showLootText(index, `+${finalAmount} 💎`, '#009ffd'); // Blau
+    }
+    else if (tile.type === 'gold') {
+        this.game.addSmileys(amount);
+        this.showLootText(index, `+${this.game.formatNumber(amount)} 💰`, '#ffeb3b'); // Gelb
+    }
+    else if (tile.type === 'fossil') {
+        state.fossilien += amount;
+        this.showLootText(index, `+${amount} 🦖`, '#e0e0e0'); // Grau/Weiß
+    }
+    else if (tile.type === 'tool_tnt') {
+        state.mineInventory.tnt++;
+        this.showLootText(index, "+1 🧨", '#ff5252'); // Rot
+    }
+    else if (tile.type === 'tool_drill') {
+        state.mineInventory.drill++;
+        this.showLootText(index, "+1 🔩", '#ffa726'); // Orange
+    }
+    else if (tile.type === 'treasure') {
+        // Schätze geben auch mehr, wenn der Buff aktiv ist
+        const baseDia = Math.floor(50 * (1 + state.mineDepth * 0.1));
+        const finalDia = Math.ceil(baseDia * lootMultiplier);
+        state.diamanten += finalDia;
+        this.showLootText(index, `+${finalDia} 💎`, '#FFD700'); // Gold
+        this.game.showNotification(`🎁 SCHATZ GEFUNDEN!`, "success");
+    }
+    else if (tile.type === 'passage' || tile.type === 'secret_passage') {
+        if (state.isTreasureRoom) {
+            state.isTreasureRoom = false;
+            this.game.showNotification("Schatzkammer verlassen.", "info");
+        }
+        if (tile.type === 'secret_passage') state.isTreasureRoom = true;
+        
+        state.mineDepth++;
+        this.showLootText(index, "ABSTIEG!", '#ffffff');
+
+        setTimeout(() => { this.reloadMineLevel(); }, 500); 
+    }
+
+    this.game.speichereSpiel();
+    this.updateMineVisuals();
+}
 
     useTNT(centerIndex) {
         const state = this.game.gameState;
