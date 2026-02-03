@@ -38,47 +38,46 @@
             </button>
 
             <div class="stats-box" style="padding: 10px;">
-                <h2 style="color: var(--color-accent-blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 10px; font-size: 1.1rem; letter-spacing: 1px;">
+                <h2 class="stats-header">
                     Aktuelle Stats
                 </h2>
 
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Gesammelte Daten</div>
-                    <div style="font-size: 2.0rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); line-height: 1.1;">
+                <div class="stats-main-display">
+                    <div class="stats-label-small">Gesammelte Daten</div>
+                    <div class="stats-value-large">
                         <span id="aktuelle_smileys">0</span> ☺
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px;">
-                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 0.7rem; color: #aaa;">Klick</div>
-                        <div style="font-size: 1.0rem; font-weight: bold; color: var(--color-accent-blue);">
+                <div class="stats-grid-row">
+                    <div class="stats-card-small">
+                        <div class="stats-label-small">Klick</div>
+                        <div class="stats-value-medium">
                             <span id="smileys_pro_klick_anzeige">1</span>
                         </div>
-                        <div style="font-size: 0.65rem; color: #666;">
+                        <div class="stats-subtext">
                             x<span id="klick_multiplikator_anzeige">1.00</span>
                         </div>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; text-align: center;" 
-                         data-tooltip-type="stats_sps">
-                        <div style="font-size: 0.7rem; color: #aaa;">Auto (SPS)</div>
-                        <div style="font-size: 1.0rem; font-weight: bold; color: #4CAF50;">
+                    <div class="stats-card-small" data-tooltip-type="stats_sps">
+                        <div class="stats-label-small">Auto (SPS)</div>
+                        <div class="stats-value-medium" style="color: #4CAF50;">
                             <span id="smileys_pro_sekunde_anzeige">0</span>
                         </div>
-                        <div style="font-size: 0.65rem; color: #666;">
+                        <div class="stats-subtext">
                             <span id="smileys_pro_minute_anzeige">0</span> /min
                         </div>
                     </div>
                 </div>
 
-                <div style="background: rgba(0, 159, 253, 0.1); border: 1px solid var(--color-accent-blue); padding: 4px; border-radius: 4px; text-align: center; margin-bottom: 8px; font-size: 0.8rem;">
+                <div class="global-boost-box">
                     <span style="color: var(--color-accent-blue);">GLOBAL BOOST:</span>
                     <strong id="globaler_multiplikator_anzeige" style="color: #fff;">x1.00</strong>
                 </div>
 
-                <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
-                    <span style="font-size: 1rem; color: #b9f2ff; text-shadow: 0 0 5px #009ffd; font-weight: bold;">
+                <div class="diamond-display-box">
+                    <span class="diamond-text">
                         💎 <span id="diamanten_anzeige">0</span>
                     </span>
                 </div>
@@ -399,24 +398,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-  // Falls du die Config schon in firebase-logic.js hast, 
-  // musst du sie hier einmalig initialisieren, damit sie global verfügbar ist:
-  if (!firebase.apps.length) {
- const firebaseConfig = {
-  apiKey: "AIzaSyAXLvyEnTMtVYMa5iOUXUFRoqDRfgClWDU",
-  authDomain: "smiley-clicker-idle-empire.firebaseapp.com",
-  databaseURL: "https://smiley-clicker-idle-empire-default-rtdb.europe-west1.firebasedatabase.app/",
-  projectId: "smiley-clicker-idle-empire",
-  storageBucket: "smiley-clicker-idle-empire.firebasestorage.app",
-  messagingSenderId: "883649043348",
-  appId: "1:883649043348:web:daf31892a0d6d639ec8d81"
-};
-    firebase.initializeApp(firebaseConfig);
-  }
-</script>
-
 <script src="data.js?v=2"></script> 
 <script src="SG.js?v=2"></script>
 <script type="module" src="firebase-logic.js?v=2"></script>
@@ -448,8 +429,5 @@
             <button id="btn-chat-send">🚀</button>
         </div>
     </div>
-</div>
-</div>
-</div>
-</body>
+</div> </body>
 </html>

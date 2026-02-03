@@ -1101,3 +1101,80 @@ input[type=range] { width: 100%; cursor: pointer; }
     z-index: 9999;                           /* Immer ganz oben */
     backdrop-filter: blur(5px);              /* Leichter Milchglas-Effekt (optional) */
 }
+
+/* --- Stats Box Bereinigung --- */
+.stats-header {
+    color: var(--color-accent-blue);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+.stats-main-display {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.stats-label-small {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.stats-value-large {
+    font-size: 2.0rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    line-height: 1.1;
+}
+
+.stats-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.stats-card-small {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.stats-value-medium {
+    font-size: 1.0rem;
+    font-weight: bold;
+    color: var(--color-accent-blue);
+}
+
+.stats-subtext {
+    font-size: 0.65rem;
+    color: #666;
+}
+
+.global-boost-box {
+    background: rgba(0, 159, 253, 0.1);
+    border: 1px solid var(--color-accent-blue);
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+}
+
+.diamond-display-box {
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 5px;
+}
+
+.diamond-text {
+    font-size: 1rem;
+    color: #b9f2ff;
+    text-shadow: 0 0 5px #009ffd;
+    font-weight: bold;
+}
