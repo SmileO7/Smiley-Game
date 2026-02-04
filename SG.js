@@ -5287,14 +5287,55 @@ class GuildSystem {
     clickGuildBoss(e) {
         const state = this.game.gameState;
         if (!state.guildBossFighting) return;
+
         this.game.triggerShake('guilds-content');
-        let damage = this.game.getClickStrength();
+
+        // 1. Basis-Schaden: Nur 1% deiner normalen Klickkraft
+        // Damit platzt der Boss nicht sofort, und der Kampf dauert etwas.
+        let rawClick = this.game.getClickStrength();
+        let damage = Math.ceil(rawClick * 0.01); 
+
+        // 2. Söldner-Synergie berechnen
+        // Söldner helfen NUR, wenn sie gerade NICHT auf einer Quest sind (status === 'idle')
+        let mercBonus = 0;
+        let activeMercsCount = 0;
+
+        if (state.guildMercenaries && state.guildMercenaries.length > 0) {
+            state.guildMercenaries.forEach(merc => {
+                if (merc.status === 'idle') {
+                    // Formel: Pro Söldner-Level +5% deines Klickschadens
+                    // Ein Level 20 Söldner verdoppelt also deinen Boss-Schaden!
+                    mercBonus += (merc.level * 0.05 * rawClick);
+                    activeMercsCount++;
+                }
+            });
+        }
+
+        // Bonus addieren
+        damage += mercBonus;
+
+        // Sicherheits-Check: Mindestens 1 Schaden
+        if (damage < 1) damage = 1;
+
+        // Kritische Treffer (Krit-Chance bleibt normal erhalten)
+        let isCrit = false;
         if (state.critChance > 0 && Math.random() < state.critChance) {
             damage *= state.critDamageMult;
+            isCrit = true;
         }
+
+        // Schaden abziehen
         state.guildBossHP -= damage;
+        
+        // Visuelles Feedback
+        // Zeigt an, wie viele Söldner helfen (optionales cooles Detail für die Konsole)
+        // console.log(`Boss Hit: ${damage} (Davon Söldner-Bonus: ${Math.floor(mercBonus)} durch ${activeMercsCount} Einheiten)`);
+
         if (e) this.game.spawnFloatingText(e, damage, 'boss-damage');
+        
         this.updateBossUI();
+
+        // Sieg-Prüfung
         if (state.guildBossHP <= 0) this.endGuildBoss(true);
     }
 
