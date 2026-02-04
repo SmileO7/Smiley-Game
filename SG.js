@@ -67,6 +67,7 @@ class SmileyGame {
             aktuelle_smileys: 0,
             lifetime_smileys: 0,
             diamanten: 0,
+            gems: 0,
             playerName: "Smiley_Gast", // Standard-Placeholder
             playerId: null,
             prestige_punkte_verfügbar: 0,
@@ -260,8 +261,11 @@ class SmileyGame {
                 }
                 this.pickaxeTimer = 0;
             }
-            // 👆👆👆 ENDE NEU 👆👆👆
 
+            const guildsModal = document.getElementById('guilds-modal');
+            if (guildsModal && guildsModal.style.display === 'flex') {
+            this.guildSystem.updateGuildTimers(); // Oder this.updateGuildTimers(), je nachdem wo du sie platziert hast
+            }
             this.updateUI();
         }, 1000);
 
@@ -2298,6 +2302,43 @@ getArtifactIcon(id) {
     // ================================================================================================================
     // 8. CONTENT RENDERING
     // ================================================================================================================
+
+    updateGuildTimers() {
+    const state = this.gameState;
+    if (!state.guildActiveQuests || state.guildActiveQuests.length === 0) return;
+
+    const now = Date.now();
+    let needsFullRender = false;
+
+    state.guildActiveQuests.forEach(q => {
+        const elapsed = (now - q.startTime) / 1000;
+        const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+        
+        // Suchen der Elemente im DOM für diese spezifische Quest
+        // Wir brauchen dafür eine ID im HTML der Quest-Karte
+        const timerEl = document.getElementById(`timer-quest-${q.id}`);
+        const barEl = document.getElementById(`bar-quest-${q.id}`);
+
+        if (timerEl) {
+            if (timeLeft > 0) {
+                timerEl.innerText = `⏳ Noch ${timeLeft}s`;
+                if (barEl) {
+                    const progress = Math.min(100, (elapsed / q.duration) * 100);
+                    barEl.style.width = progress + "%";
+                }
+            } else {
+                // Quest ist gerade fertig geworden während wir zuschauen!
+                needsFullRender = true; 
+            }
+        }
+    });
+
+    // Wenn eine Quest fertig wurde, rendern wir den Gilden-Inhalt einmal komplett neu,
+    // damit der "Abholen"-Button erscheint.
+    if (needsFullRender) {
+        this.renderGuildsContent();
+    }
+}
 
     renderPrestigeTree() {
         const container = this.getById('prestige-tree-container');
@@ -4973,58 +5014,48 @@ class GuildSystem {
     // --- QUEST LOGIK (NEU) ---
 
     generateGuildQuests() {
-        const state = this.game.gameState;
-        if (!state.guildAvailableQuests) state.guildAvailableQuests = [];
-        // Max 4 Quests gleichzeitig zur Auswahl
-        if (state.guildAvailableQuests.length >= 4) return;
+    const state = this.game.gameState;
+    if (!state.guildAvailableQuests) state.guildAvailableQuests = [];
+    if (state.guildAvailableQuests.length >= 4) return;
 
-        const questNames = [
-            "Troll-Höhle ausräuchern",       // Statt Ork-Lager
-            "Meme-Archiv bergen",            // Statt Schatz
-            "Die 'Sad Face' Gang verjagen",  // Statt Banditen
-            "Emoji-Datenbank reparieren",    // Passt zum Thema
-            "Den 'Lachenden König' eskortieren",
-            "Verlorene Pixel suchen",
-            "Server-Raum kühlen",
-            "Glitzer-Staub sammeln"
-        ];
-        const rarities = [
-            { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6 },
-            { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3 },
-            { name: "Episch", multi: 8, color: "#9c27b0", chance: 0.09 },
-            { name: "Legendär", multi: 20, color: "#ff9800", chance: 0.01 }
-        ];
+    const questNames = ["Emoji-Wald säubern", "Pixel-Mine erkunden", "Lach-Palast bewachen", "Daten-Strom flicken"];
+    const rarities = [
+        { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6 },
+        { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3 },
+        { name: "Episch", multi: 8, color: "#9c27b0", chance: 0.09 },
+        { name: "Legendär", multi: 20, color: "#ff9800", chance: 0.01 }
+    ];
 
-        while (state.guildAvailableQuests.length < 4) {
-            const name = questNames[Math.floor(Math.random() * questNames.length)];
-            const r = Math.random();
-            let rarity = rarities[0];
-            if (r > 0.99) rarity = rarities[3];
-            else if (r > 0.90) rarity = rarities[2];
-            else if (r > 0.60) rarity = rarities[1];
+    while (state.guildAvailableQuests.length < 4) {
+        const r = Math.random();
+        let rarity = rarities[0];
+        if (r > 0.99) rarity = rarities[3];
+        else if (r > 0.90) rarity = rarities[2];
+        else if (r > 0.60) rarity = rarities[1];
 
-            const duration = Math.floor(Math.random() * 300) + 60; // 1 bis 6 Minuten
-            let rewardValue = Math.max(5000, state.totalSPS * duration * 0.2); 
-            rewardValue *= rarity.multi;
+        const duration = Math.floor(Math.random() * 300) + 60; // Sekunden
+        
+        // --- BELOHNUNGS-LOGIK ---
+        const baseSmileys = state.totalSPS * duration * 0.2 * rarity.multi;
+        const isGemQuest = Math.random() < 0.15; // 15% Chance auf Gems statt Dias
 
-            // 20% Chance auf Diamanten-Quest
-            let isDiamond = Math.random() < 0.2; 
-            if (isDiamond) {
-                rewardValue = Math.max(2, Math.floor(rewardValue / 100000)); // Umrechnung in Dias
-            }
-
-            state.guildAvailableQuests.push({
-                id: Date.now() + Math.random(),
-                name: name,
-                rarity: rarity,
-                duration: duration,
-                baseReward: Math.floor(rewardValue),
-                isDiamond: isDiamond,
-                assignedMerc: null,
-                startTime: null
-            });
-        }
+        state.guildAvailableQuests.push({
+            id: Date.now() + Math.random(),
+            name: questNames[Math.floor(Math.random() * questNames.length)],
+            rarity: rarity,
+            duration: duration,
+            rewards: {
+                smileys: Math.max(100, Math.floor(baseSmileys)),
+                diamonds: isGemQuest ? 0 : Math.floor(rarity.multi * 2),
+                gems: isGemQuest ? Math.floor(rarity.multi * 1) : 0,
+                guildXP: 10 * rarity.multi,
+                mercXP: 25 * rarity.multi
+            },
+            assignedMerc: null,
+            startTime: null
+        });
     }
+}
 
     // Neue Start-Funktion: Verknüpft Söldner mit Quest
     assignMercenaryToQuest(questId) {
@@ -5069,65 +5100,48 @@ class GuildSystem {
     }
 
     claimQuest(questId) {
-        const state = this.game.gameState;
-        const index = state.guildActiveQuests.findIndex(q => q.id === questId);
-        if (index === -1) return;
-        
-        const quest = state.guildActiveQuests[index];
-        const merc = state.guildMercenaries.find(m => m.id === quest.assignedMerc);
+    const state = this.game.gameState;
+    const index = state.guildActiveQuests.findIndex(q => q.id === questId);
+    if (index === -1) return;
+    
+    const quest = state.guildActiveQuests[index];
+    const merc = state.guildMercenaries.find(m => m.id === quest.assignedMerc);
 
-        // Zeit-Check
-        const elapsed = (Date.now() - quest.startTime) / 1000;
-        if (elapsed < quest.duration) return;
+    // 1. Zeit-Check
+    const elapsed = (Date.now() - quest.startTime) / 1000;
+    if (elapsed < quest.duration) return;
 
-        // --- BELOHNUNG BERECHNEN ---
-        let finalReward = quest.baseReward;
-        
-        // Söldner Level Bonus
-        if (merc) {
-            let bonusMulti = this.getMercenaryBonus(merc);
-            
-            // Typ-Bonus
-            if (merc.type === 'scout' && !quest.isDiamond) bonusMulti += 0.5; // Scouts finden mehr Smileys
-            if (merc.type === 'miner' && quest.isDiamond) bonusMulti += 0.5; // Miner finden mehr Dias
-
-            finalReward = Math.floor(finalReward * bonusMulti);
-
-            // --- XP für Söldner ---
-            const xpGain = Math.floor(quest.duration / 10) + 10; // Simple XP Formel
-            merc.xp += xpGain;
-            if (merc.xp >= merc.maxXp) {
-                merc.level++;
-                merc.xp -= merc.maxXp;
-                merc.maxXp = Math.floor(merc.maxXp * 1.5);
-                this.game.showNotification(`🆙 ${merc.name} ist jetzt Level ${merc.level}!`, "success");
-                this.game.playLevelUpSound();
-            }
-
-            // Söldner wieder freigeben
-            merc.status = 'idle';
-            merc.questId = null;
+    // 2. EP Verteilung
+    if (merc) {
+        merc.xp += quest.rewards.mercXP;
+        // Level Up Check für Söldner
+        if (merc.xp >= merc.maxXp) {
+            merc.level++;
+            merc.xp -= merc.maxXp;
+            merc.maxXp = Math.floor(merc.maxXp * 1.8);
+            this.game.showNotification(`${merc.name} ist nun Level ${merc.level}!`, "success");
         }
-
-        // Auszahlen
-        if (quest.isDiamond) {
-            state.diamanten += finalReward;
-            this.game.showNotification(`Mission erfüllt: +${finalReward} 💎`, "success");
-        } else {
-            this.game.addSmileys(finalReward);
-            this.game.showNotification(`Mission erfüllt: +${this.game.formatNumber(finalReward)} Smileys`, "success");
-        }
-
-        // Gilden-XP
-        this.addGuildXP(10);
-
-        // Aufräumen
-        state.guildActiveQuests.splice(index, 1);
-        this.generateGuildQuests();
-        this.renderGuildsContent();
-        this.game.updateUI();
-        this.game.speichereSpiel();
+        merc.status = 'idle';
+        merc.questId = null;
     }
+    
+    // Gilden XP hinzufügen
+    this.addGuildXP(quest.rewards.guildXP);
+
+    // 3. Währungen auszahlen
+    this.game.addSmileys(quest.rewards.smileys);
+    state.diamanten += quest.rewards.diamonds;
+    state.gems += (quest.rewards.gems || 0); // Die neuen Gems!
+
+    // 4. Feedback & Speichern
+    this.game.showNotification(`Mission abgeschlossen! +${this.game.formatNumber(quest.rewards.smileys)} ☺, +${quest.rewards.diamonds} 💎, +${quest.rewards.gems || 0} ✨`, "success");
+    
+    state.guildActiveQuests.splice(index, 1);
+    this.generateGuildQuests();
+    this.renderGuildsContent();
+    this.game.updateUI();
+    this.game.speichereSpiel();
+}
 
     // --- STANDARD GILDEN LOGIK (Unverändert) ---
     foundGuild(name) {
@@ -5382,67 +5396,64 @@ class GuildSystem {
 
             // B) Quest Liste
             let questHtml = `
-                <div style="border-top:1px solid #333; padding-top:20px;">
-                    <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
-                    <div style="color:#888; font-size:0.85em; margin-bottom:15px;">👉 Schritt 1: Wähle einen Söldner. Schritt 2: Wähle eine Mission.</div>
-                    <div class="info-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">`;
-            
-            // Aktive Quests (Hellerer Balken, klarerer Status)
-            if (state.guildActiveQuests) {
-                state.guildActiveQuests.forEach(q => {
-                    const merc = state.guildMercenaries.find(m => m.id === q.assignedMerc);
-                    const elapsed = (Date.now() - q.startTime) / 1000;
-                    const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
-                    const isDone = timeLeft <= 0;
-                    const progress = Math.min(100, (elapsed / q.duration) * 100);
-                    
-                    // Farbe für aktiven Balken: Leuchtendes Cyan-Grün (#00C897) oder Erfolgs-Grün (#4CAF50)
-                    const progressColor = isDone ? '#4CAF50' : '#00C897'; 
+    <div style="border-top:1px solid #333; padding-top:20px;">
+        <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
+        <div style="color:#888; font-size:0.85em; margin-bottom:15px;">👉 Schritt 1: Wähle einen Söldner. Schritt 2: Wähle eine Mission.</div>
+        <div class="info-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">`;
 
-                    questHtml += `
-                        <div style="background:rgba(0,0,0,0.4); border:1px solid #333; border-left:4px solid ${progressColor}; padding:15px; border-radius:10px; position:relative;">
-                            <div style="font-weight:bold; color:#fff; font-size:1.1em;">${q.name}</div>
-                            <div style="font-size:0.85em; color:#ccc; margin-bottom:10px;">Wird ausgeführt von: <span style="color:#009ffd;">${merc ? merc.name : '???'}</span></div>
-                            
-                            <div style="background:#1a1a1a; height:8px; margin-bottom:8px; border-radius:4px; overflow:hidden;">
-                                <div style="width:${progress}%; height:100%; background:${progressColor}; transition:width 0.5s linear;"></div>
-                            </div>
-                            
-                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em;">
-                                <span style="color:${isDone ? '#4CAF50' : '#aaa'};">
-                                    ${isDone ? '✅ Mission abgeschlossen!' : `⏳ Noch ${timeLeft}s`}
-                                </span>
-                                ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}" style="padding:6px 15px; font-size:0.9em;">Belohnung abholen!</button>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+// 1. Aktive Quests rendern
+if (state.guildActiveQuests) {
+    state.guildActiveQuests.forEach(q => {
+        const merc = state.guildMercenaries.find(m => m.id === q.assignedMerc);
+        const elapsed = (Date.now() - q.startTime) / 1000;
+        const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+        const isDone = timeLeft <= 0;
+        const progress = Math.min(100, (elapsed / q.duration) * 100);
+        const progressColor = isDone ? '#4CAF50' : '#00C897'; 
 
-            // Verfügbare Quests (Buttons heller machen)
-            state.guildAvailableQuests.forEach(q => {
-                const rewardText = q.isDiamond ? `${q.baseReward} 💎` : `${this.game.formatNumber(q.baseReward)}`;
-                const canStart = this.selectedMercenaryId !== null;
-                // Hellerer Button-Style (#009ffd)
-                const buttonStyle = canStart 
-                    ? `background:#009ffd; color:#fff; border:none; padding:10px; border-radius:5px; cursor:pointer; width:100%; font-weight:bold;` 
-                    : `background:#333; color:#777; border:none; padding:10px; border-radius:5px; cursor:not-allowed; width:100%;`;
+        questHtml += `
+    <div style="...">
+        <div style="font-weight:bold;">${q.name}</div>
+        <div style="...">Held: ${merc ? merc.name : '???'}</div>
+        <div style="background:#1a1a1a; height:8px; ...">
+            <div id="bar-quest-${q.id}" style="width:${progress}%; height:100%; background:${progressColor}; transition:width 0.5s linear;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; ...">
+            <span id="timer-quest-${q.id}" style="color:${isDone ? '#4CAF50' : '#aaa'};">
+                ${isDone ? '✅ Abgeschlossen!' : `⏳ Noch ${timeLeft}s`}
+            </span>
+            ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}">Einsammeln</button>` : ''}
+        </div>
+    </div>`;
+    });
+}
 
-                questHtml += `
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid #333; border-left:4px solid ${q.rarity.color}; padding:15px; border-radius:10px; opacity:${canStart ? 1 : 0.7}; transition:opacity 0.2s;">
-                        <div style="color:${q.rarity.color}; font-weight:bold; font-size:1.1em;">${q.name}</div>
-                        <div style="font-size:0.85em; color:#aaa; margin-bottom:8px;">
-                            ${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min
-                        </div>
-                        <div style="font-size:0.95em; margin-bottom:15px; padding:8px; background:rgba(0,0,0,0.2); border-radius:5px;">
-                            Belohnung: <strong>${rewardText}</strong> <small style="color:#009ffd;">(+Bonus)</small>
-                        </div>
-                        <button class="btn-assign-quest" data-id="${q.id}" ${canStart ? '' : 'disabled'} style="${buttonStyle}">
-                            ${canStart ? '🚀 Söldner entsenden' : 'Wähle zuerst einen Söldner'}
-                        </button>
-                    </div>
-                `;
-            });
+// 2. Verfügbare Quests rendern (HIER IST DER FIX FÜR DIE 0)
+state.guildAvailableQuests.forEach(q => {
+    // Ermittlung des Textes: Wir schauen in das rewards Objekt
+    let rewardText = "";
+    if (q.rewards.gems > 0) rewardText = `${q.rewards.gems} ✨`;
+    else if (q.rewards.diamonds > 0) rewardText = `${q.rewards.diamonds} 💎`;
+    else rewardText = `${this.game.formatNumber(q.rewards.smileys)}`;
+
+    const canStart = this.selectedMercenaryId !== null;
+    const buttonStyle = canStart 
+        ? `background:#009ffd; color:#fff; cursor:pointer;` 
+        : `background:#333; color:#777; cursor:not-allowed;`;
+
+    questHtml += `
+        <div style="background:rgba(255,255,255,0.03); border:1px solid #333; border-left:4px solid ${q.rarity.color}; padding:15px; border-radius:10px; opacity:${canStart ? 1 : 0.7};">
+            <div style="color:${q.rarity.color}; font-weight:bold; font-size:1.1em;">${q.name}</div>
+            <div style="font-size:0.85em; color:#aaa; margin-bottom:8px;">${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min</div>
+            <div style="font-size:0.95em; margin-bottom:15px; padding:8px; background:rgba(0,0,0,0.2); border-radius:5px;">
+                Belohnung: <strong>${rewardText}</strong> <small style="color:#009ffd;">(+Bonus)</small>
+            </div>
+            <button class="btn-assign-quest" data-id="${q.id}" ${canStart ? '' : 'disabled'} 
+                    style="${buttonStyle} border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">
+                ${canStart ? '🚀 Söldner entsenden' : 'Söldner wählen'}
+            </button>
+        </div>`;
+});
             questHtml += `</div></div>`;
 
             contentHtml = mercHtml + questHtml;

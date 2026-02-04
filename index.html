@@ -134,6 +134,9 @@
                 <button id="open_diamond_mine_button" class="btn-feature"><span>💎</span> DIAMANTEN-MINE</button>
                 <button id="open_guilds_button" class="btn-feature"><span>⚔️</span> GILDEN</button>
                 <button id="show_achievements_button" class="btn-primary"><span>🏆</span> ERFOLGE</button>
+                <button id="open-gem-shop-button" class="btn-feature" style="background: linear-gradient(135deg, #9c27b0, #673ab7);">
+                    <span>✨</span> GEM-KONZERN
+                </button>
                 <button id="show_museum_button" class="btn-primary">🏺 Museum</button>
             </div>
 
@@ -287,6 +290,19 @@
         </div>
         <div id="museum_grid" class="info-grid">
             </div>
+    </div>
+</div>
+<div id="gem-shop-modal" class="modal" style="display: none;">
+    <div class="modal-content large" style="border-color: #9c27b0;">
+        <h2>✨ Edelstein-Kontor</h2>
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            Deine Gems: <span id="gem-display" style="color: #e066ff; font-weight: bold; font-size: 1.2rem;">0</span>
+        </div>
+        <div id="gem-shop-grid" class="info-grid">
+            </div>
+        <div class="modal-buttons">
+            <button id="close-gem-shop-button" class="btn-cancel">Verlassen</button>
+        </div>
     </div>
 </div>
 <div id="prestige-modal" class="modal" style="display: none;"><div class="modal-content"><h2>🌌 Prestige: Zeitreise</h2><div class="prestige-stats"><p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p><p>Du erhältst: <strong id="prestige-gain-display" style="color:gold;">0</strong> Punkte</p></div><div class="modal-buttons"><button id="btn-do-prestige" class="btn-danger">Reset durchführen</button><button id="btn-cancel-prestige" class="btn-cancel">Abbrechen</button></div></div></div>

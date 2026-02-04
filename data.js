@@ -715,3 +715,97 @@ const achievementsData = [
         bonus: { type: 'global_mult', value: 2.0 }, color: '#FFD700'
     }
 ];
+
+const GUILD_DATA = {
+    mercenaryClasses: {
+        fighter: {
+            name: "Kämpfer",
+            icon: "⚔️",
+            description: "Spezialist für gefährliche Monsterjagd-Quests.",
+            statBonus: "attack"
+        },
+        scout: {
+            name: "Späher",
+            icon: "🏹",
+            description: "Findet schneller seltene Artefakte und Relikte.",
+            statBonus: "speed"
+        },
+        miner: {
+            name: "Bergbauer",
+            icon: "⛏️",
+            description: "Spezialisiert auf die Gewinnung von Diamanten.",
+            statBonus: "resource"
+        }
+    },
+    
+    questPool: [
+        {
+            id: "monster_hunt_1",
+            name: "Schleim-Plage beseitigen",
+            duration: 300, 
+            requiredClass: "fighter",
+            difficulty: 1,
+            rewards: {
+                guildXP: 50,      // Erfahrung für die gesamte Gilde
+                mercXP: 100,      // Erfahrung nur für den beteiligten Söldner
+                smileys: 10000,   // Normale Währung
+                diamonds: 2,      // Premium Währung
+                gems: 0           // Die neue Resource (noch im Aufbau)
+            }
+        },
+        {
+            id: "expedition_ruins",
+            name: "Expedition zu den alten Tempeln",
+            duration: 900, 
+            requiredClass: "scout",
+            difficulty: 2,
+            rewards: {
+                guildXP: 150,
+                mercXP: 300,
+                smileys: 50000,
+                diamonds: 5,
+                gems: 1           // Erste Gems als seltene Belohnung
+            }
+        },
+        {
+            id: "deep_core_mining",
+            name: "Abbau im Erdkern",
+            duration: 1800, 
+            requiredClass: "miner",
+            difficulty: 3,
+            rewards: {
+                guildXP: 400,
+                mercXP: 800,
+                smileys: 250000,
+                diamonds: 15,
+                gems: 3
+            }
+        }
+    ]
+};
+
+const GEM_SHOP_DATA = [
+    {
+        id: "gem_buff_sps",
+        name: "Smaragd-Verstärker",
+        description: "Erhöht deine gesamte Produktion permanent um 15%.",
+        cost: 25,
+        type: "sps_boost",
+        value: 0.15
+    },
+    {
+        id: "gem_buff_click",
+        name: "Rubin-Schärfe",
+        description: "Kritische Treffer verursachen +50% mehr Schaden.",
+        cost: 40,
+        type: "crit_damage",
+        value: 0.50
+    },
+    {
+        id: "gem_unlock_automation",
+        name: "Kristall-Logistik",
+        description: "Söldner starten Quests automatisch neu (wenn verfügbar).",
+        cost: 100,
+        type: "automation"
+    }
+];
