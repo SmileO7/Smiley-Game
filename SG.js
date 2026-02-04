@@ -116,6 +116,7 @@ class SmileyGame {
             guildCostReduction: 0,
             guildPrestigeBonus: 0,
             guildGlobalMultiplier: 1,
+            lastBossDefeatTime: 0,
             guildBossLevel: 1,
             guildBossHP: 1000,
             guildBossMaxHP: 1000,
@@ -239,57 +240,60 @@ class SmileyGame {
     // ================================================================================================================
 
     startIntervals() {
-        // 1. Der Haupt-Loop für SPS (jede Sekunde)
-        setInterval(() => {
-            this.addSmileys(this.gameState.totalSPS);
+    // 1. Der Haupt-Loop für SPS (jede Sekunde)
+    setInterval(() => {
+        this.addSmileys(this.gameState.totalSPS);
 
-            // 👇👇👇 NEU: AUTO-HACKEN REGENERATION 👇👇👇
-            const inv = this.gameState.mineInventory;
-            const maxPicks = 50; // Limit für Hacken
-            
-            // Logik: Jede Sekunde 10% Chance ODER fester Timer? 
-            // Machen wir es einfach: Alle 5 Sekunden +1 Hacke
-            if (!this.pickaxeTimer) this.pickaxeTimer = 0;
-            this.pickaxeTimer++;
-            
-            if (this.pickaxeTimer >= 5) { // Alle 5 Sekunden
-                if (inv.pickaxe < maxPicks) {
-                    inv.pickaxe++;
-                    // Wenn Mine offen ist, Anzeige updaten
-                    const qEl = document.getElementById('qty-pickaxe');
-                    if(qEl) qEl.innerText = inv.pickaxe;
-                }
-                this.pickaxeTimer = 0;
+        // --- AUTO-HACKEN REGENERATION ---
+        const inv = this.gameState.mineInventory;
+        const maxPicks = 50; 
+        
+        if (!this.pickaxeTimer) this.pickaxeTimer = 0;
+        this.pickaxeTimer++;
+        
+        if (this.pickaxeTimer >= 5) { 
+            if (inv.pickaxe < maxPicks) {
+                inv.pickaxe++;
+                const qEl = document.getElementById('qty-pickaxe');
+                if(qEl) qEl.innerText = inv.pickaxe;
             }
+            this.pickaxeTimer = 0;
+        }
 
-            const guildsModal = document.getElementById('guilds-modal');
-            if (guildsModal && guildsModal.style.display === 'flex') {
-            this.guildSystem.updateGuildTimers(); // Oder this.updateGuildTimers(), je nachdem wo du sie platziert hast
-            }
-            this.updateUI();
-        }, 1000);
+        // --- GILDEN & SÖLDNER HINTERGRUND-LOGIK ---
+        // Boss-Alarm Prüfung (immer aktiv)
+        if (this.guildSystem) {
+            this.guildSystem.checkBossAlarm();
+        }
 
+        // KORREKTUR: updateGuildTimers wird jetzt IMMER aufgerufen.
+        // Die Methode steuert intern, ob nur die Benachrichtigung (Hintergrund)
+        // oder auch das UI (Vordergrund) aktualisiert wird.
+        this.updateGuildTimers(); 
+        
+        this.updateUI();
+    }, 1000);
 
-        // 2. Automatisches Speichern (alle 60 Sek)
-        setInterval(() => {
-            this.saveGame();
-        }, 60000);
+    // 2. Automatisches Speichern (alle 60 Sek)
+    setInterval(() => {
+        this.saveGame();
+    }, 60000);
 
-        // 3. News-Ticker Wechsel (alle 30 Sekunden)
-        setInterval(() => {
-            const ticker = this.getById('news-ticker-text');
-            if (ticker && ticker.style.color !== "rgb(0, 159, 253)") { 
-                this.updateNewsTicker();
-            }
-        }, 30000);
+    // 3. News-Ticker Wechsel (alle 30 Sekunden)
+    setInterval(() => {
+        const ticker = this.getById('news-ticker-text');
+        if (ticker && ticker.style.color !== "rgb(0, 159, 253)") { 
+            this.updateNewsTicker();
+        }
+    }, 30000);
 
-        // 4. RNG-Events (Fragezeichen alle 1-3 Minuten)
-        setInterval(() => {
-            if (Math.random() < 0.3) { // 30% Chance alle 60 Sek
-                this.spawnRandomEvent();
-            }
-        }, 60000);
-    }
+    // 4. RNG-Events (Fragezeichen alle 1-3 Minuten)
+    setInterval(() => {
+        if (Math.random() < 0.3) { 
+            this.spawnRandomEvent();
+        }
+    }, 60000);
+}
 
     produzierePassiveErträge() {
         const actualSPS = this.computeTotalSPS();
@@ -2305,37 +2309,66 @@ getArtifactIcon(id) {
 
     updateGuildTimers() {
     const state = this.gameState;
-    if (!state.guildActiveQuests || state.guildActiveQuests.length === 0) return;
-
     const now = Date.now();
     let needsFullRender = false;
+    
+    const guildsModal = document.getElementById('guilds-modal');
+    const isModalOpen = guildsModal && guildsModal.style.display === 'flex';
 
-    state.guildActiveQuests.forEach(q => {
-        const elapsed = (now - q.startTime) / 1000;
-        const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
-        
-        // Suchen der Elemente im DOM für diese spezifische Quest
-        // Wir brauchen dafür eine ID im HTML der Quest-Karte
-        const timerEl = document.getElementById(`timer-quest-${q.id}`);
-        const barEl = document.getElementById(`bar-quest-${q.id}`);
-
-        if (timerEl) {
-            if (timeLeft > 0) {
-                timerEl.innerText = `⏳ Noch ${timeLeft}s`;
-                if (barEl) {
-                    const progress = Math.min(100, (elapsed / q.duration) * 100);
-                    barEl.style.width = progress + "%";
+    // A) QUEST TIMER (Söldner)
+    if (state.guildActiveQuests && state.guildActiveQuests.length > 0) {
+        state.guildActiveQuests.forEach(q => {
+            const elapsed = (now - q.startTime) / 1000;
+            const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+            
+            if (timeLeft <= 0 && !q.notified) {
+                q.notified = true; 
+                needsFullRender = true;
+                if (Notification.permission === "granted") {
+                    const merc = state.guildMercenaries.find(m => m.id === q.assignedMerc);
+                    new Notification("Quest abgeschlossen! ⚔️", {
+                        body: `${merc ? merc.name : 'Dein Söldner'} ist zurückgekehrt!`,
+                        icon: "smiley.png"
+                    });
                 }
-            } else {
-                // Quest ist gerade fertig geworden während wir zuschauen!
-                needsFullRender = true; 
             }
-        }
-    });
 
-    // Wenn eine Quest fertig wurde, rendern wir den Gilden-Inhalt einmal komplett neu,
-    // damit der "Abholen"-Button erscheint.
-    if (needsFullRender) {
+            if (isModalOpen) {
+                const timerEl = document.getElementById(`timer-quest-${q.id}`);
+                const barEl = document.getElementById(`bar-quest-${q.id}`);
+                if (timerEl) {
+                    timerEl.innerText = timeLeft > 0 ? `⏳ Noch ${timeLeft}s` : "✅ Bereit!";
+                    if (barEl) barEl.style.width = Math.min(100, (elapsed / q.duration) * 100) + "%";
+                }
+            }
+        });
+    }
+
+    // B) BOSS REGENERATION TIMER (Garantiertes Ticken)
+    if (this.guildView === 'boss' && !state.guildBossFighting && isModalOpen) {
+        const cooldownTime = 30 * 60 * 1000; 
+        const nextAvailable = (state.lastBossDefeatTime || 0) + cooldownTime;
+        // WICHTIG: 'now' muss hier aktuell sein
+        const currentTime = Date.now();
+        const bossTimeLeft = nextAvailable - currentTime;
+
+        if (bossTimeLeft > 0) {
+            const bossTimerDisplay = document.getElementById('boss-cooldown-timer');
+            
+            if (bossTimerDisplay) {
+                const bRemaining = Math.ceil(bossTimeLeft / 1000);
+                const bMins = Math.floor(bRemaining / 60);
+                const bSecs = bRemaining % 60;
+                // Live-Überschreiben des Textes
+                bossTimerDisplay.innerText = `${bMins}:${bSecs < 10 ? '0' : ''}${bSecs}`;
+            }
+        } else if (state.lastBossDefeatTime > 0) {
+            // Timer abgelaufen -> Kampf-Button rendern
+            needsFullRender = true;
+        }
+    } // <-- Diese Klammer hat gefehlt!
+
+    if (needsFullRender && isModalOpen) {
         this.renderGuildsContent();
     }
 }
@@ -5079,6 +5112,7 @@ class GuildSystem {
         // 2. Zuweisung
         quest.assignedMerc = merc.id;
         quest.startTime = Date.now();
+        quest.notified = false;
         
         // Spezialeffekt: Fighter sind 20% schneller
         if (merc.type === 'fighter') {
@@ -5222,20 +5256,24 @@ class GuildSystem {
     }
 
     endGuildBoss(victory) {
-        clearInterval(this.game.bossInterval);
-        this.game.gameState.guildBossFighting = false;
-        if (victory) {
-            const reward = this.game.gameState.guildBossLevel * 10;
-            this.game.gameState.diamanten += reward;
-            this.game.gameState.guildBossLevel++;
-            this.game.showNotification(`BOSS BESIEGT! +${reward} 💎`, 'success');
-        } else {
-            this.game.showNotification("Zeit abgelaufen! Der Boss ist entkommen.", 'error');
-        }
-        this.game.updateUI();
-        this.renderGuildsContent();
-        this.game.speichereSpiel();
+    clearInterval(this.game.bossInterval);
+    this.game.gameState.guildBossFighting = false;
+    
+    if (victory) {
+        const reward = this.game.gameState.guildBossLevel * 10;
+        this.game.gameState.diamanten += reward;
+        this.game.gameState.guildBossLevel++;
+        // --- NEU: Zeitstempel speichern ---
+        this.game.gameState.lastBossDefeatTime = Date.now(); 
+        this.game.showNotification(`BOSS BESIEGT! +${reward} 💎`, 'success');
+    } else {
+        this.game.showNotification("Zeit abgelaufen!", 'error');
     }
+    
+    this.game.updateUI();
+    this.renderGuildsContent();
+    this.game.speichereSpiel();
+}
 
     updateBossUI() {
         const hpBar = this.game.getById('boss-hp-bar');
@@ -5248,255 +5286,303 @@ class GuildSystem {
         }
     }
 
+    checkBossAlarm() {
+    const state = this.game.gameState;
+    if (state.guildBossFighting || Notification.permission !== "granted") return;
+
+    const now = Date.now();
+    const cooldown = 30 * 60 * 1000; 
+    const nextSpawn = (state.lastBossDefeatTime || 0) + cooldown;
+    const timeLeft = nextSpawn - now;
+
+    // 1. Warnung: 5 Minuten vorher
+    if (timeLeft <= 300000 && timeLeft > 299000 && !this.bossWarned5Min) {
+        this.bossWarned5Min = true;
+        new Notification("Gilden-Alarm! 📢", { body: "Boss-Raid in 5 Minuten!", icon: "smiley.png" });
+    }
+
+    // 2. Start-Meldung & RESET der Warn-Flags
+    if (timeLeft <= 0) {
+        if (!this.bossStartNotified) {
+            this.bossStartNotified = true;
+            new Notification("DER BOSS IST DA! 👹", { body: "Angriff möglich!", icon: "smiley.png" });
+        }
+    } else {
+        // Falls timeLeft > 0 (Boss ist noch im Cooldown), 
+        // stellen wir sicher, dass das Start-Flag für den nächsten Spawn bereit ist
+        this.bossStartNotified = false;
+    }
+}
     // --- RENDER LOGIK (Mit Söldner UI) ---
 
     renderGuildsContent() {
-        const container = this.game.getById('guilds-content');
-        if (!container) return;
-        const state = this.game.gameState;
+    const container = this.game.getById('guilds-content');
+    if (!container) return;
+    const state = this.game.gameState;
 
-        // --- KEINE GILDE ---
-        if (!state.guildName) {
-            // (Bleibt gleich wie vorher)
-            const COST = 500000000;
-            const canAfford = state.aktuelle_smileys >= COST;
-            container.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <div style="font-size:4rem; margin-bottom:10px;">🏰</div>
-                    <h3>Gilde Gründen</h3>
-                    <p style="color:#aaa;">Erstelle eine Allianz für Bosse, Quests und globale Boni.</p>
-                    <div style="margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                        <p><strong>Kosten:</strong> <span style="color:#FFD700">${this.game.formatNumber(COST)}</span> Smileys</p>
-                    </div>
-                    <input type="text" id="guild-name-input" placeholder="Name deiner Gilde" maxlength="20" style="padding:10px; border-radius:5px; border:1px solid #555; background:#222; color:#fff; width:70%; margin-bottom:10px;">
-                    <br>
-                    <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'} style="width:70%;">Gilde Gründen</button>
+    // --- KEINE GILDE ---
+    if (!state.guildName) {
+        const COST = 500000000;
+        const canAfford = state.aktuelle_smileys >= COST;
+        container.innerHTML = `
+            <div style="text-align:center; padding:20px;">
+                <div style="font-size:4rem; margin-bottom:10px;">🏰</div>
+                <h3>Gilde Gründen</h3>
+                <p style="color:#aaa;">Erstelle eine Allianz für Bosse, Quests und globale Boni.</p>
+                <div style="margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px;">
+                    <p><strong>Kosten:</strong> <span style="color:#FFD700">${this.game.formatNumber(COST)}</span> Smileys</p>
                 </div>
-            `;
-            this.game.getById('found-guild-button')?.addEventListener('click', () => {
-                const val = this.game.getById('guild-name-input').value;
-                if(val.length > 2) this.foundGuild(val);
-            });
-            return;
-        }
+                <input type="text" id="guild-name-input" placeholder="Name deiner Gilde" maxlength="20" style="padding:10px; border-radius:5px; border:1px solid #555; background:#222; color:#fff; width:70%; margin-bottom:10px;">
+                <br>
+                <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'} style="width:70%;">Gilde Gründen</button>
+            </div>
+        `;
+        this.game.getById('found-guild-button')?.addEventListener('click', () => {
+            const val = this.game.getById('guild-name-input').value;
+            if(val.length > 2) this.foundGuild(val);
+        });
+        return;
+    }
 
-        // --- NAVIGATION ---
-        let tabsHtml = `
-            <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
-                <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Zentrale</button>
-                <button id="tab-guild-boss" class="btn-primary ${this.guildView==='boss'?'':'btn-cancel'}" style="flex:1">Boss Raid</button>
-                <button id="tab-guild-quests" class="btn-primary ${this.guildView==='quests'?'':'btn-cancel'}" style="flex:1">Söldner & Quests</button>
+    // --- NAVIGATION ---
+    let tabsHtml = `
+        <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:15px;">
+            <button id="tab-guild-shop" class="btn-primary ${this.guildView==='shop'?'':'btn-cancel'}" style="flex:1">Zentrale</button>
+            <button id="tab-guild-boss" class="btn-primary ${this.guildView==='boss'?'':'btn-cancel'}" style="flex:1">Boss Raid</button>
+            <button id="tab-guild-quests" class="btn-primary ${this.guildView==='quests'?'':'btn-cancel'}" style="flex:1">Söldner & Quests</button>
+        </div>
+    `;
+
+    let contentHtml = '';
+
+    // --- ZENTRALE (MITGLIEDER + LEVEL + BENACHRICHTIGUNGEN) ---
+    if (this.guildView === 'shop') {
+        // --- NEU: Benachrichtigungs-Status Panel ---
+        const notiIcon = Notification.permission === 'granted' ? '🔔' : '🔕';
+        const notiText = Notification.permission === 'granted' ? 'Aktiviert' : 'Deaktiviert';
+        
+        let settingsHtml = `
+            <div style="background:rgba(0,159,253,0.1); border:1px solid #009ffd; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h4 style="margin:0; color:#009ffd;">Gilden-Funk ${notiIcon}</h4>
+                    <p style="margin:5px 0 0 0; font-size:0.8em; color:#ccc;">Desktop-Benachrichtigungen für fertige Quests.</p>
+                </div>
+                <button id="btn-toggle-notifications" class="btn-confirm" style="font-size:0.8em; padding:8px 12px;">
+                    ${notiText}
+                </button>
             </div>
         `;
 
-        let contentHtml = '';
+        let listHtml = `
+            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; border-bottom:1px solid #444; padding-bottom:5px;">Mitglieder (${state.guildName})</h4>
+                <div id="guild-list-body" class="custom-scrollbar" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:2px; min-height:50px;">
+                    <div style="text-align:center; padding:10px; color:#666;">Lade... 📡</div>
+                </div>
+            </div>`;
 
-        // --- ZENTRALE (MITGLIEDER + LEVEL) ---
-        if (this.guildView === 'shop') {
-             // ... (Hier der Code für die Mitgliederliste von vorhin einfügen oder lassen) ...
-             // Damit die Antwort nicht zu lang wird, kürze ich das hier ab, da du das ja schon hast.
-             // Falls du es brauchst, sag bescheid. Ich fokussiere mich auf den Quest-Teil.
-             
-             // Nur Platzhalter, damit es läuft:
-             contentHtml = `<div style="text-align:center;">Nutze den Söldner-Tab für Quests! <br><br> (Mitglieder-Liste hier)</div>`;
-             
-             // Du solltest hier deinen "Zentrale"-Code von vorhin behalten!
-             // Ich schreibe es unten komplett hin, damit du copy-paste machen kannst.
-             
-             // --- FIX: Vollständiger Code für Shop/Zentrale ---
-             let listHtml = `
-                <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:20px;">
-                    <h4 style="margin:0 0 10px 0; border-bottom:1px solid #444; padding-bottom:5px;">Mitglieder (${state.guildName})</h4>
-                    <div id="guild-list-body" class="custom-scrollbar" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:2px; min-height:50px;">
-                        <div style="text-align:center; padding:10px; color:#666;">Lade... 📡</div>
-                    </div>
-                </div>`;
-            const progressPct = Math.min(100, (state.guildXP / state.guildXPReq) * 100);
-            let progressHtml = `
-                <div style="margin-bottom:20px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <strong>Gilden-Level ${state.guildLevel}</strong>
-                        <span style="color:#aaa;">${this.game.formatNumber(state.guildXP)} / ${this.game.formatNumber(state.guildXPReq)} XP</span>
-                    </div>
-                    <div style="background:#222; height:10px; border-radius:5px; overflow:hidden; border:1px solid #444;">
-                        <div style="width:${progressPct}%; height:100%; background:#009ffd; transition:width 0.3s;"></div>
-                    </div>
-                </div>`;
-            contentHtml = listHtml + progressHtml;
-            setTimeout(() => { if(this.game.chatSystem) this.game.chatSystem.startGuildMemberListener(); }, 50);
-        }
+        const progressPct = Math.min(100, (state.guildXP / state.guildXPReq) * 100);
+        let progressHtml = `
+            <div style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <strong>Gilden-Level ${state.guildLevel}</strong>
+                    <span style="color:#aaa;">${this.game.formatNumber(state.guildXP)} / ${this.game.formatNumber(state.guildXPReq)} XP</span>
+                </div>
+                <div style="background:#222; height:10px; border-radius:5px; overflow:hidden; border:1px solid #444;">
+                    <div style="width:${progressPct}%; height:100%; background:#009ffd; transition:width 0.3s;"></div>
+                </div>
+            </div>`;
 
-        // --- BOSS RAID ---
-        else if (this.guildView === 'boss') {
-             // ... (Boss Code von vorhin, unverändert) ...
-             if (state.guildBossFighting) {
-                const pct = Math.max(0, (state.guildBossHP / state.guildBossMaxHP) * 100);
-                contentHtml = `
-                    <div class="boss-arena active" style="text-align:center;">
-                        <h3 style="color:#ff5252;">🔥 RAID LÄUFT! 🔥</h3>
-                        <div style="font-size:3em; color:#fff; font-weight:bold; margin:10px 0;"><span id="boss-timer-display">${state.guildBossTimer}s</span></div>
-                        <div style="background:#222; height:25px; border-radius:15px; overflow:hidden; margin:10px auto; width:80%; border:2px solid #555; position:relative;">
-                            <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:linear-gradient(90deg, #d32f2f, #ff5252); transition:width 0.1s linear;"></div>
-                            <span id="boss-hp-text" style="position:absolute; width:100%; text-align:center; top:0; line-height:25px; color:#fff; font-size:0.8em;">${this.game.formatNumber(state.guildBossHP)} / ${this.game.formatNumber(state.guildBossMaxHP)}</span>
-                        </div>
-                        <div id="guild-boss-clicker" style="font-size:100px; cursor:pointer; user-select:none; margin:20px 0;">👹</div>
-                    </div>`;
-            } else {
+        contentHtml = settingsHtml + listHtml + progressHtml;
+        
+        // Listener für den Noti-Button verzögert binden
+        setTimeout(() => { 
+            if(this.game.chatSystem) this.game.chatSystem.startGuildMemberListener(); 
+            this.game.getById('btn-toggle-notifications')?.addEventListener('click', () => this.toggleNotifications());
+        }, 50);
+    }
+
+    // --- BOSS RAID ---
+    else if (this.guildView === 'boss') {
+        const state = this.game.gameState;
+        const now = Date.now();
+        const cooldownTime = 30 * 60 * 1000; // 30 Minuten
+        const nextAvailable = (state.lastBossDefeatTime || 0) + cooldownTime;
+        const canFight = now >= nextAvailable;
+
+        if (state.guildBossFighting) {
+            const pct = Math.max(0, (state.guildBossHP / state.guildBossMaxHP) * 100);
+            contentHtml = `
+                <div class="boss-arena active" style="text-align:center;">
+                    <h3 style="color:#ff5252;">🔥 RAID LÄUFT! 🔥</h3>
+                    <div style="font-size:3em; color:#fff; font-weight:bold; margin:10px 0;"><span id="boss-timer-display">${state.guildBossTimer}s</span></div>
+                    <div style="background:#222; height:25px; border-radius:15px; overflow:hidden; margin:10px auto; width:80%; border:2px solid #555; position:relative;">
+                        <div id="boss-hp-bar" style="width:${pct}%; height:100%; background:linear-gradient(90deg, #d32f2f, #ff5252); transition:width 0.1s linear;"></div>
+                        <span id="boss-hp-text" style="position:absolute; width:100%; text-align:center; top:0; line-height:25px; color:#fff; font-size:0.8em;">${this.game.formatNumber(state.guildBossHP)} / ${this.game.formatNumber(state.guildBossMaxHP)}</span>
+                    </div>
+                    <div id="guild-boss-clicker" style="font-size:100px; cursor:pointer; user-select:none; margin:20px 0;">👹</div>
+                </div>`;
+        } else {
+            if (canFight) {
                 const nextHp = Math.floor(1000 * Math.pow(1.5, state.guildBossLevel - 1));
                 contentHtml = `
                     <div class="boss-lobby" style="text-align:center; padding:40px;">
                         <div style="font-size: 80px; margin-bottom:20px;">💀</div>
                         <h3>Gilden-Raid (Stufe ${state.guildBossLevel})</h3>
                         <p>Boss HP: <strong style="color:#ff5252;">${this.game.formatNumber(nextHp)}</strong></p>
-                        <button id="start-boss-btn" class="btn-danger" style="padding:15px 40px; font-size:1.2em;">KAMPF STARTEN</button>
+                        <button id="start-boss-btn" class="boss-btn-active" style="padding:15px 40px; font-size:1.2em; cursor:pointer;">KAMPF STARTEN</button>
+                    </div>`;
+            } else {
+                // 👇 HIER WAR DER FEHLER: Variablen müssen VOR der Nutzung definiert werden 👇
+                const remainingSec = Math.ceil((nextAvailable - now) / 1000);
+                const mins = Math.floor(remainingSec / 60);
+                const secs = remainingSec % 60;
+
+                contentHtml = `
+                    <div class="boss-lobby" style="text-align:center; padding:40px; opacity:0.7;">
+                        <div style="font-size: 80px; margin-bottom:20px; filter:grayscale(1);">💤</div>
+                        <h3>Boss regeneriert sich...</h3>
+                        <p>Nächster Spawn in: <strong id="boss-cooldown-timer" style="color:#009ffd;">${mins}:${secs < 10 ? '0' : ''}${secs}</strong></p>
+                        <button disabled class="boss-btn-cooldown" style="padding:15px 40px; font-size:1.2em; cursor:not-allowed;">In Ruhe lassen</button>
                     </div>`;
             }
         }
+    } else if (this.guildView === 'quests') {
+        if (!state.guildMercenaries) state.guildMercenaries = [];
+        this.generateGuildQuests();
 
-        else if (this.guildView === 'quests') {
-            if (!state.guildMercenaries) state.guildMercenaries = [];
-            this.generateGuildQuests();
+        let mercHtml = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0;">Deine Söldner (${state.guildMercenaries.length}/5)</h4>
+                <button id="btn-recruit" class="btn-confirm" style="font-size:0.8em; padding:8px 15px;">
+                    + Anheuern (${this.game.formatNumber(1000000000 * (state.guildMercenaries.length + 1))})
+                </button>
+            </div>
+            <div style="display:flex; gap:15px; overflow-x:auto; padding-bottom:10px; margin-bottom:20px;">`;
 
-            // A) Söldner Liste (leicht heller Hintergrund für Karten)
-            let mercHtml = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h4 style="margin:0;">Deine Söldner (${state.guildMercenaries.length}/5)</h4>
-                    
-                    <button id="btn-recruit" class="btn-confirm" style="font-size:0.8em; padding:8px 15px; background:linear-gradient(to bottom, #4CAF50, #43A047); color:#fff; border:1px solid #2E7D32; border-radius:5px; font-weight:bold; cursor:pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
-                        + Anheuern (${this.game.formatNumber(1000000000 * (state.guildMercenaries.length + 1))})
-                    </button>
-                </div>
-                <div style="display:flex; gap:15px; overflow-x:auto; padding-bottom:10px; margin-bottom:20px;">`;
+        state.guildMercenaries.forEach(merc => {
+            const isSelected = this.selectedMercenaryId === merc.id;
+            const isBusy = merc.status === 'busy';
+            let statusIcon = isBusy ? '⏳' : '💤';
+            let typeIcon = merc.type === 'scout' ? '🏹' : (merc.type === 'miner' ? '⛏️' : '⚔️');
+            const borderColor = isSelected ? '#009ffd' : '#333';
+            const bgColor = isSelected ? 'rgba(0, 159, 253, 0.1)' : 'rgba(255,255,255,0.03)';
 
-            state.guildMercenaries.forEach(merc => {
-                const isSelected = this.selectedMercenaryId === merc.id;
-                const isBusy = merc.status === 'busy';
-                let statusIcon = isBusy ? '⏳' : '💤';
-                let typeIcon = merc.type === 'scout' ? '🏹' : (merc.type === 'miner' ? '⛏️' : '⚔️');
-                
-                // Helle Randfarbe für Auswahl, ansonsten dezentes Grau
-                const borderColor = isSelected ? '#009ffd' : '#333';
-                const bgColor = isSelected ? 'rgba(0, 159, 253, 0.1)' : 'rgba(255,255,255,0.03)';
-
-                mercHtml += `
-                    <div class="mercenary-card ${isSelected ? 'active-merc' : ''}" 
-                         data-id="${merc.id}" 
-                         style="min-width:130px; background:${bgColor}; border:2px solid ${borderColor}; padding:15px; border-radius:12px; cursor:${isBusy?'default':'pointer'}; text-align:center; transition:all 0.2s;">
-                        <div style="font-size:2.5em; margin-bottom:5px;">${typeIcon}</div>
-                        <div style="font-weight:bold; font-size:1em; color:#fff;">${merc.name}</div>
-                        <div style="font-size:0.8em; color:#FFD700;">Level ${merc.level}</div>
-                        <div style="font-size:0.75em; color:${isBusy?'#ff5252':'#aaa'}; margin-top:8px;">${statusIcon} ${isBusy ? 'Unterwegs' : 'Bereit'}</div>
-                        <div style="background:#222; height:5px; margin-top:8px; border-radius:3px; overflow:hidden;">
-                            <div style="width:${(merc.xp/merc.maxXp)*100}%; height:100%; background:#4CAF50;"></div>
-                        </div>
+            mercHtml += `
+                <div class="mercenary-card ${isSelected ? 'active-merc' : ''}" data-id="${merc.id}" 
+                     style="min-width:130px; background:${bgColor}; border:2px solid ${borderColor}; padding:15px; border-radius:12px; cursor:${isBusy?'default':'pointer'}; text-align:center;">
+                    <div style="font-size:2.5em; margin-bottom:5px;">${typeIcon}</div>
+                    <div style="font-weight:bold;">${merc.name}</div>
+                    <div style="font-size:0.8em; color:#FFD700;">Level ${merc.level}</div>
+                    <div style="font-size:0.75em; color:${isBusy?'#ff5252':'#aaa'};">${statusIcon} ${isBusy ? 'Unterwegs' : 'Bereit'}</div>
+                    <div style="background:#222; height:5px; margin-top:8px; border-radius:3px; overflow:hidden;">
+                        <div style="width:${(merc.xp/merc.maxXp)*100}%; height:100%; background:#4CAF50;"></div>
                     </div>
-                `;
+                </div>`;
+        });
+        mercHtml += `</div>`;
+
+        let questHtml = `
+            <div style="border-top:1px solid #333; padding-top:20px;">
+                <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
+                <div class="info-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">`;
+
+        if (state.guildActiveQuests) {
+            state.guildActiveQuests.forEach(q => {
+                const merc = state.guildMercenaries.find(m => m.id === q.assignedMerc);
+                const elapsed = (Date.now() - q.startTime) / 1000;
+                const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+                const isDone = timeLeft <= 0;
+                const progress = Math.min(100, (elapsed / q.duration) * 100);
+                const progressColor = isDone ? '#4CAF50' : '#00C897'; 
+
+                questHtml += `
+                    <div style="background:rgba(0,0,0,0.4); border:1px solid #333; border-left:4px solid ${progressColor}; padding:15px; border-radius:10px;">
+                        <div style="font-weight:bold;">${q.name}</div>
+                        <div style="font-size:0.85em; color:#ccc;">Held: <span style="color:#009ffd;">${merc ? merc.name : '???'}</span></div>
+                        <div style="background:#1a1a1a; height:8px; margin:8px 0; border-radius:4px; overflow:hidden;">
+                            <div id="bar-quest-${q.id}" style="width:${progress}%; height:100%; background:${progressColor}; transition:width 0.5s linear;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="timer-quest-${q.id}" style="color:${isDone ? '#4CAF50' : '#aaa'}; font-size:0.85em;">
+                                ${isDone ? '✅ Abgeschlossen!' : `⏳ Noch ${timeLeft}s`}
+                            </span>
+                            ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}">Einsammeln</button>` : ''}
+                        </div>
+                    </div>`;
             });
-            mercHtml += `</div>`;
+        }
 
-            // B) Quest Liste
-            let questHtml = `
-    <div style="border-top:1px solid #333; padding-top:20px;">
-        <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
-        <div style="color:#888; font-size:0.85em; margin-bottom:15px;">👉 Schritt 1: Wähle einen Söldner. Schritt 2: Wähle eine Mission.</div>
-        <div class="info-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">`;
+        state.guildAvailableQuests.forEach(q => {
+            let rewardText = q.rewards.gems > 0 ? `${q.rewards.gems} ✨` : (q.rewards.diamonds > 0 ? `${q.rewards.diamonds} 💎` : `${this.game.formatNumber(q.rewards.smileys)}`);
+            const canStart = this.selectedMercenaryId !== null;
+            const buttonStyle = canStart ? `background:#009ffd; color:#fff;` : `background:#333; color:#777;`;
 
-// 1. Aktive Quests rendern
-if (state.guildActiveQuests) {
-    state.guildActiveQuests.forEach(q => {
-        const merc = state.guildMercenaries.find(m => m.id === q.assignedMerc);
-        const elapsed = (Date.now() - q.startTime) / 1000;
-        const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
-        const isDone = timeLeft <= 0;
-        const progress = Math.min(100, (elapsed / q.duration) * 100);
-        const progressColor = isDone ? '#4CAF50' : '#00C897'; 
+            questHtml += `
+                <div style="background:rgba(255,255,255,0.03); border:1px solid #333; border-left:4px solid ${q.rarity.color}; padding:15px; border-radius:10px;">
+                    <div style="color:${q.rarity.color}; font-weight:bold;">${q.name}</div>
+                    <div style="font-size:0.8em; color:#aaa;">${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min</div>
+                    <div style="font-size:0.9em; margin:10px 0; padding:8px; background:rgba(0,0,0,0.2); border-radius:5px;">
+                        Belohnung: <strong>${rewardText}</strong>
+                    </div>
+                    <button class="btn-assign-quest" data-id="${q.id}" ${canStart ? '' : 'disabled'} 
+        style="${buttonStyle} width:100%; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">
+    ${canStart ? '🚀 Söldner entsenden' : 'Söldner wählen'}
+</button>
+                </div>`;
+        });
+        questHtml += `</div></div>`;
+        contentHtml = mercHtml + questHtml;
+    }
 
-        questHtml += `
-    <div style="...">
-        <div style="font-weight:bold;">${q.name}</div>
-        <div style="...">Held: ${merc ? merc.name : '???'}</div>
-        <div style="background:#1a1a1a; height:8px; ...">
-            <div id="bar-quest-${q.id}" style="width:${progress}%; height:100%; background:${progressColor}; transition:width 0.5s linear;"></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; ...">
-            <span id="timer-quest-${q.id}" style="color:${isDone ? '#4CAF50' : '#aaa'};">
-                ${isDone ? '✅ Abgeschlossen!' : `⏳ Noch ${timeLeft}s`}
-            </span>
-            ${isDone ? `<button class="btn-confirm btn-claim-quest" data-id="${q.id}">Einsammeln</button>` : ''}
-        </div>
-    </div>`;
+    container.innerHTML = tabsHtml + contentHtml;
+
+    // --- EVENT LISTENERS ---
+    this.game.getById('tab-guild-shop')?.addEventListener('click', () => { this.guildView='shop'; this.renderGuildsContent(); });
+    this.game.getById('tab-guild-boss')?.addEventListener('click', () => { this.guildView='boss'; this.renderGuildsContent(); });
+    this.game.getById('tab-guild-quests')?.addEventListener('click', () => { this.guildView='quests'; this.renderGuildsContent(); });
+
+    if (this.guildView === 'boss') {
+         this.game.getById('start-boss-btn')?.addEventListener('click', () => this.startGuildBoss());
+         const bc = this.game.getById('guild-boss-clicker');
+         if(bc) bc.addEventListener('mousedown', (e) => this.clickGuildBoss(e));
+    }
+
+    if (this.guildView === 'quests') {
+        container.querySelectorAll('.mercenary-card').forEach(card => {
+            if (!card.classList.contains('busy-merc')) {
+                card.onclick = () => { this.selectedMercenaryId = card.dataset.id; this.renderGuildsContent(); };
+            }
+        });
+        this.game.getById('btn-recruit')?.addEventListener('click', () => this.recruitMercenary());
+        container.querySelectorAll('.btn-assign-quest').forEach(btn => btn.onclick = () => this.assignMercenaryToQuest(parseFloat(btn.dataset.id)));
+        container.querySelectorAll('.btn-claim-quest').forEach(btn => btn.onclick = () => this.claimQuest(parseFloat(btn.dataset.id)));
+    }
+}
+
+    toggleNotifications() {
+    if (!("Notification" in window)) {
+        this.game.showNotification("Dein Browser unterstützt keine Desktop-Notis.", "error");
+        return;
+    }
+
+    // Abfrage der Berechtigung
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            this.game.showNotification("Gilden-Funk aktiviert! 🔔", "success");
+            // Test-Notiz senden
+            new Notification("Smiley Game", {
+                body: "Gilden-Funk bereit! Ich melde mich, wenn Quests fertig sind.",
+                icon: "smiley.png"
+            });
+        } else {
+            this.game.showNotification("Berechtigung verweigert.", "error");
+        }
+        // UI aktualisieren, damit der Button-Text von "Deaktiviert" auf "Aktiviert" springt
+        this.renderGuildsContent();
     });
 }
 
-// 2. Verfügbare Quests rendern (HIER IST DER FIX FÜR DIE 0)
-state.guildAvailableQuests.forEach(q => {
-    // Ermittlung des Textes: Wir schauen in das rewards Objekt
-    let rewardText = "";
-    if (q.rewards.gems > 0) rewardText = `${q.rewards.gems} ✨`;
-    else if (q.rewards.diamonds > 0) rewardText = `${q.rewards.diamonds} 💎`;
-    else rewardText = `${this.game.formatNumber(q.rewards.smileys)}`;
-
-    const canStart = this.selectedMercenaryId !== null;
-    const buttonStyle = canStart 
-        ? `background:#009ffd; color:#fff; cursor:pointer;` 
-        : `background:#333; color:#777; cursor:not-allowed;`;
-
-    questHtml += `
-        <div style="background:rgba(255,255,255,0.03); border:1px solid #333; border-left:4px solid ${q.rarity.color}; padding:15px; border-radius:10px; opacity:${canStart ? 1 : 0.7};">
-            <div style="color:${q.rarity.color}; font-weight:bold; font-size:1.1em;">${q.name}</div>
-            <div style="font-size:0.85em; color:#aaa; margin-bottom:8px;">${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min</div>
-            <div style="font-size:0.95em; margin-bottom:15px; padding:8px; background:rgba(0,0,0,0.2); border-radius:5px;">
-                Belohnung: <strong>${rewardText}</strong> <small style="color:#009ffd;">(+Bonus)</small>
-            </div>
-            <button class="btn-assign-quest" data-id="${q.id}" ${canStart ? '' : 'disabled'} 
-                    style="${buttonStyle} border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">
-                ${canStart ? '🚀 Söldner entsenden' : 'Söldner wählen'}
-            </button>
-        </div>`;
-});
-            questHtml += `</div></div>`;
-
-            contentHtml = mercHtml + questHtml;
-        }
-
-        container.innerHTML = tabsHtml + contentHtml;
-
-        // --- EVENT LISTENERS ---
-        this.game.getById('tab-guild-shop')?.addEventListener('click', () => { this.guildView='shop'; this.renderGuildsContent(); });
-        this.game.getById('tab-guild-boss')?.addEventListener('click', () => { this.guildView='boss'; this.renderGuildsContent(); });
-        this.game.getById('tab-guild-quests')?.addEventListener('click', () => { this.guildView='quests'; this.renderGuildsContent(); });
-
-        if (this.guildView === 'boss') {
-             this.game.getById('start-boss-btn')?.addEventListener('click', () => this.startGuildBoss());
-             const bossClicker = this.game.getById('guild-boss-clicker');
-             if(bossClicker) {
-                 bossClicker.addEventListener('mousedown', (e) => { bossClicker.style.transform = "scale(0.9)"; this.clickGuildBoss(e); });
-                 bossClicker.addEventListener('mouseup', () => bossClicker.style.transform = "scale(1)");
-             }
-        }
-
-        if (this.guildView === 'quests') {
-            // Söldner auswählen
-            container.querySelectorAll('.mercenary-card').forEach(card => {
-                if (!card.classList.contains('busy-merc')) {
-                    card.addEventListener('click', () => {
-                        this.selectedMercenaryId = card.dataset.id;
-                        this.renderGuildsContent(); // UI neu zeichnen um Auswahl anzuzeigen
-                    });
-                }
-            });
-            // Anheuern
-            this.game.getById('btn-recruit')?.addEventListener('click', () => this.recruitMercenary());
-            // Starten
-            container.querySelectorAll('.btn-assign-quest').forEach(btn => {
-                btn.addEventListener('click', (e) => this.assignMercenaryToQuest(parseFloat(e.target.dataset.id)));
-            });
-            // Abholen
-            container.querySelectorAll('.btn-claim-quest').forEach(btn => {
-                btn.addEventListener('click', (e) => this.claimQuest(parseFloat(e.target.dataset.id)));
-            });
-        }
-    }
 }
 
 // ================================================================================================================
@@ -5776,18 +5862,20 @@ class ChatSystem {
     }
 
     startGuildMemberListener() {
-        const state = this.game.gameState;
-        if (!state.guildName) return;
-        const safeGuildName = state.guildName.replace(/\s+/g, '_');
-        const membersRef = firebase.database().ref(`chat/guilds/${safeGuildName}/members`);
+    const state = this.game.gameState;
+    // PRÜFUNG: Existiert Firebase überhaupt?
+    if (typeof firebase === 'undefined' || !state.guildName) return; 
 
-        membersRef.on('value', (snapshot) => {
-            const members = [];
-            snapshot.forEach((child) => { members.push(child.val()); });
-            members.sort((a, b) => b.smileys - a.smileys);
-            this.renderGuildMemberList(members);
-        });
-    }
+    const safeGuildName = state.guildName.replace(/\s+/g, '_');
+    const membersRef = firebase.database().ref(`chat/guilds/${safeGuildName}/members`);
+
+    membersRef.on('value', (snapshot) => {
+        const members = [];
+        snapshot.forEach((child) => { members.push(child.val()); });
+        members.sort((a, b) => b.smileys - a.smileys);
+        this.renderGuildMemberList(members);
+    });
+}
 
     renderGuildMemberList(members) {
         const listBody = document.getElementById('guild-list-body');

@@ -1465,3 +1465,101 @@ input[type=range] { width: 100%; cursor: pointer; }
     align-items: center;
     height: 60px;
 }
+/* ======================================================= */
+/* 18. GUILD UI OVERRIDES (Contrast & Logic Fixes)         */
+/* ======================================================= */
+
+/* --- SÖLDNER & KARTEN --- */
+.mercenary-card.active-merc {
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.5);
+    transform: scale(1.05);
+    border-color: var(--color-accent-blue) !important;
+}
+
+/* --- REKRUTIERUNG (ANHEUERN) --- */
+#btn-recruit {
+    background: linear-gradient(135deg, #3E5641, #2E7D32) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+#btn-recruit:hover:not(:disabled) {
+    background: #4CAF50 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 200, 151, 0.4);
+}
+
+/* --- QUEST BUTTONS --- */
+.btn-assign-quest {
+    background: #011638 !important; /* Dunkles Blau */
+    color: #009ffd !important;      /* Akzent Blau */
+    border: 1px solid #009ffd !important;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-assign-quest:hover:not(:disabled) {
+    background: #009ffd !important;
+    color: #011638 !important; /* Invertiert für perfekten Kontrast */
+}
+
+.btn-claim-quest {
+    background: linear-gradient(to bottom, #4CAF50, #2E7D32) !important;
+    color: #ffffff !important;
+    border: 1px solid #1B5E20 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    cursor: pointer;
+}
+
+.btn-claim-quest:hover {
+    background: #45a049 !important;
+    transform: translateY(-1px);
+}
+
+/* --- BOSS RAID BUTTONS --- */
+.boss-btn-active {
+    background: linear-gradient(135deg, #6B0504, #911b1b) !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(107, 5, 4, 0.5);
+    cursor: pointer;
+    animation: boss-pulse 2s infinite;
+}
+
+@keyframes boss-pulse {
+    0% { box-shadow: 0 0 5px rgba(107, 5, 4, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.7); }
+    100% { box-shadow: 0 0 5px rgba(107, 5, 4, 0.5); }
+}
+
+/* --- GILDEN-FUNK (NOTIFICATIONS) --- */
+#btn-toggle-notifications {
+    background: #1a1a1a !important; 
+    color: #009ffd !important;      
+    border: 1px solid #009ffd !important;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#btn-toggle-notifications:hover {
+    background: #009ffd !important;
+    color: #000000 !important;
+}
+
+/* --- GLOBALER STATUS: DEAKTIVIERT --- */
+button:disabled, .boss-btn-cooldown {
+    background: #222222 !important;
+    color: #555555 !important;
+    border: 1px solid #333333 !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important; /* Verhindert verwaschenes Weiß */
+    box-shadow: none !important;
+    transform: none !important;
+}
