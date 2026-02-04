@@ -53,7 +53,7 @@ class SmileyGame {
             { id: 'art_crystal', name: 'Mana Kristall', desc: '-5% Cooldown für Skills', rarity: 'epic', bonusType: 'cooldown_red', value: 0.05 },
             { id: 'art_crown', name: 'Krone des Gierigen', desc: 'Verdoppelt alle Offline-Einnahmen', rarity: 'legendary', bonusType: 'offline_boost', value: 1.0 }
         ];
-        
+
         this.currentBuyAmount = 1;
         this.mineSystem = new DiamondMine(this);
         this.guildSystem = new GuildSystem(this);
@@ -228,6 +228,7 @@ class SmileyGame {
         this.updatePetInterval(); // Neue Pet-System Weiterleitung
         this.updateNewsTicker();
         this.updateUI();
+        this.guildSystem.listenToGuildData();
         
         // Chat starten (Firebase)
         this.initChat();
@@ -917,6 +918,21 @@ class SmileyGame {
                     }
                 }
             });
+        }
+
+        // 8.6 Gilden-Projekt Boni (SPS & Klick aus der Kasse)
+        const gUpgrades = this.gameState.guildServerUpgrades || {};
+        
+        // SPS-Boost durch "Gemeinsames Marketing"
+        if (gUpgrades.guild_sps) {
+            // Wir addieren den Bonus (z.B. Level 5 * 0.05 = +25% auf den Gilden-Multiplikator)
+            this.gameState.guildSPSMultiplier += (gUpgrades.guild_sps * 0.05); 
+        }
+
+        // Klick-Boost durch "Schwarm-Intelligenz"
+        if (gUpgrades.guild_click) {
+            // Wir addieren den Bonus auf den Klick-Multiplikator
+            prestigeClickMultiplier += (gUpgrades.guild_click * 0.10); 
         }
 
         // 9. Finale Berechnung
@@ -4996,7 +5012,34 @@ class GuildSystem {
         this.game = gameInstance;
         this.guildView = 'shop'; 
         this.selectedMercenaryId = null; // Welcher Söldner ist gerade ausgewählt?
+        this.currentGuildBank = 0;
         console.log("⚔️ GuildSystem + Söldner geladen.");
+        this.upgradeDefinitions = {
+            'guild_sps': {
+                name: "Synergie-Netzwerk",
+                desc: "+5% SPS Produktion für alle Mitglieder.",
+                baseCost: 1000000000, // 1 Mrd
+                costFactor: 2.5,
+                bonusPerLevel: 0.05,
+                icon: "⚡"
+            },
+            'guild_click': {
+                name: "Schwarm-Intelligenz",
+                desc: "+10% Klick-Stärke für alle Mitglieder.",
+                baseCost: 500000000, // 500 Mio
+                costFactor: 2.0,
+                bonusPerLevel: 0.10,
+                icon: "👆"
+            },
+            'guild_mercs': {
+                name: "Elite-Ausbildung",
+                desc: "Söldner erhalten +10% mehr XP.",
+                baseCost: 5000000000, // 5 Mrd
+                costFactor: 3.0,
+                bonusPerLevel: 0.10,
+                icon: "⚔️"
+            }
+        };
     }
 
     // --- SÖLDNER LOGIK ---
@@ -5355,52 +5398,103 @@ class GuildSystem {
 
     let contentHtml = '';
 
-    // --- ZENTRALE (MITGLIEDER + LEVEL + BENACHRICHTIGUNGEN) ---
-    if (this.guildView === 'shop') {
-        // --- NEU: Benachrichtigungs-Status Panel ---
-        const notiIcon = Notification.permission === 'granted' ? '🔔' : '🔕';
-        const notiText = Notification.permission === 'granted' ? 'Aktiviert' : 'Deaktiviert';
-        
-        let settingsHtml = `
-            <div style="background:rgba(0,159,253,0.1); border:1px solid #009ffd; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <h4 style="margin:0; color:#009ffd;">Gilden-Funk ${notiIcon}</h4>
-                    <p style="margin:5px 0 0 0; font-size:0.8em; color:#ccc;">Desktop-Benachrichtigungen für fertige Quests.</p>
-                </div>
-                <button id="btn-toggle-notifications" class="btn-confirm" style="font-size:0.8em; padding:8px 12px;">
-                    ${notiText}
-                </button>
+    // --- ZENTRALE (MITGLIEDER + BANK + BENACHRICHTIGUNGEN) ---
+if (this.guildView === 'shop') {
+    // 1. Gilden-Funk Status (Desktop-Benachrichtigungen)
+    const notiIcon = Notification.permission === 'granted' ? '🔔' : '🔕';
+    const notiText = Notification.permission === 'granted' ? 'Aktiviert' : 'Deaktiviert';
+
+    let settingsHtml = `
+        <div style="background:rgba(0,159,253,0.1); border:1px solid #009ffd; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h4 style="margin:0; color:#009ffd;">Gilden-Funk ${notiIcon}</h4>
+                <p style="margin:5px 0 0 0; font-size:0.8em; color:#ccc;">Desktop-Benachrichtigungen für fertige Quests.</p>
             </div>
-        `;
+            <button id="btn-toggle-notifications" class="btn-confirm" style="font-size:0.8em; padding:8px 12px;">
+                ${notiText}
+            </button>
+        </div>
+    `;
 
-        let listHtml = `
-            <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:20px;">
-                <h4 style="margin:0 0 10px 0; border-bottom:1px solid #444; padding-bottom:5px;">Mitglieder (${state.guildName})</h4>
-                <div id="guild-list-body" class="custom-scrollbar" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:2px; min-height:50px;">
-                    <div style="text-align:center; padding:10px; color:#666;">Lade... 📡</div>
-                </div>
-            </div>`;
+    // 2. Gilden-Kasse (Bank)
+    // FIX: Wir nehmen direkt den gespeicherten Wert (this.currentGuildBank), statt auf "Lade..." zu warten.
+    let bankHtml = `
+        <div style="background: linear-gradient(135deg, rgba(0,159,253,0.1), rgba(0,0,0,0.4)); border: 1px solid #009ffd; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+            <h4 style="margin:0 0 10px 0; color:#009ffd; display:flex; justify-content:space-between;">
+                <span>💰 Gilden-Kasse</span>
+                <span id="guild-bank-display">${this.game.formatNumber(this.currentGuildBank || 0)} Smileys</span>
+            </h4>
+            <p style="font-size:0.8rem; color:#aaa; margin-bottom:12px;">Spendet gemeinsam, um massive Gilden-Upgrades für alle freizuschalten!</p>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-confirm btn-donate" data-amount="1000000" style="flex:1; font-size:0.75rem;">Spende 1M</button>
+                <button class="btn-confirm btn-donate" data-amount="1000000000" style="flex:1; font-size:0.75rem;">Spende 1B</button>
+                <button id="btn-donate-all" class="btn-primary" style="flex:1; font-size:0.75rem; color:#000; font-weight:bold;">10% Spenden</button>
+            </div>
+        </div>
+    `;
 
-        const progressPct = Math.min(100, (state.guildXP / state.guildXPReq) * 100);
-        let progressHtml = `
-            <div style="margin-bottom:20px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <strong>Gilden-Level ${state.guildLevel}</strong>
-                    <span style="color:#aaa;">${this.game.formatNumber(state.guildXP)} / ${this.game.formatNumber(state.guildXPReq)} XP</span>
-                </div>
-                <div style="background:#222; height:10px; border-radius:5px; overflow:hidden; border:1px solid #444;">
-                    <div style="width:${progressPct}%; height:100%; background:#009ffd; transition:width 0.3s;"></div>
-                </div>
-            </div>`;
+    let upgradesHtml = `
+    <div style="margin-bottom:20px;">
+        <h4 style="color:#fff; margin-bottom:10px;">Gilden-Projekte</h4>
+        <div id="guild-upgrades-list"></div>
+    </div>
+    `;
 
-        contentHtml = settingsHtml + listHtml + progressHtml;
+    // 3. Mitgliederliste
+    let listHtml = `
+        <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:10px; margin-bottom:20px;">
+            <h4 style="margin:0 0 10px 0; border-bottom:1px solid #444; padding-bottom:5px;">Mitglieder (${state.guildName})</h4>
+            <div id="guild-list-body" class="custom-scrollbar" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:2px; min-height:50px;">
+                <div style="text-align:center; padding:10px; color:#666;">Verbinde mit Gilden-Server... 📡</div>
+            </div>
+        </div>
+    `;
+
+    // 4. Fortschrittsbalken (Gilden-Level)
+    const progressPct = Math.min(100, (state.guildXP / state.guildXPReq) * 100);
+    let progressHtml = `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <strong>Gilden-Level ${state.guildLevel}</strong>
+                <span style="color:#aaa;">${this.game.formatNumber(state.guildXP)} / ${this.game.formatNumber(state.guildXPReq)} XP</span>
+            </div>
+            <div style="background:#222; height:10px; border-radius:5px; overflow:hidden; border:1px solid #444;">
+                <div style="width:${progressPct}%; height:100%; background:#009ffd; transition:width 0.3s;"></div>
+            </div>
+        </div>
+    `;
+
+    contentHtml = settingsHtml + bankHtml + upgradesHtml + listHtml + progressHtml;
+
+    // --- EVENT LISTENER SETUP ---
+    setTimeout(() => { 
+        // Firebase Listener für Mitglieder
+        if(this.game.chatSystem) this.game.chatSystem.startGuildMemberListener(); 
         
-        // Listener für den Noti-Button verzögert binden
-        setTimeout(() => { 
-            if(this.game.chatSystem) this.game.chatSystem.startGuildMemberListener(); 
-            this.game.getById('btn-toggle-notifications')?.addEventListener('click', () => this.toggleNotifications());
-        }, 50);
-    }
+        // Benachrichtigungs-Toggle
+        this.game.getById('btn-toggle-notifications')?.addEventListener('click', () => this.toggleNotifications());
+
+        // Spenden Buttons
+        container.querySelectorAll('.btn-donate').forEach(btn => {
+            btn.onclick = () => this.donateToGuild(parseInt(btn.dataset.amount));
+        });
+
+        // 10% Spenden Button
+        const btnDonateMax = document.getElementById('btn-donate-all');
+        if (btnDonateMax) {
+            btnDonateMax.onclick = () => {
+                const amount = Math.floor(state.aktuelle_smileys * 0.1); 
+                if (amount > 0) {
+                    this.donateToGuild(amount);
+                } else {
+                    this.game.showNotification("Du hast keine Smileys zum Spenden!", "error");
+                }
+            };
+        }
+        this.renderGuildUpgradesList();
+    }, 50);
+}
 
     // --- BOSS RAID ---
     else if (this.guildView === 'boss') {
@@ -5580,6 +5674,181 @@ class GuildSystem {
         }
         // UI aktualisieren, damit der Button-Text von "Deaktiviert" auf "Aktiviert" springt
         this.renderGuildsContent();
+    });
+}
+
+    donateToGuild(amount) {
+    const state = this.game.gameState;
+    if (state.aktuelle_smileys < amount) return;
+
+    // Geld lokal abziehen
+    state.aktuelle_smileys -= amount;
+    
+    // UI sofort updaten (damit man sieht, dass Geld weg ist)
+    this.game.updateUI();
+
+    if (typeof firebase === 'undefined' || !state.guildName) {
+        console.error("Kein Firebase oder Gildenname!");
+        return;
+    }
+
+    const safeGuildName = state.guildName.replace(/\s+/g, '_');
+    const guildRef = firebase.database().ref(`guilds/${safeGuildName}`);
+
+    // --- DIE FIX-TRANSAKTION ---
+    guildRef.transaction(currentData => {
+        // Fall A: Die Gilde existiert noch nicht in der Datenbank (currentData ist null)
+        if (currentData === null) {
+            return {
+                bank: amount,
+                upgrades: {},
+                contributions: { [state.playerId]: amount }
+            };
+        }
+
+        // Fall B: Daten sind da -> Aktualisieren
+        // Sicherheits-Check, falls 'bank' fehlt
+        if (!currentData.bank) currentData.bank = 0;
+        if (!currentData.contributions) currentData.contributions = {};
+
+        // Werte erhöhen
+        currentData.bank += amount;
+        currentData.contributions[state.playerId] = (currentData.contributions[state.playerId] || 0) + amount;
+
+        return currentData;
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error("Transaktions-Fehler:", error);
+            this.game.showNotification("Fehler bei der Übertragung!", "error");
+            // Optional: Geld zurückgeben bei Fehler
+            state.aktuelle_smileys += amount; 
+        } else if (committed) {
+            console.log("Spende erfolgreich gespeichert:", snapshot.val());
+            this.game.showNotification("Spende angekommen! 🤝", "success");
+        }
+    });
+}
+
+    renderGuildUpgradesList() {
+    const container = document.getElementById('guild-upgrades-list');
+    if (!container) return; // Falls das Element noch nicht existiert
+    
+    container.innerHTML = '';
+    const state = this.game.gameState;
+    
+    // Die aktuellen Daten kommen aus Firebase (via listenToGuildData)
+    const serverData = state.guildServerUpgrades || {}; 
+    
+    // Aktueller Kontostand (muss live aus dem DOM oder State kommen, wir nehmen den State wenn möglich oder parsen das DOM als Fallback)
+    // Einfacher: Wir holen uns den Wert direkt vom Display, da wir ihn lokal nicht im State syncen für die Kasse
+    let currentBank = 0;
+    const bankDisplay = document.getElementById('guild-bank-display');
+    if(bankDisplay) {
+         // Wir entfernen Text und parsen die Zahl (etwas hacky, aber reicht für UI check)
+         // Besser: Wir speichern den Bank-Wert im listenToGuildData in einer Variable
+         currentBank = this.currentGuildBank || 0; 
+    }
+
+    Object.keys(this.upgradeDefinitions).forEach(key => {
+        const def = this.upgradeDefinitions[key];
+        const currentLevel = serverData[key] || 0;
+        const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, currentLevel));
+        const canAfford = this.currentGuildBank >= cost; // Wir brauchen diese Variable (siehe Schritt 3)
+
+        const div = document.createElement('div');
+        div.className = "guild-upgrade-card";
+        div.style.cssText = "background:rgba(255,255,255,0.05); border:1px solid #444; border-radius:8px; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
+
+        div.innerHTML = `
+            <div style="flex:1">
+                <div style="font-weight:bold; color:#fff;">${def.icon} ${def.name} <span style="color:#FFD700; font-size:0.8em;">(Lv. ${currentLevel})</span></div>
+                <div style="font-size:0.8em; color:#aaa;">${def.desc}</div>
+                <div style="font-size:0.75em; color:#009ffd; margin-top:2px;">Aktueller Bonus: +${Math.round(currentLevel * def.bonusPerLevel * 100)}%</div>
+            </div>
+            <button class="btn-buy-guild-upgrade" data-key="${key}" ${canAfford ? '' : 'disabled'}
+                style="background: ${canAfford ? '#009ffd' : '#333'}; color: ${canAfford ? '#fff' : '#888'}; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:${canAfford?'pointer':'not-allowed'}; min-width:100px;">
+                ${this.game.formatNumber(cost)} 💰
+            </button>
+        `;
+        
+        div.querySelector('button').onclick = () => {
+            if(canAfford) this.buyGuildUpgrade(key);
+        };
+
+        container.appendChild(div);
+    });
+}
+
+    listenToGuildData() {
+    const state = this.game.gameState;
+    if (typeof firebase === 'undefined' || !state.guildName) return;
+
+    const safeGuildName = state.guildName.replace(/\s+/g, '_');
+    const guildRef = firebase.database().ref(`guilds/${safeGuildName}`);
+
+    console.log(`📡 Lausche auf Gilden-Daten für: ${safeGuildName}`);
+
+    guildRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        // Debugging-Ausgabe (Drücke F12 um das zu sehen)
+        console.log("📥 Gilden-Daten empfangen:", data);
+
+        if (!data) {
+            // Noch keine Daten da -> Wir setzen Bank auf 0
+            this.currentGuildBank = 0;
+        } else {
+            // Daten da -> Speichern
+            this.currentGuildBank = data.bank || 0;
+            this.game.gameState.guildServerUpgrades = data.upgrades || {};
+        }
+
+        // UI Aktualisieren (Text austauschen)
+        const display = document.getElementById('guild-bank-display');
+        if (display) {
+            display.innerText = this.game.formatNumber(this.currentGuildBank) + " Smileys";
+        }
+
+        // Boni neu berechnen & Buttons neu malen
+        this.game.applyAllBoni();
+        this.game.updateUI();
+
+        if (this.guildView === 'shop') {
+            this.renderGuildUpgradesList();
+        }
+    });
+}
+
+    buyGuildUpgrade(upgradeKey) {
+    const state = this.game.gameState;
+    if (!state.guildName || typeof firebase === 'undefined') return;
+
+    const safeGuildName = state.guildName.replace(/\s+/g, '_');
+    const guildRef = firebase.database().ref(`guilds/${safeGuildName}`);
+
+    guildRef.transaction(currentData => {
+        if (currentData) {
+            const def = this.upgradeDefinitions[upgradeKey];
+            const currentLevel = (currentData.upgrades && currentData.upgrades[upgradeKey]) || 0;
+            const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, currentLevel));
+
+            if ((currentData.bank || 0) >= cost) {
+                currentData.bank -= cost;
+                if (!currentData.upgrades) currentData.upgrades = {};
+                currentData.upgrades[upgradeKey] = currentLevel + 1;
+            } else {
+                return; // Abbruch, kein Geld (race condition protection)
+            }
+        }
+        return currentData;
+    }, (error, committed, snapshot) => {
+        if (committed) {
+            this.game.showNotification("Gilden-Upgrade gekauft! 🎉", "success");
+            // Sound abspielen
+            this.game.playLevelUpSound();
+        } else {
+            this.game.showNotification("Kauf fehlgeschlagen (Zu wenig Geld?)", "error");
+        }
     });
 }
 

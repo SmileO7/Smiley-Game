@@ -1476,27 +1476,42 @@ input[type=range] { width: 100%; cursor: pointer; }
     border-color: var(--color-accent-blue) !important;
 }
 
-/* --- REKRUTIERUNG (ANHEUERN) --- */
-#btn-recruit {
-    background: linear-gradient(135deg, #3E5641, #2E7D32) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+/* --- REKRUTIERUNG & SPENDEN (Sekundär-Buttons) --- */
+#btn-recruit, .btn-donate {
+    background: #011638 !important; /* Dunkles Blau */
+    color: #009ffd !important;      /* Akzent Blau */
+    border: 1px solid #009ffd !important;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s ease;
 }
 
-#btn-recruit:hover:not(:disabled) {
-    background: #4CAF50 !important;
+#btn-recruit:hover:not(:disabled), .btn-donate:hover:not(:disabled) {
+    background: #009ffd !important;
+    color: #011638 !important; /* Invertiert beim Hover für Kontrast */
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 200, 151, 0.4);
+}
+
+/* --- SPEZIAL-BUTTON (10% Spenden) --- */
+#btn-donate-all {
+    background: #009ffd !important;
+    color: #011638 !important; /* Dunkler Text auf Blau */
+    font-weight: bold;
+    border: none !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#btn-donate-all:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
 }
 
 /* --- QUEST BUTTONS --- */
 .btn-assign-quest {
-    background: #011638 !important; /* Dunkles Blau */
-    color: #009ffd !important;      /* Akzent Blau */
+    background: #011638 !important;
+    color: #009ffd !important;
     border: 1px solid #009ffd !important;
     font-weight: bold;
     cursor: pointer;
@@ -1504,7 +1519,7 @@ input[type=range] { width: 100%; cursor: pointer; }
 
 .btn-assign-quest:hover:not(:disabled) {
     background: #009ffd !important;
-    color: #011638 !important; /* Invertiert für perfekten Kontrast */
+    color: #011638 !important;
 }
 
 .btn-claim-quest {
@@ -1559,7 +1574,7 @@ button:disabled, .boss-btn-cooldown {
     color: #555555 !important;
     border: 1px solid #333333 !important;
     cursor: not-allowed !important;
-    opacity: 1 !important; /* Verhindert verwaschenes Weiß */
+    opacity: 1 !important; 
     box-shadow: none !important;
     transform: none !important;
 }
