@@ -574,6 +574,11 @@ class SmileyGame {
             earned *= prestige.offlineBoost;
         }
 
+        // 👇 NEU: GEM-BONUS (Zeit-Dehner)
+        if (this.gameState.gemOfflineBonus > 0) {
+            earned *= (1 + this.gameState.gemOfflineBonus);
+        }
+
         if (earned > 0) {
             // Smileys gutschreiben
             this.addSmileys(earned);
@@ -935,20 +940,40 @@ class SmileyGame {
             // Wir addieren den Bonus auf den Klick-Multiplikator
             prestigeClickMultiplier += (gUpgrades.guild_click * 0.10); 
         }
-        // --- 8.7 GEM KONZERN BONI ---
+        // --- 8.7 GEM KONZERN BONI (Final Balanced) ---
         const gemUps = this.gameState.gemUpgrades || {};
         
-        // Astrale Berührung (+50% Klick pro Level)
-        if (gemUps['gem_click']) {
-            prestigeClickMultiplier += (gemUps['gem_click'] * 0.50);
+        // 1. Rabatt-Karte (-2% Kosten pro Level)
+        if (gemUps['gem_discount']) {
+            this.gameState.globalCostReduction += (gemUps['gem_discount'] * 0.02);
         }
+
+        // 2. Prestige-Magnet (+5% Prestige Punkte pro Level) -> VORHER 10%
+        if (gemUps['gem_prestige']) {
+            this.gameState.prestigePointMultiplier += (gemUps['gem_prestige'] * 0.05);
+        }
+
+        // 3. Gewinn-Verdoppler (x2 Global, Max 1 Level)
+        if (gemUps['gem_double']) {
+            // Da Max Level = 1 ist, einfach * 2 rechnen
+            const doubleMulti = 2; 
+            this.gameState.globalSPSMultiplier *= doubleMulti;
+            prestigeClickMultiplier += (doubleMulti - 1); 
+        }
+
+        // 4. Offline Bonus (Zeit-Dehner)
+        this.gameState.gemOfflineBonus = (gemUps['gem_offline'] || 0) * 0.10; 
         
-        // Gieriger Blick (Diamanten-Bonus für Mine)
+        // 5. Gieriger Blick (Mine) - Bereits beim Kauf angewendet, aber hier zur Sicherheit für Neuberechnung
+        // Hinweis: diamondMineBoost wird oft beim Laden gesetzt, daher addieren wir hier nur den dynamischen Teil,
+        // oder wir verlassen uns auf den Wert im State. Besser ist es, den Wert hier sauber neu zu berechnen:
+        this.gameState.diamondMineBoost = 0; // Reset Basis
         if (gemUps['gem_greed']) {
             this.gameState.diamondMineBoost += (gemUps['gem_greed'] * 0.05);
         }
         
-        // Schicksals-Politur (Crit Chance)
+        // 6. Schicksals-Politur (Crit) - Reset und Neu
+        this.gameState.critChance = 0 + (prestigeTreeEffects.critChanceBonus || 0); // Basis aus Tree
         if (gemUps['gem_luck']) {
             this.gameState.critChance += (gemUps['gem_luck'] * 0.01);
         }
@@ -6599,98 +6624,247 @@ class SoundSystem {
     }
 }
 // ================================================================================================================
-// === SUB-SYSTEM: GEM KONZERN (Das Empire) ===
+// === SUB-SYSTEM: DER SCHWARZMARKT (Corrupted Edition) ===
 // ================================================================================================================
 class GemEmpire {
     constructor(gameInstance) {
         this.game = gameInstance;
-        console.log("💎 Gem Konzern bereit.");
+        this.shopName = "DER SCHWARZMARKT"; 
         
-        // Upgrades, die man nur mit Gems (✨) kaufen kann
+        this.quotes = [
+            "Lila ist die Farbe der Macht.",
+            "Schau nicht zu tief in den Void...",
+            "Alles hat seinen Preis.",
+            "Exquisite Ware für exklusive Kunden.",
+            "Die Realität ist nur eine Suggestion.",
+            "Korruption ist auch eine Form von Währung."
+        ];
+
+        console.log(`👾 ${this.shopName} (Corrupted) geladen.`);
+        
         this.upgrades = {
-            'gem_luck': {
-                name: "Schicksals-Politur",
-                desc: "+1% Kritische Treffer-Chance pro Level.",
-                baseCost: 5,     
-                costFactor: 1.5, 
-                // Effekt: Wird direkt auf den Stat gerechnet
-                effect: (lvl) => { this.game.gameState.critChance += (lvl * 0.01); } 
+            // --- DAUERHAFTE MACHT ---
+            'gem_luck': { 
+                name: "Schicksals-Würfel", 
+                desc: "Manipuliert die Wahrscheinlichkeit. +1% Krit-Chance.", 
+                baseCost: 5, costFactor: 1.5, type: 'passive', icon: "🎲", category: "permanent" 
             },
-            'gem_mercs': {
-                name: "Söldner-Logistik",
-                desc: "Söldner erhalten +5% mehr XP pro Quest.",
-                baseCost: 10,
-                costFactor: 2.0,
-                // Effekt: Wird in der Quest-Logik abgefragt
+            'gem_greed': { 
+                name: "Gier-Prisma", 
+                desc: "Bricht das Licht in der Mine. +5% Diamanten-Fundrate.", 
+                baseCost: 15, costFactor: 1.8, type: 'passive', icon: "💎", category: "permanent" 
             },
-            'gem_greed': {
-                name: "Gieriger Blick",
-                desc: "+5% mehr Diamanten aus der Mine.",
-                baseCost: 15,
-                costFactor: 1.8,
-                effect: (lvl) => { this.game.gameState.diamondMineBoost += (lvl * 0.05); }
+            'gem_discount': { 
+                name: "Schatten-Pakt", 
+                desc: "Bauarbeiter stellen keine Fragen mehr. -2% Baukosten.", 
+                baseCost: 20, costFactor: 2.5, type: 'passive', icon: "📜", category: "permanent" 
             },
-            'gem_click': {
-                name: "Astrale Berührung",
-                desc: "Klicks sind +50% stärker.",
-                baseCost: 25,
-                costFactor: 3.0,
-                effect: (lvl) => { /* Wird in getClickStrength verrechnet */ }
+            'gem_prestige': { 
+                name: "Void-Magnet", 
+                desc: "Zieht verlorene Seelen an. +5% Prestige-Punkte.", 
+                baseCost: 50, costFactor: 2.0, type: 'passive', icon: "🧲", category: "permanent" 
+            },
+            'gem_offline': { 
+                name: "Chronos-Splitter", 
+                desc: "Verzerrt die Zeit bei Abwesenheit. +10% Offline-Ertrag.", 
+                baseCost: 10, costFactor: 1.5, type: 'passive', icon: "⏳", category: "permanent" 
+            },
+            'gem_double': { 
+                name: "EWIGE DOMINANZ", 
+                desc: "Verdoppelt deine gesamte Produktion PERMANENT (x2).", 
+                baseCost: 500, costFactor: 1, type: 'passive', icon: "👑", category: "permanent", maxLevel: 1 
+            },
+
+            // --- VERBRAUCHSWARE ---
+            'gem_timelapse': { 
+                name: "Warp-Antrieb (4h)", 
+                desc: "Reise 4 Stunden in die Zukunft und ernte die Gewinne.", 
+                baseCost: 20, costFactor: 1.0, type: 'consumable', icon: "🚀", category: "consumable" 
+            },
+            'gem_prestige_inject': { 
+                name: "Seelen-Extraktor", 
+                desc: "Extrahiert 70% deiner Prestige-Punkte OHNE Reset.", 
+                baseCost: 40, costFactor: 1.0, type: 'consumable', icon: "💉", category: "consumable" 
+            },
+            'gem_refresh': { 
+                name: "System-Reboot", 
+                desc: "Setzt alle Skill-Cooldowns sofort auf 0 zurück.", 
+                baseCost: 15, costFactor: 1.0, type: 'consumable', icon: "🔄", category: "consumable" 
             }
         };
     }
 
-    // Rendert den Shop in das Wiki
     renderGemShop(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        // LAYOUT FIX: Erzwingt, dass der Header OBEN ist
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.width = "100%";
+
         const state = this.game.gameState;
-        // Sicherstellen, dass das Speicherobjekt existiert
         if (!state.gemUpgrades) state.gemUpgrades = {}; 
 
-        container.innerHTML = `
-            <div style="text-align:center; margin-bottom:20px; padding:20px; background:radial-gradient(circle, #2c003e, #000); border-radius:10px; border:2px solid #9c27b0; box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);">
-                <h2 style="color:#e066ff; margin:0; text-shadow: 0 0 10px #e066ff;">✨ Gem Konzern ✨</h2>
-                <p style="color:#aaa; font-size:0.95em; margin-top:5px;">Investiere seltene Gems in permanente Macht.</p>
-                <div style="font-size:1.8em; font-weight:bold; margin-top:15px; padding:10px; background:rgba(0,0,0,0.5); border-radius:8px; display:inline-block;">
-                    <span style="color:#e066ff">${state.gems || 0} ✨</span>
+        const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
+
+        // --- CSS UPDATE ---
+        if (!document.getElementById('purple-style-v3')) {
+            const style = document.createElement('style');
+            style.id = 'purple-style-v3';
+            style.innerHTML = `
+                .purple-card {
+                    background: linear-gradient(145deg, #120024 0%, #05000a 100%);
+                    border: 1px solid #4a148c;
+                    border-radius: 8px;
+                    padding: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    position: relative;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+                    min-height: 180px; 
+                }
+                .purple-card:hover {
+                    transform: translateY(-5px);
+                    border-color: #d500f9;
+                    box-shadow: 0 0 20px rgba(213, 0, 249, 0.2);
+                    z-index: 10;
+                }
+                .purple-card.maxed {
+                    border-color: #00e676;
+                    opacity: 0.7;
+                }
+                .purple-btn {
+                    background: linear-gradient(90deg, #6200ea 0%, #d500f9 100%);
+                    border: none;
+                    color: white;
+                    padding: 10px;
+                    border-radius: 6px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    cursor: pointer;
+                    margin-top: auto; 
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+                    transition: 0.2s;
+                    width: 100%;
+                }
+                .purple-btn:hover:not(:disabled) {
+                    box-shadow: 0 0 15px rgba(213, 0, 249, 0.6);
+                    filter: brightness(1.2);
+                }
+                .purple-btn:disabled {
+                    background: transparent;
+                    border: 1px solid #444;
+                    color: #666;
+                    cursor: not-allowed;
+                    box-shadow: none;
+                }
+                .purple-header-glow {
+                    text-shadow: 0 0 10px #d500f9, 0 0 20px #651fff;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 1. HEADER (Angepasst für Corrupted Smileys)
+        let html = `
+            <div style="
+                width: 100%;
+                text-align:center; 
+                margin-bottom:30px; 
+                padding:30px 20px; 
+                background: radial-gradient(circle at center, #240046 0%, #0a0010 100%); 
+                border-bottom: 2px solid #d500f9; 
+                border-radius: 8px; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                box-sizing: border-box;
+            ">
+                <div style="color:#d1c4e9; font-style:italic; font-family:'Georgia', serif; font-size:0.9em; margin-bottom:10px; opacity:0.8;">
+                    "${randomQuote}"
+                </div>
+                
+                <h2 class="purple-header-glow" style="
+                    color:#fff; 
+                    margin:0; 
+                    text-transform:uppercase; 
+                    font-size: 1.5rem; 
+                    letter-spacing:3px;
+                    line-height: 1.2;
+                    white-space: nowrap; 
+                ">
+                    ${this.shopName}
+                </h2>
+                
+                <div style="margin-top:20px; display:inline-flex; align-items:center; background:rgba(0,0,0,0.6); padding:8px 30px; border-radius:50px; border:1px solid #7c4dff;">
+                    <span style="font-size:1.5em; margin-right:12px;">👾</span>
+                    <span style="font-size:1.4em; font-weight:bold; color:#fff;">
+                        ${this.game.formatNumber(state.gems || 0)} 
+                        <span style="color:#e040fb; font-size:0.6em; margin-left:8px; letter-spacing:1px;">CORRUPTED</span>
+                    </span>
                 </div>
             </div>
-            <div class="info-grid"></div>
-        `;
 
-        const grid = container.querySelector('.info-grid');
+            <div id="gem-shop-content" style="width: 100%; box-sizing: border-box;">
+        `;
+        
+        // Sektionen
+        html += `<h4 style="color:#b388ff; border-bottom:1px solid #4a148c; padding-bottom:10px; margin-bottom:20px; letter-spacing:2px; font-size:0.9em; margin-top:0;">⚡ ARTEFAKTE DER MACHT</h4>`;
+        html += `<div id="gem-grid-permanent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;"></div>`;
+        
+        html += `<h4 style="color:#ea80fc; border-bottom:1px solid #4a148c; padding-bottom:10px; margin-bottom:20px; letter-spacing:2px; font-size:0.9em;">📦 SCHATTEN-WAREN</h4>`;
+        html += `<div id="gem-grid-consumable" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>`;
+        
+        html += `</div>`;
+        container.innerHTML = html;
+
+        const gridPerm = container.querySelector('#gem-grid-permanent');
+        const gridCons = container.querySelector('#gem-grid-consumable');
 
         Object.keys(this.upgrades).forEach(key => {
             const def = this.upgrades[key];
             const lvl = state.gemUpgrades[key] || 0;
-            const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+            let cost = def.baseCost;
+            if (def.type === 'passive' && !def.maxLevel) {
+                cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+            }
+
             const canAfford = (state.gems || 0) >= cost;
+            const isMaxed = def.maxLevel && lvl >= def.maxLevel;
+            const targetGrid = def.category === 'consumable' ? gridCons : gridPerm;
 
             const card = document.createElement('div');
-            card.className = `info-upgrade-item`;
-            // Lila Styling für Gems
-            card.style.borderColor = canAfford ? "#e066ff" : "#555"; 
-            card.style.background = canAfford ? "rgba(224, 102, 255, 0.05)" : "transparent";
+            card.className = `purple-card ${isMaxed ? 'maxed' : ''}`;
+
+            const iconGlow = def.category === 'consumable' ? 'drop-shadow(0 0 8px #ea80fc)' : 'drop-shadow(0 0 10px #7c4dff)';
+            let btnText = isMaxed ? "MAXIMAL" : (def.type === 'consumable' ? `${cost} 👾` : `${this.game.formatNumber(cost)} 👾`);
 
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <strong style="color:#fff; font-size:1.1em;">${def.name}</strong>
-                    <span style="color:#FFD700; font-weight:bold;">Lvl ${lvl}</span>
+                <div>
+                    <div style="display:flex; align-items:center; gap: 15px; margin-bottom:15px;">
+                        <div style="font-size:2.2em; filter: ${iconGlow};">${def.icon}</div>
+                        <div style="flex:1; overflow:hidden;">
+                            <div style="font-weight:bold; color:#fff; font-size:1.0rem; margin-bottom:4px;">${def.name}</div>
+                            ${!def.maxLevel && def.type !== 'consumable' ? `<div style="font-size:0.75em; color:#b388ff; background:rgba(124, 77, 255, 0.1); display:inline-block; padding:2px 6px; border-radius:4px;">Stufe ${lvl}</div>` : ''}
+                            ${isMaxed ? `<div style="font-size:0.75em; color:#00e676; border:1px solid #00e676; display:inline-block; padding:1px 5px; border-radius:4px;">VOLLSTÄNDIG</div>` : ''}
+                        </div>
+                    </div>
+                    <p style="font-size:0.85em; color:#ccc; line-height:1.5; margin-bottom:15px;">${def.desc}</p>
                 </div>
-                <p style="font-size:0.85em; color:#ccc; min-height:40px; margin-bottom:10px;">${def.desc}</p>
-                <button class="btn-buy-gem" style="width:100%; background:${canAfford ? 'linear-gradient(45deg, #9c27b0, #673ab7)' : '#333'}; color:${canAfford?'#fff':'#777'}; border:none; padding:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; font-weight:bold; border-radius:4px; box-shadow: ${canAfford ? '0 0 10px rgba(156, 39, 176, 0.4)' : 'none'};">
-                    Verbessern (${this.game.formatNumber(cost)} ✨)
+                
+                <button class="purple-btn" ${!canAfford || isMaxed ? 'disabled' : ''}>
+                    ${btnText}
                 </button>
             `;
 
-            // Klick-Listener
-            card.querySelector('button').onclick = () => {
-                if(canAfford) this.buyUpgrade(key);
-            };
+            if (canAfford && !isMaxed) {
+                const btn = card.querySelector('button');
+                btn.onclick = () => this.buyUpgrade(key);
+            }
             
-            grid.appendChild(card);
+            targetGrid.appendChild(card);
         });
     }
 
@@ -6698,26 +6872,58 @@ class GemEmpire {
         const state = this.game.gameState;
         const def = this.upgrades[key];
         const lvl = state.gemUpgrades[key] || 0;
-        const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+        
+        if (def.maxLevel && lvl >= def.maxLevel) return;
+
+        let cost = def.baseCost;
+        if (def.type === 'passive' && !def.maxLevel) {
+            cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+        }
 
         if ((state.gems || 0) >= cost) {
-            // Bezahlen
             state.gems -= cost;
-            state.gemUpgrades[key] = lvl + 1;
-            
-            // Sofort-Effekte anwenden (Stats neu berechnen)
-            // Hinweis: Wir rufen applyAllBoni auf, dort müssen wir die Gem-Effekte später integrieren
-            this.game.applyAllBoni(); 
 
-            this.game.playBuySound(); // Falls vorhanden
-            this.game.showNotification(`${def.name} verbessert!`, "success");
-            
-            // UI Refresh
+            if (def.type === 'passive') {
+                state.gemUpgrades[key] = lvl + 1;
+                this.game.showNotification(`${def.name} verbessert!`, "success");
+            } else if (key === 'gem_timelapse') {
+                const sps = this.game.computeTotalSPS(); 
+                const seconds = 4 * 60 * 60; 
+                this.game.addSmileys(sps * seconds);
+                this.game.showNotification(`🚀 WARP AKTIV! +${this.game.formatNumber(sps * seconds)} Smileys`, "success");
+                this.game.triggerBigBang(); 
+            } else if (key === 'gem_prestige_inject') {
+                const potential = this.game.calculatePrestigeGain();
+                if (potential > 0) {
+                    const gain = Math.floor(potential * 0.70);
+                    if (gain > 0) {
+                        state.prestige_punkte_verfügbar += gain;
+                        state.gesamt_prestige_punkte += gain;
+                        this.game.showNotification(`💉 SEELEN GEERNTET: +${this.game.formatNumber(gain)}`, "success");
+                        this.game.triggerBigBang(); 
+                    } else { state.gems += cost; return; }
+                } else { state.gems += cost; return; }
+            } else if (key === 'gem_refresh') {
+                Object.keys(state.skills).forEach(skillName => {
+                    state.skills[skillName].active = false;
+                    state.skills[skillName].cooldown = false;
+                    state.skills[skillName].readyAt = 0;
+                    this.game.updateUI(); 
+                });
+                this.game.showNotification("🔄 SYSTEM NEUGESTARTET!", "success");
+            }
+
+            if (key === 'gem_luck') state.critChance += 0.01;
+            if (key === 'gem_greed') state.diamondMineBoost += 0.05;
+
+            this.game.playBuySound();
+            this.game.applyAllBoni(); 
             this.game.updateUI(); 
-            this.renderGemShop('gem_shop_container'); // Shop neu zeichnen
+            this.renderGemShop('gem_shop_container'); 
             this.game.speichereSpiel();
         } else {
-            this.game.showNotification("Nicht genug Gems!", "error");
+            // Fehlermeldung angepasst
+            this.game.showNotification("Nicht genug Corrupted Smileys!", "error");
         }
     }
 }
