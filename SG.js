@@ -3053,6 +3053,82 @@ getArtifactIcon(id) {
     // 9. EVENT LISTENERS
     // ================================================================================================================
 
+    openWiki() {
+        const modal = document.getElementById('wiki-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.openWikiPage('buildings'); // Startseite ist immer Gebäude
+            
+            // Close Button Event
+            const closeBtn = document.getElementById('close-wiki-button');
+            if(closeBtn) {
+                // removeEventListener trick um doppelte Events zu vermeiden
+                const newBtn = closeBtn.cloneNode(true);
+                closeBtn.parentNode.replaceChild(newBtn, closeBtn);
+                newBtn.onclick = () => modal.style.display = 'none';
+            }
+        }
+    }
+
+    openWikiPage(pageName) {
+        const container = document.getElementById('wiki-content-area');
+        if (!container) return;
+
+        // 1. Sidebar Buttons aktualisieren (Highlight setzen)
+        document.querySelectorAll('.wiki-nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if(btn.getAttribute('onclick').includes(pageName)) {
+                btn.classList.add('active');
+            }
+        });
+
+        // 2. Container leeren
+        container.innerHTML = '';
+        
+        // 3. Temporären Wrapper erstellen
+        const wrapper = document.createElement('div');
+        wrapper.className = 'info-grid'; 
+        
+        // Switch: Welcher Inhalt soll rein?
+        switch (pageName) {
+            case 'buildings':
+                wrapper.id = 'info_buildings_container'; 
+                container.appendChild(wrapper);
+                this.createBuildingInfoElements(); 
+                break;
+            case 'upgrades':
+                wrapper.id = 'info_global_upgrades_container';
+                container.appendChild(wrapper);
+                this.createInfoGlobalUpgradeElements();
+                break;
+            case 'prestige':
+                wrapper.id = 'info_prestige_container';
+                container.appendChild(wrapper);
+                this.createPrestigeInfoList();
+                break;
+            case 'achievements':
+                wrapper.id = 'info_achievements_container';
+                container.appendChild(wrapper);
+                this.createInfoAchievementElements();
+                break;
+            case 'pets':
+                wrapper.id = 'info_pets_container';
+                container.appendChild(wrapper);
+                this.createInfoPetsElements();
+                break;
+            case 'stats':
+                wrapper.id = 'info_stats_container';
+                container.appendChild(wrapper);
+                this.createInfoStatsElements();
+                break;
+            case 'museum':
+                wrapper.id = 'museum_grid'; 
+                container.appendChild(wrapper);
+                this.renderMuseum();
+                break;
+        }
+    }
+
     setupMainEventListeners() {
 
         window.addEventListener('beforeunload', () => {
@@ -3270,6 +3346,9 @@ btnGuild.onclick = () => {
     btnGuild.classList.add('active');
     btnGlobal.classList.remove('active');
     };
+
+    // WIKI BUTTON LISTENER
+    this.getById('open-wiki-btn')?.addEventListener('click', () => this.openWiki());
 }
 
     // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
@@ -3348,86 +3427,15 @@ btnGuild.onclick = () => {
     }
 
     setupInfoPageEventListeners() {
-        const buildingsModal = this.getById('buildings_info_modal');
-        const openBuildingsButton = this.getById('show_buildings_button');
-        const closeBuildingsButton = this.getById('close_buildings_info_button');
-        openBuildingsButton?.addEventListener('click', () => {
-            this.createBuildingInfoElements();
-            if (buildingsModal) buildingsModal.style.display = 'flex';
-        });
-        closeBuildingsButton?.addEventListener('click', () => {
-            if (buildingsModal) buildingsModal.style.display = 'none';
-        });
-
-        const globalUpgradesModal = this.getById('global_upgrades_info_modal');
-        const openGlobalUpgradesButton = this.getById('show_global_upgrades_button');
-        const closeGlobalUpgradesButton = this.getById('close_global_upgrades_info_button');
-        openGlobalUpgradesButton?.addEventListener('click', () => {
-            this.createInfoGlobalUpgradeElements();
-            if (globalUpgradesModal) globalUpgradesModal.style.display = 'flex';
-        });
-        closeGlobalUpgradesButton?.addEventListener('click', () => {
-            if (globalUpgradesModal) globalUpgradesModal.style.display = 'none';
-        });
-
-        const prestigeModal = this.getById('prestige_info_modal');
-        const openPrestigeButton = this.getById('show_prestige_button');
-        const closePrestigeButton = this.getById('close_prestige_info_button');
-        openPrestigeButton?.addEventListener('click', () => {
-            this.createPrestigeInfoList();
-            if (prestigeModal) prestigeModal.style.display = 'flex';
-        });
-        closePrestigeButton?.addEventListener('click', () => {
-            if (prestigeModal) prestigeModal.style.display = 'none';
-        });
-
-        const statsModal = this.getById('stats_info_modal');
-        const openStatsButton = this.getById('show_stats_button');
-        const closeStatsButton = this.getById('close_stats_info_button');
-        openStatsButton?.addEventListener('click', () => {
-            this.createInfoStatsElements();
-            if (statsModal) statsModal.style.display = 'flex';
-        });
-        closeStatsButton?.addEventListener('click', () => {
-            if (statsModal) statsModal.style.display = 'none';
-        });
-
-        const petInfoModal = this.getById('pets_info_modal');
-        const openPetsButton = this.getById('show_pets_button');
-        const closePetsButton = this.getById('close_pets_info_button');
-        openPetsButton?.addEventListener('click', () => {
-            this.createInfoPetsElements();
-            if (petInfoModal) petInfoModal.style.display = 'flex';
-        });
-        closePetsButton?.addEventListener('click', () => {
-            if (petInfoModal) petInfoModal.style.display = 'none';
-        });
-
-        const achievementsModal = this.getById('achievements_info_modal');
-        const openAchievementsButton = this.getById('show_achievements_button');
-        const closeAchievementsButton = this.getById('close_achievements_button');
-        openAchievementsButton?.addEventListener('click', () => {
-            this.createInfoAchievementElements();
-            if (achievementsModal) achievementsModal.style.display = 'flex';
-        });
-        closeAchievementsButton?.addEventListener('click', () => {
-            if (achievementsModal) achievementsModal.style.display = 'none';
-        });
-        // In setupInfoPageEventListeners()
+        // Veraltete Listener entfernt.
+        // Das Wiki wird jetzt über openWiki() gesteuert.
+        console.log("ℹ️ Info-System auf Smileypedia umgestellt.");
+        
+        // Listener für das Museum (falls noch nötig)
         const museumModal = this.getById('museum_modal');
-        const openMuseumBtn = this.getById('show_museum_button');
         const closeMuseumBtn = this.getById('close_museum_button');
-
-            if (openMuseumBtn && museumModal) {
-            openMuseumBtn.addEventListener('click', () => {
-            this.renderMuseum(); // Befüllt das Grid vor dem Öffnen
-            museumModal.style.display = 'flex';
-            });
-        }
-            if (closeMuseumBtn && museumModal) {
-            closeMuseumBtn.addEventListener('click', () => {
-            museumModal.style.display = 'none';
-            });
+        if (closeMuseumBtn && museumModal) {
+            closeMuseumBtn.onclick = () => museumModal.style.display = 'none';
         }
     }
 

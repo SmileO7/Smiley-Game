@@ -23,7 +23,10 @@
     <nav class="navbar">
         <a href="#" onclick="gameInstance.switchView('home')" class="active" id="nav-home">Start & Shop</a>
         <a href="#" onclick="gameInstance.switchView('prestige')" id="nav-prestige">Prestige Shop</a>
-        <a href="#" id="nav-info">Info & Tipps</a> <a href="#" id="open-settings-button">Einstellungen</a>
+        
+        <a href="#" id="open-wiki-btn">📖 Handbuch</a> 
+        
+        <a href="#" id="open-settings-button">Einstellungen</a>
     </nav>
 </header>
 
@@ -194,34 +197,32 @@
     </div>
 </div>
 
-<div id="info-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
-        <h2>📚 SPIELANLEITUNG</h2>
-        <div class="page-container info-page-layout">
-            <div style="flex: 2; display: flex; flex-direction: column; gap: 15px;">
-                <div class="info-section box-style">
-                    <h3>🚀 DEIN START</h3>
-                    <p>Willkommen beim Smiley Clicker! Dein Ziel ist einfach: <strong>Sammle so viele Smileys wie möglich.</strong></p>
-                    <ul style="margin-left: 20px; margin-top: 5px; color: #ccc;">
-                        <li><strong>Klicken:</strong> Klicke auf den großen Smiley, um zu starten.</li>
-                        <li><strong>Bauen:</strong> Kaufe Gebäude, die automatisch Smileys für dich sammeln.</li>
-                        <li><strong>Upgrades:</strong> Verbessere deine Klicks und Gebäude im Shop.</li>
-                    </ul>
-                </div>
+<div id="wiki-modal" class="modal">
+    <div class="modal-content" style="max-width: 950px; height: 85vh; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        
+        <div style="background: #011638; padding: 15px 20px; border-bottom: 2px solid #009ffd; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.5rem;">📖</span>
+                <h2 style="margin: 0; border: none; padding: 0; color: #fff; font-size: 1.5rem;">Handbuch</h2>
             </div>
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-                <div class="info-section box-style" style="text-align: center;">
-                    <h3>DATENBANK</h3>
-                    <button id="show_buildings_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🏗️ Gebäude-Liste</button>
-                    <button id="show_global_upgrades_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">⚙️ Alle Upgrades</button>
-                    <button id="show_prestige_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🌌 Skill-Tree Infos</button>
-                    <button id="show_pets_button" class="btn-primary" style="width: 100%; margin-bottom: 5px;">🐾 Pet-Lexikon</button>
-                    <button id="show_stats_button" class="btn-primary" style="width: 100%;">📊 Deine Statistik</button>
-                </div>
-            </div>
+            <span id="close-wiki-button" class="close-button" style="color: #fff; font-size: 2rem; cursor: pointer;">&times;</span>
         </div>
-        <div class="modal-buttons">
-            <button onclick="document.getElementById('info-modal').style.display='none'" class="btn-cancel">Schließen</button>
+
+        <div style="display: flex; flex: 1; overflow: hidden;">
+            
+            <div class="wiki-sidebar">
+                <button class="wiki-nav-btn active" onclick="gameInstance.openWikiPage('buildings')">🏢 Gebäude</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('upgrades')">🧪 Forschung</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('prestige')">🌌 Prestige</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('achievements')">🏆 Erfolge</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('pets')">🐶 Begleiter</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('museum')">🏺 Museum</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('stats')">📊 Statistik</button>
+            </div>
+
+            <div id="wiki-content-area" class="wiki-content-area custom-scrollbar">
+                <p style="color: #aaa; text-align: center; margin-top: 50px;">Lade Daten...</p>
+            </div>
         </div>
     </div>
 </div>
