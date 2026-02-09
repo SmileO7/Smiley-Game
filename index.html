@@ -137,10 +137,6 @@
                 <button id="open_diamond_mine_button" class="btn-feature"><span>💎</span> DIAMANTEN-MINE</button>
                 <button id="open_guilds_button" class="btn-feature"><span>⚔️</span> GILDEN</button>
                 <button id="show_achievements_button" class="btn-primary"><span>🏆</span> ERFOLGE</button>
-                <button id="open-gem-shop-button" class="btn-feature" style="background: linear-gradient(135deg, #9c27b0, #673ab7);">
-                    <span>✨</span> GEM-KONZERN
-                </button>
-                <button id="show_museum_button" class="btn-primary">🏺 Museum</button>
             </div>
 
             <div class="box-style" style="margin-top: 10px;">
@@ -218,6 +214,7 @@
                 <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('pets')">🐶 Begleiter</button>
                 <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('museum')">🏺 Museum</button>
                 <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('stats')">📊 Statistik</button>
+                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('gem_empire')">✨ Gem Konzern</button>
             </div>
 
             <div id="wiki-content-area" class="wiki-content-area custom-scrollbar">
@@ -397,8 +394,6 @@
       if (settingsBtn) settingsBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('settings-modal'); });
       const closeSettingsBtn = document.getElementById('close-settings-button');
       if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => closeModal('settings-modal'));
-      const infoBtn = document.getElementById('nav-info');
-      if (infoBtn) infoBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('info-modal'); });
       
       window.onclick = function(event) {
           if (event.target.classList.contains('modal')) {
@@ -440,10 +435,6 @@
 <script src="data.js?v=2"></script> 
 <script src="SG.js?v=2"></script>
 <script type="module" src="firebase-logic.js?v=2"></script>
-
-<div id="cloud-save-status" title="Cloud-Status" style="margin-left: 10px; font-size: 1.2rem; cursor: help; transition: all 0.3s;">
-    ☁️
-</div>
 
 <div id="main-chat-container" class="chat-minimized">
     <div class="chat-header">

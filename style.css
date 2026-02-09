@@ -1645,3 +1645,11 @@ button:disabled, .boss-btn-cooldown {
         padding: 8px 15px;
     }
 }
+
+.artifact-card {
+    transition: transform 0.2s;
+}
+.artifact-card.owned:hover {
+    transform: scale(1.05);
+    background: rgba(255, 215, 0, 0.1) !important;
+}

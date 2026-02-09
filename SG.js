@@ -60,6 +60,7 @@ class SmileyGame {
         this.chatSystem = new ChatSystem(this);
         this.petSystem = new PetSystem(this);
         this.soundSystem = new SoundSystem(this);
+        this.gemSystem = new GemEmpire(this);
 
 
         // 2. GAME STATE DEFINITION
@@ -934,6 +935,23 @@ class SmileyGame {
             // Wir addieren den Bonus auf den Klick-Multiplikator
             prestigeClickMultiplier += (gUpgrades.guild_click * 0.10); 
         }
+        // --- 8.7 GEM KONZERN BONI ---
+        const gemUps = this.gameState.gemUpgrades || {};
+        
+        // Astrale Berührung (+50% Klick pro Level)
+        if (gemUps['gem_click']) {
+            prestigeClickMultiplier += (gemUps['gem_click'] * 0.50);
+        }
+        
+        // Gieriger Blick (Diamanten-Bonus für Mine)
+        if (gemUps['gem_greed']) {
+            this.gameState.diamondMineBoost += (gemUps['gem_greed'] * 0.05);
+        }
+        
+        // Schicksals-Politur (Crit Chance)
+        if (gemUps['gem_luck']) {
+            this.gameState.critChance += (gemUps['gem_luck'] * 0.01);
+        }
 
         // 9. Finale Berechnung
         this.gameState.klickKraftMultiplier = baseClickMultiplier + prestigeClickMultiplier;
@@ -1619,34 +1637,83 @@ class SmileyGame {
     // 7. RENDERING & UI-UPDATES
     // ================================================================================================================
 
-    renderMuseum() {
-    const container = document.getElementById('museum_grid');
-    if (!container) return;
-    container.innerHTML = '';
-
-    this.artifactsData.forEach(art => {
-        const isOwned = this.gameState.collectedArtifacts.includes(art.id);
-        const card = document.createElement('div');
+    renderMuseum(targetContainer = null) {
+        // 1. Container finden (Entweder übergeben oder per ID suchen)
+        const container = targetContainer || document.getElementById('museum_grid');
         
-        // Verschiedene Styles für 'Besessen' und 'Unbekannt'
-        card.className = `info-upgrade-item artifact-card ${art.rarity} ${isOwned ? 'owned' : 'missing'}`;
+        if (!container) {
+            console.error("❌ Museum-Container nicht gefunden!");
+            return;
+        }
         
-        // Icons für Seltenheit definieren
-        const rarityStars = { common: '⭐', rare: '⭐⭐', epic: '⭐⭐⭐', legendary: '🌟🌟🌟' };
+        // 2. Sicherheits-Check: Gibt es die Liste der gesammelten Items überhaupt?
+        // Falls nicht (neues Spiel), erstellen wir sie leer, damit kein Fehler kommt.
+        if (!this.gameState.collectedArtifacts) {
+            this.gameState.collectedArtifacts = [];
+        }
 
-        card.innerHTML = `
-            <div class="artifact-icon" style="font-size: 3rem; filter: ${isOwned ? 'none' : 'brightness(0) invert(0.2)'};">
-                ${isOwned ? this.getArtifactIcon(art.id) : '❓'}
-            </div>
-            <h4>${isOwned ? art.name : 'Unbekanntes Relikt'}</h4>
-            <p style="font-size: 0.8rem; color: #aaa;">${rarityStars[art.rarity]}</p>
-            <div class="artifact-bonus" style="color: #4CAF50; font-weight: bold; margin-top: 5px;">
-                ${isOwned ? 'Bonus: ' + art.desc : 'Sammle es in der Mine'}
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
+        container.innerHTML = '';
+        
+        // Grid-Styling sicherstellen (falls CSS fehlt)
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+        container.style.gap = '15px';
+        container.style.padding = '10px';
+
+        // Header Text
+        const header = document.createElement('div');
+        header.style.gridColumn = '1 / -1';
+        header.style.textAlign = 'center';
+        header.style.color = '#aaa';
+        header.style.marginBottom = '10px';
+        header.style.background = 'rgba(255,255,255,0.05)';
+        header.style.padding = '10px';
+        header.style.borderRadius = '8px';
+        header.innerHTML = '<p>Sammle Artefakte in der Mine, um globale Boni freizuschalten.</p>';
+        container.appendChild(header);
+
+        // 3. Karten rendern
+        this.artifactsData.forEach(art => {
+            const isOwned = this.gameState.collectedArtifacts.includes(art.id);
+            
+            const card = document.createElement('div');
+            card.className = `artifact-card ${isOwned ? 'owned' : 'missing'}`;
+            
+            // Inline Styles als Fallback, falls CSS noch nicht greift
+            card.style.position = 'relative';
+            card.style.padding = '15px';
+            card.style.borderRadius = '10px';
+            card.style.textAlign = 'center';
+            card.style.border = isOwned ? '1px solid #FFD700' : '1px solid #444';
+            card.style.background = isOwned ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 255, 255, 0.02)';
+            if (!isOwned) card.style.opacity = '0.7';
+
+            // Icons
+            const icons = {
+                'art_coin': '🪙', 'art_fossil': '🐚', 'art_compass': '🧭',
+                'art_pickaxe': '⛏️', 'art_crystal': '🔮', 'art_crown': '👑'
+            };
+            const displayIcon = icons[art.id] || '🏺';
+
+            const rarityStars = { common: '⭐', rare: '⭐⭐', epic: '⭐⭐⭐', legendary: '🌟🌟🌟' };
+
+            card.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 10px; filter: ${isOwned ? 'drop-shadow(0 0 5px gold)' : 'grayscale(1)'};">
+                    ${isOwned ? displayIcon : '❓'}
+                </div>
+                <div style="font-weight:bold; color:${isOwned ? '#fff' : '#777'}; margin-bottom:5px;">
+                    ${isOwned ? art.name : '???'}
+                </div>
+                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">
+                    ${rarityStars[art.rarity]}
+                </div>
+                <div style="font-size: 0.75rem; color: ${isOwned ? '#4CAF50' : '#555'}; min-height: 35px; display:flex; align-items:center; justify-content:center;">
+                    ${isOwned ? art.desc : 'Noch nicht entdeckt'}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
 
 // Helfer für Icons (kannst du in deine getTileSymbol Logik integrieren)
 getArtifactIcon(id) {
@@ -1656,85 +1723,6 @@ getArtifactIcon(id) {
     };
     return icons[id] || '🏺';
 }
-
-    renderArtifactShowcase() {
-        // 1. Container suchen oder erstellen (falls noch nicht da)
-        let showcase = document.getElementById('artifact-showcase');
-        if (!showcase) {
-            // Wir fügen es VOR dem Gebäude-Gitter ein
-            const grid = document.getElementById('building-grid');
-            if (grid && grid.parentNode) {
-                showcase = document.createElement('div');
-                showcase.id = 'artifact-showcase';
-                showcase.style.cssText = `
-                    display: flex; 
-                    gap: 10px; 
-                    justify-content: center; 
-                    margin: 15px 0; 
-                    padding: 10px; 
-                    background: rgba(0, 0, 0, 0.2); 
-                    border-radius: 10px;
-                    border: 1px solid #333;
-                    min-height: 50px;
-                    flex-wrap: wrap;
-                `;
-                grid.parentNode.insertBefore(showcase, grid);
-                
-                // Titel hinzufügen (optional)
-                const title = document.createElement('div');
-                title.style.cssText = "width:100%; text-align:center; font-size:0.8em; color:#666; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;";
-                title.innerText = "Sammlung";
-                showcase.appendChild(title);
-            } else {
-                return; // UI noch nicht geladen
-            }
-        }
-
-        // 2. Inhalt nur aktualisieren, wenn sich was geändert hat
-        const currentCount = this.gameState.collectedArtifacts ? this.gameState.collectedArtifacts.length : 0;
-        if (showcase.dataset.count == currentCount) return; // Performance-Optimierung
-        showcase.dataset.count = currentCount;
-
-        // Header wiederherstellen (da wir gleich innerHTML clearen)
-        showcase.innerHTML = '<div style="width:100%; text-align:center; font-size:0.8em; color:#aaa; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Ausstellung</div>';
-
-        // 3. Icons zuordnen (Damit es hübsch aussieht)
-        const icons = {
-            'art_coin': '🪙',
-            'art_fossil': '🐚',
-            'art_compass': '🧭',
-            'art_pickaxe': '⛏️',
-            'art_crystal': '🔮',
-            'art_crown': '👑'
-        };
-
-        // 4. Artefakte rendern
-        const collected = this.gameState.collectedArtifacts || [];
-        
-        if (collected.length === 0) {
-            showcase.innerHTML += '<div style="color:#444; font-size:0.9em; font-style:italic;">Die Vitrine ist leer...</div>';
-            return;
-        }
-
-        collected.forEach(id => {
-            const art = this.artifactsData.find(a => a.id === id);
-            if (art) {
-                const item = document.createElement('div');
-                item.className = 'artifact-badge';
-                item.innerHTML = icons[id] || '🏺';
-                item.title = `${art.name}\n${art.desc}`; // Tooltip
-                item.style.cssText = `
-                    font-size: 1.5rem; 
-                    cursor: help; 
-                    filter: drop-shadow(0 0 5px rgba(255,215,0,0.3));
-                    transition: transform 0.2s;
-                `;
-                item.onmouseover = () => item.style.transform = "scale(1.2)";
-                item.onmouseout = () => item.style.transform = "scale(1.0)";
-                showcase.appendChild(item);
-            }
-        });
-    }
     
     updateUI() {
 
@@ -1834,7 +1822,6 @@ getArtifactIcon(id) {
         this.checkSkillUnlocks();
         this.updateGlobalUpgradeUI();
         this.renderBuffs();
-        this.renderArtifactShowcase();
     
         const comboEl = document.getElementById('combo-display');
         const comboVal = document.getElementById('combo-value');
@@ -3122,9 +3109,14 @@ getArtifactIcon(id) {
                 this.createInfoStatsElements();
                 break;
             case 'museum':
-                wrapper.id = 'museum_grid'; 
+                wrapper.id = 'museum_grid'; // WICHTIG: Die ID, die renderMuseum sucht
                 container.appendChild(wrapper);
-                this.renderMuseum();
+                this.renderMuseum(wrapper); // Ruft die Museum-Logik auf
+                break;
+            case 'gem_empire':
+                wrapper.id = 'gem_shop_container'; 
+                container.appendChild(wrapper);
+                this.gemSystem.renderGemShop('gem_shop_container');
                 break;
         }
     }
@@ -6604,5 +6596,128 @@ class SoundSystem {
     updateVolume(val) {
         this.sfxVolume = val / 100;
         this.checkContext();
+    }
+}
+// ================================================================================================================
+// === SUB-SYSTEM: GEM KONZERN (Das Empire) ===
+// ================================================================================================================
+class GemEmpire {
+    constructor(gameInstance) {
+        this.game = gameInstance;
+        console.log("💎 Gem Konzern bereit.");
+        
+        // Upgrades, die man nur mit Gems (✨) kaufen kann
+        this.upgrades = {
+            'gem_luck': {
+                name: "Schicksals-Politur",
+                desc: "+1% Kritische Treffer-Chance pro Level.",
+                baseCost: 5,     
+                costFactor: 1.5, 
+                // Effekt: Wird direkt auf den Stat gerechnet
+                effect: (lvl) => { this.game.gameState.critChance += (lvl * 0.01); } 
+            },
+            'gem_mercs': {
+                name: "Söldner-Logistik",
+                desc: "Söldner erhalten +5% mehr XP pro Quest.",
+                baseCost: 10,
+                costFactor: 2.0,
+                // Effekt: Wird in der Quest-Logik abgefragt
+            },
+            'gem_greed': {
+                name: "Gieriger Blick",
+                desc: "+5% mehr Diamanten aus der Mine.",
+                baseCost: 15,
+                costFactor: 1.8,
+                effect: (lvl) => { this.game.gameState.diamondMineBoost += (lvl * 0.05); }
+            },
+            'gem_click': {
+                name: "Astrale Berührung",
+                desc: "Klicks sind +50% stärker.",
+                baseCost: 25,
+                costFactor: 3.0,
+                effect: (lvl) => { /* Wird in getClickStrength verrechnet */ }
+            }
+        };
+    }
+
+    // Rendert den Shop in das Wiki
+    renderGemShop(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const state = this.game.gameState;
+        // Sicherstellen, dass das Speicherobjekt existiert
+        if (!state.gemUpgrades) state.gemUpgrades = {}; 
+
+        container.innerHTML = `
+            <div style="text-align:center; margin-bottom:20px; padding:20px; background:radial-gradient(circle, #2c003e, #000); border-radius:10px; border:2px solid #9c27b0; box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);">
+                <h2 style="color:#e066ff; margin:0; text-shadow: 0 0 10px #e066ff;">✨ Gem Konzern ✨</h2>
+                <p style="color:#aaa; font-size:0.95em; margin-top:5px;">Investiere seltene Gems in permanente Macht.</p>
+                <div style="font-size:1.8em; font-weight:bold; margin-top:15px; padding:10px; background:rgba(0,0,0,0.5); border-radius:8px; display:inline-block;">
+                    <span style="color:#e066ff">${state.gems || 0} ✨</span>
+                </div>
+            </div>
+            <div class="info-grid"></div>
+        `;
+
+        const grid = container.querySelector('.info-grid');
+
+        Object.keys(this.upgrades).forEach(key => {
+            const def = this.upgrades[key];
+            const lvl = state.gemUpgrades[key] || 0;
+            const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+            const canAfford = (state.gems || 0) >= cost;
+
+            const card = document.createElement('div');
+            card.className = `info-upgrade-item`;
+            // Lila Styling für Gems
+            card.style.borderColor = canAfford ? "#e066ff" : "#555"; 
+            card.style.background = canAfford ? "rgba(224, 102, 255, 0.05)" : "transparent";
+
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <strong style="color:#fff; font-size:1.1em;">${def.name}</strong>
+                    <span style="color:#FFD700; font-weight:bold;">Lvl ${lvl}</span>
+                </div>
+                <p style="font-size:0.85em; color:#ccc; min-height:40px; margin-bottom:10px;">${def.desc}</p>
+                <button class="btn-buy-gem" style="width:100%; background:${canAfford ? 'linear-gradient(45deg, #9c27b0, #673ab7)' : '#333'}; color:${canAfford?'#fff':'#777'}; border:none; padding:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; font-weight:bold; border-radius:4px; box-shadow: ${canAfford ? '0 0 10px rgba(156, 39, 176, 0.4)' : 'none'};">
+                    Verbessern (${this.game.formatNumber(cost)} ✨)
+                </button>
+            `;
+
+            // Klick-Listener
+            card.querySelector('button').onclick = () => {
+                if(canAfford) this.buyUpgrade(key);
+            };
+            
+            grid.appendChild(card);
+        });
+    }
+
+    buyUpgrade(key) {
+        const state = this.game.gameState;
+        const def = this.upgrades[key];
+        const lvl = state.gemUpgrades[key] || 0;
+        const cost = Math.floor(def.baseCost * Math.pow(def.costFactor, lvl));
+
+        if ((state.gems || 0) >= cost) {
+            // Bezahlen
+            state.gems -= cost;
+            state.gemUpgrades[key] = lvl + 1;
+            
+            // Sofort-Effekte anwenden (Stats neu berechnen)
+            // Hinweis: Wir rufen applyAllBoni auf, dort müssen wir die Gem-Effekte später integrieren
+            this.game.applyAllBoni(); 
+
+            this.game.playBuySound(); // Falls vorhanden
+            this.game.showNotification(`${def.name} verbessert!`, "success");
+            
+            // UI Refresh
+            this.game.updateUI(); 
+            this.renderGemShop('gem_shop_container'); // Shop neu zeichnen
+            this.game.speichereSpiel();
+        } else {
+            this.game.showNotification("Nicht genug Gems!", "error");
+        }
     }
 }
