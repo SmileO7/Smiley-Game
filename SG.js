@@ -1066,7 +1066,7 @@ class SmileyGame {
     // 3. KERNLOGIK (Kauf & Reset)
     // ================================================================================================================
 
-    klickeSmiley(e) {
+   klickeSmiley(e) {
         // --- 1. COMBO LOGIK & PRESTIGE CHECKS ---
         if (!this.comboCount) this.comboCount = 0;
         
@@ -1075,14 +1075,14 @@ class SmileyGame {
         let comboGain = 1; // Basis: 1 Klick = 1 Combo-Punkt
 
         // Check: Prestige ID 15 (Combo-Rausch) -> Combo steigt 50% schneller
-        if (this.gameState.prestigeUpgradeStatus[15]) comboGain = 1.5;
+        if (this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[15]) comboGain = 1.5;
         
         // Check: Global Upgrade IDs (aus data.js)
-        if (this.gameState.researchStatus[110]) comboTime = 4000; 
-        if (this.gameState.researchStatus[111]) maxCombo = 5.0;
+        if (this.gameState.researchStatus && this.gameState.researchStatus[110]) comboTime = 4000; 
+        if (this.gameState.researchStatus && this.gameState.researchStatus[111]) maxCombo = 5.0;
 
         // Check: Prestige ID 17 (Ewige Combo) -> +2 Sek Zeitfenster
-        if (this.gameState.prestigeUpgradeStatus[17]) comboTime += 2000;
+        if (this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[17]) comboTime += 2000;
 
         this.comboCount += comboGain;
         this.comboMulti = Math.min(maxCombo, 1 + (Math.sqrt(this.comboCount) * 0.15));
@@ -1099,7 +1099,7 @@ class SmileyGame {
         let baseClick = this.getClickStrength();
         
         // Check: Prestige ID 5 (Synergie) -> 1% der SPS zum Klick addieren
-        if (this.gameState.prestigeUpgradeStatus[5]) {
+        if (this.gameState.prestigeUpgradeStatus && this.gameState.prestigeUpgradeStatus[5]) {
             baseClick += (this.gameState.totalSPS * 0.01);
         }
 
@@ -1107,7 +1107,7 @@ class SmileyGame {
         let isCrit = false;
 
         // Crit Check
-        if (this.gameState.skills && this.gameState.skills.critStorm.active) {
+        if (this.gameState.skills && this.gameState.skills.critStorm && this.gameState.skills.critStorm.active) {
             isCrit = true;
             damage *= this.gameState.critDamageMult;
         } else if (this.gameState.critChance > 0 && Math.random() < this.gameState.critChance) {
@@ -1115,12 +1115,28 @@ class SmileyGame {
             isCrit = true;
         }
 
-        // Gutschrift
+        // --- 3. GUTSCHRIFT ---
         this.addSmileys(damage);
         this.gameState.totalClicksLifetime++;
         this.playClickSound();
 
-        // Animationen & Effekte
+        // ====================================================
+        // 👾 NEU: GLITCH DROP CHANCE (Corrupted Smileys)
+        // ====================================================
+        // 0.2% Chance (1 zu 500) bei jedem Klick
+        if (Math.random() < 0.002) {
+            this.gameState.gems = (this.gameState.gems || 0) + 1;
+            
+            // Kleines visuelles Feedback
+            if (e) {
+                // Zeigt "+1 👾" in Neon-Lila an der Mausposition
+                this.showFloatingText("+1 👾", e.clientX, e.clientY, "#d500f9");
+            }
+            this.showNotification("SYSTEM GLITCH! Corrupted Smiley gefunden.", "success");
+        }
+        // ====================================================
+
+        // --- 4. ANIMATIONEN & EFFEKTE ---
         if (e) {
             this.animateSmiley();
             this.createClickParticles(e); 
@@ -6624,7 +6640,7 @@ class SoundSystem {
     }
 }
 // ================================================================================================================
-// === SUB-SYSTEM: DER SCHWARZMARKT (Corrupted Edition) ===
+// === SUB-SYSTEM: DER SCHWARZMARKT (Final Corrupted Edition mit Tauschhandel) ===
 // ================================================================================================================
 class GemEmpire {
     constructor(gameInstance) {
@@ -6709,9 +6725,9 @@ class GemEmpire {
         const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
 
         // --- CSS UPDATE ---
-        if (!document.getElementById('purple-style-v3')) {
+        if (!document.getElementById('purple-style-v4')) {
             const style = document.createElement('style');
-            style.id = 'purple-style-v3';
+            style.id = 'purple-style-v4';
             style.innerHTML = `
                 .purple-card {
                     background: linear-gradient(145deg, #120024 0%, #05000a 100%);
@@ -6765,44 +6781,37 @@ class GemEmpire {
                 .purple-header-glow {
                     text-shadow: 0 0 10px #d500f9, 0 0 20px #651fff;
                 }
+                /* Tausch-Bereich Styles */
+                .exchange-box {
+                    background: linear-gradient(90deg, #1a0033 0%, #000 100%);
+                    border: 1px solid #d500f9;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-top: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    box-shadow: 0 0 15px rgba(213, 0, 249, 0.2);
+                }
+                .exchange-btn {
+                    background: #d500f9; color: #fff; border: none; padding: 10px 20px;
+                    font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase;
+                }
+                .exchange-btn:hover { box-shadow: 0 0 10px #d500f9; }
+                .exchange-btn:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; }
             `;
             document.head.appendChild(style);
         }
 
-        // 1. HEADER (Angepasst für Corrupted Smileys)
+        // 1. HEADER
         let html = `
-            <div style="
-                width: 100%;
-                text-align:center; 
-                margin-bottom:30px; 
-                padding:30px 20px; 
-                background: radial-gradient(circle at center, #240046 0%, #0a0010 100%); 
-                border-bottom: 2px solid #d500f9; 
-                border-radius: 8px; 
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                box-sizing: border-box;
-            ">
-                <div style="color:#d1c4e9; font-style:italic; font-family:'Georgia', serif; font-size:0.9em; margin-bottom:10px; opacity:0.8;">
-                    "${randomQuote}"
-                </div>
-                
-                <h2 class="purple-header-glow" style="
-                    color:#fff; 
-                    margin:0; 
-                    text-transform:uppercase; 
-                    font-size: 1.5rem; 
-                    letter-spacing:3px;
-                    line-height: 1.2;
-                    white-space: nowrap; 
-                ">
-                    ${this.shopName}
-                </h2>
-                
+            <div style="width: 100%; text-align:center; margin-bottom:30px; padding:30px 20px; background: radial-gradient(circle at center, #240046 0%, #0a0010 100%); border-bottom: 2px solid #d500f9; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
+                <div style="color:#d1c4e9; font-style:italic; font-family:'Georgia', serif; font-size:0.9em; margin-bottom:10px; opacity:0.8;">"${randomQuote}"</div>
+                <h2 class="purple-header-glow" style="color:#fff; margin:0; text-transform:uppercase; font-size: 1.5rem; letter-spacing:3px; line-height: 1.2; white-space: nowrap;">${this.shopName}</h2>
                 <div style="margin-top:20px; display:inline-flex; align-items:center; background:rgba(0,0,0,0.6); padding:8px 30px; border-radius:50px; border:1px solid #7c4dff;">
                     <span style="font-size:1.5em; margin-right:12px;">👾</span>
                     <span style="font-size:1.4em; font-weight:bold; color:#fff;">
-                        ${this.game.formatNumber(state.gems || 0)} 
-                        <span style="color:#e040fb; font-size:0.6em; margin-left:8px; letter-spacing:1px;">CORRUPTED</span>
+                        ${this.game.formatNumber(state.gems || 0)} <span style="color:#e040fb; font-size:0.6em; margin-left:8px; letter-spacing:1px;">CORRUPTED</span>
                     </span>
                 </div>
             </div>
@@ -6817,8 +6826,44 @@ class GemEmpire {
         html += `<h4 style="color:#ea80fc; border-bottom:1px solid #4a148c; padding-bottom:10px; margin-bottom:20px; letter-spacing:2px; font-size:0.9em;">📦 SCHATTEN-WAREN</h4>`;
         html += `<div id="gem-grid-consumable" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>`;
         
+        // --- 3. NEU: DER WECHSELKURS BEREICH ---
+        const exchangeRate = 1000; // 1000 Prestige = 1 Corrupted
+        const canExchange = (state.prestige_punkte_verfügbar || 0) >= exchangeRate;
+
+        html += `
+            <div class="exchange-box">
+                <div>
+                    <h4 style="margin:0; color:#fff; text-transform:uppercase;">⚖️ Dunkler Tauschhandel</h4>
+                    <p style="margin:5px 0 0 0; color:#aaa; font-size:0.9em;">
+                        Opfere deine reine Macht für korrupte Energie.<br>
+                        <span style="color:#e066ff;">${this.game.formatNumber(exchangeRate)} Prestige 🌟 ⮕ 1 Corrupted Smiley 👾</span>
+                    </p>
+                    <p style="margin:5px 0 0 0; font-size:0.8em; color: ${canExchange ? '#4CAF50' : '#FF5252'}">
+                        Verfügbar: ${this.game.formatNumber(state.prestige_punkte_verfügbar || 0)} Prestige
+                    </p>
+                </div>
+                <button id="btn-exchange-prestige" class="exchange-btn" ${!canExchange ? 'disabled' : ''}>
+                    UMWANDELN
+                </button>
+            </div>
+        `;
+
         html += `</div>`;
         container.innerHTML = html;
+
+        // Listener für Tausch-Button
+        const exBtn = document.getElementById('btn-exchange-prestige');
+        if (exBtn && canExchange) {
+            exBtn.onclick = () => {
+                state.prestige_punkte_verfügbar -= exchangeRate;
+                state.gems = (state.gems || 0) + 1;
+                this.game.playBuySound(); // Falls verfügbar
+                this.game.showNotification("Tausch erfolgreich: +1 👾", "success");
+                this.game.updateUI();
+                this.renderGemShop(containerId); // Refresh
+                this.game.speichereSpiel();
+            };
+        }
 
         const gridPerm = container.querySelector('#gem-grid-permanent');
         const gridCons = container.querySelector('#gem-grid-consumable');
