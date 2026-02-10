@@ -45,14 +45,7 @@ class SmileyGame {
             { id: 16, name: "Offshore-Konten", cost: 25, description: "Offline-Gewinn +20%.", type: 'offline_boost', value: 0.20, x: 90, y: 70, category: 'idle', parents: [2] },
             { id: 17, name: "Hype-Train", cost: 75, description: "Klicks skalieren mit Gebäudekanzahl.", type: 'building_synergy', value: 0.01, x: 50, y: 65, category: 'special', parents: [3, 4] }
         ];
-        this.artifactsData = [
-            { id: 'art_coin', name: 'Antike Münze', desc: '+5% Globaler SPS Bonus', rarity: 'common', bonusType: 'sps_mult', value: 0.05 },
-            { id: 'art_fossil', name: 'Versteinerter Smiley', desc: '+10% Klick-Stärke', rarity: 'common', bonusType: 'click_mult', value: 0.10 },
-            { id: 'art_compass', name: 'Rostiger Kompass', desc: '+2% Prestige Punkte', rarity: 'rare', bonusType: 'prestige_efficiency', value: 0.02 },
-            { id: 'art_pickaxe', name: 'Goldene Spitzhacke', desc: '-10% Minen-Upgrade Kosten', rarity: 'rare', bonusType: 'mine_cost', value: 0.10 },
-            { id: 'art_crystal', name: 'Mana Kristall', desc: '-5% Cooldown für Skills', rarity: 'epic', bonusType: 'cooldown_red', value: 0.05 },
-            { id: 'art_crown', name: 'Krone des Gierigen', desc: 'Verdoppelt alle Offline-Einnahmen', rarity: 'legendary', bonusType: 'offline_boost', value: 1.0 }
-        ];
+        this.artifactsData = artifactsData; // Importierte Artefakte aus data.js
 
         this.currentBuyAmount = 1;
         this.mineSystem = new DiamondMine(this);
