@@ -176,22 +176,10 @@ const globalUpgrades = [
     { id: 108, cost: 50000000000000, description: "Schöpfer: Game Overdrive (Kosten -10%)", type: "cost_reduction_buildings", value: 0.10, buildingIndex: 14 },
     { id: 109, cost: 150000000000000, description: "Schöpfer: Developer Mode (+500%)", type: "building_mult", value: 5.0, buildingIndex: 14 },
 
-    {
-    id: 110,
-    name: "Rhythmische Ausdauer",
-    description: "Verlängert das Combo-Zeitfenster auf 4 Sekunden.",
-    cost: 2500000, // Von 500k auf 2.5M erhöht
-    type: 'combo_time',
-    value: 4000 
-},
-{
-    id: 111,
-    name: "Combo-Limit-Break",
-    description: "Erhöht das maximale Combo-Limit auf x5.00!",
-    cost: 25000000, // Von 2.5M auf 25M erhöht
-    type: 'combo_max',
-    value: 5.0
-}
+    // Combo Click
+    { id: 110, name: "Rhythmische Ausdauer", description: "Verlängert das Combo-Zeitfenster auf 4 Sekunden.", cost: 2500000, type: 'combo_time', value: 4000 },
+    { id: 111, name: "Combo-Limit-Break", description: "Erhöht das maximale Combo-Limit auf x5.00!", cost: 25000000, type: 'combo_max', value: 5.0 },
+
 ];
 
 /* ======================================================= */
@@ -785,27 +773,7 @@ const GUILD_DATA = {
 };
 
 const GEM_SHOP_DATA = [
-    {
-        id: "gem_buff_sps",
-        name: "Smaragd-Verstärker",
-        description: "Erhöht deine gesamte Produktion permanent um 15%.",
-        cost: 25,
-        type: "sps_boost",
-        value: 0.15
-    },
-    {
-        id: "gem_buff_click",
-        name: "Rubin-Schärfe",
-        description: "Kritische Treffer verursachen +50% mehr Schaden.",
-        cost: 40,
-        type: "crit_damage",
-        value: 0.50
-    },
-    {
-        id: "gem_unlock_automation",
-        name: "Kristall-Logistik",
-        description: "Söldner starten Quests automatisch neu (wenn verfügbar).",
-        cost: 100,
-        type: "automation"
-    }
+   {    id: "gem_buff_sps", name: "Smaragd-Verstärker", description: "Erhöht deine gesamte SPS permanent um  15%.", cost: 25, type: "sps_boost", value: 0.15 },
+   {    id: "gem_buff_click", name: "Rubin-Schärfe", description: "Kritische Treffer verursachen +50% Schaden.", cost: 40, type: "crit_damage", value: 0.50 },
+   {    id: "gem_unlock_automation", name: "Kristall-Logistik", description: "Söldner starten Quests automatisch neu (wenn verfügbar).", cost: 100, type: "automation" },
 ];

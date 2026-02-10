@@ -23,7 +23,7 @@
     <nav class="navbar">
         <a href="#" onclick="gameInstance.switchView('home')" class="active" id="nav-home">🏠Smiley und Gebäude </a>
         <a href="#" onclick="gameInstance.switchView('prestige')" id="nav-prestige">🌟Prestige Shop</a>
-        <a href="#" id="open-wiki-btn">📘Smileypedia</a>
+        <a href="#" id="open_wiki_btn">📘Smileypedia</a>
         <a href="#" id="open-settings-button">  ⚙️Einstellungen</a>
     </nav>
 </header>
@@ -35,22 +35,17 @@
             <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
             
             <div class="smiley-container" style="position: relative; width: 130px; margin: 10px auto;">
-    
-    <div id="combo-display" class="combo-display">
-        <span id="combo-value">x1.00</span>
-        <span class="combo-text">Combo</span>
-    </div>
-
-    <button id="smiley_button">
-        <img src="smiley.png.png" alt="Smiley" id="smiley_image">
-    </button>
+                <div id="combo-display" class="combo-display">
+                    <span id="combo-value">x1.00</span>
+                    <span class="combo-text">Combo</span>
+                </div>
+                <button id="smiley_button">
+                    <img src="smiley.png" alt="Smiley" id="smiley_image">
+                </button>
             </div>
 
             <div class="stats-box" style="padding: 10px;">
-                <h2 class="stats-header">
-                    Aktuelle Stats
-                </h2>
-
+                <h2 class="stats-header">Aktuelle Stats</h2>
                 <div class="stats-main-display">
                     <div class="stats-label-small">Gesammelte Daten</div>
                     <div class="stats-value-large">
@@ -61,22 +56,13 @@
                 <div class="stats-grid-row">
                     <div class="stats-card-small">
                         <div class="stats-label-small">Klick</div>
-                        <div class="stats-value-medium">
-                            <span id="smileys_pro_klick_anzeige">1</span>
-                        </div>
-                        <div class="stats-subtext">
-                            x<span id="klick_multiplikator_anzeige">1.00</span>
-                        </div>
+                        <div class="stats-value-medium"><span id="smileys_pro_klick_anzeige">1</span></div>
+                        <div class="stats-subtext">x<span id="klick_multiplikator_anzeige">1.00</span></div>
                     </div>
-
                     <div class="stats-card-small" data-tooltip-type="stats_sps">
                         <div class="stats-label-small">Auto (SPS)</div>
-                        <div class="stats-value-medium" style="color: #4CAF50;">
-                            <span id="smileys_pro_sekunde_anzeige">0</span>
-                        </div>
-                        <div class="stats-subtext">
-                            <span id="smileys_pro_minute_anzeige">0</span> /min
-                        </div>
+                        <div class="stats-value-medium" style="color: #4CAF50;"><span id="smileys_pro_sekunde_anzeige">0</span></div>
+                        <div class="stats-subtext"><span id="smileys_pro_minute_anzeige">0</span> /min</div>
                     </div>
                 </div>
 
@@ -86,9 +72,7 @@
                 </div>
 
                 <div class="diamond-display-box">
-                    <span class="diamond-text">
-                        💎 <span id="diamanten_anzeige">0</span>
-                    </span>
+                    <span class="diamond-text">💎 <span id="diamanten_anzeige">0</span></span>
                 </div>
                 <div id="cloud-save-status" class="cloud-icon" title="Cloud-Status">☁️</div>
             </div>
@@ -98,15 +82,13 @@
                     <span style="font-size: 0.7rem; color: #aaa; text-transform: uppercase;">Evolution</span>
                     <span id="next-prestige-threshold" style="font-size: 0.7rem; color: var(--color-accent-blue);">100k</span>
                 </div>
-                
                 <div style="height: 15px; background: #0b0f19; border: 1px solid #333; border-radius: 8px; position: relative; overflow: hidden;">
                     <div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-accent-blue), #00d2ff); transition: width 0.5s;"></div>
                     <div id="prestige-percent-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #fff; font-weight: bold;">0%</div>
                 </div>
             </div>
 
-            <div id="active_pet_display" style="margin-top: 8px; display: none; background: rgba(62, 90, 65, 0.15); border: 1px solid var(--color-neutral-olive); padding: 8px; border-radius: 8px; align-items: center; gap: 10px;">
-            </div>
+            <div id="active_pet_display" style="margin-top: 8px; display: none; background: rgba(62, 90, 65, 0.15); border: 1px solid var(--color-neutral-olive); padding: 8px; border-radius: 8px; align-items: center; gap: 10px;"></div>
         </div> 
         
         <div class="middle-column">
@@ -114,7 +96,7 @@
                 <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...</div>
             </div>
             
-        <div id="buffs-container" class="buff-bar"></div>
+            <div id="buffs-container" class="buff-bar"></div>
 
             <div class="skills-container box-style" style="margin-top: 10px; margin-bottom: 10px;">
                 <h2 style="font-size: 1.1rem; margin-bottom: 10px; color: var(--color-accent-blue);">COMMAND CENTER: ACTIVE SKILLS</h2>
@@ -131,19 +113,19 @@
             </div>
 
             <div class="feature-button-grid">
-                <button id="open-pet-shop-button" class="btn-feature"><span>🐾</span> PET SHOP</button>
+                <button id="open_pet_shop_button" class="btn-feature"><span>🐾</span> PET SHOP</button>
                 <button id="open_diamond_mine_button" class="btn-feature"><span>💎</span> DIAMANTEN-MINE</button>
                 <button id="open_guilds_button" class="btn-feature"><span>⚔️</span> GILDEN</button>
+                <button id="open_blackmarket_button" class="btn-feature" style="border-color: #d500f9; color: #d500f9;"><span>👾</span> MARKET </button>
+                <button id="open_wardrobe_button" class="btn-feature" style="border-color: #fff; color: #fff;"> <span>🎩</span> SKINS </button>
                 <button id="show_achievements_button" class="btn-primary"><span>🏆</span> ERFOLGE</button>
             </div>
 
             <div class="box-style" style="margin-top: 10px;">
                 <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px;">Verfügbare Upgrades</h2>
                 <div id="global-upgrades-container"></div>
-            </div>
-        </div> 
-
-        <div class="right-column">
+            </div> 
+        </div> <div class="right-column">
             <h2>Gebäude</h2>
             <div id="buy-amount-toggles" class="buy-amount-container">
                 <button class="btn-toggle active" data-amount="1">1x</button>
@@ -152,6 +134,7 @@
             </div>
             <div class="building-grid" id="building-grid"></div>
         </div>
+
     </div> 
 </main>
 
@@ -286,19 +269,6 @@
         </div>
         <div id="museum_grid" class="info-grid">
             </div>
-    </div>
-</div>
-<div id="gem-shop-modal" class="modal" style="display: none;">
-    <div class="modal-content large" style="border-color: #9c27b0;">
-        <h2>✨ Edelstein-Kontor</h2>
-        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-            Deine Gems: <span id="gem-display" style="color: #e066ff; font-weight: bold; font-size: 1.2rem;">0</span>
-        </div>
-        <div id="gem-shop-grid" class="info-grid">
-            </div>
-        <div class="modal-buttons">
-            <button id="close-gem-shop-button" class="btn-cancel">Verlassen</button>
-        </div>
     </div>
 </div>
 <div id="prestige-modal" class="modal" style="display: none;"><div class="modal-content"><h2>🌌 Prestige: Zeitreise</h2><div class="prestige-stats"><p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p><p>Du erhältst: <strong id="prestige-gain-display" style="color:gold;">0</strong> Punkte</p></div><div class="modal-buttons"><button id="btn-do-prestige" class="btn-danger">Reset durchführen</button><button id="btn-cancel-prestige" class="btn-cancel">Abbrechen</button></div></div></div>

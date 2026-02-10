@@ -61,7 +61,7 @@ class SmileyGame {
         this.petSystem = new PetSystem(this);
         this.soundSystem = new SoundSystem(this);
         this.gemSystem = new GemEmpire(this);
-
+        this.skinSystem = new SkinSystem(this);
 
         // 2. GAME STATE DEFINITION
         this.gameState = {
@@ -403,6 +403,8 @@ class SmileyGame {
             petsUnlocked: source.petsUnlocked || false,
             petLevels: source.petLevels || {},
             activePet: source.activePet || null,
+            unlockedSkins: source.unlockedSkins || ['default'],
+            activeSkin: source.activeSkin || 'default',
 
             // --- Gilden System (WICHTIG: Söldner speichern!) ---
             guildsUnlocked: source.guildsUnlocked || false,
@@ -445,32 +447,55 @@ class SmileyGame {
         }
     }
 
-    // Diese Funktion sucht den Spielstand und entscheidet, wie er geladen wird
     ladeSpiel() {
-        const savedString = localStorage.getItem('smileyGameSave');
+        let savedString = localStorage.getItem('smileyGameSave');
         
-        // Wenn kein Save da ist, keine Panik -> Init macht den Rest
+        // Wenn kein Save da ist, starte neues Spiel
         if (!savedString) {
             console.log("🆕 Kein Spielstand gefunden, starte neues Spiel.");
             return;
         }
 
+        // FIX: Entferne Anführungszeichen, falls der String doppelt stringified wurde
+        if (savedString.startsWith('"') && savedString.endsWith('"')) {
+            savedString = savedString.slice(1, -1);
+        }
+
+        let parsedData = null;
+
+        // VERSUCH 1: Base64 Decodierung (Neuer Standard)
         try {
-            // Versuch 1: Base64 Decodierung (Standard)
-            const decoded = atob(savedString);
-            const parsedData = JSON.parse(decoded);
-            this.loadGame(parsedData);
-            console.log("💾 Spielstand geladen (Base64)");
-        } catch (e) {
-            // Fallback: Falls es kein Base64 war (alte Versionen)
-            try {
-                const parsedJSON = JSON.parse(savedString);
-                this.loadGame(parsedJSON.gameState || parsedJSON);
-                console.log("💾 Spielstand geladen (Legacy JSON)");
-            } catch (e2) {
-                console.error("❌ Kritischer Fehler beim Laden! Savegame korrupt.", e2);
-                this.showNotification("Spielstand defekt - Backup wird empfohlen.", "error");
+            // Prüfen, ob es Base64 ist (keine geschweiften Klammern am Anfang)
+            if (!savedString.trim().startsWith('{')) {
+                const decoded = atob(savedString);
+                parsedData = JSON.parse(decoded);
+                console.log("💾 Spielstand geladen (Base64 Mode)");
             }
+        } catch (e) {
+            console.warn("⚠️ Base64 Dekodierung fehlgeschlagen, versuche Legacy-Modus...", e);
+        }
+
+        // VERSUCH 2: Legacy JSON (Falls es einfacher Text ist)
+        if (!parsedData) {
+            try {
+                parsedData = JSON.parse(savedString);
+                console.log("💾 Spielstand geladen (Legacy JSON Mode)");
+            } catch (e) {
+                console.error("❌ Savegame komplett korrupt.");
+            }
+        }
+
+        // DATEN ANWENDEN
+        if (parsedData) {
+            // Wenn in den Daten ein 'gameState' Objekt steckt (alte Struktur), nimm das
+            const dataToLoad = parsedData.gameState || parsedData;
+            this.loadGame(dataToLoad);
+        } else {
+            console.error("⚠️ Spielstand konnte nicht gelesen werden. Starte neu.");
+            // Backup des kaputten Saves erstellen (für Analyse)
+            localStorage.setItem('smileyGameSave_CORRUPT', savedString);
+            localStorage.removeItem('smileyGameSave');
+            this.showNotification("Spielstand war defekt. Backup erstellt & Neustart.", "error");
         }
     }
 
@@ -545,6 +570,12 @@ class SmileyGame {
             console.log("🛠️ Mine war leer nach Laden -> Regeneriere...");
             // Wird im Init gemacht, da 'this.mineSystem' hier evtl noch nicht ready ist
         }
+
+        target.unlockedSkins = Array.isArray(saveData.unlockedSkins) ? saveData.unlockedSkins : ['default'];
+        target.activeSkin = saveData.activeSkin || 'default';
+
+        // Skin sofort anwenden
+        this.skinSystem.updateSmileyAppearance()
 
         console.log("📥 Daten erfolgreich in GameState übernommen.");
         this.updateUI();
@@ -1343,34 +1374,40 @@ class SmileyGame {
             return;
         }
 
-        // Nur die ersten 5 anzeigen, damit die Liste nicht den Bildschirm sprengt
+        // Nur die ersten 5 anzeigen
         upgradesToRender.slice(0, 5).forEach(upgrade => {
-        const finalCost = this.getGlobalUpgradeCost(upgrade);
-        const canAfford = this.gameState.aktuelle_smileys >= finalCost;
+            const finalCost = this.getGlobalUpgradeCost(upgrade);
+            const canAfford = this.gameState.aktuelle_smileys >= finalCost;
 
-        const div = document.createElement('div');
-        // 👇 HIER DIE ÄNDERUNG: 'affordable' Klasse hinzufügen, wenn genug Smileys da sind
-        div.className = `research-item ${canAfford ? 'affordable' : ''}`;
-        
-        div.innerHTML = `
-            <div class="research-content">
-                <div class="research-title-row">
-                    <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
+            const div = document.createElement('div');
+            div.className = `research-item ${canAfford ? 'affordable' : ''}`;
+            
+            div.innerHTML = `
+                <div class="research-content">
+                    <div class="research-title-row">
+                        <span class="research-name">✨ ${upgrade.name || 'Upgrade'}</span>
+                    </div>
+                    <div class="research-desc">${upgrade.description}</div>
                 </div>
-                <div class="research-desc">${upgrade.description}</div>
-            </div>
-            <div class="research-action">
-                <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
-                    ${this.formatNumber(finalCost)}
-                </span>
-                <button class="btn-buy-research" data-id="${upgrade.id}" ${canAfford ? '' : 'disabled'}>
-                    Kaufen
-                </button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
+                <div class="research-action">
+                    <span class="research-cost" style="color: ${canAfford ? '#4CAF50' : '#ff5252'};">
+                        ${this.formatNumber(finalCost)}
+                    </span>
+                    <button class="btn-buy-research" ${canAfford ? '' : 'disabled'}>
+                        Kaufen
+                    </button>
+                </div>
+            `;
+            
+            // WICHTIG: Klick-Event hier anhängen!
+            const btn = div.querySelector('.btn-buy-research');
+            if (btn) {
+                btn.onclick = () => this.kaufeGlobalUpgrade(upgrade.id);
+            }
+
+            container.appendChild(div);
+        });
+    }
 
     kaufeGlobalUpgrade(id) {
         const upgrade = globalUpgrades.find(u => u.id === id);
@@ -2643,25 +2680,31 @@ getArtifactIcon(id) {
     }
 
     checkFeatureUnlocks() {
-        // Wir nutzen einfach die Flags, die wir in applyAllBoni() schon berechnet haben
         const hasPets = this.gameState.petsUnlocked;
         const hasMine = this.gameState.diamondMineUnlocked;
         const hasGuilds = this.gameState.guildsUnlocked;
 
-        // Buttons ein-/ausblenden
-        const btnPets = this.getById('open-pet-shop-button');
+        // Pet Shop Button (Unterstrich!)
+        const btnPets = document.getElementById('open_pet_shop_button');
         if (btnPets) {
-            btnPets.style.display = hasPets ? 'flex' : 'none'; // 'flex' für bessere Zentrierung
-            // Falls der Button noch eine 'locked' Klasse hat (optional)
-            if (!hasPets) btnPets.classList.add('locked-feature');
-            else btnPets.classList.remove('locked-feature');
+            // Wenn freigeschaltet -> flex, sonst none
+            btnPets.style.display = hasPets ? 'flex' : 'none';
         }
 
-        const btnMine = this.getById('open_diamond_mine_button');
-        if (btnMine) btnMine.style.display = hasMine ? 'flex' : 'none';
+        // Mine Button
+        const btnMine = document.getElementById('open_diamond_mine_button');
+        if (btnMine) {
+            btnMine.style.display = hasMine ? 'flex' : 'none';
+        }
 
-        const btnGuilds = this.getById('open_guilds_button');
-        if (btnGuilds) btnGuilds.style.display = hasGuilds ? 'flex' : 'none';
+        // Guilds Button
+        const btnGuilds = document.getElementById('open_guilds_button');
+        if (btnGuilds) {
+            btnGuilds.style.display = hasGuilds ? 'flex' : 'none';
+        }
+        
+        // HINWEIS: Market, Skins und Erfolge sind IMMER sichtbar, 
+        // daher müssen sie hier nicht behandelt werden.
     }
 
     renderPetShop() {
@@ -2802,9 +2845,9 @@ getArtifactIcon(id) {
         const inv = this.gameState.mineInventory;
         
         // Werkzeuge
-        const pEl = document.getElementById('count-pickaxe');
-        const tEl = document.getElementById('count-tnt');
-        const dEl = document.getElementById('count-drill');
+        const pEl = document.getElementById('qty-pickaxe');
+        const tEl = document.getElementById('qty-tnt');
+        const dEl = document.getElementById('qty-drill');
         
         if(pEl) pEl.innerText = inv.pickaxe;
         if(tEl) tEl.innerText = inv.tnt;
@@ -3163,226 +3206,133 @@ getArtifactIcon(id) {
     }
 
     setupMainEventListeners() {
+        console.log("🔌 Starte Event-Listener Setup...");
 
-        window.addEventListener('beforeunload', () => {
-            this.saveGame();
+        // 1. Globale Listener
+        window.addEventListener('beforeunload', () => { this.saveGame(); });
+
+        const smileyBtn = document.getElementById('smiley_button');
+        if (smileyBtn) smileyBtn.addEventListener('click', (e) => this.klickeSmiley(e));
+
+        // 2. Feature Buttons (JETZT ALLES MIT UNTERSTRICHEN!)
+        
+        // Wiki / Smileypedia Button
+        const btnWiki = document.getElementById('open_wiki_btn');
+        if (btnWiki) {
+            btnWiki.onclick = (e) => {
+                e.preventDefault();
+                this.openWiki();
+            };
+        }
+
+        // Pet Shop
+        const btnPets = document.getElementById('open_pet_shop_button');
+        if (btnPets) {
+            btnPets.onclick = (e) => {
+                e.preventDefault();
+                this.updatePetButtons();
+                const modal = document.getElementById('pet-shop-modal');
+                if(modal) modal.style.display = 'flex';
+            };
+        } else { console.error("❌ Button open_pet_shop_button nicht gefunden!"); }
+
+        // Mine
+        const btnMine = document.getElementById('open_diamond_mine_button');
+        if (btnMine) {
+            btnMine.onclick = (e) => {
+                e.preventDefault();
+                this.updateDiamondMineStatus();
+                const modal = document.getElementById('diamond-mine-modal');
+                if(modal) modal.style.display = 'flex';
+            };
+        }
+
+        // Gilden
+        const btnGuilds = document.getElementById('open_guilds_button');
+        if (btnGuilds) {
+            btnGuilds.onclick = (e) => {
+                e.preventDefault();
+                this.renderGuildsContent();
+                const modal = document.getElementById('guilds-modal');
+                if(modal) modal.style.display = 'flex';
+            };
+        }
+
+        // Market (Schwarzmarkt)
+        const btnMarket = document.getElementById('open_blackmarket_button');
+        if (btnMarket) {
+            btnMarket.onclick = (e) => {
+                e.preventDefault();
+                this.switchView('blackmarket');
+            };
+        } else { console.error("❌ Button open_blackmarket_button nicht gefunden!"); }
+
+        // Skins
+        const btnSkins = document.getElementById('open_wardrobe_button');
+        if (btnSkins) {
+            btnSkins.onclick = (e) => {
+                e.preventDefault();
+                this.switchView('wardrobe');
+            };
+        }
+
+        // Achievements
+        const btnAchieve = document.getElementById('show_achievements_button');
+        if (btnAchieve) {
+            btnAchieve.onclick = (e) => {
+                e.preventDefault();
+                // 1. Erst den Inhalt generieren...
+                this.createInfoAchievementElements(); 
+                // 2. ...dann anzeigen
+                const modal = document.getElementById('achievements_info_modal');
+                if(modal) modal.style.display = 'flex';
+            };
+        }
+
+        // 3. Schließen-Buttons (Modal X)
+        const closeMap = {
+            'close-pet-shop-button': 'pet-shop-modal',
+            'close_diamond_mine_button': 'diamond-mine-modal',
+            'close_guilds_button': 'guilds-modal',
+            'close_achievements_button': 'achievements_info_modal'
+        };
+
+        Object.keys(closeMap).forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.onclick = () => {
+                    document.getElementById(closeMap[btnId]).style.display = 'none';
+                };
+            }
         });
-
-        // 1. SMILEY KLICKEN
-        this.getById('smiley_button')?.addEventListener('click', (e) => this.klickeSmiley(e));
-
-        // --- NEU: TOGGLE LEISTE (1x, 10x, 100x) ---
-        const toggleContainer = this.getById('buy-amount-toggles');
+        
+        // 4. Toggle Buttons (1x, 10x, 100x)
+        const toggleContainer = document.getElementById('buy-amount-toggles');
         if (toggleContainer) {
             toggleContainer.addEventListener('click', (e) => {
                 const btn = e.target.closest('.btn-toggle');
                 if (!btn) return;
-
-                // Visuell umschalten (Active Klasse setzen)
                 document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-
-                // Wert setzen & UI updaten
                 this.currentBuyAmount = parseInt(btn.dataset.amount, 10);
-                this.updateUI(); // Berechnet sofort die Preise neu
-            });
-        }
-
-        // --- NEU: TASTATUR SHORTCUTS (Shift/Strg) ---
-        window.addEventListener('keydown', (e) => {
-            if (e.repeat) return; // Verhindert Flackern
-
-            if (e.shiftKey) {
-                this.currentBuyAmount = 10;
-                this.highlightToggle(10); // Visuelles Feedback
                 this.updateUI();
-            } else if (e.ctrlKey) {
-                this.currentBuyAmount = 100;
-                this.highlightToggle(100); // Visuelles Feedback
-                this.updateUI();
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'Shift' || e.key === 'Control') {
-                // Zurücksetzen auf den Button, der eigentlich aktiv ist
-                const activeBtn = document.querySelector('.btn-toggle.active');
-                if (activeBtn) {
-                    this.currentBuyAmount = parseInt(activeBtn.dataset.amount);
-                } else {
-                    this.currentBuyAmount = 1;
+            });
+        }
+        
+        // 5. Gebäude-Kauf im Grid (Event Delegation)
+        const grid = document.getElementById('building-grid');
+        if(grid) {
+             grid.addEventListener('click', (e) => {
+                const button = e.target.closest('.btn-buy');
+                if (!button) return;
+                const buildingItem = button.closest('.building-item');
+                const index = parseInt(buildingItem.dataset.index, 10);
+                if (!isNaN(index)) {
+                    this.kaufeMehrereGebaeude(index, this.currentBuyAmount || 1);
                 }
-                
-                // Visuelles Feedback entfernen
-                document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('key-active'));
-                
-                this.updateUI();
-            }
-        });
-
-        // 2. GEBÄUDE KAUFEN (Angepasst auf dynamische Menge)
-        this.getById('building-grid')?.addEventListener('click', (e) => {
-            const button = e.target.closest('.btn-buy');
-            if (!button) return;
-
-            const buildingItem = button.closest('.building-item');
-            if (!buildingItem) return;
-
-            const index = parseInt(buildingItem.dataset.index, 10);
-            
-            // WICHTIG: Wir nutzen jetzt die globale Variable statt data-amount!
-            const amount = this.currentBuyAmount; 
-
-            if (!isNaN(index)) {
-                this.kaufeMehrereGebaeude(index, amount);
-            }
-        });
-
-        // 3. GLOBAL UPGRADES (Unverändert)
-        this.getById('global-upgrades-container')?.addEventListener('click', (e) => {
-            const button = e.target.closest('.btn-buy-research');
-            if (!button) return;
-            const id = parseInt(button.dataset.id, 10);
-            const amount = parseInt(button.dataset.amount, 10);
-            if (!isNaN(id)) {
-                this.kaufeGlobalUpgrade(id, amount || 1);
-            }
-        });
-
-        // 4. PET SHOP (Unverändert)
-        this.getById('pet-shop-grid')?.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            const petId = button.dataset.id;
-            if (button.classList.contains('btn-buy-pet')) {
-                this.levelUpPet(petId);
-            } else if (button.classList.contains('btn-pet-activate')) {
-                this.activatePet(petId);
-            }
-        });
-
-        const petModal = this.getById('pet-shop-modal');
-        const openPetButton = this.getById('open-pet-shop-button');
-        const closePetButton = this.getById('close-pet-shop-button');
-        if (openPetButton && petModal) {
-            openPetButton.addEventListener('click', () => {
-                this.updatePetButtons();
-                petModal.style.display = 'flex';
             });
         }
-        if (closePetButton && petModal) {
-            closePetButton.addEventListener('click', () => {
-                petModal.style.display = 'none';
-            });
-        }
-
-        // 5. DIAMANT MINE & MINIGAME (Unverändert)
-        this.getById('diamond-mine-content')?.addEventListener('click', (e) => {
-            const buyButton = e.target.closest('#buy-diamond-mine-button');
-            const startButton = e.target.closest('#start-minigame-button');
-            if (buyButton) {
-                const index = parseInt(buyButton.dataset.index, 10);
-                if (index === DIAMOND_MINE_INDEX) {
-                    this.kaufeMehrereGebaeude(index, 1);
-                }
-            }
-            if (startButton) {
-                if (!this.gameState.diamondMinigameRunning) {
-                    this.startDiamondMinigame();
-                } else {
-                    this.currentMinigameClicks = (this.currentMinigameClicks || 0) + 1;
-                    startButton.style.transform = 'scale(0.95)';
-                    setTimeout(() => startButton.style.transform = 'scale(1)', 50);
-                    const resultText = this.getById('minigame-result');
-                    if (resultText) resultText.innerText = `Schürf-Power: ${this.currentMinigameClicks}`;
-                }
-            }
-        });
-
-        const diamondMineModal = this.getById('diamond-mine-modal');
-        const openMineButton = this.getById('open_diamond_mine_button');
-        const closeMineButton = this.getById('close_diamond_mine_button');
-        if (openMineButton && diamondMineModal) {
-            openMineButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.updateDiamondMineStatus();
-                diamondMineModal.style.display = 'flex';
-            });
-        }
-        if (closeMineButton && diamondMineModal) {
-            closeMineButton.addEventListener('click', () => {
-                diamondMineModal.style.display = 'none';
-            });
-        }
-
-        // 6. GILDEN (Unverändert)
-        const guildsModal = this.getById('guilds-modal');
-        const openGuildsButton = this.getById('open_guilds_button');
-        const closeGuildsButton = this.getById('close_guilds_button');
-        if (openGuildsButton && guildsModal) {
-            openGuildsButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.renderGuildsContent();
-                guildsModal.style.display = 'flex';
-            });
-        }
-        if (closeGuildsButton && guildsModal) {
-            closeGuildsButton.addEventListener('click', () => {
-                guildsModal.style.display = 'none';
-            });
-        }
-
-        // 7. ESCAPE KEY (Unverändert)
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modals = [
-                    'prestige-shop-modal', 'skill_tree_modal', 'settings-modal', 
-                    'pet-shop-modal', 'diamond-mine-modal', 'guilds-modal',
-                    'buildings_info_modal', 'global_upgrades_info_modal', 
-                    'achievements_info_modal', 'stats_info_modal', 'prestige_info_modal',
-                    'pets_info_modal'
-                ];
-                modals.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el && el.style.display && el.style.display !== 'none') {
-                        el.style.display = 'none';
-                    }
-                });
-            }
-        });
-        // --- CHAT UI LOGIK ---
-        const chatContainer = document.getElementById('main-chat-container');
-        const chatToggle = document.getElementById('btn-chat-toggle');
-        const btnGlobal = document.getElementById('btn-chat-global');
-        const btnGuild = document.getElementById('btn-chat-guild');
-
-        // Minimieren / Maximieren
-            chatToggle.onclick = () => {
-            chatContainer.classList.toggle('chat-minimized');
-            chatToggle.innerText = chatContainer.classList.contains('chat-minimized') ? '➕' : '➖';
-        };
-
-        // Switch zwischen Global und Gilde
-            btnGlobal.onclick = () => {
-            this.currentChatChannel = 'global';
-            btnGlobal.classList.add('active');
-            btnGuild.classList.remove('active');
-            // Hier später: Nachrichten filtern
-    };
-
-btnGuild.onclick = () => {
-    if (!this.gameState.guildName) {
-        this.showNotification("Du bist in keiner Gilde!", "error");
-        return;
     }
-    this.currentChatChannel = 'guild';
-    btnGuild.classList.add('active');
-    btnGlobal.classList.remove('active');
-    };
-
-    // WIKI BUTTON LISTENER
-    this.getById('open-wiki-btn')?.addEventListener('click', () => this.openWiki());
-}
 
     // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
     highlightToggle(amount) {
@@ -4020,22 +3970,119 @@ btnGuild.onclick = () => {
 
 
     switchView(viewName) {
-        const modals = ['prestige-shop-modal', 'info-modal', 'settings-modal'];
+        // --- 1. NAVBAR UPDATE (Der blaue Strich) ---
+        // Wir entfernen 'active' erst von allen Links...
+        document.querySelectorAll('.navbar a').forEach(el => el.classList.remove('active'));
+
+        // ... und setzen ihn neu, je nachdem wo wir sind
+        if (viewName === 'home') {
+            const nav = document.getElementById('nav-home');
+            if(nav) nav.classList.add('active');
+        } else if (viewName === 'prestige') {
+            const nav = document.getElementById('nav-prestige');
+            if(nav) nav.classList.add('active');
+        }
+
+        // --- 2. ALLE MODALS SCHLIEßEN (Reset) ---
+        const modals = [
+            'prestige-shop-modal',  
+            'wiki-modal',
+            'settings-modal', 
+            'blackmarket-modal', 
+            'wardrobe-modal', 
+            'pet-shop-modal', 
+            'diamond-mine-modal', 
+            'guilds-modal',
+            'achievements_info_modal' // <--- WICHTIG: Das hier fehlte!
+        ];
+
         modals.forEach(id => {
             const m = document.getElementById(id);
-            if(m) m.style.display = 'none';
+            if (m) m.style.display = 'none';
         });
+
+        // --- 3. ANSICHT WÄHLEN ---
         if (viewName === 'home') {
             window.scrollTo(0, 0);
-        } else if (viewName === 'prestige') {
+            this.updateUI();
+        } 
+        
+        // --- PRESTIGE SHOP ---
+        else if (viewName === 'prestige') {
             const pModal = document.getElementById('prestige-shop-modal');
-            if(pModal) {
+            if (pModal) {
                 pModal.style.display = 'flex';
-                this.updatePrestigeUIView();
+                this.updatePrestigeUIView(); 
+                this.renderPrestigeTree(); 
             }
-        } else if (viewName === 'info') {
-            const iModal = document.getElementById('info-modal');
-            if(iModal) iModal.style.display = 'flex';
+        } 
+        
+        // --- INFO / WIKI ---
+        else if (viewName === 'info' || viewName === 'wiki') {
+            const iModal = document.getElementById('wiki-modal') || document.getElementById('info-modal');
+            if (iModal) {
+                iModal.style.display = 'flex';
+                if (typeof this.openWikiPage === 'function') {
+                    this.openWikiPage('buildings'); 
+                }
+            }
+        }
+
+        // --- OPTIONEN ---
+        else if (viewName === 'settings') {
+            const sModal = document.getElementById('settings-modal');
+            if (sModal) {
+                this.speichereSpiel();
+                const textArea = document.getElementById('save-data-textarea');
+                if(textArea) textArea.value = localStorage.getItem('smileyGameSave') || '';
+                sModal.style.display = 'flex';
+            }
+        }
+
+        // --- DER SCHWARZMARKT (GemEmpire) ---
+        else if (viewName === 'blackmarket') {
+            let bmModal = document.getElementById('blackmarket-modal');
+            if (!bmModal) {
+                bmModal = document.createElement('div');
+                bmModal.id = 'blackmarket-modal';
+                bmModal.className = 'modal-overlay';
+                bmModal.style.display = 'none';
+                bmModal.innerHTML = `
+                    <div class="modal-content" style="background:#05000a; border:1px solid #d500f9; max-width:850px; width:95%; max-height:90vh; overflow-y:auto; box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);">
+                        <span class="close-modal" onclick="document.getElementById('blackmarket-modal').style.display='none'" style="color:#fff; font-size:2rem;">&times;</span>
+                        <div id="gem_shop_container_main"></div>
+                    </div>
+                `;
+                document.body.appendChild(bmModal);
+            }
+            bmModal.style.display = 'flex';
+            if (this.gemSystem) {
+                this.gemSystem.renderGemShop('gem_shop_container_main');
+            }
+        }
+
+        // --- DER KLEIDERSCHRANK (Skins) ---
+        else if (viewName === 'wardrobe') {
+            let wModal = document.getElementById('wardrobe-modal');
+            if (!wModal) {
+                wModal = document.createElement('div');
+                wModal.id = 'wardrobe-modal';
+                wModal.className = 'modal-overlay';
+                wModal.style.display = 'none';
+                wModal.innerHTML = `
+                    <div class="modal-content" style="background:#111; border:1px solid #444; max-width:600px; width:95%; max-height:85vh; overflow-y:auto;">
+                        <span class="close-modal" onclick="document.getElementById('wardrobe-modal').style.display='none'">&times;</span>
+                        <h2 style="text-align:center; color:#fff; border-bottom:1px solid #333; padding-bottom:10px; margin-top:0;">Kleiderschrank 🎩</h2>
+                        <p style="text-align:center; color:#aaa; font-size:0.9em;">Bezahle mit Corrupted Smileys (👾)</p>
+                        <div id="wardrobe-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:15px; margin-top:20px;"></div>
+                    </div>
+                `;
+                document.body.appendChild(wModal);
+            }
+            wModal.style.display = 'flex';
+            if (this.skinSystem) {
+                this.skinSystem.renderWardrobe();
+            }
         }
     }
 
@@ -5449,6 +5496,7 @@ class GuildSystem {
     if (!state.guildName) {
         const COST = 500000000;
         const canAfford = state.aktuelle_smileys >= COST;
+        
         container.innerHTML = `
             <div style="text-align:center; padding:20px;">
                 <div style="font-size:4rem; margin-bottom:10px;">🏰</div>
@@ -5462,10 +5510,21 @@ class GuildSystem {
                 <button id="found-guild-button" class="btn-confirm" ${canAfford ? '' : 'disabled'} style="width:70%;">Gilde Gründen</button>
             </div>
         `;
-        this.game.getById('found-guild-button')?.addEventListener('click', () => {
-            const val = this.game.getById('guild-name-input').value;
-            if(val.length > 2) this.foundGuild(val);
-        });
+
+        // --- KORREKTUR START ---
+        // Wir suchen den Button
+        const foundBtn = this.game.getById('found-guild-button');
+        
+        // Wir nutzen .onclick (Sicherer bei Re-Renderings)
+        if (foundBtn) {
+            foundBtn.onclick = () => {
+                const input = this.game.getById('guild-name-input');
+                const val = input ? input.value : "";
+                if(val.length > 2) this.foundGuild(val);
+            };
+        }
+        // --- KORREKTUR ENDE ---
+
         return;
     }
 
@@ -6456,7 +6515,7 @@ class PetSystem {
     }
 
     updatePetButtons() {
-        const openButton = this.game.getById('open-pet-shop-button');
+        const openButton = this.game.getById('open_pet_shop_button');
         const state = this.game.gameState;
 
         // Button im Hauptmenü anzeigen/ausblenden
@@ -6969,6 +7028,179 @@ class GemEmpire {
         } else {
             // Fehlermeldung angepasst
             this.game.showNotification("Nicht genug Corrupted Smileys!", "error");
+        }
+    }
+}
+
+// ================================================================================================================
+// === SUB-SYSTEM: DER KLEIDERSCHRANK (Skins & Visuals) ===
+// ================================================================================================================
+class SkinSystem {
+    constructor(gameInstance) {
+        this.game = gameInstance;
+        console.log("👕 SkinSystem geladen.");
+
+        // Die Liste aller verfügbaren Skins
+        this.skins = [
+            { id: 'default', name: 'Klassisch', icon: '😊', cost: 0, desc: 'Der gute alte Standard.', css: '' },
+            { id: 'cool',    name: 'Der Coole', icon: '😎', cost: 2, desc: 'Schützt vor UV-Strahlen.', css: '' },
+            { id: 'rich',    name: 'Monokel',   icon: '🧐', cost: 5, desc: 'Wirkt sofort intelligenter.', css: '' },
+            { id: 'cowboy',  name: 'Sheriff',   icon: '🤠', cost: 8, desc: 'Dieser Server ist zu klein für uns beide.', css: '' },
+            { id: 'party',   name: 'Party',     icon: '🥳', cost: 10, desc: 'Jeder Klick ein Fest.', css: '' },
+            { id: 'robot',   name: 'Mecha-V1',  icon: '🤖', cost: 15, desc: 'Klick-Geräusche nicht inklusive.', css: '' },
+            { id: 'alien',   name: 'Area 51',   icon: '👽', cost: 20, desc: 'Sie sind unter uns.', css: '' },
+            { id: 'devil',   name: 'Diablo',    icon: '😈', cost: 25, desc: 'Ein teuflischer Deal.', css: '' },
+            { id: 'clown',   name: 'Joker',     icon: '🤡', cost: 30, desc: 'Warum denn so ernst?', css: '' },
+            { id: 'ghost',   name: 'Phantom',   icon: '👻', cost: 40, desc: 'Jetzt siehst du mich...', css: 'ghost-anim' },
+            { id: 'glitch',  name: 'MISSINGNO', icon: '👾', cost: 50, desc: 'D4t3n f3hl3r...', css: 'glitch-anim' },
+            { id: 'king',    name: 'Der König', icon: '👑', cost: 100, desc: 'Das ultimative Statussymbol.', css: 'king-glow' }
+        ];
+    }
+
+    // Rendert das Fenster
+    renderWardrobe() {
+        const container = document.getElementById('wardrobe-grid');
+        const modal = document.getElementById('wardrobe-modal');
+        const state = this.game.gameState;
+
+        if (!container || !modal) return;
+
+        // Sicherstellen, dass Datenstruktur existiert
+        if (!state.unlockedSkins) state.unlockedSkins = ['default'];
+        if (!state.activeSkin) state.activeSkin = 'default';
+
+        container.innerHTML = '';
+
+        // CSS für Spezialeffekte injizieren
+        if (!document.getElementById('skin-styles')) {
+            const style = document.createElement('style');
+            style.id = 'skin-styles';
+            style.innerHTML = `
+                .skin-card {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid #444;
+                    border-radius: 8px;
+                    padding: 10px;
+                    text-align: center;
+                    transition: 0.2s;
+                    position: relative;
+                }
+                .skin-card:hover { transform: translateY(-3px); border-color: #aaa; }
+                .skin-card.active-skin { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
+                .skin-icon { font-size: 3rem; margin-bottom: 5px; }
+                
+                /* Spezial-Effekte */
+                @keyframes ghost-float { 0%,100% { opacity: 0.8; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-5px); } }
+                .ghost-anim { animation: ghost-float 3s infinite ease-in-out; }
+                
+                @keyframes glitch-skew { 0% { transform: skew(0deg); } 20% { transform: skew(-10deg); } 40% { transform: skew(10deg); } 100% { transform: skew(0deg); } }
+                .glitch-anim { animation: glitch-skew 0.5s infinite; filter: drop-shadow(2px 0 red) drop-shadow(-2px 0 blue); }
+                
+                @keyframes king-shine { 0% { filter: drop-shadow(0 0 5px gold); } 50% { filter: drop-shadow(0 0 20px gold); } 100% { filter: drop-shadow(0 0 5px gold); } }
+                .king-glow { animation: king-shine 2s infinite; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        this.skins.forEach(skin => {
+            const isUnlocked = state.unlockedSkins.includes(skin.id);
+            const isActive = state.activeSkin === skin.id;
+            const canAfford = state.gems >= skin.cost;
+
+            const card = document.createElement('div');
+            card.className = `skin-card ${isActive ? 'active-skin' : ''}`;
+            
+            let btnHtml = '';
+            if (isActive) {
+                btnHtml = `<button disabled style="background:#4CAF50; color:#fff; border:none; padding:5px 10px; border-radius:4px; width:100%;">Ausgerüstet</button>`;
+            } else if (isUnlocked) {
+                btnHtml = `<button class="btn-equip-skin" data-id="${skin.id}" style="background:#009ffd; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; width:100%;">Ausrüsten</button>`;
+            } else {
+                btnHtml = `<button class="btn-buy-skin" data-id="${skin.id}" ${canAfford ? '' : 'disabled'} 
+                           style="background:${canAfford ? '#e066ff' : '#333'}; color:${canAfford ? '#fff' : '#888'}; border:none; padding:5px 10px; border-radius:4px; cursor:${canAfford?'pointer':'not-allowed'}; width:100%;">
+                           Kaufen (${skin.cost} 👾)
+                           </button>`;
+            }
+
+            card.innerHTML = `
+                <div class="skin-icon ${skin.css}">${skin.icon}</div>
+                <div style="font-weight:bold; color:#fff; margin-bottom:5px;">${skin.name}</div>
+                <div style="font-size:0.75em; color:#aaa; height:30px; margin-bottom:5px;">${skin.desc}</div>
+                ${btnHtml}
+            `;
+
+            // Event Listener
+            if (!isActive) {
+                const btn = card.querySelector('button');
+                if (btn.classList.contains('btn-buy-skin')) {
+                    btn.onclick = () => this.buySkin(skin.id);
+                } else if (btn.classList.contains('btn-equip-skin')) {
+                    btn.onclick = () => this.equipSkin(skin.id);
+                }
+            }
+
+            container.appendChild(card);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    buySkin(skinId) {
+        const state = this.game.gameState;
+        const skin = this.skins.find(s => s.id === skinId);
+        
+        if (!skin || state.unlockedSkins.includes(skinId)) return;
+
+        if (state.gems >= skin.cost) {
+            state.gems -= skin.cost;
+            state.unlockedSkins.push(skinId);
+            this.game.playBuySound();
+            this.game.showNotification(`👕 Skin "${skin.name}" gekauft!`, "success");
+            this.game.updateUI(); // Updated Gems Anzeige
+            this.renderWardrobe();
+            this.game.speichereSpiel();
+        } else {
+            this.game.showNotification("Nicht genug Corrupted Smileys!", "error");
+        }
+    }
+
+    equipSkin(skinId) {
+        const state = this.game.gameState;
+        if (!state.unlockedSkins.includes(skinId)) return;
+
+        state.activeSkin = skinId;
+        this.updateSmileyAppearance();
+        this.renderWardrobe();
+        this.game.showNotification("Skin gewechselt!", "success");
+        this.game.speichereSpiel();
+    }
+
+    updateSmileyAppearance() {
+        const state = this.game.gameState;
+        const btn = document.getElementById('smiley_button');
+        if (!btn) return;
+
+        const skinId = state.activeSkin || 'default';
+        const skin = this.skins.find(s => s.id === skinId) || this.skins[0];
+
+        // 1. Icon ändern
+        btn.innerText = skin.icon;
+
+        // 2. CSS Klassen resetten und neue setzen
+        // Wir behalten 'active-key' und 'anim-squish' bei, falls sie gerade laufen
+        const keepClasses = [];
+        if (btn.classList.contains('active-key')) keepClasses.push('active-key');
+        if (btn.classList.contains('anim-squish')) keepClasses.push('anim-squish');
+        
+        btn.className = ''; // Alles weg
+        btn.classList.add('smiley-btn'); // Basis Klasse wieder rein (musst du im CSS haben oder id nutzen)
+        
+        // Alte Klassen wieder rein
+        keepClasses.forEach(c => btn.classList.add(c));
+
+        // Spezial-Effekt Klasse vom Skin hinzufügen
+        if (skin.css) {
+            btn.classList.add(skin.css);
         }
     }
 }
