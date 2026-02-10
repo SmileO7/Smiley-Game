@@ -8,14 +8,6 @@
     <link rel="stylesheet" href="style.css?v=2"> 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#009ffd">
-    <style>
-        /* CSS Fixes für Layout & Modals */
-        .main-layout { display: grid; } 
-        .page-container { width: 100%; }
-        .navbar a.active { border-bottom: 2px solid #009FFD; color: #009FFD; }
-        .settings-section { margin-bottom: 20px; clear: both; }
-        #cloud-controls button { margin: 5px; min-width: 120px; }
-    </style>
 </head>
 <body class="home-page">
 
@@ -74,7 +66,6 @@
                 <div class="diamond-display-box">
                     <span class="diamond-text">💎 <span id="diamanten_anzeige">0</span></span>
                 </div>
-                <div id="cloud-save-status" class="cloud-icon" title="Cloud-Status">☁️</div>
             </div>
 
             <div class="box-style" style="margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
@@ -213,34 +204,32 @@
         <div class="settings-section" style="border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 15px; text-align: center;">
             <h3 style="margin-top: 0;">☁️ Cloud Speicher</h3>
             <p style="font-size: 0.9em; color: #aaa; margin-bottom: 10px;">Verbinde dich, um Spielstände zu sichern.</p>
-            
             <div id="cloud-controls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-    <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;">
-        🔵 Mit Google verbinden
-    </button>
-
-    <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;">
-        Nicht verbunden
-    </p>
-
-    <button id="cloud-save-btn" class="btn-confirm" style="display: none;" onclick="saveGameToCloud()">
-        ☁️ Speichern ⬆️
-    </button>
-    
-    <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;" onclick="loadGameFromCloud()">
-        ☁️ Laden ⬇️
-    </button>
-    
-    <button id="google-logout-btn" class="btn-cancel" style="display: none;">
-        Logout
-    </button>
-</div>
+            <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;"> 🔵 Mit Google verbinden</button>
+            <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;"> Nicht verbunden </p>
+            <button id="cloud-save-btn" class="btn-confirm" style="display: none;" onclick="saveGameToCloud()">☁️ Speichern ⬆️ </button>
+            <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;" onclick="loadGameFromCloud()"> ☁️ Laden ⬇️ </button>
+            <button id="google-logout-btn" class="btn-cancel" style="display: none;"> Logout </button>
         </div>
+</div>
 
         <div class="settings-section">
             <h3>🔊 Audio</h3>
             <div class="setting-row"><label>Musik: <input type="range" id="music-volume" min="0" max="100" value="50"></label></div>
             <div class="setting-row"><label>SFX: <input type="range" id="sound-volume" min="0" max="100" value="50"></label></div>
+        </div>
+
+        <div class="settings-section">
+            <h3>🔔 Benachrichtigungen</h3>
+            <div class="setting-row" style="margin-bottom: 10px; display:flex; justify-content:center; gap:10px; align-items:center;">
+                <label style="cursor:pointer;">
+                    <input type="checkbox" id="setting-toast-toggle" checked>
+                    Popups im Spiel
+                </label>
+            </div>
+            <div class="setting-row" style="display:flex; justify-content:center; gap:10px; align-items:center;">
+                <label style="cursor:pointer;"> <input type="checkbox" id="setting-desktop-toggle"> Desktop (Hintergrund)</label>
+            </div>
         </div>
 
         <div class="settings-section">

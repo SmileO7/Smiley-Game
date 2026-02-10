@@ -2195,17 +2195,27 @@ getArtifactIcon(id) {
     }
 
     showNotification(message, type = 'info') {
+        // --- KORREKTUR START ---
+        // Wir prüfen zuerst, ob der Spieler Popups deaktiviert hat.
+        // Wenn settingsToasts 'false' ist, brechen wir sofort ab.
+        if (this.settingsToasts === false) return; 
+        // --- KORREKTUR ENDE ---
+
         const container = document.getElementById('toast-container');
         if (!container) return;
+        
         const toast = document.createElement('div');
         toast.className = 'toast';
         if (type === 'success') toast.style.borderLeftColor = '#4CAF50';
         if (type === 'error') toast.style.borderLeftColor = '#f44336';
+        
         toast.innerText = message;
         container.appendChild(toast);
+        
         requestAnimationFrame(() => {
             toast.classList.add('show');
         });
+        
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => {
@@ -3429,9 +3439,16 @@ getArtifactIcon(id) {
         const exportButton = this.getById('export-save-button');
         const importButton = this.getById('import-save-button');
         const saveDataTextarea = this.getById('save-data-textarea');
+        
+        // Audio Inputs
         const musicVolumeSlider = this.getById('music-volume');
         const soundVolumeSlider = this.getById('sound-volume');
+        
+        // --- NEU: Benachrichtigungs Inputs ---
+        const toastCheck = this.getById('setting-toast-toggle');
+        const desktopCheck = this.getById('setting-desktop-toggle');
 
+        // 1. Audio Listener
         if (musicVolumeSlider) {
             musicVolumeSlider.addEventListener('input', (e) => {
                 localStorage.setItem('musicVolume', e.target.value);
@@ -3445,6 +3462,48 @@ getArtifactIcon(id) {
             });
         }
 
+        // 2. Benachrichtigungs Listener (NEU)
+        if (toastCheck) {
+            toastCheck.addEventListener('change', (e) => {
+                this.settingsToasts = e.target.checked;
+                localStorage.setItem('setting_toasts', e.target.checked);
+                // Feedback nur wenn aktiviert (sonst sieht man es ja nicht)
+                if(e.target.checked) this.showNotification("Popups aktiviert!", "success");
+            });
+        }
+
+        if (desktopCheck) {
+            desktopCheck.addEventListener('change', (e) => {
+                const isActive = e.target.checked;
+                this.settingsDesktop = isActive;
+                localStorage.setItem('setting_desktop', isActive);
+
+                if (isActive) {
+                    // Browser um Erlaubnis fragen
+                    if ("Notification" in window) {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                new Notification("Smiley Clicker", { 
+                                    body: "Desktop-Benachrichtigungen aktiviert!", 
+                                    icon: "smiley.png" 
+                                });
+                            } else {
+                                // Wenn abgelehnt, Haken wieder rausnehmen
+                                e.target.checked = false; 
+                                this.settingsDesktop = false;
+                                localStorage.setItem('setting_desktop', false);
+                                this.showNotification("Berechtigung verweigert.", "error");
+                            }
+                        });
+                    } else {
+                        this.showNotification("Browser unterstützt keine Notis.", "error");
+                        e.target.checked = false;
+                    }
+                }
+            });
+        }
+
+        // 3. Modal & Speicher Buttons
         openSettingsButton?.addEventListener('click', (e) => {
             e.preventDefault();
             this.speichereSpiel();
@@ -3469,6 +3528,7 @@ getArtifactIcon(id) {
                     navigator.clipboard.writeText(saveData).then(() => {
                         this.showNotification("Spielstand in Zwischenablage kopiert.", "success");
                     }, () => {
+                        // Fallback
                         if (document.execCommand && saveDataTextarea.select) {
                             saveDataTextarea.select();
                             document.execCommand('copy');
@@ -3476,6 +3536,7 @@ getArtifactIcon(id) {
                         }
                     });
                 } catch (err) {
+                     // Fallback 2
                     if (document.execCommand && saveDataTextarea.select) {
                         saveDataTextarea.select();
                         document.execCommand('copy');
@@ -3492,6 +3553,7 @@ getArtifactIcon(id) {
                     location.reload();
                 } else {
                     console.error("Import fehlgeschlagen. Überprüfe den Code.");
+                    this.showNotification("Code ungültig!", "error");
                 }
             }
         });
@@ -3909,13 +3971,29 @@ getArtifactIcon(id) {
     }
 
     ladeAudioEinstellungen() {
+        // 1. Audio laden
         const musicVolume = localStorage.getItem('musicVolume');
         const soundVolume = localStorage.getItem('soundVolume');
-        const musicVolumeSlider = this.getById('music-volume');
-        const soundVolumeSlider = this.getById('sound-volume');
-        if (musicVolumeSlider && musicVolume !== null) musicVolumeSlider.value = musicVolume;
-        if (soundVolumeSlider && soundVolume !== null) soundVolumeSlider.value = soundVolume;
+        const musicSlider = this.getById('music-volume');
+        const soundSlider = this.getById('sound-volume');
+
+        if (musicSlider && musicVolume !== null) musicSlider.value = musicVolume;
+        if (soundSlider && soundVolume !== null) soundSlider.value = soundVolume;
         this.setzeLautstaerke();
+
+        // 2. Benachrichtigungen laden (DAS HIER IST WICHTIG)
+        const toastSetting = localStorage.getItem('setting_toasts');
+        const desktopSetting = localStorage.getItem('setting_desktop');
+
+        const toastCheck = this.getById('setting-toast-toggle');
+        const desktopCheck = this.getById('setting-desktop-toggle');
+
+        // Standard: Toasts AN (true), wenn noch nichts gespeichert wurde
+        this.settingsToasts = (toastSetting === null) ? true : (toastSetting === 'true');
+        this.settingsDesktop = (desktopSetting === 'true');
+
+        if (toastCheck) toastCheck.checked = this.settingsToasts;
+        if (desktopCheck) desktopCheck.checked = this.settingsDesktop;
     }
 
     setzeLautstaerke() {
@@ -5545,18 +5623,6 @@ if (this.guildView === 'shop') {
     const notiIcon = Notification.permission === 'granted' ? '🔔' : '🔕';
     const notiText = Notification.permission === 'granted' ? 'Aktiviert' : 'Deaktiviert';
 
-    let settingsHtml = `
-        <div style="background:rgba(0,159,253,0.1); border:1px solid #009ffd; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h4 style="margin:0; color:#009ffd;">Gilden-Funk ${notiIcon}</h4>
-                <p style="margin:5px 0 0 0; font-size:0.8em; color:#ccc;">Desktop-Benachrichtigungen für fertige Quests.</p>
-            </div>
-            <button id="btn-toggle-notifications" class="btn-confirm" style="font-size:0.8em; padding:8px 12px;">
-                ${notiText}
-            </button>
-        </div>
-    `;
-
     // 2. Gilden-Kasse (Bank)
     // FIX: Wir nehmen direkt den gespeicherten Wert (this.currentGuildBank), statt auf "Lade..." zu warten.
     let bankHtml = `
@@ -5606,15 +5672,12 @@ if (this.guildView === 'shop') {
         </div>
     `;
 
-    contentHtml = settingsHtml + bankHtml + upgradesHtml + listHtml + progressHtml;
+    contentHtml = bankHtml + upgradesHtml + listHtml + progressHtml;
 
     // --- EVENT LISTENER SETUP ---
     setTimeout(() => { 
         // Firebase Listener für Mitglieder
         if(this.game.chatSystem) this.game.chatSystem.startGuildMemberListener(); 
-        
-        // Benachrichtigungs-Toggle
-        this.game.getById('btn-toggle-notifications')?.addEventListener('click', () => this.toggleNotifications());
 
         // Spenden Buttons
         container.querySelectorAll('.btn-donate').forEach(btn => {
@@ -6783,85 +6846,6 @@ class GemEmpire {
 
         const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
 
-        // --- CSS UPDATE ---
-        if (!document.getElementById('purple-style-v4')) {
-            const style = document.createElement('style');
-            style.id = 'purple-style-v4';
-            style.innerHTML = `
-                .purple-card {
-                    background: linear-gradient(145deg, #120024 0%, #05000a 100%);
-                    border: 1px solid #4a148c;
-                    border-radius: 8px;
-                    padding: 15px;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    position: relative;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-                    min-height: 180px; 
-                }
-                .purple-card:hover {
-                    transform: translateY(-5px);
-                    border-color: #d500f9;
-                    box-shadow: 0 0 20px rgba(213, 0, 249, 0.2);
-                    z-index: 10;
-                }
-                .purple-card.maxed {
-                    border-color: #00e676;
-                    opacity: 0.7;
-                }
-                .purple-btn {
-                    background: linear-gradient(90deg, #6200ea 0%, #d500f9 100%);
-                    border: none;
-                    color: white;
-                    padding: 10px;
-                    border-radius: 6px;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    cursor: pointer;
-                    margin-top: auto; 
-                    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-                    transition: 0.2s;
-                    width: 100%;
-                }
-                .purple-btn:hover:not(:disabled) {
-                    box-shadow: 0 0 15px rgba(213, 0, 249, 0.6);
-                    filter: brightness(1.2);
-                }
-                .purple-btn:disabled {
-                    background: transparent;
-                    border: 1px solid #444;
-                    color: #666;
-                    cursor: not-allowed;
-                    box-shadow: none;
-                }
-                .purple-header-glow {
-                    text-shadow: 0 0 10px #d500f9, 0 0 20px #651fff;
-                }
-                /* Tausch-Bereich Styles */
-                .exchange-box {
-                    background: linear-gradient(90deg, #1a0033 0%, #000 100%);
-                    border: 1px solid #d500f9;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin-top: 30px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    box-shadow: 0 0 15px rgba(213, 0, 249, 0.2);
-                }
-                .exchange-btn {
-                    background: #d500f9; color: #fff; border: none; padding: 10px 20px;
-                    font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase;
-                }
-                .exchange-btn:hover { box-shadow: 0 0 10px #d500f9; }
-                .exchange-btn:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; }
-            `;
-            document.head.appendChild(style);
-        }
-
         // 1. HEADER
         let html = `
             <div style="width: 100%; text-align:center; margin-bottom:30px; padding:30px 20px; background: radial-gradient(circle at center, #240046 0%, #0a0010 100%); border-bottom: 2px solid #d500f9; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
@@ -7070,37 +7054,6 @@ class SkinSystem {
         if (!state.activeSkin) state.activeSkin = 'default';
 
         container.innerHTML = '';
-
-        // CSS für Spezialeffekte injizieren
-        if (!document.getElementById('skin-styles')) {
-            const style = document.createElement('style');
-            style.id = 'skin-styles';
-            style.innerHTML = `
-                .skin-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid #444;
-                    border-radius: 8px;
-                    padding: 10px;
-                    text-align: center;
-                    transition: 0.2s;
-                    position: relative;
-                }
-                .skin-card:hover { transform: translateY(-3px); border-color: #aaa; }
-                .skin-card.active-skin { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
-                .skin-icon { font-size: 3rem; margin-bottom: 5px; }
-                
-                /* Spezial-Effekte */
-                @keyframes ghost-float { 0%,100% { opacity: 0.8; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-5px); } }
-                .ghost-anim { animation: ghost-float 3s infinite ease-in-out; }
-                
-                @keyframes glitch-skew { 0% { transform: skew(0deg); } 20% { transform: skew(-10deg); } 40% { transform: skew(10deg); } 100% { transform: skew(0deg); } }
-                .glitch-anim { animation: glitch-skew 0.5s infinite; filter: drop-shadow(2px 0 red) drop-shadow(-2px 0 blue); }
-                
-                @keyframes king-shine { 0% { filter: drop-shadow(0 0 5px gold); } 50% { filter: drop-shadow(0 0 20px gold); } 100% { filter: drop-shadow(0 0 5px gold); } }
-                .king-glow { animation: king-shine 2s infinite; }
-            `;
-            document.head.appendChild(style);
-        }
 
         this.skins.forEach(skin => {
             const isUnlocked = state.unlockedSkins.includes(skin.id);

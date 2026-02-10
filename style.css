@@ -515,42 +515,6 @@ main {
     transform: scale(0.95);
 }
 
-/* WICHTIG: Feature Buttons Grid (Mitte) - Bereinigt */
-.feature-button-grid {
-    display: flex; 
-    justify-content: space-between;
-    gap: 5px;
-    margin-bottom: 15px;
-    flex-shrink: 0;
-    width: 100%;
-}
-
-.feature-button-grid button {
-    flex: 1; 
-    height: 45px;
-    font-size: 0.75rem;
-    display: flex;
-    flex-direction: column; 
-    align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid #444;
-    padding: 2px;
-    transition: all 0.2s ease;
-}
-
-.feature-button-grid button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--color-accent-blue);
-    transform: translateY(-2px);
-}
-
-/* Falls der Platz zu eng wird, Text ausblenden (optional) */
-@media (max-width: 600px) {
-    .feature-button-grid button { font-size: 0; }
-    .feature-button-grid button span { font-size: 1.2rem; margin-bottom: 0; }
-}
-
 #open_diamond_mine_button:hover { 
     color: #009FFD; 
     border-color: #009FFD;
@@ -1787,3 +1751,198 @@ button:disabled, .boss-btn-cooldown {
     z-index: 10;
 }
 .close-modal:hover { color: #ff5252; }
+
+/* ======================================================= */
+/* ✨ FEATURE BUTTONS 2.0 (Lebendig & Bunt)              */
+/* ======================================================= */
+
+.feature-button-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 2 Reihen à 3 Buttons */
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.feature-button-grid button {
+    position: relative;
+    height: 60px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #eee;
+    background: linear-gradient(180deg, rgba(30, 30, 40, 0.9) 0%, rgba(10, 10, 15, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    /* 👇 DAS IST NEU: Schiebt den Inhalt hoch */
+    padding-bottom: 8px; 
+    
+    box-shadow: 0 4px 0 rgba(0,0,0,0.5); /* 3D-Effekt unten */
+}
+
+/* Das Icon im Button */
+.feature-button-grid button span {
+    font-size: 1.6rem;
+    margin-bottom: 2px;
+    display: block;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    transition: transform 0.2s ease;
+}
+
+/* --- INTERAKTION --- */
+
+/* Drücken (Klick) */
+.feature-button-grid button:active {
+    transform: translateY(4px); /* Geht nach unten */
+    box-shadow: 0 0 0 rgba(0,0,0,0); /* Schatten weg */
+}
+
+/* Hover Allgemein */
+.feature-button-grid button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, rgba(50, 50, 60, 0.9) 0%, rgba(20, 20, 30, 0.95) 100%);
+    color: #fff;
+}
+
+.feature-button-grid button:hover span {
+    transform: scale(1.2) rotate(5deg); /* Icon wächst und wackelt */
+}
+
+/* --- INDIVIDUELLE FARBEN & LEUCHTEN --- */
+
+/* 🐾 Pet Shop: Natur-Grün */
+#open_pet_shop_button { border-bottom: 3px solid #4CAF50; }
+#open_pet_shop_button:hover { box-shadow: 0 0 15px rgba(76, 175, 80, 0.4), 0 4px 0 rgba(0,0,0,0.5); border-color: #4CAF50; }
+
+/* 💎 Mine: Diamant-Cyan */
+#open_diamond_mine_button { border-bottom: 3px solid #00E5FF; }
+#open_diamond_mine_button:hover { box-shadow: 0 0 15px rgba(0, 229, 255, 0.4), 0 4px 0 rgba(0,0,0,0.5); border-color: #00E5FF; }
+
+/* ⚔️ Gilden: Kampf-Rot */
+#open_guilds_button { border-bottom: 3px solid #FF5252; }
+#open_guilds_button:hover { box-shadow: 0 0 15px rgba(255, 82, 82, 0.4), 0 4px 0 rgba(0,0,0,0.5); border-color: #FF5252; }
+
+/* 👾 Market: Neon-Lila */
+#open_blackmarket_button { border-bottom: 3px solid #D500F9; color: #e1bee7 !important; }
+#open_blackmarket_button:hover { box-shadow: 0 0 15px rgba(213, 0, 249, 0.4), 0 4px 0 rgba(0,0,0,0.5); border-color: #D500F9; }
+
+/* 🎩 Skins: Weiß/Edel */
+#open_wardrobe_button { border-bottom: 3px solid #ffffff; }
+#open_wardrobe_button:hover { box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 4px 0 rgba(0,0,0,0.5); border-color: #ffffff; }
+
+/* 🏆 Erfolge: Gold */
+#show_achievements_button { border-bottom: 3px solid #FFD700; background-color: rgba(255, 215, 0, 0.05) !important; }
+#show_achievements_button:hover { box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), 0 4px 0 rgba(0,0,0,0.5); border-color: #FFD700; }
+
+/* Deaktivierte Buttons (grau) */
+.feature-button-grid button[style*="display: none"] {
+    display: none !important;
+}
+
+/* ======================================================= */
+/* 👾 SCHWARZMARKT (GEM EMPIRE) STYLES                     */
+/* ======================================================= */
+.purple-card {
+    background: linear-gradient(145deg, #120024 0%, #05000a 100%);
+    border: 1px solid #4a148c;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    min-height: 180px; 
+}
+.purple-card:hover {
+    transform: translateY(-5px);
+    border-color: #d500f9;
+    box-shadow: 0 0 20px rgba(213, 0, 249, 0.2);
+    z-index: 10;
+}
+.purple-card.maxed {
+    border-color: #00e676;
+    opacity: 0.7;
+}
+.purple-btn {
+    background: linear-gradient(90deg, #6200ea 0%, #d500f9 100%);
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: auto; 
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    transition: 0.2s;
+    width: 100%;
+}
+.purple-btn:hover:not(:disabled) {
+    box-shadow: 0 0 15px rgba(213, 0, 249, 0.6);
+    filter: brightness(1.2);
+}
+.purple-btn:disabled {
+    background: transparent;
+    border: 1px solid #444;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.purple-header-glow {
+    text-shadow: 0 0 10px #d500f9, 0 0 20px #651fff;
+}
+.exchange-box {
+    background: linear-gradient(90deg, #1a0033 0%, #000 100%);
+    border: 1px solid #d500f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 0 15px rgba(213, 0, 249, 0.2);
+}
+.exchange-btn {
+    background: #d500f9; color: #fff; border: none; padding: 10px 20px;
+    font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase;
+}
+.exchange-btn:hover { box-shadow: 0 0 10px #d500f9; }
+.exchange-btn:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; }
+
+/* ======================================================= */
+/* 🎩 SKINS & VISUALS STYLES                               */
+/* ======================================================= */
+.skin-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    transition: 0.2s;
+    position: relative;
+}
+.skin-card:hover { transform: translateY(-3px); border-color: #aaa; }
+.skin-card.active-skin { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
+.skin-icon { font-size: 3rem; margin-bottom: 5px; }
+
+/* Spezial-Effekte Animationen */
+@keyframes ghost-float { 0%,100% { opacity: 0.8; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-5px); } }
+.ghost-anim { animation: ghost-float 3s infinite ease-in-out; }
+
+@keyframes glitch-skew { 0% { transform: skew(0deg); } 20% { transform: skew(-10deg); } 40% { transform: skew(10deg); } 100% { transform: skew(0deg); } }
+.glitch-anim { animation: glitch-skew 0.5s infinite; filter: drop-shadow(2px 0 red) drop-shadow(-2px 0 blue); }
+
+@keyframes king-shine { 0% { filter: drop-shadow(0 0 5px gold); } 50% { filter: drop-shadow(0 0 20px gold); } 100% { filter: drop-shadow(0 0 5px gold); } }
+.king-glow { animation: king-shine 2s infinite; }
