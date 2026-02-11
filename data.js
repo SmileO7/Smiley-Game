@@ -497,3 +497,15 @@ const artifactsData = [
     { id: 'art_void', name: 'Splitter der Leere', desc: 'Kosmischer Rabatt (-3% Kosten auf ALLES)', rarity: 'epic', bonusType: 'cost_reduction_global', value: 0.03 },
     { id: 'art_core', name: 'Leuchtender Erdkern', desc: 'Gewaltige Hitze (+50% Klick-Stärke)', rarity: 'legendary', bonusType: 'click_mult', value: 0.50 }
 ];
+
+/* ======================================================= */
+/* GILDEN-PROJEKTE (UPGRADES)                              */
+/* ======================================================= */
+const guildUpgradesData = 
+{ 'guild_sps': {
+        name: "Synergie-Netzwerk", desc: "+1% SPS Produktion für alle Mitglieder.", baseCost: 1000000000, costFactor: 1.8, bonusPerLevel: 0.01, icon: "⚡" },
+  'guild_click': {
+        name: "Schwarm-Intelligenz", desc: "+2% Klick-Stärke für alle Mitglieder.", baseCost: 500000000, costFactor: 1.8, bonusPerLevel: 0.02, icon: "👆" },
+  'guild_mercs': {
+        name: "Elite-Ausbildung", desc: "Söldner erhalten +2% mehr XP.", baseCost: 5000000000, costFactor: 2.0, bonusPerLevel: 0.02, icon: "⚔️" },
+};
