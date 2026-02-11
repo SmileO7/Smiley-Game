@@ -25,26 +25,7 @@ class SmileyGame {
 
     constructor() {
         // 1. PRESTIGE UPGRADES DEFINITION
-        this.prestigeUpgrades = [
-            { id: 0, name: "Genesis Protokoll", cost: 1, description: "Dauerhafter Startbonus auf alle Einnahmen.", type: 'sps_mult', value: 0.10, x: 50, y: 90, category: 'start', parents: [] },
-            { id: 1, name: "Finger-Training", cost: 2, description: "Klickkraft +25%.", type: 'click_mult', value: 0.25, x: 30, y: 75, category: 'click', parents: [0] },
-            { id: 2, name: "Automatisierung", cost: 2, description: "SPS +25%.", type: 'sps_mult', value: 0.25, x: 70, y: 75, category: 'idle', parents: [0] },
-            { id: 3, name: "Effizientes Bauen", cost: 5, description: "Alle Gebäude 5% günstiger.", type: 'cost_reduction', value: 0.05, x: 15, y: 60, category: 'qol', parents: [1] },
-            { id: 4, name: "Zeit-Reisender", cost: 10, description: "Prestige-Punkte sind 10% effektiver.", type: 'prestige_efficiency', value: 0.10, x: 85, y: 60, category: 'idle', parents: [2] },
-            { id: 5, name: "Synergie-Effekt", cost: 15, description: "Klicks skalieren mit deiner SPS.", type: 'click_mult', value: 0.50, x: 50, y: 55, category: 'special', parents: [1, 2] },
-            { id: 6, name: "Pet Shop Lizenz", cost: 50, description: "Schaltet den PET SHOP frei.", type: 'unlock_pets', value: 0, x: 35, y: 40, category: 'special', parents: [5] },
-            { id: 7, name: "Schürfrechte", cost: 50, description: "Schaltet die DIAMANTEN-MINE frei.", type: 'unlock_mine', value: 0, x: 65, y: 40, category: 'special', parents: [5] },
-            { id: 8, name: "Gilden-Gründung", cost: 100, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 50, y: 25, category: 'special', parents: [6, 7] },
-            { id: 9, name: "Marktbeherrschung", cost: 250, description: "Verdoppelt die gesamte Produktion (x2).", type: 'global_mult', value: 1.0, x: 50, y: 10, category: 'qol', parents: [8] },
-            { id: 10, name: "Klick-Gott", cost: 500, description: "Verdreifacht Klickkraft (+200%).", type: 'click_mult', value: 2.0, x: 20, y: 15, category: 'click', parents: [9] },
-            { id: 11, name: "Industrie-Gigant", cost: 500, description: "Verdreifacht passive SPS (+200%).", type: 'sps_mult', value: 2.0, x: 80, y: 15, category: 'idle', parents: [9] },
-            { id: 12, name: "Nano-Technologie", cost: 1500, description: "Gebäude Kosten -10%.", type: 'cost_reduction', value: 0.10, x: 50, y: -10, category: 'qol', parents: [10, 11] },
-            { id: 13, name: "Chronos-Meister", cost: 5000, description: "Prestige-Effizienz +50%.", type: 'prestige_efficiency', value: 0.50, x: 30, y: -25, category: 'idle', parents: [12] },
-            { id: 14, name: "Der Urknall", cost: 10000, description: "Multipliziert ALLES mit 5.", type: 'global_mult', value: 4.0, x: 70, y: -25, category: 'special', parents: [12] },
-            { id: 15, name: "Präzisions-Training", cost: 25, description: "Kritische Treffer-Chance +5%.", type: 'crit_chance', value: 0.05, x: 10, y: 70, category: 'click', parents: [1] },
-            { id: 16, name: "Offshore-Konten", cost: 25, description: "Offline-Gewinn +20%.", type: 'offline_boost', value: 0.20, x: 90, y: 70, category: 'idle', parents: [2] },
-            { id: 17, name: "Hype-Train", cost: 75, description: "Klicks skalieren mit Gebäudekanzahl.", type: 'building_synergy', value: 0.01, x: 50, y: 65, category: 'special', parents: [3, 4] }
-        ];
+        this.prestigeUpgrades = prestigeUpgrades; // Importierte Prestige-Upgrades aus data.js
         this.artifactsData = artifactsData; // Importierte Artefakte aus data.js
 
         this.currentBuyAmount = 1;
@@ -105,7 +86,6 @@ class SmileyGame {
             guildLevel: 1,
             guildXP: 0,
             guildXPReq: 1000,
-            guildUpgradeStatus: guildUpgradesData.map(() => false),
             guildSPSMultiplier: 0,
             guildCostReduction: 0,
             guildPrestigeBonus: 0,
@@ -924,6 +904,10 @@ class SmileyGame {
                     case 'cost_reduction_global':
                         this.gameState.globalCostReduction += bonus.value;
                         break;
+                    // 👇 DAS HIER IST NEU 👇
+                    case 'mine_boost':
+                        this.gameState.diamondMineBoost += bonus.value;
+                        break;
                 }
             }
         });
@@ -1441,8 +1425,12 @@ class SmileyGame {
 
     canBuyPrestigeUpgrade(upgrade) {
         if (this.gameState.prestige_punkte_verfügbar < upgrade.cost) return false;
-        if (upgrade.parents && upgrade.parents.length > 0) {
-            for (let parentId of upgrade.parents) {
+        
+        // NEU: Unterstützt jetzt 'requirements' statt nur 'parents'
+        const reqs = upgrade.requirements || upgrade.parents || [];
+        
+        if (reqs.length > 0) {
+            for (let parentId of reqs) {
                 const parentIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
                 if (!this.gameState.prestigeUpgradeStatus[parentIndex]) return false;
             }
@@ -1621,6 +1609,25 @@ class SmileyGame {
                 // --- STATS ---
                 case 'crit_chance_reach': // NEU: Kritische Chance
                     if (this.gameState.critChance >= req.value) isMet = true;
+                    break;
+                // --- GEHEIMNISSE (NEU) ---
+                case 'artifact_count': 
+                    if (this.gameState.collectedArtifacts && this.gameState.collectedArtifacts.length >= req.value) isMet = true; 
+                    break;
+                case 'blackmarket_purchases':
+                    let gemUpsCount = 0;
+                    if (this.gameState.gemUpgrades) {
+                        gemUpsCount = Object.values(this.gameState.gemUpgrades).reduce((a, b) => a + b, 0);
+                    }
+                    if (gemUpsCount >= req.value) isMet = true;
+                    break;
+
+                // --- SÖLDNER (NEU) ---
+                case 'mercenary_count':
+                    if (this.gameState.guildMercenaries && this.gameState.guildMercenaries.length >= req.value) isMet = true;
+                    break;
+                case 'mercenary_level':
+                    if (this.gameState.guildMercenaries && this.gameState.guildMercenaries.some(m => m.level >= req.value)) isMet = true;
                     break;
             }
 
@@ -1904,10 +1911,6 @@ getArtifactIcon(id) {
             } else {
                 comboEl.classList.remove('active');
             }
-        }
-        const skillModal = document.getElementById('skill_tree_modal');
-        if (skillModal && skillModal.style.display === 'flex') {
-            this.renderPrestigeTree(); 
         }
     }
 
@@ -2468,8 +2471,10 @@ getArtifactIcon(id) {
             container.appendChild(world);
             this.treeX = container.clientWidth / 2;
             this.treeY = container.clientHeight / 2;
-            world.style.transform = `translate(${this.treeX}px, ${this.treeY}px)`;
+            this.treeZoom = this.treeZoom || 1.0;
         }
+        
+        world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
         world.innerHTML = '';
 
         const canvas = document.createElement('canvas');
@@ -2483,12 +2488,22 @@ getArtifactIcon(id) {
         canvas.style.pointerEvents = 'none';
         world.appendChild(canvas);
 
-        const ZOOM = 10;
         this.prestigeUpgrades.forEach(upgrade => {
             const node = document.createElement('div');
             node.className = 'skill-node';
-            const pixelX = (upgrade.x - 50) * ZOOM;
-            const pixelY = (upgrade.y - 50) * ZOOM;
+            
+            // NEU: Größen-Zuweisung nach Kosten
+            if (upgrade.cost >= 25) {
+                node.classList.add('node-tier-god');
+            } else if (upgrade.cost >= 5) {
+                node.classList.add('node-tier-keystone');
+            } else {
+                node.classList.add('node-tier-travel');
+            }
+            
+            const pixelX = upgrade.x;
+            const pixelY = upgrade.y;
+            
             node.style.left = pixelX + 'px';
             node.style.top = pixelY + 'px';
             if (upgrade.category) node.classList.add('node-' + upgrade.category);
@@ -2499,10 +2514,11 @@ getArtifactIcon(id) {
 
             if (isBought) {
                 node.classList.add('purchased');
+                // Icon für kleine Nodes weglassen, wenn gewünscht. Hier zeigen wir es.
                 node.innerHTML = this.getUpgradeIcon(upgrade.type);
             } else if (canBuy) {
                 node.classList.add('available');
-                node.innerText = "?";
+                node.innerText = "+"; // Ein Plus sieht eleganter aus als ein Fragezeichen
                 node.onclick = (e) => {
                     e.stopPropagation();
                     this.tryBuyPrestigeUpgrade(upgrade);
@@ -2526,8 +2542,9 @@ getArtifactIcon(id) {
     setupSkillTreeControls() {
         const container = this.getById('prestige-tree-container');
         if (!container) return;
-        this.treeX = 0;
-        this.treeY = 0;
+        this.treeX = container.clientWidth / 2;
+        this.treeY = container.clientHeight / 2;
+        this.treeZoom = 1.0; // NEU: Start-Zoom
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
@@ -2551,7 +2568,26 @@ getArtifactIcon(id) {
             this.treeY = e.clientY - this.startY;
             const world = this.getById('prestige-tree-world');
             if (world) {
-                world.style.transform = `translate(${this.treeX}px, ${this.treeY}px)`;
+                world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
+            }
+        });
+
+        // NEU: Mausrad Zoom-Logik
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.1;
+            if (e.deltaY < 0) {
+                this.treeZoom += zoomSpeed; // Reinzoomen
+            } else {
+                this.treeZoom -= zoomSpeed; // Rauszoomen
+            }
+            
+            // Limitieren, damit man sich nicht im Nichts verliert
+            this.treeZoom = Math.max(0.3, Math.min(this.treeZoom, 2.0));
+            
+            const world = this.getById('prestige-tree-world');
+            if (world) {
+                world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
             }
         });
     }
@@ -2563,22 +2599,44 @@ getArtifactIcon(id) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
+        
+        // --- NEU: Hintergrund-Beschriftungen der Pfade ---
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; // Sehr transparentes Weiß
+        ctx.font = 'bold 80px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Die Texte an den entsprechenden Koordinaten platzieren
+        ctx.fillText("NORDEN: Pfad des Klickers", 0, -450);
+        ctx.fillText("OSTEN: Pfad der Industrie", 450, 0);
+        ctx.fillText("SÜDEN: Pfad der Synergie", 0, 450);
+        ctx.fillText("WESTEN: Pfad der Zeit", -450, 0);
+        
+        ctx.font = 'bold 120px Arial';
+        ctx.fillStyle = 'rgba(224, 64, 251, 0.03)'; // Sehr transparentes Lila für Götter-Ring
+        ctx.fillText("A S T R A L E R   R I N G", 0, -800);
+        ctx.fillText("A S T R A L E R   R I N G", 0, 800);
+        // --------------------------------------------------
+
         ctx.lineCap = 'round';
-        const ZOOM = 10;
 
         this.prestigeUpgrades.forEach(upgrade => {
-            if (upgrade.parents && upgrade.parents.length > 0) {
-                const targetX = (upgrade.x - 50) * ZOOM;
-                const targetY = (upgrade.y - 50) * ZOOM;
-                upgrade.parents.forEach(parentId => {
+            const reqs = upgrade.requirements || upgrade.parents || [];
+            
+            if (reqs.length > 0) {
+                const targetX = upgrade.x;
+                const targetY = upgrade.y;
+                
+                reqs.forEach(parentId => {
                     const parentUpgrade = this.prestigeUpgrades.find(u => u.id === parentId);
                     if (parentUpgrade) {
-                        const startX = (parentUpgrade.x - 50) * ZOOM;
-                        const startY = (parentUpgrade.y - 50) * ZOOM;
+                        const startX = parentUpgrade.x;
+                        const startY = parentUpgrade.y;
                         const uIndex = this.prestigeUpgrades.findIndex(u => u.id === upgrade.id);
                         const pIndex = this.prestigeUpgrades.findIndex(u => u.id === parentId);
-                        const isTargetBought = this.gameState.prestigeUpgradeStatus[uIndex];
-                        const isParentBought = this.gameState.prestigeUpgradeStatus[pIndex];
+                        
+                        const isTargetBought = this.gameState.prestigeUpgradeStatus[uIndex] || false;
+                        const isParentBought = this.gameState.prestigeUpgradeStatus[pIndex] || false;
 
                         ctx.beginPath();
                         ctx.moveTo(startX, startY);
@@ -3959,6 +4017,9 @@ getArtifactIcon(id) {
             case 'click_mult': return `+${(bonus.value * 100)}% Klickkraft`;
             case 'global_mult': return `+${(bonus.value * 100)}% auf Alles`;
             case 'prestige_efficiency': return `+${(bonus.value * 100)}% Prestige-Effekt`;
+            // 👇 DAS HIER IST NEU 👇
+            case 'mine_boost': return `+${(bonus.value * 100)}% Minen-Ertrag`;
+            case 'cost_reduction_global': return `-${(bonus.value * 100)}% Kosten`;
             default: return "Permanenter Bonus";
         }
     }

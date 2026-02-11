@@ -182,38 +182,168 @@ const globalUpgrades = [
 ];
 
 /* ======================================================= */
-/* 3. PRESTIGE SYSTEM (SKILL TREE)                        */
+/* 3. PRESTIGE SYSTEM (POE-STYLE MEGA SKILL TREE)         */
 /* ======================================================= */
-
 const prestigeUpgrades = [
-    { id: 0, name: "Genesis", cost: 1, description: "Startbonus: +10% passive SPS.", type: 'sps_mult', value: 0.10, x: 0, y: 0, requirements: [] },
-    { id: 1, name: "Aktive Finger", cost: 2, description: "Klickkraft +25%.", type: 'click_mult', value: 0.25, x: -100, y: 100, requirements: [0] },
-    { id: 2, name: "Passive Macht", cost: 2, description: "SPS +25%.", type: 'sps_mult', value: 0.25, x: 100, y: 100, requirements: [0] },
-    
-    // --- NEU: Combo Fokus ---
-    { id: 15, name: "Combo-Rausch", cost: 5, description: "Die Combo steigt 50% schneller.", type: 'combo_speed', value: 0.50, x: -50, y: 150, requirements: [1] },
-    
-    { id: 3, name: "Bau-Rabatt", cost: 8, description: "Alle Gebäude sind 5% günstiger.", type: 'cost_reduction', value: 0.05, x: -150, y: 200, requirements: [1] },
-    { id: 4, name: "Prestige-Experte", cost: 10, description: "Prestige-Punkte sind 10% effektiver.", type: 'prestige_efficiency', value: 0.10, x: 150, y: 200, requirements: [2] },
-    { id: 5, name: "Synergie", cost: 20, description: "Klicks skalieren mit 1% deiner SPS.", type: 'click_sps_ratio', value: 0.01, x: 0, y: 300, requirements: [1, 2] },
-    
-    { id: 6, name: "Süße Begleiter", cost: 50, description: "Schaltet das PET-SYSTEM frei.", type: 'unlock_pets', value: 0, x: -100, y: 400, requirements: [5] },
-    { id: 7, name: "Tiefbau", cost: 50, description: "Schaltet die DIAMANTEN-MINE frei.", type: 'unlock_mine', value: 0, x: 100, y: 400, requirements: [5] },
-    
-    // --- NEU: Diamanten Fokus ---
-    { id: 16, name: "Glitzer-Gier", cost: 75, description: "Minen-Erträge +20%.", type: 'mine_boost', value: 0.20, x: 150, y: 450, requirements: [7] },
-    
-    { id: 8, name: "Imperium", cost: 150, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 0, y: 500, requirements: [6, 7] },
-    { id: 9, name: "Globaler Reichtum", cost: 400, description: "Verdoppelt deine gesamte SPS-Produktion (x2).", type: 'global_mult', value: 1.0, x: 0, y: 600, requirements: [8] },
-    
-    // --- NEU: End-Game Combo ---
-    { id: 17, name: "Ewige Combo", cost: 750, description: "Combo-Zeitfenster +2 Sekunden.", type: 'combo_time_add', value: 2000, x: -200, y: 650, requirements: [9] },
+    // ==========================================
+    // 🌟 ZENTRUM
+    // ==========================================
+    { id: 0, name: "Nexus", cost: 1, description: "Der Anfang von allem. +10% SPS.", type: 'sps_mult', value: 0.10, x: 0, y: 0, requirements: [] },
 
-    { id: 10, name: "Klick-Titan", cost: 1000, description: "Verdreifacht deine Klickkraft (+200%).", type: 'click_mult', value: 2.0, x: -150, y: 700, requirements: [9] },
-    { id: 11, name: "Industrie-Gigant", cost: 1000, description: "Verdreifacht deine passive SPS (+200%).", type: 'sps_mult', value: 2.0, x: 150, y: 700, requirements: [9] },
-    { id: 12, name: "Massenproduktion", cost: 2500, description: "Reduziert alle Gebäudekosten um weitere 10%.", type: 'cost_reduction', value: 0.10, x: 0, y: 800, requirements: [10, 11] },
-    { id: 13, name: "Zeitreise-Meister", cost: 7500, description: "Prestige-Punkte sind 50% effektiver.", type: 'prestige_efficiency', value: 0.50, x: -100, y: 900, requirements: [12] },
-    { id: 14, name: "Big Bang", cost: 15000, description: "Multipliziert ALLES mit 5.", type: 'global_mult', value: 4.0, x: 100, y: 900, requirements: [12] }
+    // ==========================================
+    // ⬆️ NORDEN: Der Pfad des Klickers (Aktiv)
+    // ==========================================
+    { id: 1, name: "Starker Finger", cost: 1, description: "Klickkraft +5%", type: 'click_mult', value: 0.05, x: 0, y: -80, requirements: [0] },
+    { id: 2, name: "Sehnentraining", cost: 1, description: "Klickkraft +5%", type: 'click_mult', value: 0.05, x: 0, y: -160, requirements: [1] },
+    
+    { id: 3, name: "Präzision I", cost: 1, description: "Krit-Chance +1%", type: 'crit_chance', value: 0.01, x: -80, y: -160, requirements: [2] },
+    { id: 4, name: "Fokus I", cost: 1, description: "Krit-Chance +1%", type: 'crit_chance', value: 0.01, x: 80, y: -160, requirements: [2] },
+    { id: 5, name: "Präzision II", cost: 1, description: "Krit-Chance +2%", type: 'crit_chance', value: 0.02, x: -80, y: -240, requirements: [3] },
+    { id: 6, name: "Fokus II", cost: 1, description: "Krit-Chance +2%", type: 'crit_chance', value: 0.02, x: 80, y: -240, requirements: [4] },
+    { id: 7, name: "Schlagkraft", cost: 2, description: "Klickkraft +10%", type: 'click_mult', value: 0.10, x: 0, y: -240, requirements: [2] },
+    
+    { id: 8, name: "TITANEN-KLICK", cost: 5, description: "Verdoppelt Klickkraft (+100%)", type: 'click_mult', value: 1.0, x: 0, y: -320, requirements: [5, 6, 7] }, // TIER 1 KEYSTONE
+
+    { id: 9, name: "Meuchelmord I", cost: 2, description: "Krit-Chance +3%", type: 'crit_chance', value: 0.03, x: -160, y: -320, requirements: [5] },
+    { id: 10, name: "Instinkt I", cost: 2, description: "Krit-Chance +3%", type: 'crit_chance', value: 0.03, x: 160, y: -320, requirements: [6] },
+    { id: 11, name: "Meuchelmord II", cost: 3, description: "Krit-Chance +4%", type: 'crit_chance', value: 0.04, x: -160, y: -400, requirements: [9] },
+    { id: 12, name: "Instinkt II", cost: 3, description: "Krit-Chance +4%", type: 'crit_chance', value: 0.04, x: 160, y: -400, requirements: [10] },
+    { id: 13, name: "Wucht", cost: 3, description: "Klickkraft +20%", type: 'click_mult', value: 0.20, x: 0, y: -400, requirements: [8] },
+
+    { id: 14, name: "Brutalität I", cost: 5, description: "Klickkraft +25%", type: 'click_mult', value: 0.25, x: -80, y: -480, requirements: [11, 13] },
+    { id: 15, name: "Brutalität II", cost: 5, description: "Klickkraft +25%", type: 'click_mult', value: 0.25, x: 80, y: -480, requirements: [12, 13] },
+    { id: 16, name: "Zerstörung", cost: 10, description: "Klickkraft +50%", type: 'click_mult', value: 0.50, x: 0, y: -560, requirements: [14, 15] },
+
+    { id: 17, name: "Tödliche Augen", cost: 5, description: "Krit-Chance +5%", type: 'crit_chance', value: 0.05, x: -240, y: -400, requirements: [9] },
+    { id: 18, name: "Wahnsinn", cost: 5, description: "Krit-Chance +5%", type: 'crit_chance', value: 0.05, x: 240, y: -400, requirements: [10] },
+    { id: 19, name: "Blutrausch I", cost: 8, description: "Krit-Chance +5%", type: 'crit_chance', value: 0.05, x: -240, y: -480, requirements: [17] },
+    { id: 20, name: "Blutrausch II", cost: 8, description: "Krit-Chance +5%", type: 'crit_chance', value: 0.05, x: 240, y: -480, requirements: [18] },
+    
+    { id: 21, name: "Meteorschlag I", cost: 10, description: "Klickkraft +50%", type: 'click_mult', value: 0.50, x: -160, y: -560, requirements: [19] },
+    { id: 22, name: "Meteorschlag II", cost: 10, description: "Klickkraft +50%", type: 'click_mult', value: 0.50, x: 160, y: -560, requirements: [20] },
+
+    { id: 23, name: "GÖTTER-FAUST", cost: 50, description: "Klickkraft x5", type: 'click_mult', value: 4.0, x: 0, y: -640, requirements: [16, 21, 22] }, // TIER 2 KEYSTONE
+    { id: 24, name: "ONE PUNCH", cost: 250, description: "Klickkraft x20", type: 'click_mult', value: 19.0, x: 0, y: -720, requirements: [23] }, // GOD NODE
+
+    // ==========================================
+    // ➡️ OSTEN: Der Pfad der Industrie (Idle)
+    // ==========================================
+    { id: 25, name: "Sanfte Ströme", cost: 1, description: "SPS +5%", type: 'sps_mult', value: 0.05, x: 80, y: 0, requirements: [0] },
+    { id: 26, name: "Ölung", cost: 1, description: "SPS +5%", type: 'sps_mult', value: 0.05, x: 160, y: 0, requirements: [25] },
+    
+    { id: 27, name: "Skonto I", cost: 1, description: "Kosten -1%", type: 'cost_reduction', value: 0.01, x: 160, y: -80, requirements: [26] },
+    { id: 28, name: "Nickerchen I", cost: 1, description: "Offline-Ertrag +5%", type: 'offline_boost', value: 0.05, x: 160, y: 80, requirements: [26] },
+    { id: 29, name: "Skonto II", cost: 1, description: "Kosten -2%", type: 'cost_reduction', value: 0.02, x: 240, y: -80, requirements: [27] },
+    { id: 30, name: "Nickerchen II", cost: 1, description: "Offline-Ertrag +10%", type: 'offline_boost', value: 0.10, x: 240, y: 80, requirements: [28] },
+    { id: 31, name: "Zahnräder", cost: 2, description: "SPS +10%", type: 'sps_mult', value: 0.10, x: 240, y: 0, requirements: [26] },
+
+    { id: 32, name: "INDUSTRIE-WUNDER", cost: 5, description: "Verdoppelt SPS (+100%)", type: 'sps_mult', value: 1.0, x: 320, y: 0, requirements: [29, 30, 31] }, // TIER 1 KEYSTONE
+
+    { id: 33, name: "Großhandel I", cost: 2, description: "Kosten -3%", type: 'cost_reduction', value: 0.03, x: 320, y: -160, requirements: [29] },
+    { id: 34, name: "Tiefschlaf I", cost: 2, description: "Offline-Ertrag +15%", type: 'offline_boost', value: 0.15, x: 320, y: 160, requirements: [30] },
+    
+    // UNLOCK NODE
+    { id: 35, name: "SÜßE BEGLEITER", cost: 10, description: "Schaltet den PET-SHOP frei.", type: 'unlock_pets', value: 0, x: 400, y: -160, requirements: [33] },
+    
+    { id: 36, name: "Tiefschlaf II", cost: 3, description: "Offline-Ertrag +20%", type: 'offline_boost', value: 0.20, x: 400, y: 160, requirements: [34] },
+    { id: 37, name: "Farbrikation", cost: 3, description: "SPS +15%", type: 'sps_mult', value: 0.15, x: 400, y: 0, requirements: [32] },
+
+    { id: 38, name: "Expansion I", cost: 5, description: "SPS +20%", type: 'sps_mult', value: 0.20, x: 480, y: -80, requirements: [35, 37] },
+    { id: 39, name: "Expansion II", cost: 5, description: "SPS +20%", type: 'sps_mult', value: 0.20, x: 480, y: 80, requirements: [36, 37] },
+    { id: 40, name: "Monopol", cost: 10, description: "SPS +25%", type: 'sps_mult', value: 0.25, x: 560, y: 0, requirements: [38, 39] },
+
+    { id: 41, name: "Korruption I", cost: 5, description: "Kosten -4%", type: 'cost_reduction', value: 0.04, x: 400, y: -240, requirements: [33] },
+    { id: 42, name: "Koma I", cost: 5, description: "Offline-Ertrag +25%", type: 'offline_boost', value: 0.25, x: 400, y: 240, requirements: [34] },
+    { id: 43, name: "Korruption II", cost: 8, description: "Kosten -5%", type: 'cost_reduction', value: 0.05, x: 480, y: -240, requirements: [41] },
+    { id: 44, name: "Koma II", cost: 8, description: "Offline-Ertrag +30%", type: 'offline_boost', value: 0.30, x: 480, y: 240, requirements: [42] },
+
+    { id: 45, name: "Weltmarkt I", cost: 10, description: "SPS +30%", type: 'sps_mult', value: 0.30, x: 560, y: -160, requirements: [43] },
+    { id: 46, name: "Weltmarkt II", cost: 10, description: "SPS +30%", type: 'sps_mult', value: 0.30, x: 560, y: 160, requirements: [44] },
+
+    { id: 47, name: "KAPITALISMUS", cost: 50, description: "SPS x5", type: 'sps_mult', value: 4.0, x: 640, y: 0, requirements: [40, 45, 46] }, // TIER 2 KEYSTONE
+    { id: 48, name: "UNENDLICHER PROFIT", cost: 250, description: "SPS x20", type: 'sps_mult', value: 19.0, x: 720, y: 0, requirements: [47] }, // GOD NODE
+
+    // ==========================================
+    // ⬇️ SÜDEN: Der Pfad der Synergie (Gilden)
+    // ==========================================
+    { id: 49, name: "Kooperation I", cost: 1, description: "Globale Macht +2%", type: 'global_mult', value: 0.02, x: 0, y: 80, requirements: [0] },
+    { id: 50, name: "Kooperation II", cost: 1, description: "Globale Macht +3%", type: 'global_mult', value: 0.03, x: 0, y: 160, requirements: [49] },
+    
+    { id: 51, name: "Schwarmgeist I", cost: 1, description: "Klickkraft +5%", type: 'click_mult', value: 0.05, x: -80, y: 160, requirements: [50] },
+    { id: 52, name: "Gruppenzwang I", cost: 1, description: "SPS +5%", type: 'sps_mult', value: 0.05, x: 80, y: 160, requirements: [50] },
+    { id: 53, name: "Schwarmgeist II", cost: 1, description: "Klickkraft +10%", type: 'click_mult', value: 0.10, x: -80, y: 240, requirements: [51] },
+    { id: 54, name: "Gruppenzwang II", cost: 1, description: "SPS +10%", type: 'sps_mult', value: 0.10, x: 80, y: 240, requirements: [52] },
+    { id: 55, name: "Zusammenhalt", cost: 2, description: "Globale Macht +5%", type: 'global_mult', value: 0.05, x: 0, y: 240, requirements: [50] },
+
+    // UNLOCK NODE
+    { id: 56, name: "IMPERIUM", cost: 5, description: "Schaltet das GILDEN-SYSTEM frei.", type: 'unlock_guilds', value: 0, x: 0, y: 320, requirements: [53, 54, 55] }, // TIER 1 KEYSTONE
+
+    { id: 57, name: "Allianz I", cost: 2, description: "Globale Macht +5%", type: 'global_mult', value: 0.05, x: -160, y: 320, requirements: [53] },
+    { id: 58, name: "Pakt I", cost: 2, description: "Globale Macht +5%", type: 'global_mult', value: 0.05, x: 160, y: 320, requirements: [54] },
+    { id: 59, name: "Allianz II", cost: 3, description: "Globale Macht +10%", type: 'global_mult', value: 0.10, x: -160, y: 400, requirements: [57] },
+    { id: 60, name: "Pakt II", cost: 3, description: "Globale Macht +10%", type: 'global_mult', value: 0.10, x: 160, y: 400, requirements: [58] },
+    { id: 61, name: "Blutspakt", cost: 3, description: "Globale Macht +10%", type: 'global_mult', value: 0.10, x: 0, y: 400, requirements: [56] },
+
+    { id: 62, name: "Architektur I", cost: 5, description: "Gebäude-Synergie +0.1%", type: 'building_synergy', value: 0.001, x: -80, y: 480, requirements: [59, 61] },
+    { id: 63, name: "Architektur II", cost: 5, description: "Gebäude-Synergie +0.1%", type: 'building_synergy', value: 0.001, x: 80, y: 480, requirements: [60, 61] },
+    { id: 64, name: "Metropolis", cost: 10, description: "Gebäude-Synergie +0.2%", type: 'building_synergy', value: 0.002, x: 0, y: 560, requirements: [62, 63] },
+
+    { id: 65, name: "Sekte I", cost: 5, description: "Globale Macht +15%", type: 'global_mult', value: 0.15, x: -240, y: 400, requirements: [57] },
+    { id: 66, name: "Kult I", cost: 5, description: "Globale Macht +15%", type: 'global_mult', value: 0.15, x: 240, y: 400, requirements: [58] },
+    { id: 67, name: "Sekte II", cost: 8, description: "Globale Macht +20%", type: 'global_mult', value: 0.20, x: -240, y: 480, requirements: [65] },
+    { id: 68, name: "Kult II", cost: 8, description: "Globale Macht +20%", type: 'global_mult', value: 0.20, x: 240, y: 480, requirements: [66] },
+
+    { id: 69, name: "Weltwunder I", cost: 10, description: "Gebäude-Synergie +0.3%", type: 'building_synergy', value: 0.003, x: -160, y: 560, requirements: [67] },
+    { id: 70, name: "Weltwunder II", cost: 10, description: "Gebäude-Synergie +0.3%", type: 'building_synergy', value: 0.003, x: 160, y: 560, requirements: [68] },
+
+    { id: 71, name: "LEGION", cost: 50, description: "Globale Macht x5", type: 'global_mult', value: 4.0, x: 0, y: 640, requirements: [64, 69, 70] }, // TIER 2 KEYSTONE
+    { id: 72, name: "WELTHERRSCHAFT", cost: 250, description: "Globale Macht x20", type: 'global_mult', value: 19.0, x: 0, y: 720, requirements: [71] }, // GOD NODE
+
+    // ==========================================
+    // ⬅️ WESTEN: Der Pfad der Zeit (Prestige & Mine)
+    // ==========================================
+    { id: 73, name: "Zeitschleife I", cost: 1, description: "Prestige-Effizienz +1%", type: 'prestige_efficiency', value: 0.01, x: -80, y: 0, requirements: [0] },
+    { id: 74, name: "Zeitschleife II", cost: 1, description: "Prestige-Effizienz +1%", type: 'prestige_efficiency', value: 0.01, x: -160, y: 0, requirements: [73] },
+    
+    { id: 75, name: "Sparfuchs I", cost: 1, description: "Kosten -1%", type: 'cost_reduction', value: 0.01, x: -160, y: -80, requirements: [74] },
+    { id: 76, name: "Geiz I", cost: 1, description: "Kosten -1%", type: 'cost_reduction', value: 0.01, x: -160, y: 80, requirements: [74] },
+    { id: 77, name: "Sparfuchs II", cost: 1, description: "Kosten -2%", type: 'cost_reduction', value: 0.02, x: -240, y: -80, requirements: [75] },
+    { id: 78, name: "Geiz II", cost: 1, description: "Kosten -2%", type: 'cost_reduction', value: 0.02, x: -240, y: 80, requirements: [76] },
+    { id: 79, name: "Erinnerung", cost: 2, description: "Prestige-Effizienz +2%", type: 'prestige_efficiency', value: 0.02, x: -240, y: 0, requirements: [74] },
+
+    // UNLOCK NODE
+    { id: 80, name: "TIEFBAU", cost: 5, description: "Schaltet die DIAMANTEN-MINE frei.", type: 'unlock_mine', value: 0, x: -320, y: 0, requirements: [77, 78, 79] }, // TIER 1 KEYSTONE
+
+    { id: 81, name: "Raffgier I", cost: 2, description: "Kosten -3%", type: 'cost_reduction', value: 0.03, x: -320, y: -160, requirements: [77] },
+    { id: 82, name: "Schatzsuche I", cost: 2, description: "Kosten -3%", type: 'cost_reduction', value: 0.03, x: -320, y: 160, requirements: [78] },
+    { id: 83, name: "Raffgier II", cost: 3, description: "Kosten -4%", type: 'cost_reduction', value: 0.04, x: -400, y: -160, requirements: [81] },
+    { id: 84, name: "Schatzsuche II", cost: 3, description: "Kosten -4%", type: 'cost_reduction', value: 0.04, x: -400, y: 160, requirements: [82] },
+    { id: 85, name: "Déjà-vu", cost: 3, description: "Prestige-Effizienz +5%", type: 'prestige_efficiency', value: 0.05, x: -400, y: 0, requirements: [80] },
+
+    { id: 86, name: "Gedankensprung I", cost: 5, description: "Prestige-Effizienz +10%", type: 'prestige_efficiency', value: 0.10, x: -480, y: -80, requirements: [83, 85] },
+    { id: 87, name: "Gedankensprung II", cost: 5, description: "Prestige-Effizienz +10%", type: 'prestige_efficiency', value: 0.10, x: -480, y: 80, requirements: [84, 85] },
+    { id: 88, name: "Allwissenheit", cost: 10, description: "Prestige-Effizienz +15%", type: 'prestige_efficiency', value: 0.15, x: -560, y: 0, requirements: [86, 87] },
+
+    { id: 89, name: "Gier I", cost: 5, description: "Kosten -5%", type: 'cost_reduction', value: 0.05, x: -400, y: -240, requirements: [81] },
+    { id: 90, name: "Goldrausch I", cost: 5, description: "Kosten -5%", type: 'cost_reduction', value: 0.05, x: -400, y: 240, requirements: [82] },
+    { id: 91, name: "Gier II", cost: 8, description: "Kosten -6%", type: 'cost_reduction', value: 0.06, x: -480, y: -240, requirements: [89] },
+    { id: 92, name: "Goldrausch II", cost: 8, description: "Kosten -6%", type: 'cost_reduction', value: 0.06, x: -480, y: 240, requirements: [90] },
+
+    { id: 93, name: "Erleuchtung I", cost: 10, description: "Prestige-Effizienz +20%", type: 'prestige_efficiency', value: 0.20, x: -560, y: -160, requirements: [91] },
+    { id: 94, name: "Erleuchtung II", cost: 10, description: "Prestige-Effizienz +20%", type: 'prestige_efficiency', value: 0.20, x: -560, y: 160, requirements: [92] },
+
+    { id: 95, name: "ZEIT-MEISTER", cost: 50, description: "Prestige-Effizienz +100%", type: 'prestige_efficiency', value: 1.0, x: -640, y: 0, requirements: [88, 93, 94] }, // TIER 2 KEYSTONE
+    { id: 96, name: "OMNIPRÄSENZ", cost: 250, description: "Prestige-Effizienz +500%", type: 'prestige_efficiency', value: 5.0, x: -720, y: 0, requirements: [95] }, // GOD NODE
+
+    // ==========================================
+    // 🌌 OUTER RING (Die Brücken der Götter)
+    // ==========================================
+    
+    { id: 97, name: "ZEIT & RAUM", cost: 150, description: "Globale Macht x3", type: 'global_mult', value: 2.0, x: -480, y: -480, requirements: [23, 95] }, // Verbindet Nord und West
+    { id: 98, name: "MASCHINEN-GOTT", cost: 150, description: "SPS x5", type: 'sps_mult', value: 4.0, x: 480, y: -480, requirements: [23, 47] }, // Verbindet Nord und Ost
+    { id: 99, name: "PERFEKTE HARMONIE", cost: 150, description: "Gebäude-Synergie +0.5%", type: 'building_synergy', value: 0.005, x: 480, y: 480, requirements: [47, 71] }, // Verbindet Ost und Süd
+    { id: 100, name: "TIEFE SYNERGIE", cost: 150, description: "Kosten -20%", type: 'cost_reduction', value: 0.20, x: -480, y: 480, requirements: [71, 95] }, // Verbindet Süd und West
+    
 ];
 
 /* ======================================================= */
@@ -314,7 +444,19 @@ const achievementsData = [
     { id: 36, name: "Gilden-Level II", description: "Erreichen Gilden-Level 5.", requirement: { type: 'guild_level', value: 5 }, bonus: { type: 'global_mult', value: 0.15 }, color: '#ff9800' },
     { id: 37, name: "Gilden-Level III", description: "Erreichen Gilden-Level 10.", requirement: { type: 'guild_level', value: 10 }, bonus: { type: 'global_mult', value: 0.25 }, color: '#ff9800' },
     { id: 38, name: "Gilden-Level IV", description: "Erreichen Gilden-Level 20.", requirement: { type: 'guild_level', value: 20 }, bonus: { type: 'global_mult', value: 0.50 }, color: '#ff9800' },
-    { id: 39, name: "Gilden-Level V", description: "Erreichen Gilden-Level 50.", requirement: { type: 'guild_level', value: 50 }, bonus: { type: 'global_mult', value: 2.0 }, color: '#FFD700' }
+    { id: 39, name: "Gilden-Level V", description: "Erreichen Gilden-Level 50.", requirement: { type: 'guild_level', value: 50 }, bonus: { type: 'global_mult', value: 2.0 }, color: '#FFD700' },
+
+    // =========================================================================
+    // 🎭 KATEGORIE: GEHEIMNISSE (Artefakte & Schwarzmarkt)
+    // =========================================================================
+    { id: 40, name: "Erster Fund", description: "Finde dein erstes Artefakt in der Mine.", requirement: { type: 'artifact_count', value: 1 }, bonus: { type: 'mine_boost', value: 0.10 }, color: '#9c27b0' },
+    { id: 41, name: "Museums-Direktor", description: "Sammle 5 verschiedene Artefakte.", requirement: { type: 'artifact_count', value: 5 }, bonus: { type: 'sps_mult', value: 0.10 }, color: '#9c27b0' },
+    { id: 42, name: "Dunkle Geschäfte", description: "Kaufe dein erstes Upgrade auf dem Schwarzmarkt.", requirement: { type: 'blackmarket_purchases', value: 1 }, bonus: { type: 'click_mult', value: 0.25 }, color: '#ea80fc' },
+    // =========================================================================
+    // 🛡️ KATEGORIE: SÖLDNER (Gilden-Quests)
+    // =========================================================================
+    { id: 43, name: "Die Truppe wächst", description: "Heuere deinen zweiten Söldner an.", requirement: { type: 'mercenary_count', value: 2 }, bonus: { type: 'global_mult', value: 0.05 }, color: '#ff9800' },
+    { id: 44, name: "Erfahrener Held", description: "Level einen Söldner auf Stufe 5.", requirement: { type: 'mercenary_level', value: 5 }, bonus: { type: 'sps_mult', value: 0.15 }, color: '#ff9800' }
 ];
 
 const GUILD_DATA = {

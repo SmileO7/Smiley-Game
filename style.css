@@ -1946,3 +1946,84 @@ button:disabled, .boss-btn-cooldown {
 
 @keyframes king-shine { 0% { filter: drop-shadow(0 0 5px gold); } 50% { filter: drop-shadow(0 0 20px gold); } 100% { filter: drop-shadow(0 0 5px gold); } }
 .king-glow { animation: king-shine 2s infinite; }
+
+/* ======================================================= */
+/* MEGA SKILL TREE (Vollbild Modal & Knoten-Größen)        */
+/* ======================================================= */
+
+/* 1. Macht das Modal fast so groß wie den gesamten Bildschirm */
+#skill_tree_modal .modal-content {
+    max-width: 95vw !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: #0a0a0a !important; /* Sehr dunkler Hintergrund */
+    border: 1px solid #7c4dff !important;
+    box-shadow: 0 0 50px rgba(124, 77, 255, 0.2) !important;
+}
+
+/* 2. Der Bereich, in dem du den Tree verschiebst (Pan-Container) */
+#prestige-tree-container {
+    width: 100%;
+    flex: 1; /* Nimmt den restlichen Platz ein */
+    overflow: hidden; /* WICHTIG: Verhindert unschöne Scrollbalken */
+    background: radial-gradient(circle at center, #1a0033 0%, #000 100%);
+    border-radius: 8px;
+    border: 2px solid #333;
+    position: relative;
+    cursor: grab;
+}
+
+#prestige-tree-container:active {
+    cursor: grabbing;
+}
+
+/* 3. Optisches Upgrade für die Linien-Ansicht */
+#prestige-lines {
+    filter: drop-shadow(0 0 3px rgba(0, 159, 253, 0.5));
+}
+
+/* ======================================================= */
+/* SKILL TREE KNOTEN-GRÖSSEN (Moderat & Elegant)           */
+/* ======================================================= */
+
+/* Die wichtigste Regel: Zentriert jeden Knoten EXAKT auf der Koordinate (Linien-Kreuzung) */
+.skill-node {
+    position: absolute !important;
+    transform: translate(-50%, -50%) !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important; /* Löscht alle alten, fehlerhaften Abstände */
+}
+
+/* 4. Kleine Reise-Knoten (1-3 Punkte) */
+.skill-node.node-tier-travel {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    font-size: 0.9rem !important;
+    border: 2px solid #555 !important;
+}
+
+/* 5. Wichtige Keystones (5-10 Punkte) */
+.skill-node.node-tier-keystone {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    font-size: 1.2rem !important;
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* 6. Die äußeren Götter-Knoten (25+ Punkte) */
+.skill-node.node-tier-god {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important; 
+    font-size: 1.5rem !important;
+    border: 3px solid #e040fb !important;
+    box-shadow: 0 0 20px rgba(224, 64, 251, 0.8) !important;
+}
