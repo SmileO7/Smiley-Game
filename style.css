@@ -1432,6 +1432,11 @@ input[type=range] { width: 100%; cursor: pointer; }
 /* ======================================================= */
 /* 18. GUILD UI OVERRIDES (Contrast & Logic Fixes)         */
 /* ======================================================= */
+.mercenary-status-recovering {
+    color: #ff4444 !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+}
 
 /* --- SÖLDNER & KARTEN --- */
 .mercenary-card.active-merc {

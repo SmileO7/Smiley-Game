@@ -37,6 +37,7 @@ class SmileyGame {
         this.gemSystem = new GemEmpire(this);
         this.skinSystem = new SkinSystem(this);
 
+    
         // 2. GAME STATE DEFINITION
         this.gameState = {
             aktuelle_smileys: 0,
@@ -5260,6 +5261,12 @@ class GuildSystem {
                 icon: "⚔️"
             }
         };
+        setInterval(() => {
+            const modal = document.getElementById('guilds-modal'); // Prüfen, ob Gilden-Fenster offen ist
+            if (modal && modal.style.display === 'flex' && this.guildView === 'quests') {
+            this.renderGuildsContent();
+            }
+        }, 60000); // Alle 60 Sekunden
     }
 
     // --- SÖLDNER LOGIK ---
@@ -5309,62 +5316,160 @@ class GuildSystem {
 
     // --- QUEST LOGIK (NEU) ---
 
-    generateGuildQuests() {
-    const state = this.game.gameState;
-    if (!state.guildAvailableQuests) state.guildAvailableQuests = [];
-    if (state.guildAvailableQuests.length >= 4) return;
-
-    const questNames = ["Emoji-Wald säubern", "Pixel-Mine erkunden", "Lach-Palast bewachen", "Daten-Strom flicken"];
-    const rarities = [
-        { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6 },
-        { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3 },
-        { name: "Episch", multi: 8, color: "#9c27b0", chance: 0.09 },
-        { name: "Legendär", multi: 20, color: "#ff9800", chance: 0.01 }
-    ];
-
-    while (state.guildAvailableQuests.length < 4) {
-        const r = Math.random();
-        let rarity = rarities[0];
-        if (r > 0.99) rarity = rarities[3];
-        else if (r > 0.90) rarity = rarities[2];
-        else if (r > 0.60) rarity = rarities[1];
-
-        const duration = Math.floor(Math.random() * 300) + 60; // Sekunden
+    generateGuildQuests(force = false) {
+        const state = this.game.gameState;
+        if (!state.guildAvailableQuests) state.guildAvailableQuests = [];
         
-        // --- BELOHNUNGS-LOGIK ---
-        const baseSmileys = state.totalSPS * duration * 0.2 * rarity.multi;
-        const isGemQuest = Math.random() < 0.15; // 15% Chance auf Gems statt Dias
+        const now = Date.now();
+        const COOLDOWN = 30 * 60 * 1000;
+        
+        const needsRefill = state.guildAvailableQuests.length === 0;
+        const cooldownOver = now - (state.lastQuestFolderRefresh || 0) > COOLDOWN;
 
-        state.guildAvailableQuests.push({
-            id: Date.now() + Math.random(),
-            name: questNames[Math.floor(Math.random() * questNames.length)],
-            rarity: rarity,
-            duration: duration,
-            rewards: {
-                smileys: Math.max(100, Math.floor(baseSmileys)),
-                diamonds: isGemQuest ? 0 : Math.floor(rarity.multi * 2),
-                gems: isGemQuest ? Math.floor(rarity.multi * 1) : 0,
-                guildXP: 10 * rarity.multi,
-                mercXP: 25 * rarity.multi
-            },
-            assignedMerc: null,
-            startTime: null
-        });
+        if (!force && !needsRefill && !cooldownOver) return;
+
+        state.lastQuestFolderRefresh = now;
+
+        if (state.guildAvailableQuests.length > 5) {
+            state.guildAvailableQuests = state.guildAvailableQuests.slice(0, 5);
+        }
+        if (state.guildAvailableQuests.length === 5) return;
+
+        const rarities = [
+            { name: "Gewöhnlich", multi: 1, color: "#fff", chance: 0.6, failRisk: 0.05 },
+            { name: "Selten", multi: 3, color: "#009ffd", chance: 0.3, failRisk: 0.15 },
+            { name: "Episch", multi: 8, color: "#9c27b0", chance: 0.09, failRisk: 0.30 },
+            { name: "Legendär", multi: 20, color: "#ff9800", chance: 0.01, failRisk: 0.50 }
+        ];
+
+        // NEU: Unsere 3 Spezialisierungen
+        const questFocuses = [
+            { id: 'gold', prefix: "💰", chance: 0.4 },
+            { id: 'gems', prefix: "💎", chance: 0.3 },
+            { id: 'exp',  prefix: "⚔️", chance: 0.3 }
+        ];
+
+        while (state.guildAvailableQuests.length < 5) {
+            // 1. Seltenheit auswürfeln
+            const r = Math.random();
+            let rarity = rarities[0];
+            if (r > 0.99) rarity = rarities[3];
+            else if (r > 0.90) rarity = rarities[2];
+            else if (r > 0.60) rarity = rarities[1];
+
+            // 2. Fokus auswürfeln
+            const rFocus = Math.random();
+            let focus = questFocuses[0];
+            if (rFocus > 0.7) focus = questFocuses[2];
+            else if (rFocus > 0.4) focus = questFocuses[1];
+
+            const duration = Math.floor(Math.random() * 300) + 60; // 1 bis 6 Minuten
+            const loc = guildQuestData.locations[Math.floor(Math.random() * guildQuestData.locations.length)];
+            const act = guildQuestData.actions[Math.floor(Math.random() * guildQuestData.actions.length)];
+            
+            // Name bekommt jetzt ein passendes Icon davor!
+            let name = `${focus.prefix} ${loc} ${act}`;
+
+            // 3. BELOHNUNGEN VERTEILEN
+            let r_smileys = 0;
+            let r_diamonds = 0;
+            let r_gems = 0;
+            let r_guildXP = 10 * rarity.multi;
+            let r_mercXP = 25 * rarity.multi;
+
+            if (focus.id === 'gold') {
+                // MASSIV Smileys & Gilden-XP
+                r_smileys = Math.max(100, Math.floor((state.totalSPS || 0) * duration * 0.8 * rarity.multi));
+                r_guildXP = Math.floor(r_guildXP * 1.5);
+            } else if (focus.id === 'gems') {
+                // DIAMANTEN & GEMS (Keine Smileys)
+                r_diamonds = Math.floor((Math.random() * 3 + 2) * rarity.multi); 
+                if (rarity.name === "Episch" || rarity.name === "Legendär") {
+                    r_gems = Math.floor((Math.random() * 2 + 1) * rarity.multi * 0.5); // Gems nur bei seltenen Quests!
+                }
+                r_smileys = Math.floor((state.totalSPS || 0) * duration * 0.05 * rarity.multi); // Nur ein kleines Taschengeld
+            } else if (focus.id === 'exp') {
+                // MASSIV SÖLDNER XP (Für Level-Ups)
+                r_mercXP = Math.floor(r_mercXP * 3);
+                r_smileys = Math.floor((state.totalSPS || 0) * duration * 0.1 * rarity.multi);
+                if (Math.random() > 0.5) r_diamonds = rarity.multi; // Kleine Chance auf einen Dia
+            }
+
+            state.guildAvailableQuests.push({
+                id: Date.now() + Math.random(),
+                name: name,
+                rarity: rarity,
+                duration: duration,
+                baseDuration: duration,
+                failRisk: rarity.failRisk,
+                focus: focus.id, // Speichern wir für spätere Nutzung
+                rewards: {
+                    smileys: r_smileys,
+                    diamonds: r_diamonds,
+                    gems: r_gems,
+                    guildXP: r_guildXP,
+                    mercXP: r_mercXP
+                },
+                assignedMerc: null,
+                startTime: null
+            });
+        }
     }
+
+    completeQuest(quest) {
+    const state = this.game.gameState;
+    const merc = state.guildMercenaries.find(m => m.id === quest.assignedMerc);
+    if (!merc) return;
+
+    // 1. Level-Bonus berechnen (Risiko-Reduktion)
+    // Wir holen uns das Scaling aus der data.js oder nutzen 2% als Fallback
+    const classData = guildQuestData.classes[merc.type] || { levelScaling: 0.02 };
+    const levelRiskReduction = (merc.level - 1) * classData.levelScaling;
+    
+    // Finales Risiko: Basis-Risiko der Quest minus Level-Bonus
+    const finalRisk = Math.max(0.01, quest.failRisk - levelRiskReduction); 
+
+    const failRoll = Math.random();
+    
+    if (failRoll < finalRisk) {
+        // --- FEHLSCHLAG: Verletzung ---
+        merc.status = 'recovering';
+        merc.recoveryUntil = Date.now() + (1000 * 60 * 15); // 15 Min Pause
+        this.game.showNotification(`${merc.name} wurde verletzt! Risiko war ${Math.round(finalRisk * 100)}%`, "error");
+    } else {
+        // --- ERFOLG: Belohnungen & XP ---
+        this.applyQuestRewards(quest.rewards);
+        
+        // Söldner-XP verarbeiten
+        merc.xp = (merc.xp || 0) + quest.rewards.mercXP;
+        merc.xpNeeded = merc.xpNeeded || 100;
+
+        if (merc.xp >= merc.xpNeeded) {
+            merc.level = (merc.level || 1) + 1;
+            merc.xp = 0;
+            merc.xpNeeded = Math.floor(merc.xpNeeded * 1.5);
+            this.game.showNotification(`LEVEL UP! ${merc.name} ist nun Level ${merc.level}!`, "success");
+        }
+        
+        merc.status = 'idle';
+        this.game.showNotification(`${merc.name} war erfolgreich!`, "success");
+    }
+
+    state.guildActiveQuests = state.guildActiveQuests.filter(q => q.id !== quest.id);
+    this.game.speichereSpiel();
+    this.renderGuildsContent();
 }
 
-    // Neue Start-Funktion: Verknüpft Söldner mit Quest
     assignMercenaryToQuest(questId) {
-        const state = this.game.gameState;
+        const state = this.game.gameState; // KORRIGIERT
         
-        // 1. Validierung
         if (!this.selectedMercenaryId) {
-            this.game.showNotification("Wähle erst einen Söldner aus!", "error");
+            this.game.showNotification("Wähle erst einen Söldner aus!", "error"); // KORRIGIERT
             return;
         }
         const merc = state.guildMercenaries.find(m => m.id === this.selectedMercenaryId);
         if (!merc || merc.status !== 'idle') {
-            this.game.showNotification("Dieser Söldner ist beschäftigt!", "error");
+            this.game.showNotification("Dieser Söldner ist beschäftigt!", "error"); // KORRIGIERT
             return;
         }
 
@@ -5372,28 +5477,33 @@ class GuildSystem {
         if (questIndex === -1) return;
         const quest = state.guildAvailableQuests[questIndex];
 
-        // 2. Zuweisung
+        // KLASSEN-BONI ANWENDEN
+        if (merc.type === 'fighter') {
+            quest.duration = Math.floor(quest.baseDuration * 0.8);
+        }
+        if (merc.type === 'scout') {
+            quest.rewards.guildXP = Math.floor(quest.rewards.guildXP * 1.5);
+        }
+        if (merc.type === 'miner') {
+            if (quest.rewards.diamonds > 0) quest.rewards.diamonds += Math.max(1, Math.floor(quest.rewards.diamonds * 0.2));
+            if (quest.rewards.gems > 0) quest.rewards.gems += Math.max(1, Math.floor(quest.rewards.gems * 0.2));
+        }
+
         quest.assignedMerc = merc.id;
         quest.startTime = Date.now();
         quest.notified = false;
         
-        // Spezialeffekt: Fighter sind 20% schneller
-        if (merc.type === 'fighter') {
-            quest.duration = Math.floor(quest.duration * 0.8);
-        }
-
         merc.status = 'busy';
         merc.questId = quest.id;
 
-        // 3. Verschieben von "Verfügbar" nach "Aktiv"
         if (!state.guildActiveQuests) state.guildActiveQuests = [];
         state.guildActiveQuests.push(quest);
         state.guildAvailableQuests.splice(questIndex, 1);
 
-        this.selectedMercenaryId = null; // Auswahl aufheben
-        this.renderGuildsContent();
-        this.game.speichereSpiel();
-        this.game.showNotification(`${merc.name} ist aufgebrochen!`, "success");
+        this.selectedMercenaryId = null; 
+        if (typeof this.renderGuildsContent === 'function') this.renderGuildsContent();
+        this.game.speichereSpiel(); // KORRIGIERT
+        this.game.showNotification(`${merc.name} ist aufgebrochen!`, "success"); // KORRIGIERT
     }
 
     claimQuest(questId) {
@@ -5803,40 +5913,85 @@ if (this.guildView === 'shop') {
         if (!state.guildMercenaries) state.guildMercenaries = [];
         this.generateGuildQuests();
 
+        // ERKLÄRUNG: Wir prüfen, ob wir unter dem Cap (5) sind. Nur dann wird der HTML-Code für den Button generiert.
+        let recruitBtnHtml = '';
+        if (state.guildMercenaries.length < 5) {
+            recruitBtnHtml = `<button id="btn-recruit" class="btn-confirm" style="font-size:0.8em; padding:8px 15px;">
+                                + Anheuern (${this.game.formatNumber(1000000000 * (state.guildMercenaries.length + 1))})
+                              </button>`;
+        }
+
         let mercHtml = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h4 style="margin:0;">Deine Söldner (${state.guildMercenaries.length}/5)</h4>
-                <button id="btn-recruit" class="btn-confirm" style="font-size:0.8em; padding:8px 15px;">
-                    + Anheuern (${this.game.formatNumber(1000000000 * (state.guildMercenaries.length + 1))})
-                </button>
+                ${recruitBtnHtml}
             </div>
             <div style="display:flex; gap:15px; overflow-x:auto; padding-bottom:10px; margin-bottom:20px;">`;
 
         state.guildMercenaries.forEach(merc => {
-            const isSelected = this.selectedMercenaryId === merc.id;
-            const isBusy = merc.status === 'busy';
-            let statusIcon = isBusy ? '⏳' : '💤';
-            let typeIcon = merc.type === 'scout' ? '🏹' : (merc.type === 'miner' ? '⛏️' : '⚔️');
-            const borderColor = isSelected ? '#009ffd' : '#333';
-            const bgColor = isSelected ? 'rgba(0, 159, 253, 0.1)' : 'rgba(255,255,255,0.03)';
+    const isSelected = this.selectedMercenaryId === merc.id;
+    const isBusy = merc.status === 'busy';
+    const isRecovering = merc.status === 'recovering';
+    
+    // --- STATUS LOGIK ---
+    let statusText = isBusy ? 'Unterwegs' : 'Bereit';
+    let statusColor = isBusy ? '#ff5252' : '#aaa';
+    let statusIcon = isBusy ? '⏳' : '💤';
 
-            mercHtml += `
-                <div class="mercenary-card ${isSelected ? 'active-merc' : ''}" data-id="${merc.id}" 
-                     style="min-width:130px; background:${bgColor}; border:2px solid ${borderColor}; padding:15px; border-radius:12px; cursor:${isBusy?'default':'pointer'}; text-align:center;">
-                    <div style="font-size:2.5em; margin-bottom:5px;">${typeIcon}</div>
-                    <div style="font-weight:bold;">${merc.name}</div>
-                    <div style="font-size:0.8em; color:#FFD700;">Level ${merc.level}</div>
-                    <div style="font-size:0.75em; color:${isBusy?'#ff5252':'#aaa'};">${statusIcon} ${isBusy ? 'Unterwegs' : 'Bereit'}</div>
-                    <div style="background:#222; height:5px; margin-top:8px; border-radius:3px; overflow:hidden;">
-                        <div style="width:${(merc.xp/merc.maxXp)*100}%; height:100%; background:#4CAF50;"></div>
-                    </div>
-                </div>`;
-        });
-        mercHtml += `</div>`;
+    if (isRecovering) {
+        const remainingMs = (merc.recoveryUntil || 0) - Date.now();
+        const remainingMin = Math.ceil(remainingMs / (1000 * 60));
+        
+        if (remainingMin > 0) {
+            statusText = `Verletzt (${remainingMin} Min.)`;
+            statusColor = '#ff4444';
+            statusIcon = '🩹';
+        } else {
+            // Zeit abgelaufen -> Status zurücksetzen
+            merc.status = 'idle';
+            statusText = 'Bereit';
+            statusColor = '#aaa';
+            statusIcon = '💤';
+        }
+    }
 
+    let typeIcon = merc.type === 'scout' ? '🏹' : (merc.type === 'miner' ? '⛏️' : '⚔️');
+    const borderColor = isSelected ? '#009ffd' : '#333';
+    const bgColor = isSelected ? 'rgba(0, 159, 253, 0.1)' : 'rgba(255,255,255,0.03)';
+    const isClickable = !isBusy && !isRecovering;
+
+    mercHtml += `
+        <div class="mercenary-card ${isSelected ? 'active-merc' : ''}" 
+             data-id="${merc.id}" 
+             style="min-width:130px; background:${bgColor}; border:2px solid ${borderColor}; padding:15px; border-radius:12px; cursor:${isClickable ? 'pointer' : 'default'}; text-align:center;">
+            
+            <div style="font-size:2.5em; margin-bottom:5px;">${typeIcon}</div>
+            <div style="font-weight:bold;">${merc.name}</div>
+            <div style="font-size:0.8em; color:#FFD700;">Level ${merc.level}</div>
+            
+            <div style="font-size:0.75em; color:${statusColor}; font-weight:bold; margin-top:3px;">
+                ${statusIcon} ${statusText}
+            </div>
+            
+            <div class="xp-bar-outer" style="background:#222; height:18px; margin-top:10px; border-radius:9px; position:relative; overflow:hidden; border:1px solid #444;">
+                <div style="width:${(merc.xp / (merc.maxXp || merc.xpNeeded)) * 100}%; height:100%; background:linear-gradient(90deg, #4CAF50, #8BC34A); transition: width 0.3s ease;"></div>
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:bold; text-shadow:1px 1px 2px black; pointer-events:none;">
+                    ${Math.floor(merc.xp)} / ${merc.maxXp || merc.xpNeeded}
+                </div>
+            </div>
+        </div>`;
+});
+            mercHtml += `</div>`;
+
+        // ERKLÄRUNG: Wir nutzen Flexbox (justify-content: space-between), damit die Überschrift links und der Refresh-Button rechts auf einer Höhe stehen. 
         let questHtml = `
             <div style="border-top:1px solid #333; padding-top:20px;">
-                <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h4 style="margin:0 0 5px 0;">Verfügbare Aufträge</h4>
+                    <button id="btn-refresh-quests" style="background:#009ffd; color:#fff; border:none; padding:8px 15px; border-radius:5px; font-weight:bold; cursor:pointer; box-shadow: 0 0 5px rgba(0, 159, 253, 0.5);">
+                        🔄 Neue Aufträge (5 💎)
+                    </button>
+                </div>
                 <div class="info-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;">`;
 
         if (state.guildActiveQuests) {
@@ -5866,24 +6021,40 @@ if (this.guildView === 'shop') {
         }
 
         state.guildAvailableQuests.forEach(q => {
-            let rewardText = q.rewards.gems > 0 ? `${q.rewards.gems} ✨` : (q.rewards.diamonds > 0 ? `${q.rewards.diamonds} 💎` : `${this.game.formatNumber(q.rewards.smileys)}`);
+            // NEU: Wir bauen schicke Badges für alle Belohnungen, die größer als 0 sind!
+            let rewardHtml = '';
+            if (q.rewards.smileys > 0) {
+                rewardHtml += `<span style="background:rgba(255,215,0,0.1); color:#FFD700; padding:2px 6px; border-radius:4px; margin-right:5px; display:inline-block; margin-bottom:4px; font-size:0.85em; border:1px solid rgba(255,215,0,0.3);">${this.game.formatNumber(q.rewards.smileys)} 🪙</span>`;
+            }
+            if (q.rewards.diamonds > 0) {
+                rewardHtml += `<span style="background:rgba(0,159,253,0.1); color:#009ffd; padding:2px 6px; border-radius:4px; margin-right:5px; display:inline-block; margin-bottom:4px; font-size:0.85em; border:1px solid rgba(0,159,253,0.3);">${q.rewards.diamonds} 💎</span>`;
+            }
+            if (q.rewards.gems > 0) {
+                rewardHtml += `<span style="background:rgba(224,64,251,0.1); color:#e040fb; padding:2px 6px; border-radius:4px; margin-right:5px; display:inline-block; margin-bottom:4px; font-size:0.85em; border:1px solid rgba(224,64,251,0.3);">${q.rewards.gems} ✨</span>`;
+            }
+            rewardHtml += `<span style="background:rgba(76,175,80,0.1); color:#4CAF50; padding:2px 6px; border-radius:4px; margin-right:5px; display:inline-block; margin-bottom:4px; font-size:0.85em; border:1px solid rgba(76,175,80,0.3);">${q.rewards.mercXP} XP</span>`;
+
             const canStart = this.selectedMercenaryId !== null;
             const buttonStyle = canStart ? `background:#009ffd; color:#fff;` : `background:#333; color:#777;`;
 
             questHtml += `
                 <div style="background:rgba(255,255,255,0.03); border:1px solid #333; border-left:4px solid ${q.rarity.color}; padding:15px; border-radius:10px;">
-                    <div style="color:${q.rarity.color}; font-weight:bold;">${q.name}</div>
-                    <div style="font-size:0.8em; color:#aaa;">${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min</div>
-                    <div style="font-size:0.9em; margin:10px 0; padding:8px; background:rgba(0,0,0,0.2); border-radius:5px;">
-                        Belohnung: <strong>${rewardText}</strong>
+                    <div style="color:${q.rarity.color}; font-weight:bold; font-size:1.1em;">${q.name}</div>
+                    <div style="font-size:0.8em; color:#aaa; margin-bottom:10px;">
+                        ${q.rarity.name} • 🕒 ${Math.ceil(q.duration / 60)} Min • ⚠️ Risiko: ${Math.round(q.failRisk * 100)}%
                     </div>
+                    
+                    <div style="margin:10px 0; padding:10px; background:rgba(0,0,0,0.3); border-radius:6px;">
+                        <div style="font-size:0.75em; color:#888; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Belohnungen:</div>
+                        <div>${rewardHtml}</div>
+                    </div>
+                    
                     <button class="btn-assign-quest" data-id="${q.id}" ${canStart ? '' : 'disabled'} 
-        style="${buttonStyle} width:100%; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">
-    ${canStart ? '🚀 Söldner entsenden' : 'Söldner wählen'}
-</button>
+                        style="${buttonStyle} width:100%; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:0.9em; letter-spacing:0.5px; transition:0.2s;">
+                        ${canStart ? '🚀 Söldner entsenden' : 'Söldner wählen'}
+                    </button>
                 </div>`;
         });
-        questHtml += `</div></div>`;
         contentHtml = mercHtml + questHtml;
     }
 
@@ -5901,15 +6072,41 @@ if (this.guildView === 'shop') {
     }
 
     if (this.guildView === 'quests') {
-        container.querySelectorAll('.mercenary-card').forEach(card => {
-            if (!card.classList.contains('busy-merc')) {
-                card.onclick = () => { this.selectedMercenaryId = card.dataset.id; this.renderGuildsContent(); };
-            }
-        });
+    container.querySelectorAll('.mercenary-card').forEach(card => {
+        // KORREKTUR: Nur anklickbar, wenn nicht 'busy' UND nicht 'recovering'
+        const mercId = card.dataset.id;
+        const merc = state.guildMercenaries.find(m => m.id === mercId);
+        const isLocked = merc && (merc.status === 'busy' || merc.status === 'recovering');
+
+        if (!isLocked) {
+            card.onclick = () => { 
+                this.selectedMercenaryId = mercId; 
+                this.renderGuildsContent(); 
+            };
+        }
+    });
         this.game.getById('btn-recruit')?.addEventListener('click', () => this.recruitMercenary());
         container.querySelectorAll('.btn-assign-quest').forEach(btn => btn.onclick = () => this.assignMercenaryToQuest(parseFloat(btn.dataset.id)));
         container.querySelectorAll('.btn-claim-quest').forEach(btn => btn.onclick = () => this.claimQuest(parseFloat(btn.dataset.id)));
     }
+    // ERKLÄRUNG: Wenn der Refresh-Button geklickt wird, prüfen wir zuerst die Diamanten. 
+        // Falls genug da sind, leeren wir die aktuelle Quest-Liste komplett, ziehen die Diamanten ab, 
+        // erzwingen (force = true) die Generierung neuer Quests und zeichnen das UI neu.
+        const refreshBtn = this.game.getById('btn-refresh-quests');
+        if (refreshBtn) {
+            refreshBtn.onclick = () => {
+                if ((state.diamanten || 0) >= 5) {
+                    state.diamanten -= 5;
+                    state.guildAvailableQuests = []; // Alte Quests in den Müll werfen
+                    this.generateGuildQuests(true);  // Neue Quests erzwingen
+                    this.game.speichereSpiel();
+                    this.renderGuildsContent();
+                    this.game.showNotification("Neue Aufträge eingetroffen!", "success");
+                } else {
+                    this.game.showNotification("Nicht genug Diamanten für einen Refresh!", "error");
+                }
+            };
+        }
 }
 
     toggleNotifications() {
@@ -6376,8 +6573,11 @@ class ChatSystem {
         const state = this.game.gameState;
         if (!state.guildName || !state.playerId || typeof firebase === 'undefined') return;
 
+        // Wir säubern den Namen für Firebase
         const safeGuildName = state.guildName.replace(/\s+/g, '_');
-        const myMemberRef = firebase.database().ref(`chat/guilds/${safeGuildName}/members/${state.playerId}`);
+        
+        // KORREKTUR: 'chat/' am Anfang entfernt. Jetzt passt es zu deinen Regeln!
+        const myMemberRef = firebase.database().ref(`guilds/${safeGuildName}/members/${state.playerId}`);
 
         const myStats = {
             name: state.playerName,

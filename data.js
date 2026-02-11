@@ -461,9 +461,9 @@ const achievementsData = [
 
 const GUILD_DATA = {
     mercenaryClasses: {
-        fighter: { name: "Kämpfer", icon: "⚔️", description: "Spezialist für gefährliche Monsterjagd-Quests.", statBonus: "attack" },
-        scout: { name: "Späher", icon: "🏹", description: "Findet schneller seltene Artefakte und Relikte.", statBonus: "speed" },
-        miner: { name: "Bergbauer", icon: "⛏️", description: "Spezialisiert auf die Gewinnung von Diamanten.", statBonus: "resource"},
+        fighter: { name: "Kämpfer", icon: "⚔️", description: "Spezialist für gefährliche Monsterjagd-Quests.",baseBonus: 0.20, levelScaling: 0.02},
+        scout: { name: "Späher", icon: "🏹", description: "Findet schneller seltene Artefakte und Relikte.",baseBonus: 0.50, levelScaling: 0.03},
+        miner: { name: "Bergbauer", icon: "⛏️", description: "Spezialisiert auf die Gewinnung von Diamanten.", baseBonus: 0.20, levelScaling: 0.02},
     
     questPool: [
         { id: "monster_hunt_1", name: "Schleim-Plage beseitgen", duration: 300, requiredClass: "fighter", difficulty: 1, rewards: { guildXP: 50, mercXP: 100, smileys: 10000, diamonds: 2, gems: 0 } },
@@ -472,6 +472,15 @@ const GUILD_DATA = {
     ],
 }};
 
+const guildQuestData = {
+    locations: ["den Emoji-Wald", "die Pixel-Mine", "den Lach-Palast", "den Daten-Strom", "die Schatten-Ebene", "das Void-Portal", "den Gold-Tempel", "die Server-Farm"],
+    actions: ["säubern", "erkunden", "bewachen", "reparieren", "infiltrieren", "plündern", "verteidigen", "analysieren"],
+    classes: {
+        fighter: { name: "Kämpfer", icon: "⚔️", bonusText: "-20% Quest-Dauer" },
+        scout: { name: "Späher", icon: "🏹", bonusText: "+50% Gilden-XP" },
+        miner: { name: "Bergbauer", icon: "⛏️", bonusText: "+20% Diamanten/Gems" }
+    }
+};
 /* ======================================================= */
 /* 7. ARTEFAKTE (MUSEUM)                                   */
 /* ======================================================= */
