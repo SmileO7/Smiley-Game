@@ -1,31 +1,37 @@
-😄 Smiley Clicker: Das Endlose Idle-Abenteuer
-🕹️ Jetzt spielen!
-Die aktuelle Version des Smiley Clicker ist permanent online und spielbar unter: 👉 https://smileo7.github.io/Smiley-Game/
+😃 Smiley Clicker - Version 1.0
+Smiley Clicker ist nicht nur ein einfaches Klick-Spiel. Es ist ein komplexes Idle-RPG-Management-Spiel mit Multiplayer-Elementen, Wirtschaftssimulation, Minigames und einem tiefgehenden Skill-System.
 
-✅ Implementierte Kern-Features
-Das Spiel bietet bereits ein vollständiges Grundgerüst für dein Idle-Erlebnis:
+Starte mit einem einzigen Klick und baue ein Imperium auf, das Dimensionen überschreitet!
 
-Grundproduktion & Upgrades: Das Bau- und Upgrade-System ist implementiert und ermöglicht dir, die Smiley-Produktion zu automatisieren.
+✨ Features
+🏗️ Wirtschaft & Aufbau
+15+ Gebäudetypen: Vom einfachen Auto-Klicker über Smiley-Farmen bis hin zum Absoluten Schöpfer.
 
-Prestige-System (V1): Der Prestige Shop ist funktionsfähig. Du kannst durch das Erreichen von Meilensteinen "Smiley Points" verdienen und in dauerhafte globale Buffs investieren.
+Dynamische Preise: Kaufe 1x, 10x oder 100x Gebäude mit Hotkeys.
 
-Pet-System (V1): Das Freischalten von Pets über den Prestige-Baum ist implementiert, inklusive Aktivierung und Pet-Boni.
+Globales Prestige: Setze deinen Fortschritt zurück ("Urknall"), um Prestige-Punkte zu erhalten und mächtige permanente Boni im Skill-Tree freizuschalten.
 
-Diamanten-Mine (Side-Game): Die Mine ist freischaltbar und dient als neue Währungsebene. Die passive Diamanten-Produktion (DPS) und ein interaktives Minispiel sind implementiert.
+⛏️ Die Diamanten-Mine
+Minigame: Ein Grid-basiertes Grabungssystem (inspiriert von Minesweeper).
 
-Gilden-Freischaltung: Das Gilden-System ist im Prestige-Baum freigeschaltet (Vorbereitung für Prio 9).
+Werkzeuge: Nutze Spitzhacken, TNT und Bohrer.
 
-UI Standardisierung: Das Interface folgt bereits einem Standard-Design und Farbschema, um Übersichtlichkeit und Lesbarkeit zu gewährleisten.
+Loot: Finde Diamanten, Gold, Fossilien und seltene Artefakte für das Museum.
 
-Basis-Klicken: Die primäre Methode, um Smileys zu verdienen.
+Forschung: Verbessere deine Ausrüstung im Labor.
 
-🚧 Nächste große Schritte (Roadmap)
-Der aktuelle Fokus liegt auf der Erweiterung und Vertiefung des bestehenden Gameplays, um die Langzeit-Motivation zu steigern:
+⚔️ Gilden & Multiplayer (Firebase)
+Echtzeit-Chat: Kommuniziere mit anderen Spielern (Global & Gilde).
 
-Gilden-Kernmechanik (Prio 9): Implementierung der Gilden-Gründung und der ersten Gilden-Upgrades.
+Boss-Raids: Kämpfe gemeinsam mit deiner Gilde gegen riesige Bosse. HP werden in Echtzeit synchronisiert.
 
-Pet-Leveling: Implementierung des Level-Systems für Pets (anstelle des einfachen On/Off-Status).
+Söldner-System: Rekrutiere Helden (Fighter, Miner, Scout), sende sie auf Quests und spezialisiere sie über individuelle Talentbäume.
 
-Balancierung: Detailliertes Balancing des Spiels, insbesondere nach Einführung aller Features.
+Projekte: Spende Smileys für globale Gilden-Boni.
 
-Events & Zeitboni: Einführung von zeitbasierten Boni und spezifischen Events (Weihnachten, Ostern etc.).
+🐾 Begleiter & Sammelbares
+Pet System: Kaufe und levele Haustiere, die passive Boni geben (z.B. der Hund klickt automatisch).
+
+Kleiderschrank: Kaufe Skins für deinen Smiley (z.B. König, Glitch, Geist) mit Spezialeffekten.
+
+Schwarzmarkt (Gem Empire): Eine düstere Parallel-Wirtschaft mit "Corrupted Smileys" und mächtigen Einmal-Effekten.
