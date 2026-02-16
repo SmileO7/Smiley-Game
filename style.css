@@ -226,31 +226,47 @@ main {
 /* ======================================================= */
 
 #smiley_button {
-    background-color: var(--color-accent-blue);
-    border: 4px solid var(--color-primary-dark);
+    /* Button-Größe deutlich reduziert, damit er in die Spalte passt */
+    width: 180px;  
+    height: 180px;
+    background: rgba(0, 159, 253, 0.1);
+    border: 3px solid #009ffd;
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(0, 159, 253, 0.2);
     cursor: pointer;
-    display: block;
+    outline: none;
+    position: relative;
+    overflow: hidden; 
     
-    /* COMPACT SIZE (Wichtig!) */
-    height: 130px; 
-    width: 130px;
+    /* Perfekte Zentrierung */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Damit er nicht die ganze Breite einnimmt */
     margin: 10px auto; 
     
-    padding: 0;
-    transition: transform 0.05s ease, box-shadow 0.2s;
-    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 159, 253, 0.2);
+    transition: transform 0.1s ease;
+    user-select: none;
 }
 
-#smiley_button:active { transform: scale(0.95); }
-#smiley_button:hover { box-shadow: 0 0 30px rgba(0, 159, 253, 0.5); transform: scale(1.05); }
-#smiley_image { display: block; height: 100%; width: 100%; object-fit: cover; border-radius: 50%; }
+/* Für Emojis als Text */
+#smiley_button {
+    font-size: 80px; 
+    line-height: 1;
+}
 
-/* Animation beim Klicken */
-#smiley_button.anim-squish {
-    transform: scale(0.90);
-    transition: transform 0.05s ease-out;
+/* Für Skin-Bilder */
+#smiley_button img {
+    width: 70%;      
+    height: 70%;     
+    object-fit: contain; 
+    pointer-events: none;
+}
+
+/* Klick-Animation */
+#smiley_button:active {
+    transform: scale(0.95);
 }
 
 /* Linke Stats Box */
@@ -2057,3 +2073,68 @@ button:disabled, .boss-btn-cooldown {
     100% { transform: scale(1); filter: brightness(1); }
 }
 .floating-text.glitch { color: #d500f9; font-weight: bold;}
+
+/* Der Schwarzmarkt-Button im 3D-Look */
+.purple-btn {
+    background: #7c4dff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #4a148c; /* Dunklerer lila Schatten für 3D-Effekt */
+    transition: all 0.1s;
+    width: 100%;
+}
+
+.purple-btn:hover:not(:disabled) {
+    background: #9575cd;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 #4a148c;
+}
+
+.purple-btn:active:not(:disabled) {
+    transform: translateY(3px); /* Drückt den Button nach unten */
+    box-shadow: 0 1px 0 #4a148c;
+}
+
+.purple-btn:disabled {
+    background: #333;
+    color: #777;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Der Kaufen/Ausrüsten-Button im Kleiderschrank */
+.btn-buy-skin, .btn-equip-skin {
+    background: #2c3e50; /* Edles Dunkelblau/Grau */
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #1a252f;
+    transition: all 0.1s;
+    width: 100%;
+}
+
+.btn-buy-skin:hover:not(:disabled), .btn-equip-skin:hover:not(:disabled) {
+    background: #34495e;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 #1a252f;
+}
+
+.btn-buy-skin:active:not(:disabled), .btn-equip-skin:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #1a252f;
+}
+
+/* Spezial-Zustand für den aktuell aktiven Skin */
+.skin-card.active-skin {
+    border: 2px solid #009ffd !important;
+    background: rgba(0, 159, 253, 0.15) !important;
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.3);
+}

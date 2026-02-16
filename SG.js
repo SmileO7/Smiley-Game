@@ -5471,49 +5471,61 @@ class GuildSystem {
 }
 
     assignMercenaryToQuest(questId) {
-        const state = this.game.gameState; // KORRIGIERT
+        const state = this.game.gameState;
         
         if (!this.selectedMercenaryId) {
-            this.game.showNotification("Wähle erst einen Söldner aus!", "error"); // KORRIGIERT
+            this.game.showNotification("Wähle erst einen Söldner aus!", "error");
             return;
         }
+
         const merc = state.guildMercenaries.find(m => m.id === this.selectedMercenaryId);
         if (!merc || merc.status !== 'idle') {
-            this.game.showNotification("Dieser Söldner ist beschäftigt!", "error"); // KORRIGIERT
+            this.game.showNotification("Dieser Söldner ist beschäftigt!", "error");
             return;
         }
 
         const questIndex = state.guildAvailableQuests.findIndex(q => q.id === questId);
         if (questIndex === -1) return;
-        const quest = state.guildAvailableQuests[questIndex];
+        
+        // Quest-Objekt klonen, damit wir das Original in availableQuests nicht verändern
+        const quest = JSON.parse(JSON.stringify(state.guildAvailableQuests[questIndex]));
 
-        // KLASSEN-BONI ANWENDEN
-        if (merc.type === 'fighter') {
-            quest.duration = Math.floor(quest.baseDuration * 0.8);
-        }
-        if (merc.type === 'scout') {
-            quest.rewards.guildXP = Math.floor(quest.rewards.guildXP * 1.5);
-        }
-        if (merc.type === 'miner') {
-            if (quest.rewards.diamonds > 0) quest.rewards.diamonds += Math.max(1, Math.floor(quest.rewards.diamonds * 0.2));
-            if (quest.rewards.gems > 0) quest.rewards.gems += Math.max(1, Math.floor(quest.rewards.gems * 0.2));
+        // --- BONI ANWENDEN ---
+        if (quest.rewards) {
+            if (merc.type === 'fighter') {
+                // Nutze baseDuration falls vorhanden, sonst duration
+                const base = quest.baseDuration || quest.duration;
+                quest.duration = Math.floor(base * 0.8);
+            }
+            if (merc.type === 'scout') {
+                quest.rewards.guildXP = Math.floor((quest.rewards.guildXP || 0) * 1.5);
+            }
+            if (merc.type === 'miner') {
+                if (quest.rewards.diamonds > 0) quest.rewards.diamonds = Math.ceil(quest.rewards.diamonds * 1.2);
+                if (quest.rewards.gems > 0) quest.rewards.gems = Math.ceil(quest.rewards.gems * 1.2);
+            }
         }
 
+        // Quest-Metadaten setzen
         quest.assignedMerc = merc.id;
         quest.startTime = Date.now();
         quest.notified = false;
         
+        // Söldner-Status updaten
         merc.status = 'busy';
         merc.questId = quest.id;
 
+        // Listen-Management
         if (!state.guildActiveQuests) state.guildActiveQuests = [];
         state.guildActiveQuests.push(quest);
         state.guildAvailableQuests.splice(questIndex, 1);
 
         this.selectedMercenaryId = null; 
-        if (typeof this.renderGuildsContent === 'function') this.renderGuildsContent();
-        this.game.speichereSpiel(); // KORRIGIERT
-        this.game.showNotification(`${merc.name} ist aufgebrochen!`, "success"); // KORRIGIERT
+        
+        // UI und Speicher
+        this.renderGuildsContent();
+        this.game.speichereSpiel();
+        this.game.showNotification(`⚔️ ${merc.name} ist aufgebrochen!`, "success");
     }
 
     claimQuest(questId) {
@@ -5934,42 +5946,48 @@ class GuildSystem {
                 const isBusy = merc.status === 'busy';
                 const isRecovering = merc.status === 'recovering';
                 
+                // Spezialisierungs-Info
+                let specIcon = "⚔️";
+                let specName = "Fighter";
+                let specBonus = "🛡️ -50% Risiko";
+                
+                if (merc.type === 'miner') {
+                    specIcon = "⛏️";
+                    specName = "Miner";
+                    specBonus = "💎 +50% Beute";
+                } else if (merc.type === 'scout') {
+                    specIcon = "🏹";
+                    specName = "Scout";
+                    specBonus = "🚩 x2 Gilden-XP";
+                }
+
                 let statusText = isBusy ? 'Unterwegs' : 'Bereit';
                 let statusColor = isBusy ? '#ff5252' : '#aaa';
                 let statusIcon = isBusy ? '⏳' : '💤';
 
                 if (isRecovering) {
                     const remainingMin = Math.ceil(((merc.recoveryUntil || 0) - Date.now()) / 60000);
-                    if (remainingMin > 0) {
-                        statusText = `Verletzt (${remainingMin}m)`;
-                        statusColor = '#ff4444';
-                        statusIcon = '🩹';
-                    } else {
-                        merc.status = 'idle';
-                        statusText = 'Bereit';
-                        statusColor = '#aaa';
-                        statusIcon = '💤';
-                    }
+                    statusText = remainingMin > 0 ? `Verletzt (${remainingMin}m)` : 'Bereit';
+                    statusColor = remainingMin > 0 ? '#ff4444' : '#aaa';
+                    statusIcon = remainingMin > 0 ? '🩹' : '💤';
+                    if (remainingMin <= 0) merc.status = 'idle';
                 }
 
-                let typeIcon = merc.type === 'scout' ? '🏹' : (merc.type === 'miner' ? '⛏️' : '⚔️');
                 const borderColor = isSelected ? '#009ffd' : '#333';
                 const bgColor = isSelected ? 'rgba(0, 159, 253, 0.1)' : 'rgba(255,255,255,0.03)';
-                const isClickable = !isBusy && !isRecovering;
 
                 mercHtml += `
                     <div class="mercenary-card ${isSelected ? 'active-merc' : ''}" data-id="${merc.id}" 
-                         style="min-width:130px; background:${bgColor}; border:2px solid ${borderColor}; padding:15px; border-radius:12px; cursor:${isClickable ? 'pointer' : 'default'}; text-align:center;">
-                        <div style="font-size:2.5em; margin-bottom:5px;">${typeIcon}</div>
-                        <div style="font-weight:bold;">${merc.name}</div>
-                        <div style="font-size:0.8em; color:#FFD700;">Level ${merc.level}</div>
-                        <div style="font-size:0.75em; color:${statusColor}; font-weight:bold; margin-top:3px;">${statusIcon} ${statusText}</div>
+                         style="min-width:140px; background:${bgColor}; border:2px solid ${borderColor}; padding:12px; border-radius:12px; cursor:${!isBusy && !isRecovering ? 'pointer' : 'default'}; text-align:center; transition: all 0.2s;">
+                        <div style="font-size:2.2em; margin-bottom:5px;">${specIcon}</div>
+                        <div style="font-weight:bold; font-size:0.9em;">${merc.name}</div>
+                        <div style="font-size:0.7em; color:#009ffd; font-weight:bold; margin-top:2px;">${specName}</div>
+                        <div style="font-size:0.65em; color:#4CAF50; background:rgba(0,0,0,0.3); padding:2px 4px; border-radius:4px; margin-top:4px;">${specBonus}</div>
+                        <div style="font-size:0.75rem; color:#FFD700; margin-top:5px;">Lvl ${merc.level}</div>
+                        <div style="font-size:0.7em; color:${statusColor}; font-weight:bold; margin-top:3px;">${statusIcon} ${statusText}</div>
                         
-                        <div class="xp-bar-outer" style="background:#222; height:18px; margin-top:10px; border-radius:9px; position:relative; overflow:hidden; border:1px solid #444;">
-                            <div style="width:${(merc.xp / (merc.maxXp || merc.xpNeeded)) * 100}%; height:100%; background:linear-gradient(90deg, #4CAF50, #8BC34A); transition: width 0.3s ease;"></div>
-                            <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:bold; text-shadow:1px 1px 2px black;">
-                                ${Math.floor(merc.xp)} / ${merc.maxXp || merc.xpNeeded}
-                            </div>
+                        <div class="xp-bar-outer" style="background:#222; height:10px; margin-top:8px; border-radius:5px; overflow:hidden; border:1px solid #444;">
+                            <div style="width:${(merc.xp / (merc.maxXp || 100)) * 100}%; height:100%; background:linear-gradient(90deg, #4CAF50, #8BC34A);"></div>
                         </div>
                     </div>`;
             });
