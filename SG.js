@@ -1137,7 +1137,7 @@ class SmileyGame {
             // Kleines visuelles Feedback
             if (e) {
                 // Zeigt "+1 👾" in Neon-Lila an der Mausposition
-                this.showFloatingText("+1 👾", e.clientX, e.clientY, "#d500f9");
+                this.spawnFloatingText("+1 👾", 'glitch');
             }
             this.showNotification("SYSTEM GLITCH! Corrupted Smiley gefunden.", "success");
         }
@@ -5605,7 +5605,7 @@ class GuildSystem {
         const bossRef = firebase.database().ref(`guilds/${safeGuildName}/boss`);
 
         const level = state.guildBossLevel || 1;
-        const hp = Math.floor(5000000 * Math.pow(2.0, level - 1));
+        const hp = Math.floor(1000000000 * Math.pow(3.0, level - 1));
 
         // Wir informieren den Server: "Der Bosskampf hat JETZT begonnen!"
         bossRef.update({
@@ -5634,42 +5634,50 @@ class GuildSystem {
                 this.endGuildBoss(false);
             }
         }, 1000);
+        this.game.chatSystem.sendGuildSystemMessage(`${state.username} hat den Gilden-Boss (Lv. ${level}) herausgefordert! ⚔️`);
     }
 
     clickGuildBoss(e) {
         const state = this.game.gameState;
         if (!state.guildBossFighting || !state.guildName) return;
 
-        this.game.triggerShake('guilds-content');
-
+        const bossIcon = document.getElementById('guild-boss-clicker');
+        
         // --- SCHADEN BERECHNEN ---
         let rawClick = this.game.getClickStrength();
-        let damage = Math.ceil(rawClick * 0.0005);
-
+        let damage = Math.ceil(rawClick * 0.0001); 
         let mercBonus = 0;
         if (state.guildMercenaries) {
             state.guildMercenaries.forEach(merc => {
-                if (merc.status === 'idle') {
-                    // Söldner geben +0.1 % deines Schadens pro Level (statt 5 %)
-                    mercBonus += (merc.level * 0.001 * rawClick);
-                }
+                if (merc.status === 'idle') mercBonus += (merc.level * 0.001 * rawClick);
             });
         }
         damage += mercBonus;
         if (damage < 1) damage = 1;
 
+        let isCrit = false;
         if (state.critChance > 0 && Math.random() < state.critChance) {
             damage *= state.critDamageMult;
+            isCrit = true;
         }
 
-        // Lokales UI sofort aktualisieren, damit es sich schnell anfühlt
-        if (e) this.game.spawnFloatingText(e, damage, 'boss-damage');
+        // --- VISUELLE EFFEKTE ---
+        if (bossIcon) {
+            // Alte Klassen entfernen, um Animation neu zu triggern
+            bossIcon.classList.remove('boss-hit-shake', 'boss-crit-shake');
+            void bossIcon.offsetWidth; // Trigger Reflow
+            bossIcon.classList.add(isCrit ? 'boss-crit-shake' : 'boss-hit-shake');
+        }
 
-        // --- SCHADEN AN SERVER SENDEN ---
+        // Floating Text (Nutzt Gildenfarben: Gold für Crit, Rot für Normal)
+        if (e) {
+            this.game.spawnFloatingText(e, damage, isCrit ? 'boss-damage crit' : 'boss-damage');
+        }
+
+        // --- SERVER SYNC ---
         const safeGuildName = state.guildName.replace(/\s+/g, '_');
         const bossHpRef = firebase.database().ref(`guilds/${safeGuildName}/boss/hp`);
 
-        // Transaktion: Verhindert, dass Spieler sich gegenseitig den Schaden überschreiben
         bossHpRef.transaction((currentHp) => {
             if (currentHp === null) return currentHp;
             const newHp = currentHp - damage;
@@ -5679,11 +5687,7 @@ class GuildSystem {
                 const finalHp = result.snapshot.val();
                 state.guildBossHP = finalHp;
                 this.updateBossUI();
-
-                // Wenn der Boss hierdurch stirbt, beende den Kampf
-                if (finalHp <= 0) {
-                    this.endGuildBoss(true);
-                }
+                if (finalHp <= 0) this.endGuildBoss(true);
             }
         });
     }
@@ -5709,13 +5713,13 @@ class GuildSystem {
                 lastDefeatTime: firebase.database.ServerValue.TIMESTAMP
             });
 
-            this.game.showNotification(`BOSS BESIEGT! +${reward} 💎`, 'success');
+            this.game.chatSystem.sendGuildSystemMessage(`🏆 DER BOSS WURDE BESIEGT! Die Gilde feiert einen glorreichen Sieg!`);
         } else {
             // Dem Server sagen, dass die Zeit um ist
             bossRef.update({
                 isFighting: false
             });
-            this.game.showNotification("Zeit abgelaufen! Der Boss ist entkommen.", 'error');
+            this.game.chatSystem.sendGuildSystemMessage(`💀 Der Boss war zu stark... Wir müssen trainieren und es erneut versuchen.`);
         }
         
         this.game.updateUI();
@@ -6140,6 +6144,10 @@ class GuildSystem {
 
         if (!state.guildName || typeof firebase === 'undefined') return;
 
+        if (amount >= 1000000000) {
+        this.game.chatSystem.sendGuildSystemMessage(`💰 Großzügige Spende: ${state.username} hat ${this.game.formatNumber(amount)} Smileys investiert!`);
+        }
+
         state.aktuelle_smileys -= amount;
         this.game.speichereSpiel();
 
@@ -6468,7 +6476,7 @@ class ChatSystem {
         this.chatRef = firebase.database().ref(path);
         this.chatRef.limitToLast(20).on('child_added', (snapshot) => {
             const data = snapshot.val();
-            if(data && data.text) this.displayChatMessage(data.user, data.text, type);
+            if(data && data.text) this.displayChatMessage(data.user || data.sender, data.text, type, data.isSystem);
         });
     }
 
@@ -6491,7 +6499,7 @@ class ChatSystem {
         input.value = "";
     }
 
-    displayChatMessage(user, text, type) {
+    displayChatMessage(user, text, type, isSystem = false) {
         const container = document.getElementById('chat-messages');
         if (!container) return;
 
@@ -6499,7 +6507,14 @@ class ChatSystem {
         msgDiv.className = `chat-msg ${type}`;
         const isMe = user === this.game.gameState.playerName;
         
-        msgDiv.innerHTML = `<strong style="color:${isMe ? '#009ffd' : '#aaa'}">${user}:</strong> ${text}`;
+        if (isSystem || user === "SYSTEM") {
+            // Spezielles Styling für System-Nachrichten
+            msgDiv.style.cssText = "color: #009ffd; font-style: italic; font-size: 0.85em; margin: 5px 0; border-left: 3px solid #009ffd; padding-left: 8px; background: rgba(0, 159, 253, 0.05); border-radius: 0 4px 4px 0;";
+            msgDiv.innerText = `📢 ${text}`;
+        } else {
+            msgDiv.innerHTML = `<strong style="color:${isMe ? '#009ffd' : '#aaa'}">${user}:</strong> ${text}`;
+        }
+
         container.appendChild(msgDiv);
         container.scrollTop = container.scrollHeight;
     }
@@ -6706,8 +6721,22 @@ class ChatSystem {
             btnList.classList.remove('active');
         }
     }
-}
 
+    sendGuildSystemMessage(text) {
+        const state = this.game.gameState;
+        if (!state.guildName || typeof firebase === 'undefined') return;
+
+        const safeGuildName = state.guildName.replace(/\s+/g, '_');
+        const chatRef = firebase.database().ref(`guilds/${safeGuildName}/chat`);
+
+        chatRef.push({
+            sender: "SYSTEM",
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            isSystem: true // Flag für spezielles Styling
+        });
+    }
+}
 // ================================================================================================================
 // === SUB-SYSTEM: PET SYSTEM ===
 // ================================================================================================================

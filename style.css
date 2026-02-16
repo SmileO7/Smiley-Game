@@ -2033,3 +2033,27 @@ button:disabled, .boss-btn-cooldown {
     box-shadow: 0 0 20px rgba(224, 64, 251, 0.8) !important;
 }
 
+/* Animation für normale Treffer am Boss */
+.boss-hit-shake {
+    animation: bossShake 0.15s ease-in-out;
+}
+
+/* Animation für Kritische Treffer (Heftiger) */
+.boss-crit-shake {
+    animation: bossCrit 0.25s ease-in-out;
+}
+
+@keyframes bossShake {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(0.95) rotate(2deg); filter: brightness(1.5) sepia(1) saturate(5) hue-rotate(-50deg); } /* Kurzes Aufleuchten in Rot-Orange */
+    100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+@keyframes bossCrit {
+    0% { transform: scale(1); }
+    25% { transform: scale(0.9) translate(-10px, 5px) rotate(-5deg); filter: brightness(2) contrast(2); }
+    50% { transform: scale(1.1) translate(10px, -5px) rotate(5deg); }
+    75% { transform: scale(0.95) translate(-5px, -5px); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+.floating-text.glitch { color: #d500f9; font-weight: bold;}
