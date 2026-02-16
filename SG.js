@@ -493,6 +493,7 @@ class SmileyGame {
         if (Array.isArray(saveData.buildingCounts)) target.buildingCounts = saveData.buildingCounts;
         if (Array.isArray(saveData.researchStatus)) target.researchStatus = saveData.researchStatus;
         if (Array.isArray(saveData.prestigeUpgradeStatus)) target.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
+        if (Array.isArray(saveData.achievementsUnlocked)) target.achievementsUnlocked = saveData.achievementsUnlocked;
         
         // Prestige
         target.prestigeResets = Number(saveData.prestigeResets) || 0;
@@ -3016,39 +3017,34 @@ getArtifactIcon(id) {
         upgrades.forEach(u => {
             const currentLvl = this.game.gameState.mineResearch[u.id] || 0;
             const cost = Math.floor(u.baseCost * Math.pow(1.5, currentLvl));
-            const isMaxed = currentLvl >= u.max;
+            
+            // WICHTIG: Hier die harte Prüfung auf das Max-Level aus dem Objekt
+            const isMaxed = currentLvl >= u.max; 
             const canAfford = this.game.gameState.fossilien >= cost;
             
-            // Effekt-Beschreibung dynamisch
-            let effectInfo = "";
-            if (u.id === 'durable_picks') effectInfo = `Aktuell: ${(currentLvl*10)}%`;
-            if (u.id === 'fossil_scanner') effectInfo = `Aktuell: +${(currentLvl*2)}% Chance`;
-            if (u.id === 'explosive_yield') effectInfo = `Aktuell: Stufe ${currentLvl}`;
+            // ... (Dein restlicher HTML Code für effectInfo und div)
 
-            const div = document.createElement('div');
-            div.className = `info-upgrade-item ${isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked')}`;
-            div.innerHTML = `
-                <div style="font-size:2em; margin-bottom:5px;">${u.icon}</div>
-                <h4>${u.name} (Lv. ${currentLvl}/${u.max})</h4>
-                <p style="font-size:0.8em; min-height:30px;">${u.desc}</p>
-                <div style="font-size:0.75em; color:#009ffd; margin-bottom:5px;">${effectInfo}</div>
-                <button class="btn-buy-research" ${isMaxed || !canAfford ? 'disabled' : ''} 
-                        style="width:100%; margin-top:5px; background:${canAfford?'var(--color-primary)':'#444'}">
-                    ${isMaxed ? 'MAX' : `Forschen (${cost} 🦖)`}
-                </button>
-            `;
-            
-            div.querySelector('button').onclick = () => {
+            const btn = div.querySelector('button');
+            if (btn) {
+                // Button nur klickbar machen, wenn nicht maxed UND genug Fossilien
                 if (!isMaxed && canAfford) {
-                    this.game.gameState.fossilien -= cost;
-                    if(!this.game.gameState.mineResearch[u.id]) this.game.gameState.mineResearch[u.id] = 0;
-                    this.game.gameState.mineResearch[u.id]++;
-                    this.game.playBuySound();
-                    this.game.showNotification("Forschung abgeschlossen! 🧪", "success");
-                    this.renderDiamondMineContent(); // Refresh für Drop-Chancen Update
-                    this.game.speichereSpiel();
+                    btn.onclick = () => {
+                        // Doppelte Sicherheitsprüfung im Klick-Event
+                        const freshLvl = this.game.gameState.mineResearch[u.id] || 0;
+                        if (freshLvl < u.max && this.game.gameState.fossilien >= cost) {
+                            this.game.gameState.fossilien -= cost;
+                            this.game.gameState.mineResearch[u.id] = freshLvl + 1;
+                            
+                            this.game.playBuySound();
+                            this.game.showNotification("Forschung verbessert! 🧪", "success");
+                            this.renderDiamondMineContent(); 
+                            this.game.speichereSpiel();
+                        }
+                    };
+                } else {
+                    btn.disabled = true; // Button wirklich im DOM deaktivieren
                 }
-            };
+            }
             grid.appendChild(div);
         });
     }
@@ -3065,30 +3061,44 @@ getArtifactIcon(id) {
 
         let shopHtml = '';
         diamondShopUpgrades.forEach((upgrade, index) => {
-            const count = this.gameState.diamondShopPurchases[index] || 0;
-            const isPurchased = count > 0;
+            const count = this.game.gameState.diamondShopPurchases[upgrade.id] || 0;
             const isMaxed = upgrade.maxPurchases && count >= upgrade.maxPurchases;
-            const canAfford = this.gameState.diamanten >= upgrade.cost;
-            const stateClass = isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked');
-            const buttonText = isMaxed ? 'Gekauft' : `Kaufen (${this.formatNumber(upgrade.cost)} 💎)`;
+            const canAfford = this.game.gameState.diamanten >= upgrade.cost;
+            
+            const div = document.createElement('div');
+            div.className = `info-upgrade-item ${isMaxed ? 'purchased' : (canAfford ? 'available' : 'locked')}`;
+            
+            // --- Einheits-Design für die Buttons ---
+            const buttonStyle = isMaxed 
+                ? "background:#444; color:#888; border:none; cursor:default;" 
+                : (canAfford 
+                    ? "background:#009ffd; color:#fff; border:none; cursor:pointer; box-shadow: 0 4px 0 #007bbd;" 
+                    : "background:#333; color:#777; border:none; cursor:not-allowed;");
 
-            shopHtml += `
-                <div class="info-upgrade-item ${stateClass}" data-id="${upgrade.id}">
-                    <h4>${upgrade.name}</h4>
-                    <p>${upgrade.description}</p>
-                    <p>Status: ${isMaxed ? 'Permanent' : 'Verfügbar'}</p>
-                    <button class="btn-buy-diamond" data-id="${upgrade.id}" ${isMaxed || !canAfford ? 'disabled' : ''}>
-                        ${buttonText}
-                    </button>
-                </div>
+            div.innerHTML = `
+                <div style="font-size:2em; margin-bottom:5px;">💎</div>
+                <h4 style="margin:5px 0; color:#fff;">${upgrade.name}</h4>
+                <p style="font-size:0.8em; min-height:40px; color:#ccc;">${upgrade.description}</p>
+                <div style="font-size:0.75em; color:#009ffd; margin-bottom:10px;">Status: ${isMaxed ? 'Permanent aktiv' : 'Verfügbar'}</div>
+                
+                <button class="btn-buy-diamond" data-id="${upgrade.id}" ${isMaxed || !canAfford ? 'disabled' : ''} 
+                        style="width:100%; padding:10px; border-radius:6px; font-weight:bold; text-transform:uppercase; font-size:0.85em; transition:all 0.1s; ${buttonStyle}">
+                    ${isMaxed ? 'BEREITS GEKAUFT' : `Kaufen (${this.game.formatNumber(upgrade.cost)} 💎)`}
+                </button>
             `;
-        });
-        innerGrid.innerHTML = shopHtml;
-        innerGrid.querySelectorAll('.btn-buy-diamond').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const id = parseInt(e.target.dataset.id, 10);
-                this.buyDiamondShopUpgrade(id);
-            });
+            
+            const btn = div.querySelector('button');
+            if (btn && !isMaxed && canAfford) {
+                // Klick-Effekt (nach unten drücken)
+                btn.onmousedown = () => { btn.style.transform = "translateY(2px)"; btn.style.boxShadow = "none"; };
+                btn.onmouseup = () => { btn.style.transform = "translateY(0)"; btn.style.boxShadow = "0 4px 0 #007bbd"; };
+                
+                btn.onclick = () => {
+                    this.game.buyDiamondShopUpgrade(upgrade.id);
+                    this.renderDiamondMineContent(); // Sofortiger Refresh des Shops
+                };
+            }
+            innerGrid.appendChild(div);
         });
     }
 
@@ -6876,6 +6886,16 @@ class PetSystem {
                     ${equipHtml}
                 </div>
             `;
+
+            const buyBtn = petDiv.querySelector('.btn-buy-pet');
+            if (buyBtn) {
+                buyBtn.onclick = () => this.levelUpPet(pet.id);
+            }
+
+            const equipBtn = petDiv.querySelector('.btn-pet-activate');
+            if (equipBtn) {
+                equipBtn.onclick = () => this.activatePet(pet.id);
+            }
             petGrid.appendChild(petDiv);
         });
     }
