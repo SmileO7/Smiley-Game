@@ -267,6 +267,17 @@
 <div id="prestige_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Prestige-Skill-Liste</h2><div id="info_prestige_container"></div><div class="modal-buttons"><button id="close_prestige_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="pets_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>🐶 Pet-Infos</h2><div id="info_pets_container" class="info-grid"></div><div class="modal-buttons"><button id="close_pets_info_button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="merc-talent-modal" class="modal-overlay" style="display:none; z-index: 2000;">
+    <div class="modal-content" style="max-width: 500px; background: #0a0a0a; border: 2px solid #e040fb; box-shadow: 0 0 20px rgba(224, 64, 251, 0.4);">
+        <h2 id="talent-modal-title" style="text-align:center; color:#e040fb; margin-top:0;">Wähle ein Talent</h2>
+        <p id="talent-modal-desc" style="text-align:center; color:#aaa; font-size:0.9em;"></p>
+        
+        <div id="talent-options-container" style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+            </div>
+
+        <button onclick="document.getElementById('merc-talent-modal').style.display='none'" class="btn-cancel" style="width:100%;">Später entscheiden</button>
+    </div>
+</div>
 
 <div id="offline-modal" class="modal" style="display: none; align-items: center; justify-content: center;">
     <div class="modal-content" style="text-align: center; border: 2px solid #FFD700; max-width: 400px;">

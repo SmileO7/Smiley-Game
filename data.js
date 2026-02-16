@@ -509,3 +509,39 @@ const guildUpgradesData =
   'guild_mercs': {
         name: "Elite-Ausbildung", desc: "Söldner erhalten +2% mehr XP.", baseCost: 5000000000, costFactor: 2.0, bonusPerLevel: 0.02, icon: "⚔️" },
 };
+
+// =========================================================
+// GLOBALER ZUGRIFF: SÖLDNER TALENTE
+// =========================================================
+const MERCENARY_TALENTS = {
+    fighter: {
+        level5: [
+            { id: 'berserker', name: 'Berserker', icon: '🪓', desc: 'Missionszeit -15%', value: 0.85, type: 'time' },
+            { id: 'bodyguard', name: 'Leibwächter', icon: '🛡️', desc: 'Risiko -25%', value: 0.75, type: 'risk' }
+        ],
+        level10: [
+            { id: 'commander', name: 'Kommandant', icon: '🚩', desc: 'Gilden-XP +50%', value: 1.5, type: 'gxp' },
+            { id: 'veteran', name: 'Veteran', icon: '🎖️', desc: 'Söldner-XP +30%', value: 1.3, type: 'mxp' }
+        ]
+    },
+    miner: {
+        level5: [
+            { id: 'geologist', name: 'Geologe', icon: '🔍', desc: 'Smaragd-Chance x2', value: 2.0, type: 'emerald' },
+            { id: 'blaster', name: 'Sprengmeister', icon: '🧨', desc: 'Findet öfter TNT/Bohrer', value: 1.5, type: 'tools' }
+        ],
+        level10: [
+            { id: 'deep_miner', name: 'Tiefengräber', icon: '🚇', desc: 'Diamanten +50%', value: 1.5, type: 'diamonds' },
+            { id: 'corrupted_miner', name: 'Void-Gräber', icon: '👾', desc: 'Corrupted Gems +30%', value: 1.3, type: 'gems' }
+        ]
+    },
+    scout: {
+        level5: [
+            { id: 'runner', name: 'Eilbote', icon: '🏃', desc: 'Missionszeit -20%', value: 0.8, type: 'time' },
+            { id: 'merchant', name: 'Händler', icon: '💰', desc: 'Smileys +40%', value: 1.4, type: 'gold' }
+        ],
+        level10: [
+            { id: 'diplomat', name: 'Diplomat', icon: '🤝', desc: 'Gilden-XP x2', value: 2.0, type: 'gxp' },
+            { id: 'treasure_hunter', name: 'Schatzsucher', icon: '🗺️', desc: 'Höhere Item-Chance', value: 1.25, type: 'items' }
+        ]
+    }
+};

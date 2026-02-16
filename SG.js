@@ -218,6 +218,7 @@ class SmileyGame {
     startIntervals() {
     // 1. Der Haupt-Loop für SPS (jede Sekunde)
     setInterval(() => {
+        this.sanityCheck(); 
         this.addSmileys(this.gameState.totalSPS);
 
         // --- AUTO-HACKEN REGENERATION ---
@@ -355,6 +356,8 @@ class SmileyGame {
         let source = this.gameState;
 
         const saveData = {
+
+            version: "1.0.0",
             // --- Basis Währungen ---
             aktuelle_smileys: source.aktuelle_smileys || 0,
             lifetime_smileys: source.lifetime_smileys || 0,
@@ -551,6 +554,12 @@ class SmileyGame {
 
         // Skin sofort anwenden
         this.skinSystem.updateSmileyAppearance()
+
+        if (!target.version) {
+            console.log("⚠️ Alter Spielstand erkannt (Pre-1.0). Führe Migration durch...");
+            target.version = "1.0";
+            // Hier könnten wir später fehlende Arrays auffüllen
+        }
 
         console.log("📥 Daten erfolgreich in GameState übernommen.");
         this.updateUI();
@@ -4665,6 +4674,25 @@ initChat() {
      this.chatSystem.initChat();
 }
 
+    // Prüft alle wichtigen Zahlen und repariert sie notfalls
+    sanityCheck() {
+        const s = this.gameState;
+        
+        // Währungen prüfen
+        if (isNaN(s.aktuelle_smileys) || s.aktuelle_smileys < 0) s.aktuelle_smileys = 0;
+        if (isNaN(s.diamanten) || s.diamanten < 0) s.diamanten = 0;
+        if (isNaN(s.gems) || s.gems < 0) s.gems = 0;
+        if (isNaN(s.totalSPS)) s.totalSPS = 0;
+
+        // Söldner prüfen
+        if (s.guildMercenaries) {
+            s.guildMercenaries.forEach(m => {
+                if (isNaN(m.level)) m.level = 1;
+                if (isNaN(m.xp)) m.xp = 0;
+            });
+        }
+    }
+
 }
 
 // ================================================================================================================
@@ -5291,7 +5319,7 @@ class GuildSystem {
         const state = this.game.gameState;
         // Kosten: 1 Mrd * Anzahl Söldner
         const cost = 1000000000 * (state.guildMercenaries.length + 1);
-        
+       
         if (state.aktuelle_smileys < cost) {
             this.game.showNotification("❌ Nicht genug Smileys zum Anheuern!", "error");
             return;
@@ -5304,8 +5332,8 @@ class GuildSystem {
         state.aktuelle_smileys -= cost;
 
         const names = ["Geralt", "Xena", "Arthur", "Merlin", "Robin", "Buffy", "Conan", "Viking"];
-        const types = ['scout', 'miner', 'fighter']; // Scout=SmileyBonus, Miner=DiaBonus, Fighter=Schneller
-        
+        const types = ['scout', 'miner', 'fighter']; 
+       
         const newMerc = {
             id: 'merc_' + Date.now(),
             name: names[Math.floor(Math.random() * names.length)],
@@ -5314,8 +5342,15 @@ class GuildSystem {
             maxXp: 100,
             type: types[Math.floor(Math.random() * types.length)],
             status: 'idle',
-            questId: null
+            questId: null,
+            talents: {
+                availablePoints: 0,
+                spentPoints: 0,
+                choices: {}
+            }
         };
+        
+        // HIER WAR DER CODE - JETZT GELÖSCHT!
 
         state.guildMercenaries.push(newMerc);
         this.game.showNotification("⚔️ Neuer Söldner angeheuert!", "success");
@@ -5427,48 +5462,57 @@ class GuildSystem {
     }
 
     completeQuest(quest) {
-    const state = this.game.gameState;
-    const merc = state.guildMercenaries.find(m => m.id === quest.assignedMerc);
-    if (!merc) return;
+        const state = this.game.gameState;
+        const merc = state.guildMercenaries.find(m => m.id === quest.assignedMerc);
+        if (!merc) return;
 
-    // 1. Level-Bonus berechnen (Risiko-Reduktion)
-    // Wir holen uns das Scaling aus der data.js oder nutzen 2% als Fallback
-    const classData = guildQuestData.classes[merc.type] || { levelScaling: 0.02 };
-    const levelRiskReduction = (merc.level - 1) * classData.levelScaling;
-    
-    // Finales Risiko: Basis-Risiko der Quest minus Level-Bonus
-    const finalRisk = Math.max(0.01, quest.failRisk - levelRiskReduction); 
-
-    const failRoll = Math.random();
-    
-    if (failRoll < finalRisk) {
-        // --- FEHLSCHLAG: Verletzung ---
-        merc.status = 'recovering';
-        merc.recoveryUntil = Date.now() + (1000 * 60 * 15); // 15 Min Pause
-        this.game.showNotification(`${merc.name} wurde verletzt! Risiko war ${Math.round(finalRisk * 100)}%`, "error");
-    } else {
-        // --- ERFOLG: Belohnungen & XP ---
-        this.applyQuestRewards(quest.rewards);
-        
-        // Söldner-XP verarbeiten
-        merc.xp = (merc.xp || 0) + quest.rewards.mercXP;
-        merc.xpNeeded = merc.xpNeeded || 100;
-
-        if (merc.xp >= merc.xpNeeded) {
-            merc.level = (merc.level || 1) + 1;
-            merc.xp = 0;
-            merc.xpNeeded = Math.floor(merc.xpNeeded * 1.5);
-            this.game.showNotification(`LEVEL UP! ${merc.name} ist nun Level ${merc.level}!`, "success");
+        // --- MIGRATIONS-CHECK (Falls alte Söldner geladen werden) ---
+        if (!merc.talents) {
+            merc.talents = { spentPoints: 0, choices: {}, availablePoints: 0 };
         }
-        
-        merc.status = 'idle';
-        this.game.showNotification(`${merc.name} war erfolgreich!`, "success");
-    }
 
-    state.guildActiveQuests = state.guildActiveQuests.filter(q => q.id !== quest.id);
-    this.game.speichereSpiel();
-    this.renderGuildsContent();
-}
+        const classData = guildQuestData.classes[merc.type] || { levelScaling: 0.02 };
+        const levelRiskReduction = (merc.level - 1) * classData.levelScaling;
+        const finalRisk = Math.max(0.01, quest.failRisk - levelRiskReduction); 
+
+        const failRoll = Math.random();
+        
+        if (failRoll < finalRisk) {
+            merc.status = 'recovering';
+            merc.recoveryUntil = Date.now() + (1000 * 60 * 15);
+            this.game.showNotification(`${merc.name} wurde verletzt! Risiko war ${Math.round(finalRisk * 100)}%`, "error");
+        } else {
+            this.applyQuestRewards(quest.rewards);
+            
+            merc.xp = (merc.xp || 0) + quest.rewards.mercXP;
+            merc.xpNeeded = merc.xpNeeded || 100;
+
+            if (merc.xp >= merc.xpNeeded) {
+                merc.level = (merc.level || 1) + 1;
+                merc.xp = 0;
+                merc.xpNeeded = Math.floor(merc.xpNeeded * 1.5);
+                
+                // ====================================================
+                // 🌟 NEU: TALENTPUNKT-CHECK (Alle 5 Level)
+                // ====================================================
+                if (merc.level % 5 === 0) {
+                    merc.talents.availablePoints = (merc.talents.availablePoints || 0) + 1;
+                    this.game.showNotification(`🌟 Talentpunkt für ${merc.name}!`, "success");
+                    this.game.playLevelUpSound(); // Falls Sound vorhanden
+                }
+                // ====================================================
+
+                this.game.showNotification(`LEVEL UP! ${merc.name} ist nun Level ${merc.level}!`, "success");
+            }
+            
+            merc.status = 'idle';
+            this.game.showNotification(`${merc.name} war erfolgreich!`, "success");
+        }
+
+        state.guildActiveQuests = state.guildActiveQuests.filter(q => q.id !== quest.id);
+        this.game.speichereSpiel();
+        this.renderGuildsContent();
+    }
 
     assignMercenaryToQuest(questId) {
         const state = this.game.gameState;
@@ -5487,22 +5531,48 @@ class GuildSystem {
         const questIndex = state.guildAvailableQuests.findIndex(q => q.id === questId);
         if (questIndex === -1) return;
         
-        // Quest-Objekt klonen, damit wir das Original in availableQuests nicht verändern
+        // Quest-Objekt klonen
         const quest = JSON.parse(JSON.stringify(state.guildAvailableQuests[questIndex]));
 
-        // --- BONI ANWENDEN ---
+        // --- BONI ANWENDEN (KLASSE + TALENTE) ---
         if (quest.rewards) {
-            if (merc.type === 'fighter') {
-                // Nutze baseDuration falls vorhanden, sonst duration
-                const base = quest.baseDuration || quest.duration;
-                quest.duration = Math.floor(base * 0.8);
+            // 1. ZEIT-BERECHNUNG
+            let timeMult = 1.0;
+            if (merc.type === 'fighter') timeMult *= 0.8; // Basis: Fighter sind 20% schneller
+            // Talent-Check (z.B. Berserker oder Eilbote)
+            timeMult *= this.getMercenaryTalentBonus(merc, 'time');
+            
+            const baseDuration = quest.baseDuration || quest.duration;
+            quest.duration = Math.floor(baseDuration * timeMult);
+
+            // 2. GILDEN-XP
+            let gxpMult = 1.0;
+            if (merc.type === 'scout') gxpMult = 1.5; // Basis: Scout +50% XP
+            // Talent-Check (z.B. Diplomat)
+            gxpMult *= this.getMercenaryTalentBonus(merc, 'gxp');
+            
+            quest.rewards.guildXP = Math.floor((quest.rewards.guildXP || 0) * gxpMult);
+
+            // 3. LOOT (DIAMANTEN & GEMS)
+            let lootMult = 1.0;
+            if (merc.type === 'miner') lootMult = 1.2; // Basis: Miner +20% Loot
+            
+            // Spezifische Talent-Checks
+            const diaTalent = this.getMercenaryTalentBonus(merc, 'diamonds'); // z.B. Tiefengräber
+            const gemTalent = this.getMercenaryTalentBonus(merc, 'gems');     // z.B. Void-Gräber
+            
+            // Berechnung
+            if (quest.rewards.diamonds > 0) {
+                quest.rewards.diamonds = Math.ceil(quest.rewards.diamonds * lootMult * diaTalent);
             }
-            if (merc.type === 'scout') {
-                quest.rewards.guildXP = Math.floor((quest.rewards.guildXP || 0) * 1.5);
+            if (quest.rewards.gems > 0) {
+                quest.rewards.gems = Math.ceil(quest.rewards.gems * lootMult * gemTalent);
             }
-            if (merc.type === 'miner') {
-                if (quest.rewards.diamonds > 0) quest.rewards.diamonds = Math.ceil(quest.rewards.diamonds * 1.2);
-                if (quest.rewards.gems > 0) quest.rewards.gems = Math.ceil(quest.rewards.gems * 1.2);
+
+            // 4. SMILEYS (GOLD) - z.B. durch "Händler"-Talent beim Scout
+            const goldTalent = this.getMercenaryTalentBonus(merc, 'gold');
+            if (goldTalent !== 1.0) {
+                quest.rewards.smileys = Math.floor(quest.rewards.smileys * goldTalent);
             }
         }
 
@@ -5610,6 +5680,7 @@ class GuildSystem {
     }
 
     startGuildBoss() {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         if (state.guildBossFighting || !state.guildName || typeof firebase === 'undefined') return;
 
@@ -5650,6 +5721,7 @@ class GuildSystem {
     }
 
     clickGuildBoss(e) {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         if (!state.guildBossFighting || !state.guildName) return;
 
@@ -5705,6 +5777,7 @@ class GuildSystem {
     }
 
     endGuildBoss(victory) {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         if (!state.guildBossFighting || !state.guildName) return;
 
@@ -5946,6 +6019,17 @@ class GuildSystem {
                 const isBusy = merc.status === 'busy';
                 const isRecovering = merc.status === 'recovering';
                 
+                let talentButtonHtml = "";
+                if (!merc.talents) merc.talents = { availablePoints: 0, choices: {} };
+
+                if (merc.talents.availablePoints > 0) {
+                    talentButtonHtml = `
+                        <button class="btn-open-talents" data-id="${merc.id}" 
+                                style="width:100%; padding:6px; font-size:0.75em; margin:8px 0; background:#e040fb; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow: 0 0 10px rgba(224, 64, 251, 0.4); transition: transform 0.1s;">
+                            🌟 TALENT WÄHLEN
+                        </button>`;
+                }
+
                 // Spezialisierungs-Info
                 let specIcon = "⚔️";
                 let specName = "Fighter";
@@ -5981,6 +6065,9 @@ class GuildSystem {
                          style="min-width:140px; background:${bgColor}; border:2px solid ${borderColor}; padding:12px; border-radius:12px; cursor:${!isBusy && !isRecovering ? 'pointer' : 'default'}; text-align:center; transition: all 0.2s;">
                         <div style="font-size:2.2em; margin-bottom:5px;">${specIcon}</div>
                         <div style="font-weight:bold; font-size:0.9em;">${merc.name}</div>
+                        
+                        ${talentButtonHtml}
+
                         <div style="font-size:0.7em; color:#009ffd; font-weight:bold; margin-top:2px;">${specName}</div>
                         <div style="font-size:0.65em; color:#4CAF50; background:rgba(0,0,0,0.3); padding:2px 4px; border-radius:4px; margin-top:4px;">${specBonus}</div>
                         <div style="font-size:0.75rem; color:#FFD700; margin-top:5px;">Lvl ${merc.level}</div>
@@ -6072,6 +6159,13 @@ class GuildSystem {
                 `;
             }
 
+            container.querySelectorAll('.btn-open-talents').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation(); // Wichtig: Damit die Karte nicht gleichzeitig ausgewählt wird
+                this.openTalentMenu(btn.dataset.id);
+            };
+        });
+
             contentHtml = mercHtml + activeQuestsHtml + availableQuestsHtml;
         }
 
@@ -6111,6 +6205,13 @@ class GuildSystem {
             container.querySelectorAll('.btn-assign-quest').forEach(btn => btn.onclick = () => this.assignMercenaryToQuest(parseFloat(btn.dataset.id)));
             container.querySelectorAll('.btn-claim-quest').forEach(btn => btn.onclick = () => this.claimQuest(parseFloat(btn.dataset.id)));
             
+            container.querySelectorAll('.btn-open-talents').forEach(btn => {
+            btn.onclick = (e) => {
+            e.stopPropagation(); // Verhindert, dass man den Söldner nur "auswählt"
+            this.openTalentMenu(btn.dataset.id);
+                };
+            });
+
             const refreshBtn = this.game.getById('btn-refresh-quests');
             if (refreshBtn) {
                 refreshBtn.onclick = () => {
@@ -6153,6 +6254,7 @@ class GuildSystem {
 }
 
     donateToProject(projectId, amount) {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         
         if ((state.aktuelle_smileys || 0) < amount) {
@@ -6337,6 +6439,7 @@ class GuildSystem {
     }
 
     buyGuildUpgrade(upgradeKey) {
+    if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
     const state = this.game.gameState;
     if (!state.guildName || typeof firebase === 'undefined') return;
 
@@ -6369,6 +6472,84 @@ class GuildSystem {
     });
 }
 
+    getMercenaryTalentBonus(merc, type) {
+        if (!merc.talents || !merc.talents.choices) return 1.0;
+        
+        let totalMult = 1.0;
+        // Wir gehen durch alle gewählten Talente (z.B. choices: { level5: 'berserker' })
+        Object.entries(merc.talents.choices).forEach(([lvlKey, talentId]) => {
+            const levelOptions = MERCENARY_TALENTS[merc.type][lvlKey];
+            const choice = levelOptions.find(t => t.id === talentId);
+            
+            // Wenn der gesuchte Typ (z.B. 'time') übereinstimmt, Bonus addieren/multiplizieren
+            if (choice && choice.type === type) {
+                // Bei Zeit und Risiko nutzen wir Multiplikation, bei Gold/XP Addition
+                if (type === 'time' || type === 'risk') totalMult *= choice.value;
+                else totalMult += (choice.value - 1);
+            }
+        });
+        return totalMult;
+    }
+    openTalentMenu(mercId) {
+        const merc = this.game.gameState.guildMercenaries.find(m => m.id === mercId);
+        if (!merc || !merc.talents || merc.talents.availablePoints <= 0) return;
+
+        // Welches Level-Paket ist als nächstes dran?
+        // Wenn choices.level5 fehlt, zeige level5, sonst level10 etc.
+        let targetLevelKey = "level5";
+        if (merc.talents.choices.level5) targetLevelKey = "level10";
+        // Erweitere dies, wenn du mehr Level hast!
+
+        const options = MERCENARY_TALENTS[merc.type][targetLevelKey];
+        if (!options) {
+            this.game.showNotification("Keine weiteren Talente auf dieser Stufe!", "info");
+            return;
+        }
+
+        const modal = document.getElementById('merc-talent-modal');
+        const container = document.getElementById('talent-options-container');
+        const title = document.getElementById('talent-modal-title');
+        const desc = document.getElementById('talent-modal-desc');
+
+        title.innerText = `${merc.name}: Stufe ${targetLevelKey.replace('level', '')}`;
+        desc.innerText = `Wähle eine Spezialisierung. Diese Wahl ist permanent!`;
+        container.innerHTML = '';
+
+        options.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = 'info-upgrade-item';
+            card.style.cssText = "cursor:pointer; text-align:center; border: 1px solid #444; transition: transform 0.2s;";
+            card.innerHTML = `
+                <div style="font-size:3em; margin-bottom:10px;">${opt.icon}</div>
+                <div style="font-weight:bold; color:#fff;">${opt.name}</div>
+                <div style="font-size:0.8em; color:#aaa; margin:10px 0;">${opt.desc}</div>
+                <button class="btn-confirm" style="width:100%; font-size:0.7em;">WÄHLEN</button>
+            `;
+
+            card.onclick = () => {
+                this.selectTalent(mercId, targetLevelKey, opt.id);
+                modal.style.display = 'none';
+            };
+            container.appendChild(card);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    selectTalent(mercId, levelKey, talentId) {
+        const merc = this.game.gameState.guildMercenaries.find(m => m.id === mercId);
+        if (!merc) return;
+
+        // Wahl speichern
+        merc.talents.choices[levelKey] = talentId;
+        merc.talents.availablePoints--;
+        merc.talents.spentPoints++;
+
+        this.game.showNotification("✨ Talent freigeschaltet!", "success");
+        this.game.playLevelUpSound();
+        this.game.speichereSpiel();
+        this.renderGuildsContent();
+    }
 }
 
 // ================================================================================================================
@@ -6480,6 +6661,7 @@ class ChatSystem {
     }
 
     switchChatChannel(type) {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const chatContainer = document.getElementById('chat-messages');
         if (chatContainer) chatContainer.innerHTML = ''; 
 
@@ -6499,6 +6681,7 @@ class ChatSystem {
     }
 
     sendChatMessage() {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const input = document.getElementById('chat-input');
         const text = input.value.trim();
         if (text === "" || !this.chatRef) return;
@@ -6639,6 +6822,7 @@ class ChatSystem {
     // --- GILDEN MITGLIEDER LOGIK (War vorher in SmileyGame) ---
 
     syncGuildStats() {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         if (!state.guildName || !state.playerId || typeof firebase === 'undefined') return;
 
@@ -6741,6 +6925,7 @@ class ChatSystem {
     }
 
     sendGuildSystemMessage(text) {
+        if (typeof firebase === 'undefined' || !this.game.gameState.guildName) return;
         const state = this.game.gameState;
         if (!state.guildName || typeof firebase === 'undefined') return;
 
