@@ -2674,14 +2674,12 @@ getArtifactIcon(id) {
     }
 
     drawPrestigeLines() {
-
         const canvas = this.getById('prestige-lines');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.translate(prestigePanX, prestigePanY);
         
         // --- NEU: Hintergrund-Beschriftungen der Pfade ---
         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; // Sehr transparentes Weiß
