@@ -47,17 +47,21 @@ window.cloudSystem = {
 
     // 3. Umbenennen von save zu saveToCloud
     saveToCloud: async (jsonData) => {
-        const user = auth.currentUser;
-        if (!user) return;
-        try {
-            await setDoc(doc(db, "users", user.uid), { 
-                savedGame: jsonData, 
-                date: new Date().toISOString()
-            });
-        } catch (e) {
-            console.error("Fehler beim Speichern:", e);
-        }
-    },
+    const user = auth.currentUser;
+    if (!user) return Promise.reject(new Error("Nicht eingeloggt")); 
+
+    try {
+        await setDoc(doc(db, "users", user.uid), { 
+            savedGame: jsonData, 
+            date: new Date().toISOString()
+        });
+        console.log("☁️ Gespeichert in Firestore.");
+        return true; // Wichtig für das .then()
+    } catch (e) {
+        console.error("Fehler beim Speichern:", e);
+        throw e; // Wichtig für das .catch()
+    }
+},
 
     checkUserGuild: async () => {
         const user = auth.currentUser;

@@ -392,22 +392,21 @@
 
   // 5. Cloud Funktionen (OHNE ALERT)
   function saveGameToCloud(silent = false) {
-        if (!window.gameInstance || !window.cloudSystem) return;
-        
-        const data = gameInstance.saveGame(true); 
-        
-        window.cloudSystem.save(data).then(() => {
-            if (silent === false) { 
-                // Nur wenn man klickt: Toast zeigen (KEIN alert!)
-                if(gameInstance.showNotification) gameInstance.showNotification("☁️ In Cloud gespeichert!", "success");
-            } else {
-                console.log("☁️ Auto-Save (Leise): OK");
-            }
-        }).catch(err => {
-            // Nur bei echtem Fehler warnen
-            if (silent === false) alert("Fehler beim Speichern: " + err.message);
-        });
-  }
+    if (!window.gameInstance || !window.cloudSystem) return;
+    
+    const data = gameInstance.saveGame(true); 
+    
+    // HIER GEÄNDERT: von .save() zu .saveToCloud()
+    window.cloudSystem.saveToCloud(data).then(() => {
+        if (silent === false) { 
+            if(gameInstance.showNotification) gameInstance.showNotification("☁️ In Cloud gespeichert!", "success");
+        } else {
+            console.log("☁️ Auto-Save (Leise): OK");
+        }
+    }).catch(err => {
+        if (silent === false) alert("Fehler beim Speichern: " + err.message);
+    });
+}
 
   function loadGameFromCloud() {
         if (!window.cloudSystem) return;
