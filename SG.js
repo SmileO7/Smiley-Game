@@ -395,7 +395,9 @@ class SmileyGame {
                 gameState: this.gameState
             };
             const jsonString = JSON.stringify(allData);
-            const encodedData = btoa(jsonString);
+            // Wir kodieren den String erst in UTF-8, bevor btoa ihn anfasst
+            const uint8array = new TextEncoder().encode(JSON.stringify(saveData));
+            const encodedData = btoa(String.fromCharCode.apply(null, uint8array));
             localStorage.setItem('smileyGameSave', encodedData);
         } catch (e) {
             console.error("Fehler beim Speichern des Spiels:", e);
