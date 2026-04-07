@@ -31,6 +31,31 @@ window.cloudSystem = {
         }
     },
 
+    checkUserGuild: async () => {
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        try {
+            // Wir müssen leider einmal durch alle Gilden schauen, 
+            // wo die User-ID als Mitglied hinterlegt ist.
+            const guildsRef = ref(db, 'guilds');
+            const snapshot = await get(guildsRef);
+            
+            if (snapshot.exists()) {
+                const allGuilds = snapshot.val();
+                for (const guildName in allGuilds) {
+                    if (allGuilds[guildName].members && allGuilds[guildName].members[user.uid]) {
+                        console.log("🏰 Gilde gefunden:", guildName);
+                        return { name: guildName, data: allGuilds[guildName] };
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Fehler beim Gilden-Check:", error);
+        }
+        return null;
+    },
+
     // Ausloggen
     logout: async () => {
         await signOut(auth);
@@ -172,11 +197,33 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- STATUS ÜBERWACHUNG ---
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-        console.log("👤 User erkannt:", user.email);
-        // Optional: Hier könnte man automatischen Load anstoßen, wenn gewünscht
-    } else {
-        console.log("👤 Kein User eingeloggt.");
+        console.log("👤 User eingeloggt:", user.email);
+        
+        // 1. Spielstand laden
+        const cloudData = await window.cloudSystem.loadFromCloud();
+        if (cloudData && window.gameInstance) {
+            window.gameInstance.loadGame(cloudData);
+            window.gameInstance.updateUI();
+        }
+
+        // 2. NEU: Gilden-Status laden
+        const userGuild = await window.cloudSystem.checkUserGuild();
+        const guildDisplay = document.getElementById('guilds-content'); // Das Div im Modal
+        
+        if (userGuild && guildDisplay) {
+            // Interface anpassen, wenn man in einer Gilde ist
+            guildDisplay.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h3 style="color: #ffd700;">Deine Gilde: ${userGuild.name}</h3>
+                    <p>Rolle: ${userGuild.data.members[user.uid].role}</p>
+                    <p>Bankguthaben: ${userGuild.data.bank || 0} 💰</p>
+                    <button class="buy-button" onclick="alert('Chat kommt bald!')">Gilden-Chat öffnen</button>
+                </div>
+            `;
+            // Optional: Verstecke das Eingabefeld, da man schon in einer Gilde ist
+            document.querySelector('.guild-input-container').style.display = 'none';
+        }
     }
 });
