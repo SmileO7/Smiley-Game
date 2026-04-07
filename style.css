@@ -1035,6 +1035,105 @@ input[type=range] { width: 100%; cursor: pointer; }
     main { padding-top: 0; }
 }
 
+/* =========================================================
+   MOBILE OPTIMIERUNG (für Smartphones)
+   ========================================================= */
+@media screen and (max-width: 768px) {
+    
+    /* 1. Das Haupt-Layout stapeln statt nebeneinander */
+    body, html {
+        overflow-y: auto !important; /* Erlaubt vertikales Scrollen */
+        height: auto !important;     /* Hebt feste Höhenbeschränkungen auf */
+        position: relative;
+    }
+
+    /* Das Haupt-Layout für Mobile anpassen */
+    .main-container, main, #game-wrapper {
+        display: flex;
+        flex-direction: column; /* Stapelt alles untereinander */
+        min-height: 100vh;
+        overflow-y: visible;   /* Stellt sicher, dass nichts abgeschnitten wird */
+    }
+
+    /* Modals (Fenster) anpassen */
+    .modal-content {
+        max-height: 85vh;     /* Fenster darf fast so hoch wie das Handy sein */
+        overflow-y: auto;     /* Erlaubt Scrollen INNERHALB des Fensters */
+        -webkit-overflow-scrolling: touch; /* Macht das Scrollen auf iPhones flüssiger */
+    }
+
+    /* 2. Den Smiley (Click-Bereich) zentrieren und passend machen */
+    #smiley-container {
+        width: 100%;
+        height: auto;
+        padding: 20px 0;
+    }
+
+    #smiley {
+        width: 200px; /* Etwas kleiner für Mobile */
+        height: 200px;
+    }
+
+    /* 3. Menüs (Upgrades, Gilden) auf volle Breite */
+    .modal-content.large {
+        width: 95%;
+        margin: 5% auto;
+        padding: 15px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* 4. Buttons größer machen (besser für Finger-Touch) */
+    .buy-button, .btn-main {
+        width: 100%;
+        padding: 15px;
+        font-size: 1.1em;
+        margin: 10px 0;
+    }
+
+    /* 5. Statistiken oben fixieren oder kompakter machen */
+    .stats-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 0.9em;
+    }
+
+    /* Den Skilltree-Container scrollbar machen */
+#prestige-skill-tree, .skill-tree-container {
+    display: block;
+    overflow-x: auto; /* Erlaubt horizontales Wischen im Baum */
+    overflow-y: hidden;
+    white-space: nowrap; /* Verhindert, dass Zeilen wahllos umbrechen */
+    padding: 20px;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+/* Die einzelnen Skill-Knoten anpassen */
+.skill-node {
+    display: inline-block; /* Skills nebeneinander lassen, aber wischbar */
+    width: 80px;  /* Etwas kleiner für Mobile */
+    height: 80px;
+    margin: 10px;
+    vertical-align: top;
+    white-space: normal; /* Text im Skill darf wieder umbrechen */
+    font-size: 0.8em;
+    pointer-events: auto !important; /* Sicherstellen, dass Klicks durchgehen */
+}
+
+/* Falls du Linien (SVG) zwischen den Skills hast */
+#skill-tree-svg {
+    min-width: 600px; /* Erzwingt eine Mindestbreite, damit die Linien nicht quetschen */
+}
+
+    .skill-node, .skill-node * {
+    cursor: pointer;
+    touch-action: manipulation; /* Optimiert für schnelles Tippen am Handy */
+}
+}
+
 /* ======================================================= */
 /* 14. VISUAL FEEDBACK (Screen Shake)                      */
 /* ======================================================= */
