@@ -389,6 +389,7 @@ class SmileyGame {
     }
     
     speichereSpiel() {
+        const data = this.saveGame(true); // Holt sich die Daten als Objekt, ohne sie zu speichern
         try {
             this.gameState.lastSaveTime = Date.now();
             const allData = {
@@ -396,7 +397,7 @@ class SmileyGame {
             };
             const jsonString = JSON.stringify(allData);
             // Wir kodieren den String erst in UTF-8, bevor btoa ihn anfasst
-            const uint8array = new TextEncoder().encode(JSON.stringify(saveData));
+            const uint8array = new TextEncoder().encode(JSON.stringify(this.gameState)); 
             const encodedData = btoa(String.fromCharCode.apply(null, uint8array));
             localStorage.setItem('smileyGameSave', encodedData);
         } catch (e) {
