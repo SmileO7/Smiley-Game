@@ -105,10 +105,45 @@ window.cloudSystem = {
     getUser: () => auth.currentUser
 };
 
+// Funktion zum Beitreten oder Erstellen einer Gilde
+window.cloudSystem.joinGuild = async (guildName) => {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("Du musst eingeloggt sein, um einer Gilde beizutreten!");
+        return;
+    }
+
+    const memberId = user.uid;
+    const guildRef = ref(db, `guilds/${guildName}/members/${memberId}`);
+
+    try {
+        // Wir speichern die Daten genau so, wie es die .validate-Regel verlangt
+        await set(guildRef, {
+            role: "Member", // Standard-Rolle
+            joinedAt: Date.now(),
+            playerName: user.displayName || "Anonymer Smiley"
+        });
+        
+        console.log(`✅ Erfolg: Du bist jetzt Mitglied der Gilde ${guildName}!`);
+        
+        // Initialer Eintrag in die Bank (optional, falls noch nicht vorhanden)
+        const bankRef = ref(db, `guilds/${guildName}/bank`);
+        const bankSnap = await get(bankRef);
+        if (!bankSnap.exists()) {
+            await set(bankRef, 0);
+        }
+
+    } catch (error) {
+        console.error("Fehler beim Gilden-Beitritt:", error.message);
+        alert("Beitritt verweigert: Entweder existiert die Gilde nicht oder du hast keine Rechte.");
+    }
+};
+
 // --- EVENT LISTENER (Buttons verbinden) ---
 // Da dies ein Modul ist, müssen wir die Buttons manuell suchen und verbinden,
 // falls sie im HTML kein 'onclick' haben (wie der Login Button).
 document.addEventListener("DOMContentLoaded", () => {
+    // Bestehende Login/Logout Buttons
     const loginBtn = document.getElementById("google-login-btn");
     const logoutBtn = document.getElementById("google-logout-btn");
 
@@ -117,6 +152,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (logoutBtn) {
         logoutBtn.addEventListener("click", window.cloudSystem.logout);
+    }
+
+    // --- NEU: Gilden-Logik ---
+    const joinBtn = document.getElementById("join-guild-btn");
+    const inputField = document.getElementById("guild-name-input");
+
+    if (joinBtn && inputField) {
+        joinBtn.addEventListener("click", () => {
+            const name = inputField.value.trim();
+            if (name) {
+                // Hier rufen wir die Funktion auf, die wir vorhin erstellt haben
+                window.cloudSystem.joinGuild(name);
+            } else {
+                alert("Bitte gib einen Gilden-Namen ein!");
+            }
+        });
     }
 });
 

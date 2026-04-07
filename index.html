@@ -245,7 +245,27 @@
 
 <div id="pet-shop-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Pet Shop</h2><div id="pet-lock-message" class="info-section"></div><div class="pet-grid" id="pet-shop-grid"></div><div class="modal-buttons"><button id="close-pet-shop-button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="diamond-mine-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>💎 Diamanten-Minispiel</h2><div id="diamond-mine-content"></div><div class="modal-buttons"><button id="close_diamond_mine_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="guilds-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>⚔️ Gilden-System</h2><div id="guilds-content"></div><div class="modal-buttons"><button id="close_guilds_button" class="btn-cancel">Schließen</button></div></div></div>
+<div id="guilds-modal" class="modal" style="display: none;">
+    <div class="modal-content large">
+        <h2>⚔️ Gilden-System</h2>
+        
+        <div class="guild-input-container" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed #555;">
+            <p style="margin-top: 0; font-size: 0.9em; color: #ccc;">Tritt einer Gilde bei oder gründe eine neue:</p>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="guild-name-input" placeholder="Gildenname..." 
+                       style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #1a1a1a; color: white;">
+                <button id="join-guild-btn" class="buy-button" style="margin: 0; padding: 10px 20px;">Beitreten</button>
+            </div>
+        </div>
+
+        <div id="guilds-content">
+            </div>
+
+        <div class="modal-buttons">
+            <button id="close_guilds_button" class="btn-cancel">Schließen</button>
+        </div>
+    </div>
+</div>
 <div id="achievements_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Achievements</h2><div id="info_achievements_container" class="info-grid"></div><div class="modal-buttons"><button id="close_achievements_button" class="btn-cancel">Schließen</button></div></div></div>
 <div id="museum_modal" class="modal-overlay" style="display:none;">
     <div class="modal-content museum-layout">
@@ -401,8 +421,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="data.js?v=2"></script> 
-<script src="SG.js?v=2"></script>
 <script type="module" src="firebase-logic.js?v=2"></script>
+<script src="SG.js?v=2"></script>
 
 <div id="main-chat-container" class="chat-minimized">
     <div class="chat-header">
