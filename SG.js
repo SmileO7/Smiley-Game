@@ -389,22 +389,12 @@ class SmileyGame {
     }
     
     speichereSpiel() {
-        const data = this.saveGame(true); // Holt sich die Daten als Objekt, ohne sie zu speichern
-        try {
-            this.gameState.lastSaveTime = Date.now();
-            const allData = {
-                gameState: this.gameState
-            };
-            const jsonString = JSON.stringify(allData);
-            // Wir kodieren den String erst in UTF-8, bevor btoa ihn anfasst
-            const uint8array = new TextEncoder().encode(JSON.stringify(this.gameState)); 
-            const encodedData = btoa(String.fromCharCode.apply(null, uint8array));
-            localStorage.setItem('smileyGameSave', encodedData);
-        } catch (e) {
-            console.error("Fehler beim Speichern des Spiels:", e);
-        }
-        this.syncGuildStats();
-    }
+    // Wir nutzen einfach die bestehende saveGame Funktion
+    // Das verhindert doppelte Logik und Fehler
+    this.saveGame(false); 
+    this.syncGuildStats();
+    console.log("☁️ Cloud-Sync & Local-Save angestoßen.");
+}
 
     saveGame(returnOnly = false) {
         let source = this.gameState;
@@ -466,69 +456,59 @@ class SmileyGame {
         if (returnOnly) return saveData;
 
         try {
-            const jsonString = JSON.stringify(saveData);
-            // Wir speichern es einmal als Base64 (Schutz) und einmal als Backup
-            const encodedData = btoa(jsonString);
-            localStorage.setItem('smileyGameSave', encodedData);
-            
-            console.log("💾 Spiel erfolgreich gespeichert.");
-        } catch (e) {
-            console.error("❌ Fehler beim Speichern:", e);
-            this.showNotification("Fehler beim Speichern!", "error");
-        }
+        const jsonString = JSON.stringify(saveData);
+
+        // --- SICHERES EMOJI-ENCODING ---
+        // Schritt 1: UTF-8 sicher machen
+        const utf8String = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+            return String.fromCharCode('0x' + p1);
+        });
+        // Schritt 2: Jetzt erst btoa
+        const encodedData = btoa(utf8String);
+        
+        localStorage.setItem('smileyGameSave', encodedData);
+        console.log("💾 Spiel erfolgreich (emoji-sicher) gespeichert.");
+    } catch (e) {
+        console.error("❌ Fehler beim Speichern:", e);
+        this.showNotification("Fehler beim Speichern!", "error");
+    }
     }
 
     ladeSpiel() {
-        let savedString = localStorage.getItem('smileyGameSave');
-        
-        // Wenn kein Save da ist, starte neues Spiel
-        if (!savedString) {
-            console.log("🆕 Kein Spielstand gefunden, starte neues Spiel.");
-            return;
-        }
+    let savedString = localStorage.getItem('smileyGameSave');
+    if (!savedString) return;
 
-        // FIX: Entferne Anführungszeichen, falls der String doppelt stringified wurde
-        if (savedString.startsWith('"') && savedString.endsWith('"')) {
-            savedString = savedString.slice(1, -1);
-        }
-
-        let parsedData = null;
-
-        // VERSUCH 1: Base64 Decodierung (Neuer Standard)
-        try {
-            // Prüfen, ob es Base64 ist (keine geschweiften Klammern am Anfang)
-            if (!savedString.trim().startsWith('{')) {
-                const decoded = atob(savedString);
-                parsedData = JSON.parse(decoded);
-                console.log("💾 Spielstand geladen (Base64 Mode)");
-            }
-        } catch (e) {
-            console.warn("⚠️ Base64 Dekodierung fehlgeschlagen, versuche Legacy-Modus...", e);
-        }
-
-        // VERSUCH 2: Legacy JSON (Falls es einfacher Text ist)
-        if (!parsedData) {
-            try {
-                parsedData = JSON.parse(savedString);
-                console.log("💾 Spielstand geladen (Legacy JSON Mode)");
-            } catch (e) {
-                console.error("❌ Savegame komplett korrupt.");
-            }
-        }
-
-        // DATEN ANWENDEN
-        if (parsedData) {
-            // Wenn in den Daten ein 'gameState' Objekt steckt (alte Struktur), nimm das
-            const dataToLoad = parsedData.gameState || parsedData;
-            this.loadGame(dataToLoad);
-        } else {
-            console.error("⚠️ Spielstand konnte nicht gelesen werden. Starte neu.");
-            // Backup des kaputten Saves erstellen (für Analyse)
-            localStorage.setItem('smileyGameSave_CORRUPT', savedString);
-            localStorage.removeItem('smileyGameSave');
-            this.showNotification("Spielstand war defekt. Backup erstellt & Neustart.", "error");
-        }
+    // Fix für Anführungszeichen
+    if (savedString.startsWith('"') && savedString.endsWith('"')) {
+        savedString = savedString.slice(1, -1);
     }
+
+    let parsedData = null;
+
+    try {
+        // Prüfen ob Base64 (kein '{')
+        if (!savedString.trim().startsWith('{')) {
+            // --- SICHERES EMOJI-DECODING ---
+            const decodedBase64 = atob(savedString);
+            const decodedJson = decodeURIComponent(decodedBase64.split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            parsedData = JSON.parse(decodedJson);
+            console.log("💾 Spielstand geladen (Safe Unicode Mode)");
+        } else {
+            parsedData = JSON.parse(savedString);
+            console.log("💾 Spielstand geladen (Legacy Mode)");
+        }
+    } catch (e) {
+        console.error("❌ Dekodierung fehlgeschlagen:", e);
+    }
+
+    if (parsedData) {
+        const dataToLoad = parsedData.gameState || parsedData;
+        this.loadGame(dataToLoad);
+    }
+}
 
     // Diese Funktion verteilt die Daten wieder in die Variablen
     // Diese Funktion verteilt die Daten wieder in die Variablen
