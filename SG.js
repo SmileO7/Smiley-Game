@@ -130,6 +130,10 @@ class SmileyGame {
                 }
             };
         }
+    
+        this.treeX = window.innerWidth / 2;
+        this.treeY = window.innerHeight / 2;
+        this.treeZoom = 1.0;
 
         // 4. INITIALISIERUNG STARTEN
         this.init();
@@ -207,6 +211,53 @@ class SmileyGame {
         
         // Chat starten (Firebase)
         this.initChat();
+
+        const container = this.getById('prestige-tree-container');
+        let isDragging = false;
+        let startX, startY;
+
+        // Touch-Start: Position merken
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - this.treeX;
+                startY = e.touches[0].clientY - this.treeY;
+            }
+        }, { passive: false });
+
+        // Touch-Move: Verschieben
+        container.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            e.preventDefault(); // Ganz wichtig: Verhindert das Scrollen der Website!
+
+            this.treeX = e.touches[0].clientX - startX;
+            this.treeY = e.touches[0].clientY - startY;
+
+        // Das World-Element (mit Buttons UND Canvas) verschieben
+        const world = this.getById('prestige-tree-world');
+            if (world) {
+            world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
+        }
+        }, { passive: false });
+
+        container.addEventListener('touchend', () => {
+        isDragging = false;
+        });
+
+        container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomSpeed = 0.1;
+        if (e.deltaY < 0) {
+            this.treeZoom = Math.min(this.treeZoom + zoomSpeed, 2); // Max 2x Zoom
+        } else {
+            this.treeZoom = Math.max(this.treeZoom - zoomSpeed, 0.3); // Min 0.3x Zoom
+        }
+    
+        const world = this.getById('prestige-tree-world');
+        if (world) {
+            world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
+        }
+        }, { passive: false });
 
         console.log("✅ Spiel initialisiert. PlayerID:", this.gameState.playerId);
     }
@@ -2623,12 +2674,14 @@ getArtifactIcon(id) {
     }
 
     drawPrestigeLines() {
+
         const canvas = this.getById('prestige-lines');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.translate(prestigePanX, prestigePanY);
         
         // --- NEU: Hintergrund-Beschriftungen der Pfade ---
         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)'; // Sehr transparentes Weiß
