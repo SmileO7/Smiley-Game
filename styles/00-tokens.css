@@ -1,0 +1,38 @@
+:root {
+  /* Farben */
+  --color-primary-dark: #011638; /* Haupt-Hintergrund */
+  --color-secondary-red: #6b0504; /* Rot-Akzent */
+  --color-accent-blue: #009ffd; /* Helles Cyan-Blau */
+  --color-neutral-olive: #3e5641; /* Neutraler Akzent */
+
+  /* Text Farben */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b3b3b3;
+  --color-text-accent: var(--color-accent-blue);
+  --color-text-light: #f0f0f0;
+
+  /* Overlay Backgrounds */
+  --container-bg: rgba(255, 255, 255, 0.05);
+  --color-dark-overlay: rgba(0, 0, 0, 0.4);
+  --color-modal-bg: rgba(0, 0, 0, 0.8);
+
+  /* Mapping für Legacy Code */
+  --color-background-dark: var(--color-primary-dark);
+  --color-red-main: var(--color-secondary-red);
+  --color-blue-main: var(--color-accent-blue);
+  --color-neutral-accent: var(--color-neutral-olive);
+  --color-box-background: var(--color-primary-dark);
+  --color-shadow: rgba(0, 0, 0, 0.3);
+
+  /* Spacings */
+  --spacing-sm: 10px;
+  --spacing-md: 20px;
+  --spacing-lg: 30px;
+}
+
+/* GLOBAL RESET */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

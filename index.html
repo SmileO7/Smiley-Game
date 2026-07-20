@@ -1,452 +1,1175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smiley Clicker</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="style.css?v=2"> 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#009ffd">
-</head>
-<body class="home-page">
-
-<header>
-    <nav class="navbar">
-        <a href="#" onclick="gameInstance.switchView('home')" class="active" id="nav-home">🏠Smiley und Gebäude </a>
-        <a href="#" onclick="gameInstance.switchView('prestige')" id="nav-prestige">🌟Prestige Shop</a>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles/main.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#009ffd" />
+  </head>
+  <body class="home-page">
+    <header>
+      <nav class="navbar">
+        <a
+          href="#"
+          onclick="gameInstance.switchView('home')"
+          class="active"
+          id="nav-home"
+          >🏠Smiley und Gebäude
+        </a>
+        <a
+          href="#"
+          onclick="gameInstance.switchView('prestige')"
+          id="nav-prestige"
+          >🌟Prestige Shop</a
+        >
         <a href="#" id="open_wiki_btn">📘Smileypedia</a>
-        <a href="#" id="open-settings-button">  ⚙️Einstellungen</a>
-    </nav>
-</header>
+        <a href="#" id="open-settings-button"> ⚙️Einstellungen</a>
+      </nav>
+    </header>
 
-<main>
-    <div id="view-home" class="main-layout">
-        
+    <main>
+      <div id="view-home" class="main-layout">
         <div class="left-column">
-            <h1>Smiley <span style="color:var(--color-accent-blue)">Clicker</span></h1>
-            
-            <div class="smiley-container" style="position: relative; width: 130px; margin: 10px auto;">
-                <div id="combo-display" class="combo-display">
-                    <span id="combo-value">x1.00</span>
-                    <span class="combo-text">Combo</span>
-                </div>
-                <button id="smiley_button">
-                    <img src="smiley.png" alt="Smiley" id="smiley_image">
-                </button>
+          <h1>
+            Smiley <span style="color: var(--color-accent-blue)">Clicker</span>
+          </h1>
+
+          <div
+            class="smiley-container"
+            style="position: relative; width: 130px; margin: 10px auto"
+          >
+            <div id="combo-display" class="combo-display">
+              <span id="combo-value">x1.00</span>
+              <span class="combo-text">Combo</span>
+            </div>
+            <button id="smiley_button">
+              <img src="smiley.png" alt="Smiley" id="smiley_image" />
+            </button>
+          </div>
+
+          <div class="stats-box" style="padding: 10px">
+            <h2 class="stats-header">Aktuelle Stats</h2>
+            <div class="stats-main-display">
+              <div class="stats-label-small">Gesammelte Daten</div>
+              <div class="stats-value-large">
+                <span id="aktuelle_smileys">0</span> ☺
+              </div>
             </div>
 
-            <div class="stats-box" style="padding: 10px;">
-                <h2 class="stats-header">Aktuelle Stats</h2>
-                <div class="stats-main-display">
-                    <div class="stats-label-small">Gesammelte Daten</div>
-                    <div class="stats-value-large">
-                        <span id="aktuelle_smileys">0</span> ☺
-                    </div>
+            <div class="stats-grid-row">
+              <div class="stats-card-small">
+                <div class="stats-label-small">Klick</div>
+                <div class="stats-value-medium">
+                  <span id="smileys_pro_klick_anzeige">1</span>
                 </div>
-
-                <div class="stats-grid-row">
-                    <div class="stats-card-small">
-                        <div class="stats-label-small">Klick</div>
-                        <div class="stats-value-medium"><span id="smileys_pro_klick_anzeige">1</span></div>
-                        <div class="stats-subtext">x<span id="klick_multiplikator_anzeige">1.00</span></div>
-                    </div>
-                    <div class="stats-card-small" data-tooltip-type="stats_sps">
-                        <div class="stats-label-small">Auto (SPS)</div>
-                        <div class="stats-value-medium" style="color: #4CAF50;"><span id="smileys_pro_sekunde_anzeige">0</span></div>
-                        <div class="stats-subtext"><span id="smileys_pro_minute_anzeige">0</span> /min</div>
-                    </div>
+                <div class="stats-subtext">
+                  x<span id="klick_multiplikator_anzeige">1.00</span>
                 </div>
-
-                <div class="global-boost-box">
-                    <span style="color: var(--color-accent-blue);">GLOBAL BOOST:</span>
-                    <strong id="globaler_multiplikator_anzeige" style="color: #fff;">x1.00</strong>
+              </div>
+              <div class="stats-card-small" data-tooltip-type="stats_sps">
+                <div class="stats-label-small">Auto (SPS)</div>
+                <div class="stats-value-medium" style="color: #4caf50">
+                  <span id="smileys_pro_sekunde_anzeige">0</span>
                 </div>
-
-                <div class="diamond-display-box">
-                    <span class="diamond-text">💎 <span id="diamanten_anzeige">0</span></span>
+                <div class="stats-subtext">
+                  <span id="smileys_pro_minute_anzeige">0</span> /min
                 </div>
+              </div>
             </div>
 
-            <div class="box-style" style="margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
-                    <span style="font-size: 0.7rem; color: #aaa; text-transform: uppercase;">Evolution</span>
-                    <span id="next-prestige-threshold" style="font-size: 0.7rem; color: var(--color-accent-blue);">100k</span>
-                </div>
-                <div style="height: 15px; background: #0b0f19; border: 1px solid #333; border-radius: 8px; position: relative; overflow: hidden;">
-                    <div id="prestige-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-accent-blue), #00d2ff); transition: width 0.5s;"></div>
-                    <div id="prestige-percent-text" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #fff; font-weight: bold;">0%</div>
-                </div>
+            <div class="global-boost-box">
+              <span style="color: var(--color-accent-blue)">GLOBAL BOOST:</span>
+              <strong id="globaler_multiplikator_anzeige" style="color: #fff"
+                >x1.00</strong
+              >
             </div>
 
-            <div id="active_pet_display" style="margin-top: 8px; display: none; background: rgba(62, 90, 65, 0.15); border: 1px solid var(--color-neutral-olive); padding: 8px; border-radius: 8px; align-items: center; gap: 10px;"></div>
-        </div> 
-        
-        <div class="middle-column">
-            <div class="news-ticker-container">
-                <div id="news-ticker-text" class="ticker-text">Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...</div>
+            <div class="diamond-display-box">
+              <span class="diamond-text"
+                >💎 <span id="diamanten_anzeige">0</span></span
+              >
             </div>
-            
-            <div id="buffs-container" class="buff-bar"></div>
+          </div>
 
-            <div class="skills-container box-style" style="margin-top: 10px; margin-bottom: 10px;">
-                <h2 style="font-size: 1.1rem; margin-bottom: 10px; color: var(--color-accent-blue);">COMMAND CENTER: ACTIVE SKILLS</h2>
-                <div class="skills-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                    <div class="skill-item"><button id="btn-skill-frenzy" class="btn-skill ready" onclick="gameInstance.useSkill('frenzy')" title="Frenzy"><span class="skill-icon">🔥</span><span id="timer-frenzy" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-frenzy" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-overdrive" class="btn-skill ready" onclick="gameInstance.useSkill('overdrive')" title="Overdrive"><span class="skill-icon">⚡</span><span id="timer-overdrive" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-overdrive" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-critStorm" class="btn-skill ready" onclick="gameInstance.useSkill('critStorm')" title="CritStorm"><span class="skill-icon">🎯</span><span id="timer-critStorm" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-critStorm" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-goldRush" class="btn-skill ready" onclick="gameInstance.useSkill('goldRush')" title="GoldRush"><span class="skill-icon">💰</span><span id="timer-goldRush" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-goldRush" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-diamondPulse" class="btn-skill ready" onclick="gameInstance.useSkill('diamondPulse')" title="DiamondPulse"><span class="skill-icon">💎</span><span id="timer-diamondPulse" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-diamondPulse" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-efficiency" class="btn-skill ready" onclick="gameInstance.useSkill('efficiency')" title="Efficiency"><span class="skill-icon">📉</span><span id="timer-efficiency" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-efficiency" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-shards" class="btn-skill ready" onclick="gameInstance.useSkill('shards')" title="Shards"><span class="skill-icon">💠</span><span id="timer-shards" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-shards" class="cooldown-fill"></div></div></div>
-                    <div class="skill-item"><button id="btn-skill-hyperMinute" class="btn-skill ready" onclick="gameInstance.useSkill('hyperMinute')" title="HyperMinute"><span class="skill-icon">🚀</span><span id="timer-hyperMinute" class="skill-timer">BEREIT</span></button><div class="skill-cooldown-bar"><div id="cooldown-hyperMinute" class="cooldown-fill"></div></div></div>
-                </div>
+          <div
+            class="box-style"
+            style="
+              margin-top: 8px;
+              background: rgba(255, 255, 255, 0.05);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              padding: 10px;
+              border-radius: 8px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 5px;
+              "
+            >
+              <span
+                style="
+                  font-size: 0.7rem;
+                  color: #aaa;
+                  text-transform: uppercase;
+                "
+                >Evolution</span
+              >
+              <span
+                id="next-prestige-threshold"
+                style="font-size: 0.7rem; color: var(--color-accent-blue)"
+                >100k</span
+              >
             </div>
+            <div
+              style="
+                height: 15px;
+                background: #0b0f19;
+                border: 1px solid #333;
+                border-radius: 8px;
+                position: relative;
+                overflow: hidden;
+              "
+            >
+              <div
+                id="prestige-progress-bar"
+                style="
+                  width: 0%;
+                  height: 100%;
+                  background: linear-gradient(
+                    90deg,
+                    var(--color-accent-blue),
+                    #00d2ff
+                  );
+                  transition: width 0.5s;
+                "
+              ></div>
+              <div
+                id="prestige-percent-text"
+                style="
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 0.65rem;
+                  color: #fff;
+                  font-weight: bold;
+                "
+              >
+                0%
+              </div>
+            </div>
+          </div>
 
-            <div class="feature-button-grid">
-                <button id="open_pet_shop_button" class="btn-feature"><span>🐾</span> PET SHOP</button>
-                <button id="open_diamond_mine_button" class="btn-feature"><span>💎</span> DIAMANTEN-MINE</button>
-                <button id="open_guilds_button" class="btn-feature"><span>⚔️</span> GILDEN</button>
-                <button id="open_blackmarket_button" class="btn-feature" style="border-color: #d500f9; color: #d500f9;"><span>👾</span> MARKET </button>
-                <button id="open_wardrobe_button" class="btn-feature" style="border-color: #fff; color: #fff;"> <span>🎩</span> SKINS </button>
-                <button id="show_achievements_button" class="btn-primary"><span>🏆</span> ERFOLGE</button>
-            </div>
-
-            <div class="box-style" style="margin-top: 10px;">
-                <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px;">Verfügbare Upgrades</h2>
-                <div id="global-upgrades-container"></div>
-            </div> 
-        </div> <div class="right-column">
-            <h2>Gebäude</h2>
-            <div id="buy-amount-toggles" class="buy-amount-container">
-                <button class="btn-toggle active" data-amount="1">1x</button>
-                <button class="btn-toggle" data-amount="10">10x</button>
-                <button class="btn-toggle" data-amount="100">100x</button>
-            </div>
-            <div class="building-grid" id="building-grid"></div>
+          <div
+            id="active_pet_display"
+            style="
+              margin-top: 8px;
+              display: none;
+              background: rgba(62, 90, 65, 0.15);
+              border: 1px solid var(--color-neutral-olive);
+              padding: 8px;
+              border-radius: 8px;
+              align-items: center;
+              gap: 10px;
+            "
+          ></div>
         </div>
 
-    </div> 
-</main>
+        <div class="middle-column">
+          <div class="news-ticker-container">
+            <div id="news-ticker-text" class="ticker-text">
+              Willkommen beim Smiley Clicker! Sammel Smileys und werde reich...
+            </div>
+          </div>
 
-<div id="prestige-shop-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
+          <div id="buffs-container" class="buff-bar"></div>
+
+          <div
+            class="skills-container box-style"
+            style="margin-top: 10px; margin-bottom: 10px"
+          >
+            <h2
+              style="
+                font-size: 1.1rem;
+                margin-bottom: 10px;
+                color: var(--color-accent-blue);
+              "
+            >
+              COMMAND CENTER: ACTIVE SKILLS
+            </h2>
+            <div
+              class="skills-grid"
+              style="
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+              "
+            >
+              <div class="skill-item">
+                <button
+                  id="btn-skill-frenzy"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('frenzy')"
+                  title="Frenzy"
+                >
+                  <span class="skill-icon">🔥</span
+                  ><span id="timer-frenzy" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-frenzy" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-overdrive"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('overdrive')"
+                  title="Overdrive"
+                >
+                  <span class="skill-icon">⚡</span
+                  ><span id="timer-overdrive" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-overdrive" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-critStorm"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('critStorm')"
+                  title="CritStorm"
+                >
+                  <span class="skill-icon">🎯</span
+                  ><span id="timer-critStorm" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-critStorm" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-goldRush"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('goldRush')"
+                  title="GoldRush"
+                >
+                  <span class="skill-icon">💰</span
+                  ><span id="timer-goldRush" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-goldRush" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-diamondPulse"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('diamondPulse')"
+                  title="DiamondPulse"
+                >
+                  <span class="skill-icon">💎</span
+                  ><span id="timer-diamondPulse" class="skill-timer"
+                    >BEREIT</span
+                  >
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-diamondPulse" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-efficiency"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('efficiency')"
+                  title="Efficiency"
+                >
+                  <span class="skill-icon">📉</span
+                  ><span id="timer-efficiency" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-efficiency" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-shards"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('shards')"
+                  title="Shards"
+                >
+                  <span class="skill-icon">💠</span
+                  ><span id="timer-shards" class="skill-timer">BEREIT</span>
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-shards" class="cooldown-fill"></div>
+                </div>
+              </div>
+              <div class="skill-item">
+                <button
+                  id="btn-skill-hyperMinute"
+                  class="btn-skill ready"
+                  onclick="gameInstance.useSkill('hyperMinute')"
+                  title="HyperMinute"
+                >
+                  <span class="skill-icon">🚀</span
+                  ><span id="timer-hyperMinute" class="skill-timer"
+                    >BEREIT</span
+                  >
+                </button>
+                <div class="skill-cooldown-bar">
+                  <div id="cooldown-hyperMinute" class="cooldown-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-button-grid">
+            <button id="open_pet_shop_button" class="btn-feature">
+              <span>🐾</span> PET SHOP
+            </button>
+            <button id="open_diamond_mine_button" class="btn-feature">
+              <span>💎</span> DIAMANTEN-MINE
+            </button>
+            <button id="open_guilds_button" class="btn-feature">
+              <span>⚔️</span> GILDEN
+            </button>
+            <button
+              id="open_blackmarket_button"
+              class="btn-feature"
+              style="border-color: #d500f9; color: #d500f9"
+            >
+              <span>👾</span> MARKET
+            </button>
+            <button
+              id="open_wardrobe_button"
+              class="btn-feature"
+              style="border-color: #fff; color: #fff"
+            >
+              <span>🎩</span> SKINS
+            </button>
+            <button id="show_achievements_button" class="btn-primary">
+              <span>🏆</span> ERFOLGE
+            </button>
+          </div>
+
+          <div class="box-style" style="margin-top: 10px">
+            <h2 style="font-size: 1.1rem; border: none; margin-bottom: 10px">
+              Verfügbare Upgrades
+            </h2>
+            <div id="global-upgrades-container"></div>
+          </div>
+        </div>
+        <div class="right-column">
+          <h2>Gebäude</h2>
+          <div id="buy-amount-toggles" class="buy-amount-container">
+            <button class="btn-toggle active" data-amount="1">1x</button>
+            <button class="btn-toggle" data-amount="10">10x</button>
+            <button class="btn-toggle" data-amount="100">100x</button>
+          </div>
+          <div class="building-grid" id="building-grid"></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="prestige-shop-modal" class="modal" style="display: none">
+      <div class="modal-content large">
         <h2>🌌 Prestige Shop</h2>
         <div class="page-container">
-            <div class="stats-box prestige-stats">
-                <h3>Prestige Status</h3>
-                <p>Verfügbare Punkte: <span id="prestige_punkte_verfügbar">0</span></p>
-                <p>Gesammelte Punkte: <span id="gesamt_prestige_punkte">0</span></p>
-                <p>Globaler Multiplikator: <span id="prestige_view_multi">x1.00</span></p>
-                <hr>
-                <p>Aktuelle Smileys: <span id="aktuelle_smileys_prestige">0</span></p>
-                <p>Nächster Punkt bei: <span id="next_prestige_point">1,000,000</span></p>
+          <div class="stats-box prestige-stats">
+            <h3>Prestige Status</h3>
+            <p>
+              Verfügbare Punkte: <span id="prestige_punkte_verfügbar">0</span>
+            </p>
+            <p>Gesammelte Punkte: <span id="gesamt_prestige_punkte">0</span></p>
+            <p>
+              Globaler Multiplikator:
+              <span id="prestige_view_multi">x1.00</span>
+            </p>
+            <hr />
+            <p>
+              Aktuelle Smileys: <span id="aktuelle_smileys_prestige">0</span>
+            </p>
+            <p>
+              Nächster Punkt bei:
+              <span id="next_prestige_point">1,000,000</span>
+            </p>
+          </div>
+          <section class="prestige-info box-style" style="margin-top: 20px">
+            <h3>Prestige-System</h3>
+            <p>
+              Führe einen Prestige-Reset durch, um deine bisher gesammelten
+              Smileys in wertvolle Smiley Points umzuwandeln.
+            </p>
+            <div class="prestige-consequences">
+              <h4>Was passiert beim Reset?</h4>
+              <ul>
+                <li>
+                  <span class="pro" style="color: green">+</span> Du erhältst
+                  Smiley Points (Währung & Bonus).
+                </li>
+                <li>
+                  <span class="con" style="color: red">-</span> Deine Smileys
+                  werden auf 0 zurückgesetzt.
+                </li>
+                <li>
+                  <span class="con" style="color: red">-</span> Alle deine
+                  Gebäude werden auf 0 zurückgesetzt.
+                </li>
+              </ul>
             </div>
-            <section class="prestige-info box-style" style="margin-top: 20px;">
-                <h3>Prestige-System</h3>
-                <p>Führe einen Prestige-Reset durch, um deine bisher gesammelten Smileys in wertvolle Smiley Points umzuwandeln.</p>
-                <div class="prestige-consequences">
-                    <h4>Was passiert beim Reset?</h4>
-                    <ul>
-                        <li><span class="pro" style="color:green;">+</span> Du erhältst Smiley Points (Währung & Bonus).</li>
-                        <li><span class="con" style="color:red;">-</span> Deine Smileys werden auf 0 zurückgesetzt.</li>
-                        <li><span class="con" style="color:red;">-</span> Alle deine Gebäude werden auf 0 zurückgesetzt.</li>
-                    </ul>
-                </div>
-                <div class="prestige-actions" style="margin-top: 20px;">
-                    <button id="prestige_reset_button_page" class="btn-prestige">Prestige durchführen</button>
-                    <button id="open_skill_tree_button" class="btn-primary">Skill-Tree öffnen</button>
-                </div>
-            </section>
+            <div class="prestige-actions" style="margin-top: 20px">
+              <button id="prestige_reset_button_page" class="btn-prestige">
+                Prestige durchführen
+              </button>
+              <button id="open_skill_tree_button" class="btn-primary">
+                Skill-Tree öffnen
+              </button>
+            </div>
+          </section>
         </div>
         <div class="modal-buttons">
-            <button onclick="document.getElementById('prestige-shop-modal').style.display='none'" class="btn-cancel">Schließen</button>
+          <button
+            onclick="
+              document.getElementById('prestige-shop-modal').style.display =
+                'none'
+            "
+            class="btn-cancel"
+          >
+            Schließen
+          </button>
         </div>
+      </div>
     </div>
-</div>
 
-<div id="wiki-modal" class="modal">
-    <div class="modal-content" style="max-width: 950px; height: 85vh; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-        
-        <div style="background: #011638; padding: 15px 20px; border-bottom: 2px solid #009ffd; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.5rem;">📖</span>
-                <h2 style="margin: 0; border: none; padding: 0; color: #fff; font-size: 1.5rem;">Handbuch</h2>
-            </div>
-            <span id="close-wiki-button" class="close-button" style="color: #fff; font-size: 2rem; cursor: pointer;">&times;</span>
+    <div id="wiki-modal" class="modal">
+      <div
+        class="modal-content"
+        style="
+          max-width: 950px;
+          height: 85vh;
+          padding: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        "
+      >
+        <div
+          style="
+            background: #011638;
+            padding: 15px 20px;
+            border-bottom: 2px solid #009ffd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 1.5rem">📖</span>
+            <h2
+              style="
+                margin: 0;
+                border: none;
+                padding: 0;
+                color: #fff;
+                font-size: 1.5rem;
+              "
+            >
+              Handbuch
+            </h2>
+          </div>
+          <span
+            id="close-wiki-button"
+            class="close-button"
+            style="color: #fff; font-size: 2rem; cursor: pointer"
+            >&times;</span
+          >
         </div>
 
-        <div style="display: flex; flex: 1; overflow: hidden;">
-            
-            <div class="wiki-sidebar">
-                <button class="wiki-nav-btn active" onclick="gameInstance.openWikiPage('buildings')">🏢 Gebäude</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('upgrades')">🧪 Forschung</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('prestige')">🌌 Prestige</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('achievements')">🏆 Erfolge</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('pets')">🐶 Begleiter</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('museum')">🏺 Museum</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('stats')">📊 Statistik</button>
-                <button class="wiki-nav-btn" onclick="gameInstance.openWikiPage('gem_empire')">✨Schwarzmarkt </button>
-            </div>
+        <div style="display: flex; flex: 1; overflow: hidden">
+          <div class="wiki-sidebar">
+            <button
+              class="wiki-nav-btn active"
+              onclick="gameInstance.openWikiPage('buildings')"
+            >
+              🏢 Gebäude
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('upgrades')"
+            >
+              🧪 Forschung
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('prestige')"
+            >
+              🌌 Prestige
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('achievements')"
+            >
+              🏆 Erfolge
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('pets')"
+            >
+              🐶 Begleiter
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('museum')"
+            >
+              🏺 Museum
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('stats')"
+            >
+              📊 Statistik
+            </button>
+            <button
+              class="wiki-nav-btn"
+              onclick="gameInstance.openWikiPage('gem_empire')"
+            >
+              ✨Schwarzmarkt
+            </button>
+          </div>
 
-            <div id="wiki-content-area" class="wiki-content-area custom-scrollbar">
-                <p style="color: #aaa; text-align: center; margin-top: 50px;">Lade Daten...</p>
-            </div>
+          <div
+            id="wiki-content-area"
+            class="wiki-content-area custom-scrollbar"
+          >
+            <p style="color: #aaa; text-align: center; margin-top: 50px">
+              Lade Daten...
+            </p>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<div id="settings-modal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <div id="settings-modal" class="modal" style="display: none">
+      <div class="modal-content">
         <span id="close-settings-button" class="close">&times;</span>
         <h2>Einstellungen</h2>
 
-        <div class="settings-section" style="border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 15px; text-align: center;">
-            <h3 style="margin-top: 0;">☁️ Cloud Speicher</h3>
-            <p style="font-size: 0.9em; color: #aaa; margin-bottom: 10px;">Verbinde dich, um Spielstände zu sichern.</p>
-            <div id="cloud-controls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="google-login-btn" class="btn-primary" style="background-color: #4285F4;"> 🔵 Mit Google verbinden</button>
-            <p id="user-email-display" style="width: 100%; color: #4CAF50; font-size: 0.9em; display: none; margin: 5px 0;"> Nicht verbunden </p>
-            <button id="cloud-save-btn" class="btn-confirm" style="display: none;" onclick="saveGameToCloud()">☁️ Speichern ⬆️ </button>
-            <button id="cloud-load-btn" class="btn-primary" style="display: none; background-color: #ff9800;" onclick="loadGameFromCloud()"> ☁️ Laden ⬇️ </button>
-            <button id="google-logout-btn" class="btn-cancel" style="display: none;"> Logout </button>
+        <div
+          class="settings-section"
+          style="
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+          "
+        >
+          <h3 style="margin-top: 0">☁️ Cloud Speicher</h3>
+          <p style="font-size: 0.9em; color: #aaa; margin-bottom: 10px">
+            Verbinde dich, um Spielstände zu sichern.
+          </p>
+          <div
+            id="cloud-controls"
+            style="
+              display: flex;
+              gap: 10px;
+              justify-content: center;
+              flex-wrap: wrap;
+            "
+          >
+            <button
+              id="google-login-btn"
+              class="btn-primary"
+              style="background-color: #4285f4"
+            >
+              🔵 Mit Google verbinden
+            </button>
+            <p
+              id="user-email-display"
+              style="
+                width: 100%;
+                color: #4caf50;
+                font-size: 0.9em;
+                display: none;
+                margin: 5px 0;
+              "
+            >
+              Nicht verbunden
+            </p>
+            <button
+              id="cloud-save-btn"
+              class="btn-confirm"
+              style="display: none"
+              onclick="saveGameToCloud()"
+            >
+              ☁️ Speichern ⬆️
+            </button>
+            <button
+              id="cloud-load-btn"
+              class="btn-primary"
+              style="display: none; background-color: #ff9800"
+              onclick="loadGameFromCloud()"
+            >
+              ☁️ Laden ⬇️
+            </button>
+            <button
+              id="google-logout-btn"
+              class="btn-cancel"
+              style="display: none"
+            >
+              Logout
+            </button>
+          </div>
         </div>
-</div>
 
         <div class="settings-section">
-            <h3>🔊 Audio</h3>
-            <div class="setting-row"><label>Musik: <input type="range" id="music-volume" min="0" max="100" value="50"></label></div>
-            <div class="setting-row"><label>SFX: <input type="range" id="sound-volume" min="0" max="100" value="50"></label></div>
+          <h3>🔊 Audio</h3>
+          <div class="setting-row">
+            <label
+              >Musik:
+              <input
+                type="range"
+                id="music-volume"
+                min="0"
+                max="100"
+                value="50"
+            /></label>
+          </div>
+          <div class="setting-row">
+            <label
+              >SFX:
+              <input
+                type="range"
+                id="sound-volume"
+                min="0"
+                max="100"
+                value="50"
+            /></label>
+          </div>
         </div>
 
         <div class="settings-section">
-            <h3>🔔 Benachrichtigungen</h3>
-            <div class="setting-row" style="margin-bottom: 10px; display:flex; justify-content:center; gap:10px; align-items:center;">
-                <label style="cursor:pointer;">
-                    <input type="checkbox" id="setting-toast-toggle" checked>
-                    Popups im Spiel
-                </label>
-            </div>
-            <div class="setting-row" style="display:flex; justify-content:center; gap:10px; align-items:center;">
-                <label style="cursor:pointer;"> <input type="checkbox" id="setting-desktop-toggle"> Desktop (Hintergrund)</label>
-            </div>
+          <h3>🔔 Benachrichtigungen</h3>
+          <div
+            class="setting-row"
+            style="
+              margin-bottom: 10px;
+              display: flex;
+              justify-content: center;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <label style="cursor: pointer">
+              <input type="checkbox" id="setting-toast-toggle" checked />
+              Popups im Spiel
+            </label>
+          </div>
+          <div
+            class="setting-row"
+            style="
+              display: flex;
+              justify-content: center;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <label style="cursor: pointer">
+              <input type="checkbox" id="setting-desktop-toggle" /> Desktop
+              (Hintergrund)</label
+            >
+          </div>
         </div>
 
         <div class="settings-section">
-            <h3>💾 Lokaler Speicher (Datei)</h3>
-            <div class="save-management" style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button id="export-save-button" class="btn-primary" style="flex: 1;">Code Exportieren</button>
-                <button id="import-save-button" class="btn-confirm" style="flex: 1;">Code Importieren</button>
-            </div>
-            <textarea id="save-data-textarea" placeholder="Speicher-Code hier einfügen..." style="width: 100%; height: 60px; background: #222; color: #fff; border: 1px solid #444;"></textarea>
+          <h3>💾 Lokaler Speicher (Datei)</h3>
+          <div
+            class="save-management"
+            style="display: flex; gap: 10px; margin-bottom: 10px"
+          >
+            <button id="export-save-button" class="btn-primary" style="flex: 1">
+              Code Exportieren
+            </button>
+            <button id="import-save-button" class="btn-confirm" style="flex: 1">
+              Code Importieren
+            </button>
+          </div>
+          <textarea
+            id="save-data-textarea"
+            placeholder="Speicher-Code hier einfügen..."
+            style="
+              width: 100%;
+              height: 60px;
+              background: #222;
+              color: #fff;
+              border: 1px solid #444;
+            "
+          ></textarea>
         </div>
+      </div>
     </div>
-</div>
 
-<div id="pet-shop-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Pet Shop</h2><div id="pet-lock-message" class="info-section"></div><div class="pet-grid" id="pet-shop-grid"></div><div class="modal-buttons"><button id="close-pet-shop-button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="diamond-mine-modal" class="modal" style="display: none;"><div class="modal-content large"><h2>💎 Diamanten-Minispiel</h2><div id="diamond-mine-content"></div><div class="modal-buttons"><button id="close_diamond_mine_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="guilds-modal" class="modal" style="display: none;">
-    <div class="modal-content large">
+    <div id="pet-shop-modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Pet Shop</h2>
+        <div id="pet-lock-message" class="info-section"></div>
+        <div class="pet-grid" id="pet-shop-grid"></div>
+        <div class="modal-buttons">
+          <button id="close-pet-shop-button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="diamond-mine-modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>💎 Diamanten-Minispiel</h2>
+        <div id="diamond-mine-content"></div>
+        <div class="modal-buttons">
+          <button id="close_diamond_mine_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="guilds-modal" class="modal" style="display: none">
+      <div class="modal-content large">
         <h2>⚔️ Gilden-System</h2>
-        
-        <div class="guild-input-container" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed #555;">
-            <p style="margin-top: 0; font-size: 0.9em; color: #ccc;">Tritt einer Gilde bei oder gründe eine neue:</p>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="guild-name-input" placeholder="Gildenname..." 
-                       style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #1a1a1a; color: white;">
-                <button id="join-guild-btn" class="buy-button" style="margin: 0; padding: 10px 20px;">Beitreten</button>
-            </div>
+
+        <div
+          class="guild-input-container"
+          style="
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px dashed #555;
+          "
+        >
+          <p style="margin-top: 0; font-size: 0.9em; color: #ccc">
+            Tritt einer Gilde bei oder gründe eine neue:
+          </p>
+          <div style="display: flex; gap: 10px">
+            <input
+              type="text"
+              id="guild-name-input"
+              placeholder="Gildenname..."
+              style="
+                flex: 1;
+                padding: 10px;
+                border-radius: 5px;
+                border: 1px solid #444;
+                background: #1a1a1a;
+                color: white;
+              "
+            />
+            <button
+              id="join-guild-btn"
+              class="buy-button"
+              style="margin: 0; padding: 10px 20px"
+            >
+              Beitreten
+            </button>
+          </div>
         </div>
 
-        <div id="guilds-content">
-            </div>
+        <div id="guilds-content"></div>
 
         <div class="modal-buttons">
-            <button id="close_guilds_button" class="btn-cancel">Schließen</button>
+          <button id="close_guilds_button" class="btn-cancel">Schließen</button>
         </div>
+      </div>
     </div>
-</div>
-<div id="achievements_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Achievements</h2><div id="info_achievements_container" class="info-grid"></div><div class="modal-buttons"><button id="close_achievements_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="museum_modal" class="modal-overlay" style="display:none;">
-    <div class="modal-content museum-layout">
+    <div id="achievements_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Achievements</h2>
+        <div id="info_achievements_container" class="info-grid"></div>
+        <div class="modal-buttons">
+          <button id="close_achievements_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="museum_modal" class="modal-overlay" style="display: none">
+      <div class="modal-content museum-layout">
         <div class="modal-header">
-            <h2>🏛️ Das Große Smiley-Museum</h2>
-            <button id="close_museum_button" class="btn-close">&times;</button>
+          <h2>🏛️ Das Große Smiley-Museum</h2>
+          <button id="close_museum_button" class="btn-close">&times;</button>
         </div>
         <div class="museum-info-banner">
-            Entdecke seltene Relikte aus der Tiefe. Sammlungen gewähren mächtige Boni!
+          Entdecke seltene Relikte aus der Tiefe. Sammlungen gewähren mächtige
+          Boni!
         </div>
-        <div id="museum_grid" class="info-grid">
-            </div>
+        <div id="museum_grid" class="info-grid"></div>
+      </div>
     </div>
-</div>
-<div id="prestige-modal" class="modal" style="display: none;"><div class="modal-content"><h2>🌌 Prestige: Zeitreise</h2><div class="prestige-stats"><p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p><p>Du erhältst: <strong id="prestige-gain-display" style="color:gold;">0</strong> Punkte</p></div><div class="modal-buttons"><button id="btn-do-prestige" class="btn-danger">Reset durchführen</button><button id="btn-cancel-prestige" class="btn-cancel">Abbrechen</button></div></div></div>
-<div id="skill_tree_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Prestige Skill-Tree</h2><div style="margin-bottom:10px;">Verfügbare Punkte: <span id="prestige_punkte_verfügbar_modal">0</span></div><div id="prestige-tree-container"></div><div id="prestige-tooltip-modal" style="display:none; position:absolute;"></div><div class="modal-buttons"><button id="reset_prestige_upgrades_button" class="btn-danger">Punkte zurücksetzen</button><button id="close_skill_tree_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="buildings_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Gebäude-Übersicht</h2><div id="info_buildings_container" class="info-grid"></div><div class="modal-buttons"><button id="close_buildings_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="global_upgrades_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>⚙️ Global Upgrades</h2><div id="info_global_upgrades_container" class="info-grid"></div><div class="modal-buttons"><button id="close_global_upgrades_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="prestige_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Prestige-Skill-Liste</h2><div id="info_prestige_container"></div><div class="modal-buttons"><button id="close_prestige_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="stats_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>Stats-Erklärung</h2><div id="info_stats_container" class="info-grid"></div><div class="modal-buttons"><button id="close_stats_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="pets_info_modal" class="modal" style="display: none;"><div class="modal-content large"><h2>🐶 Pet-Infos</h2><div id="info_pets_container" class="info-grid"></div><div class="modal-buttons"><button id="close_pets_info_button" class="btn-cancel">Schließen</button></div></div></div>
-<div id="merc-talent-modal" class="modal-overlay" style="display:none; z-index: 2000;">
-    <div class="modal-content" style="max-width: 500px; background: #0a0a0a; border: 2px solid #e040fb; box-shadow: 0 0 20px rgba(224, 64, 251, 0.4);">
-        <h2 id="talent-modal-title" style="text-align:center; color:#e040fb; margin-top:0;">Wähle ein Talent</h2>
-        <p id="talent-modal-desc" style="text-align:center; color:#aaa; font-size:0.9em;"></p>
-        
-        <div id="talent-options-container" style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-            </div>
-
-        <button onclick="document.getElementById('merc-talent-modal').style.display='none'" class="btn-cancel" style="width:100%;">Später entscheiden</button>
-    </div>
-</div>
-
-<div id="offline-modal" class="modal" style="display: none; align-items: center; justify-content: center;">
-    <div class="modal-content" style="text-align: center; border: 2px solid #FFD700; max-width: 400px;">
-        <h2 style="color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">🌙 Willkommen zurück!</h2>
-        <p style="color: #aaa; margin: 15px 0;">Deine Smileys haben fleißig weitergearbeitet.</p>
-        <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin: 20px 0;">
-            <div style="font-size: 0.9em; color: #ccc;">Vergangene Zeit:</div>
-            <div id="offline-time-display" style="font-weight: bold; margin-bottom: 10px;">0 Std 0 Min</div>
-            <div style="font-size: 0.9em; color: #ccc;">Gesammelte Smileys:</div>
-            <div id="offline-earnings-display" style="font-size: 1.8em; font-weight: bold; color: #4CAF50;">+0</div>
+    <div id="prestige-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <h2>🌌 Prestige: Zeitreise</h2>
+        <div class="prestige-stats">
+          <p>Lifetime Smileys: <span id="prestige-lifetime-display">0</span></p>
+          <p>
+            Du erhältst:
+            <strong id="prestige-gain-display" style="color: gold">0</strong>
+            Punkte
+          </p>
         </div>
-        <button id="close-offline-modal" class="btn-confirm" style="width: 100%; font-size: 1.2em; padding: 10px;">
-            Einsammeln 💰
+        <div class="modal-buttons">
+          <button id="btn-do-prestige" class="btn-danger">
+            Reset durchführen</button
+          ><button id="btn-cancel-prestige" class="btn-cancel">
+            Abbrechen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="skill_tree_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Prestige Skill-Tree</h2>
+        <div style="margin-bottom: 10px">
+          Verfügbare Punkte: <span id="prestige_punkte_verfügbar_modal">0</span>
+        </div>
+        <div id="prestige-tree-container"></div>
+        <div
+          id="prestige-tooltip-modal"
+          style="display: none; position: absolute"
+        ></div>
+        <div class="modal-buttons">
+          <button id="reset_prestige_upgrades_button" class="btn-danger">
+            Punkte zurücksetzen</button
+          ><button id="close_skill_tree_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="buildings_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Gebäude-Übersicht</h2>
+        <div id="info_buildings_container" class="info-grid"></div>
+        <div class="modal-buttons">
+          <button id="close_buildings_info_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="global_upgrades_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>⚙️ Global Upgrades</h2>
+        <div id="info_global_upgrades_container" class="info-grid"></div>
+        <div class="modal-buttons">
+          <button id="close_global_upgrades_info_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="prestige_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Prestige-Skill-Liste</h2>
+        <div id="info_prestige_container"></div>
+        <div class="modal-buttons">
+          <button id="close_prestige_info_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="stats_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>Stats-Erklärung</h2>
+        <div id="info_stats_container" class="info-grid"></div>
+        <div class="modal-buttons">
+          <button id="close_stats_info_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="pets_info_modal" class="modal" style="display: none">
+      <div class="modal-content large">
+        <h2>🐶 Pet-Infos</h2>
+        <div id="info_pets_container" class="info-grid"></div>
+        <div class="modal-buttons">
+          <button id="close_pets_info_button" class="btn-cancel">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+    <div
+      id="merc-talent-modal"
+      class="modal-overlay"
+      style="display: none; z-index: 2000"
+    >
+      <div
+        class="modal-content"
+        style="
+          max-width: 500px;
+          background: #0a0a0a;
+          border: 2px solid #e040fb;
+          box-shadow: 0 0 20px rgba(224, 64, 251, 0.4);
+        "
+      >
+        <h2
+          id="talent-modal-title"
+          style="text-align: center; color: #e040fb; margin-top: 0"
+        >
+          Wähle ein Talent
+        </h2>
+        <p
+          id="talent-modal-desc"
+          style="text-align: center; color: #aaa; font-size: 0.9em"
+        ></p>
+
+        <div
+          id="talent-options-container"
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+          "
+        ></div>
+
+        <button
+          onclick="
+            document.getElementById('merc-talent-modal').style.display = 'none'
+          "
+          class="btn-cancel"
+          style="width: 100%"
+        >
+          Später entscheiden
         </button>
+      </div>
     </div>
-</div>
 
-<div id="toast-container"></div>
-<audio id="background-music" loop src="music.mp3"></audio>
-<audio id="click-sound" src="click.mp3"></audio>
-<div id="big-bang-overlay"></div>
-<div id="custom-tooltip"></div> 
+    <div
+      id="offline-modal"
+      class="modal"
+      style="display: none; align-items: center; justify-content: center"
+    >
+      <div
+        class="modal-content"
+        style="text-align: center; border: 2px solid #ffd700; max-width: 400px"
+      >
+        <h2
+          style="color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5)"
+        >
+          🌙 Willkommen zurück!
+        </h2>
+        <p style="color: #aaa; margin: 15px 0">
+          Deine Smileys haben fleißig weitergearbeitet.
+        </p>
+        <div
+          style="
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+          "
+        >
+          <div style="font-size: 0.9em; color: #ccc">Vergangene Zeit:</div>
+          <div
+            id="offline-time-display"
+            style="font-weight: bold; margin-bottom: 10px"
+          >
+            0 Std 0 Min
+          </div>
+          <div style="font-size: 0.9em; color: #ccc">Gesammelte Smileys:</div>
+          <div
+            id="offline-earnings-display"
+            style="font-size: 1.8em; font-weight: bold; color: #4caf50"
+          >
+            +0
+          </div>
+        </div>
+        <button
+          id="close-offline-modal"
+          class="btn-confirm"
+          style="width: 100%; font-size: 1.2em; padding: 10px"
+        >
+          Einsammeln 💰
+        </button>
+      </div>
+    </div>
 
-<script>
-  // 1. UI-Update für Login-Status
-  setInterval(() => {
-    const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
-    const loginBtn = document.getElementById('google-login-btn');
-    const emailDisp = document.getElementById('user-email-display');
-    const saveBtn = document.getElementById('cloud-save-btn');
-    const loadBtn = document.getElementById('cloud-load-btn');
-    const logoutBtn = document.getElementById('google-logout-btn');
+    <div id="toast-container"></div>
+    <audio id="background-music" loop src="music.mp3"></audio>
+    <audio id="click-sound" src="click.mp3"></audio>
+    <div id="big-bang-overlay"></div>
+    <div id="custom-tooltip"></div>
 
-    if (user) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (emailDisp) {
-            emailDisp.style.display = 'block';
+    <script>
+      // 1. UI-Update für Login-Status
+      setInterval(() => {
+        const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
+        const loginBtn = document.getElementById("google-login-btn");
+        const emailDisp = document.getElementById("user-email-display");
+        const saveBtn = document.getElementById("cloud-save-btn");
+        const loadBtn = document.getElementById("cloud-load-btn");
+        const logoutBtn = document.getElementById("google-logout-btn");
+
+        if (user) {
+          if (loginBtn) loginBtn.style.display = "none";
+          if (emailDisp) {
+            emailDisp.style.display = "block";
             emailDisp.innerText = "Verbunden als: " + user.email;
-        }
-        if (saveBtn) saveBtn.style.display = 'inline-block';
-        if (loadBtn) loadBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (emailDisp) emailDisp.style.display = 'none';
-        if (saveBtn) saveBtn.style.display = 'none';
-        if (loadBtn) loadBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
-  }, 1000);
-
-  // 2. ⏰ AUTO-SAVE (Alle 60 Sekunden)
-  setInterval(() => {
-      const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
-      // Nur speichern, wenn eingeloggt UND Spiel geladen
-      if (user && window.gameInstance) {
-          saveGameToCloud(true); // <--- TRUE = LEISE (Kein Popup!)
-      }
-  }, 60000); 
-
-  // 3. Service Worker aufräumen
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for(let registration of registrations) {
-        registration.unregister();
-      }
-    });
-  }
-  
-  // 4. Modal Logik
-  function openModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.style.display = 'flex';
-  }
-  function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.style.display = 'none';
-  }
-  
-  document.addEventListener('DOMContentLoaded', () => {
-      const settingsBtn = document.getElementById('open-settings-button');
-      if (settingsBtn) settingsBtn.addEventListener('click', (e) => { e.preventDefault(); openModal('settings-modal'); });
-      const closeSettingsBtn = document.getElementById('close-settings-button');
-      if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => closeModal('settings-modal'));
-      
-      window.onclick = function(event) {
-          if (event.target.classList.contains('modal')) {
-              event.target.style.display = "none";
           }
-      }
-  });
-
-  // 5. Cloud Funktionen (OHNE ALERT)
-  function saveGameToCloud(silent = false) {
-    if (!window.gameInstance || !window.cloudSystem) return;
-    
-    const data = gameInstance.saveGame(true); 
-    
-    // HIER GEÄNDERT: von .save() zu .saveToCloud()
-    window.cloudSystem.saveToCloud(data).then(() => {
-        if (silent === false) { 
-            if(gameInstance.showNotification) gameInstance.showNotification("☁️ In Cloud gespeichert!", "success");
+          if (saveBtn) saveBtn.style.display = "inline-block";
+          if (loadBtn) loadBtn.style.display = "inline-block";
+          if (logoutBtn) logoutBtn.style.display = "inline-block";
         } else {
-            console.log("☁️ Auto-Save (Leise): OK");
+          if (loginBtn) loginBtn.style.display = "inline-block";
+          if (emailDisp) emailDisp.style.display = "none";
+          if (saveBtn) saveBtn.style.display = "none";
+          if (loadBtn) loadBtn.style.display = "none";
+          if (logoutBtn) logoutBtn.style.display = "none";
         }
-    }).catch(err => {
-        if (silent === false) alert("Fehler beim Speichern: " + err.message);
-    });
-}
+      }, 1000);
 
-  function loadGameFromCloud() {
-        if (!window.cloudSystem) return;
-        window.cloudSystem.load().then(data => {
-            if (data && window.gameInstance) {
-                gameInstance.loadGame(data);
+      // 2. ⏰ AUTO-SAVE (Alle 60 Sekunden)
+      setInterval(() => {
+        const user = window.cloudSystem ? window.cloudSystem.getUser() : null;
+        // Nur speichern, wenn eingeloggt UND Spiel geladen
+        if (user && window.gameInstance) {
+          saveGameToCloud(true); // <--- TRUE = LEISE (Kein Popup!)
+        }
+      }, 60000);
+
+      // 3. Service Worker aufräumen
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then(function (registrations) {
+            for (let registration of registrations) {
+              registration.unregister();
             }
-        });
-  }
-</script>
-<script src="data.js?v=2"></script> 
-<script type="module" src="firebase-logic.js?v=2"></script>
-<script src="SG.js?v=2"></script>
+          });
+      }
 
-<div id="main-chat-container" class="chat-minimized">
-    <div class="chat-header">
+      // 4. Modal Logik
+      function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = "flex";
+      }
+      function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = "none";
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const settingsBtn = document.getElementById("open-settings-button");
+        if (settingsBtn)
+          settingsBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            openModal("settings-modal");
+          });
+        const closeSettingsBtn = document.getElementById(
+          "close-settings-button",
+        );
+        if (closeSettingsBtn)
+          closeSettingsBtn.addEventListener("click", () =>
+            closeModal("settings-modal"),
+          );
+
+        window.onclick = function (event) {
+          if (event.target.classList.contains("modal")) {
+            event.target.style.display = "none";
+          }
+        };
+      });
+
+      // 5. Cloud Funktionen (OHNE ALERT)
+      function saveGameToCloud(silent = false) {
+        if (!window.gameInstance || !window.cloudSystem) return;
+
+        const data = gameInstance.saveGame(true);
+
+        // HIER GEÄNDERT: von .save() zu .saveToCloud()
+        window.cloudSystem
+          .saveToCloud(data)
+          .then(() => {
+            if (silent === false) {
+              if (gameInstance.showNotification)
+                gameInstance.showNotification(
+                  "☁️ In Cloud gespeichert!",
+                  "success",
+                );
+            } else {
+              console.log("☁️ Auto-Save (Leise): OK");
+            }
+          })
+          .catch((err) => {
+            if (silent === false)
+              alert("Fehler beim Speichern: " + err.message);
+          });
+      }
+
+      function loadGameFromCloud() {
+        if (!window.cloudSystem) return;
+        window.cloudSystem.load().then((data) => {
+          if (data && window.gameInstance) {
+            gameInstance.loadGame(data);
+          }
+        });
+      }
+    </script>
+    <script src="data.js?v=2"></script>
+    <script type="module" src="firebase-logic.js?v=2"></script>
+    <script src="SG.js?v=2"></script>
+
+    <div id="main-chat-container" class="chat-minimized">
+      <div class="chat-header">
         <div class="chat-tabs">
-            <button id="btn-chat-global" class="btn-chat-tab active">Global<span class="notification-dot"></span></button>
-            <button id="btn-chat-guild" class="btn-chat-tab">Gilde<span class="notification-dot"></span></button>
+          <button id="btn-chat-global" class="btn-chat-tab active">
+            Global<span class="notification-dot"></span>
+          </button>
+          <button id="btn-chat-guild" class="btn-chat-tab">
+            Gilde<span class="notification-dot"></span>
+          </button>
         </div>
 
         <div id="chat-user-display" title="Klicken zum Namen ändern">
-            👤 <span id="current-player-name">Lade...</span>
+          👤 <span id="current-player-name">Lade...</span>
         </div>
 
         <div class="header-controls">
-            <button id="btn-chat-mute" class="btn-mute" title="Stummschalten">🔔</button>
-            <button id="btn-chat-toggle" title="Minimieren">➖</button>
+          <button id="btn-chat-mute" class="btn-mute" title="Stummschalten">
+            🔔
+          </button>
+          <button id="btn-chat-toggle" title="Minimieren">➖</button>
         </div>
-    </div>
-    
-    <div id="chat-content-wrapper">
+      </div>
+
+      <div id="chat-content-wrapper">
         <div id="chat-messages" class="chat-display">
-            <div class="chat-msg system">Willkommen im Chat! 👋</div>
+          <div class="chat-msg system">Willkommen im Chat! 👋</div>
         </div>
-        
+
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Nachricht schreiben..." maxlength="100">
-            <button id="btn-chat-send">🚀</button>
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Nachricht schreiben..."
+            maxlength="100"
+          />
+          <button id="btn-chat-send">🚀</button>
         </div>
+      </div>
     </div>
-</div> </body>
+  </body>
 </html>

@@ -1,0 +1,511 @@
+.floating-text,
+.click-effect {
+  position: fixed;
+  pointer-events: none;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2rem;
+  animation: floatUp 1s ease-out forwards;
+  z-index: 5000;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.click-effect {
+  color: var(--color-accent-blue);
+  font-size: 1.5rem;
+}
+.click-effect.crit-style {
+  color: #ff3333;
+  font-size: 2.5rem;
+  text-shadow: 0 0 10px red;
+  font-weight: 900;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.2);
+  }
+}
+
+@keyframes shake-animation {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
+
+.shake-effect {
+  animation: shake-animation 0.3s;
+  animation-iteration-count: 1;
+}
+
+.boss-hit-effect {
+  animation: shake-animation 0.2s;
+  border-color: #ff5252 !important;
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
+#big-bang-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: opacity 0.1s ease-in;
+}
+
+.flash-bang {
+  animation: flash-animation 2.5s forwards;
+}
+
+@keyframes flash-animation {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Cloud Status Styles */
+#cloud-save-status.saving {
+  color: #009ffd;
+  text-shadow: 0 0 10px #009ffd;
+  animation: cloud-pulse 1s infinite alternate;
+}
+
+#cloud-save-status.success {
+  color: #4caf50;
+  text-shadow: 0 0 8px #4caf50;
+}
+
+#cloud-save-status.error {
+  color: #ff5252;
+  animation: shake-effect 0.3s ease-in-out;
+}
+
+@keyframes cloud-pulse {
+  from {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.click-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000; /* Über allem anderen */
+  font-size: 1.2rem;
+  user-select: none;
+  animation: particle-fly 0.8s ease-out forwards;
+}
+
+@keyframes particle-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    /* Die Variablen --tw-x/y werden per JavaScript berechnet */
+    transform: translate(var(--tw-x), var(--tw-y)) scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes boss-pulse {
+  0% {
+    box-shadow: 0 0 5px rgba(107, 5, 4, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(107, 5, 4, 0.5);
+  }
+}
+@keyframes bossShake {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(0.95) rotate(2deg);
+    filter: brightness(1.5) sepia(1) saturate(5) hue-rotate(-50deg);
+  } /* Kurzes Aufleuchten in Rot-Orange */
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+@keyframes bossCrit {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.9) translate(-10px, 5px) rotate(-5deg);
+    filter: brightness(2) contrast(2);
+  }
+  50% {
+    transform: scale(1.1) translate(10px, -5px) rotate(5deg);
+  }
+  75% {
+    transform: scale(0.95) translate(-5px, -5px);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Animation für normale Treffer am Boss */
+.boss-hit-shake {
+  animation: bossShake 0.15s ease-in-out;
+}
+
+/* Animation für Kritische Treffer (Heftiger) */
+.boss-crit-shake {
+  animation: bossCrit 0.25s ease-in-out;
+}
+
+.floating-text.glitch {
+  color: #d500f9;
+  font-weight: bold;
+}
+
+.rng-event-object {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  z-index: 9999;
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  animation:
+    bounceAround 10s linear infinite,
+    glowPulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes glowPulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px gold);
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 20px white);
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px gold);
+  }
+}
+
+@keyframes bounceAround {
+  0% {
+    margin-left: 0px;
+    margin-top: 0px;
+  }
+  25% {
+    margin-left: 50px;
+    margin-top: 100px;
+  }
+  50% {
+    margin-left: -50px;
+    margin-top: 200px;
+  }
+  75% {
+    margin-left: 100px;
+    margin-top: 50px;
+  }
+  100% {
+    margin-left: 0px;
+    margin-top: 0px;
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -150%;
+  }
+  20% {
+    left: 150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+/* --- SPEZIAL-ANIMATIONEN FÜR SKINS --- */
+
+/* 1. Geist (Schweben & Transparent) */
+.ghost-anim {
+  animation: ghost-float 3s ease-in-out infinite;
+  opacity: 0.8;
+}
+@keyframes ghost-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.5;
+    filter: drop-shadow(0 10px 5px rgba(255, 255, 255, 0.2));
+  }
+}
+
+/* 2. Glitch (Verzerrung & Farben) */
+.glitch-anim {
+  position: relative;
+  animation: glitch-skew 2s infinite linear alternate-reverse;
+}
+@keyframes glitch-skew {
+  0% {
+    transform: skew(0deg);
+  }
+  20% {
+    transform: skew(-2deg);
+    filter: drop-shadow(-2px 0 #ff00c1);
+  }
+  40% {
+    transform: skew(2deg);
+    filter: drop-shadow(2px 0 #00fff9);
+  }
+  60% {
+    transform: skew(0deg);
+  }
+  80% {
+    transform: skew(-1deg);
+  }
+  100% {
+    transform: skew(0deg);
+  }
+}
+
+/* 3. König (Goldenes Leuchten) */
+.king-glow {
+  animation: king-shine 3s infinite;
+}
+@keyframes king-shine {
+  0% {
+    filter: drop-shadow(0 0 5px gold);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 25px gold);
+    transform: scale(1.05);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px gold);
+    transform: scale(1);
+  }
+}
+
+/* 4. Party (Wackeln) */
+.party-anim {
+  /* Falls du das css-Feld im JS noch hinzufügst */
+  animation: party-dance 0.5s infinite;
+}
+@keyframes party-dance {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* 1. Geist (Schweben & Transparent) */
+.ghost-anim {
+  animation: ghost-float 3s ease-in-out infinite;
+  opacity: 0.8;
+}
+@keyframes ghost-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.5;
+    filter: drop-shadow(0 10px 5px rgba(255, 255, 255, 0.2));
+  }
+}
+
+/* 2. Glitch (Verzerrung & Farben) */
+.glitch-anim {
+  position: relative;
+  animation: glitch-skew 2s infinite linear alternate-reverse;
+}
+@keyframes glitch-skew {
+  0% {
+    transform: skew(0deg);
+  }
+  20% {
+    transform: skew(-2deg);
+    filter: drop-shadow(-2px 0 #ff00c1);
+  }
+  40% {
+    transform: skew(2deg);
+    filter: drop-shadow(2px 0 #00fff9);
+  }
+  60% {
+    transform: skew(0deg);
+  }
+  80% {
+    transform: skew(-1deg);
+  }
+  100% {
+    transform: skew(0deg);
+  }
+}
+
+/* 3. König (Goldenes Leuchten) */
+.king-glow {
+  animation: king-shine 3s infinite;
+}
+@keyframes king-shine {
+  0% {
+    filter: drop-shadow(0 0 5px gold);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 25px gold);
+    transform: scale(1.05);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px gold);
+    transform: scale(1);
+  }
+}
+
+/* 4. Party (Wackeln) */
+.party-anim {
+  /* Falls du das css-Feld im JS noch hinzufügst */
+  animation: party-dance 0.5s infinite;
+}
+@keyframes party-dance {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Spezial-Effekte Animationen */
+@keyframes ghost-float {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(-5px);
+  }
+}
+.ghost-anim {
+  animation: ghost-float 3s infinite ease-in-out;
+}
+
+@keyframes glitch-skew {
+  0% {
+    transform: skew(0deg);
+  }
+  20% {
+    transform: skew(-10deg);
+  }
+  40% {
+    transform: skew(10deg);
+  }
+  100% {
+    transform: skew(0deg);
+  }
+}
+.glitch-anim {
+  animation: glitch-skew 0.5s infinite;
+  filter: drop-shadow(2px 0 red) drop-shadow(-2px 0 blue);
+}
+
+@keyframes king-shine {
+  0% {
+    filter: drop-shadow(0 0 5px gold);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px gold);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px gold);
+  }
+}
+.king-glow {
+  animation: king-shine 2s infinite;
+}

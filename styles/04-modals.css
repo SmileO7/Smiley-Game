@@ -1,0 +1,252 @@
+/* Update für den Modal-Hintergrund */
+.modal {
+  background-color: rgba(0, 0, 0, 0.6); /* Etwas transparenter */
+  backdrop-filter: blur(8px); /* Der magische Blur-Effekt */
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  padding: 20px;
+  opacity: 0; /* Start für Animation */
+  transition: opacity 0.3s ease;
+}
+
+/* Wenn das Modal angezeigt wird (Logik via JS oder CSS-Klasse) */
+.modal[style*="display: flex"] {
+  opacity: 1;
+}
+
+/* Update für den Modal-Inhalt mit Einfliege-Animation */
+.modal-content {
+  background-color: rgba(11, 16, 25, 0.95); /* Glas-Look */
+  border: 1px solid var(--color-accent-blue);
+  border-radius: 12px;
+  box-shadow: 0 0 50px rgba(0, 159, 253, 0.2);
+  max-height: 90vh;
+  max-width: 900px;
+  width: 95%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+
+  /* Animation beim Erscheinen */
+  transform: scale(0.8) translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Skalierung auf Normalgröße, wenn das Modal aktiv ist */
+.modal[style*="display: flex"] .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.modal-content.large {
+  max-width: 1000px;
+}
+.modal-content h2 {
+  margin-top: 0;
+  color: var(--color-accent-blue);
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+.page-container {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 5px;
+}
+.modal-buttons {
+  margin-top: 20px;
+  text-align: right;
+  border-top: 1px solid #333;
+  padding-top: 10px;
+}
+
+#prestige-tooltip-modal {
+  position: fixed !important;
+  background: rgba(10, 10, 25, 0.95);
+  border: 1px solid #ffd700;
+  padding: 15px;
+  border-radius: 6px;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
+  max-width: 300px;
+  color: #fff;
+}
+/* Modals (Fenster) anpassen */
+.modal-content {
+  max-height: 85vh; /* Fenster darf fast so hoch wie das Handy sein */
+  overflow-y: auto; /* Erlaubt Scrollen INNERHALB des Fensters */
+  -webkit-overflow-scrolling: touch; /* Macht das Scrollen auf iPhones flüssiger */
+}
+/* 3. Menüs (Upgrades, Gilden) auf volle Breite */
+.modal-content.large {
+  width: 95%;
+  margin: 5% auto;
+  padding: 15px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+/* WICHTIG für Market & Skins */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85); /* Dunkler Hintergrund */
+  backdrop-filter: blur(5px);
+  z-index: 3000; /* Muss über allem liegen */
+  display: none; /* Standardmäßig ausgeblendet */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Close Button in dynamischen Modals */
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 2rem;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10;
+}
+.close-modal:hover {
+  color: #ff5252;
+}
+
+/* 1. Macht das Modal fast so groß wie den gesamten Bildschirm */
+#skill_tree_modal .modal-content {
+  max-width: 95vw !important;
+  height: 90vh !important;
+  max-height: 90vh !important;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: #0a0a0a !important; /* Sehr dunkler Hintergrund */
+  border: 1px solid #7c4dff !important;
+  box-shadow: 0 0 50px rgba(124, 77, 255, 0.2) !important;
+}
+
+#custom-tooltip {
+  position: fixed;
+  display: none;
+  background: rgba(20, 20, 25, 0.95);
+  border: 1px solid #444;
+  border-left: 4px solid var(--color-primary-dark);
+  padding: 12px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 100000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  max-width: 300px;
+  white-space: pre-line;
+  backdrop-filter: blur(4px);
+}
+
+#custom-tooltip h4 {
+  margin: 0 0 5px 0;
+  color: var(--color-accent-blue);
+  font-size: 1rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+}
+#custom-tooltip .tooltip-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+#custom-tooltip .highlight-green {
+  color: #4caf50;
+}
+#custom-tooltip .highlight-red {
+  color: #ff5252;
+}
+#custom-tooltip .highlight-gold {
+  color: #ffd700;
+}
+
+#building-tooltip {
+  background-color: rgba(
+    15,
+    20,
+    30,
+    0.95
+  ); /* Fast schwarzer Hintergrund, 95% deckend */
+  border: 2px solid #009ffd; /* Dein typischer blauer Rand */
+  border-radius: 8px; /* Abgerundete Ecken */
+  padding: 12px; /* Platz innen */
+  color: #ffffff; /* Weiße Schrift */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Schatten für 3D-Effekt */
+  pointer-events: none; /* WICHTIG: Damit die Maus durchklicken kann */
+  font-size: 0.9rem; /* Lesbare Größe */
+  min-width: 220px; /* Mindestbreite */
+  z-index: 9999; /* Immer ganz oben */
+  backdrop-filter: blur(5px); /* Leichter Milchglas-Effekt (optional) */
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border-left: 5px solid var(--color-accent-blue);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast.success {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+/* Settings Slider */
+.settings-section {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+#save-data-textarea {
+  width: 100%;
+  background: #000;
+  color: #009ffd;
+  border: 1px solid #333;
+  padding: 10px;
+}
+
+#cloud-controls button {
+  margin: 5px;
+  min-width: 120px;
+}

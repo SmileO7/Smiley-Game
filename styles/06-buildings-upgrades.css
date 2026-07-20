@@ -1,0 +1,225 @@
+/* ======================================================= */
+/* 4. RECHTE SPALTE & GEBÄUDE (HOLO STYLE)                 */
+/* ======================================================= */
+
+/* Container für Gebäude */
+.building-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Einzelne Gebäude-Karte */
+.building-item {
+  /* Dunkelblauer Hintergrund wie im Bild */
+  background-color: #0b1629;
+  border: 1px solid #005a8d; /* Dunkleres Blau für den Rand */
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.building-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.building-name {
+  font-weight: bold;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.building-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-accent-blue);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Titelzeile */
+.building-item h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+/* Anzahl Badge */
+.building-item h3 span {
+  background: rgba(0, 159, 253, 0.15);
+  color: var(--color-accent-blue);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Info Text */
+.building-item .production {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+/* Buttons */
+.building-item .button-group {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+  width: 100%;
+}
+
+/* === EINZELNER KAUF-BUTTON IN DER KARTE === */
+.building-item .btn-buy {
+  width: 100%; /* Volle Breite */
+  height: 35px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between; /* Text links, Preis rechts */
+  padding: 0 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.1s;
+  align-items: center;
+}
+
+/* Aktive Buttons */
+.building-item .btn-buy:not(:disabled) {
+  background-color: rgba(0, 159, 253, 0.15);
+  border-color: var(--color-accent-blue);
+  color: #fff;
+}
+
+.building-item .btn-buy:not(:disabled):hover {
+  background-color: var(--color-accent-blue);
+  color: #000;
+  font-weight: bold;
+}
+
+.building-item .btn-buy:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Effekt für kaufbare Gebäude */
+.building-item.affordable {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 12px rgba(0, 159, 253, 0.4);
+  transition: all 0.3s ease;
+}
+
+/* Optional: Ein ganz leichtes Pulsieren, damit es lebendiger wirkt */
+.building-item.affordable:not(:hover) {
+  animation: affordable-pulse 2s infinite ease-in-out;
+}
+
+.buy-amount-container {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes affordable-pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 159, 253, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(0, 159, 253, 0.3);
+  }
+}
+
+.research-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  min-height: 60px;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.research-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-accent-blue);
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.research-content {
+  flex-grow: 1;
+  margin-right: 10px;
+  overflow: hidden;
+}
+.research-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.research-group-name {
+  font-size: 0.7rem;
+  color: var(--color-accent-blue);
+  text-transform: uppercase;
+}
+.research-name {
+  font-weight: bold;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.research-desc {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* Glow für kaufbare Upgrades in der Mitte */
+.research-item.affordable {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 15px rgba(0, 159, 253, 0.4);
+  background-color: rgba(
+    0,
+    159,
+    253,
+    0.08
+  ); /* Leicht helleres Blau im Hintergrund */
+}
+
+/* Pulsieren für kaufbare Upgrades */
+.research-item.affordable:not(:hover) {
+  animation: upgrade-glow-pulse 2s infinite ease-in-out;
+}
+
+@keyframes upgrade-glow-pulse {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 159, 253, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 159, 253, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 159, 253, 0.2);
+  }
+}
