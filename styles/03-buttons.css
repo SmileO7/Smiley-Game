@@ -1,3 +1,5 @@
+/* #region Base Button System */
+
 .btn-toggle {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
@@ -24,7 +26,6 @@
   box-shadow: 0 0 10px rgba(0, 159, 253, 0.4);
 }
 
-/* Globale Buttons */
 .btn-primary,
 .btn-confirm,
 .btn-danger,
@@ -48,6 +49,7 @@
   background-color: var(--color-blue-main);
   color: #000;
 }
+
 .btn-primary:hover {
   background-color: #33baff;
   transform: translateY(-2px);
@@ -58,6 +60,7 @@
 .btn-prestige {
   background-color: var(--color-red-main);
 }
+
 .btn-danger:hover {
   background-color: #8a0806;
   transform: translateY(-2px);
@@ -68,7 +71,6 @@
   background-color: var(--color-neutral-accent);
 }
 
-/* Feedback beim Klicken für alle Buttons */
 .btn-primary:active,
 .btn-confirm:active,
 .btn-danger:active,
@@ -77,9 +79,36 @@
   transform: scale(0.95);
 }
 
+.btn-tool {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #333;
+  cursor: pointer;
+  font-size: 1.1rem;
+  min-width: 60px;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
+  transform: none !important;
+}
+
+.btn-tool:hover {
+  background: #444;
+  border-color: #777;
+}
+
+.btn-tool:active {
+  background: #222;
+}
+
+/* #endregion */
+
+/* #region Research & Skill Buttons */
+
 .btn-buy-research {
   background: var(--color-blue-main);
-  color: #000; /* Schwarz auf Blau für bessere Lesbarkeit */
+  color: #000;
   border: none;
   border-radius: 4px;
   padding: 5px 10px;
@@ -106,27 +135,6 @@
   box-shadow: none;
 }
 
-.btn-tool {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background: #333;
-  cursor: pointer;
-  font-size: 1.1rem;
-  min-width: 60px;
-  transition:
-    background 0.1s,
-    border-color 0.1s;
-  transform: none !important;
-}
-.btn-tool:hover {
-  background: #444;
-  border-color: #777;
-}
-.btn-tool:active {
-  background: #222;
-}
-
 .btn-skill {
   width: 100%;
   min-height: 65px;
@@ -145,6 +153,7 @@
   border-color: #009ffd;
   box-shadow: 0 0 10px rgba(0, 159, 253, 0.3);
 }
+
 .btn-skill.ready .skill-timer {
   color: #009ffd;
 }
@@ -154,6 +163,7 @@
   background: rgba(76, 175, 80, 0.15);
   box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
 }
+
 .btn-skill.is-active .skill-timer {
   color: #4caf50 !important;
 }
@@ -163,9 +173,14 @@
   background: rgba(244, 67, 54, 0.1);
   cursor: not-allowed;
 }
+
 .btn-skill:disabled .skill-timer {
   color: #f44336;
 }
+
+/* #endregion */
+
+/* #region Chat & Guild Buttons */
 
 .btn-chat-tab {
   position: relative;
@@ -179,16 +194,23 @@
   transition: all 0.2s;
   font-family: inherit;
 }
+
 .btn-chat-tab:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.05);
 }
+
 .btn-chat-tab.active {
   background: rgba(0, 159, 253, 0.2);
   border: 1px solid #009ffd;
   color: #fff;
   text-shadow: 0 0 5px rgba(0, 159, 253, 0.5);
 }
+
+.btn-chat-tab.has-notification .notification-dot {
+  display: block;
+}
+
 #btn-chat-mute {
   background: transparent;
   border: none;
@@ -199,14 +221,17 @@
   color: #fff;
   transition: transform 0.2s;
 }
+
 #btn-chat-mute:hover {
   opacity: 1;
   transform: scale(1.1);
 }
+
 #btn-chat-mute.muted {
   color: #ff4444;
   opacity: 1;
 }
+
 #btn-chat-toggle {
   background: transparent;
   border: none;
@@ -217,6 +242,7 @@
   line-height: 1;
   padding: 0;
 }
+
 #btn-chat-toggle:hover {
   color: #fff;
 }
@@ -233,16 +259,14 @@
   justify-content: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
+
 #btn-chat-send:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
+
 #btn-chat-send:active {
   transform: translateY(1px);
-}
-
-.btn-chat-tab.has-notification .notification-dot {
-  display: block;
 }
 
 #btn-guild-list {
@@ -253,20 +277,41 @@
   border-radius: 4px;
   padding: 2px 6px;
 }
+
 #btn-guild-list:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
 #btn-guild-list.active {
   background: #009ffd;
   color: #fff;
   border-color: #009ffd;
 }
 
-/* --- REKRUTIERUNG & SPENDEN (Sekundär-Buttons) --- */
+#btn-toggle-notifications {
+  background: #1a1a1a !important;
+  color: #009ffd !important;
+  border: 1px solid #009ffd !important;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#btn-toggle-notifications:hover {
+  background: #009ffd !important;
+  color: #000 !important;
+}
+
+/* #endregion */
+
+/* #region Quest, Donate & Raid Buttons */
+
 #btn-recruit,
 .btn-donate {
-  background: #011638 !important; /* Dunkles Blau */
-  color: #009ffd !important; /* Akzent Blau */
+  background: #011638 !important;
+  color: #009ffd !important;
   border: 1px solid #009ffd !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
@@ -277,14 +322,13 @@
 #btn-recruit:hover:not(:disabled),
 .btn-donate:hover:not(:disabled) {
   background: #009ffd !important;
-  color: #011638 !important; /* Invertiert beim Hover für Kontrast */
+  color: #011638 !important;
   transform: translateY(-2px);
 }
 
-/* --- SPEZIAL-BUTTON (10% Spenden) --- */
 #btn-donate-all {
   background: #009ffd !important;
-  color: #011638 !important; /* Dunkler Text auf Blau */
+  color: #011638 !important;
   font-weight: bold;
   border: none !important;
   cursor: pointer;
@@ -296,7 +340,6 @@
   box-shadow: 0 0 15px rgba(0, 159, 253, 0.6);
 }
 
-/* --- QUEST BUTTONS --- */
 .btn-assign-quest {
   background: #011638 !important;
   color: #009ffd !important;
@@ -312,7 +355,7 @@
 
 .btn-claim-quest {
   background: linear-gradient(to bottom, #4caf50, #2e7d32) !important;
-  color: #ffffff !important;
+  color: #fff !important;
   border: 1px solid #1b5e20 !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   cursor: pointer;
@@ -323,140 +366,39 @@
   transform: translateY(-1px);
 }
 
-/* --- BOSS RAID BUTTONS --- */
 .boss-btn-active {
   background: linear-gradient(135deg, #6b0504, #911b1b) !important;
-  color: #ffffff !important;
+  color: #fff !important;
   font-weight: bold;
   box-shadow: 0 0 15px rgba(107, 5, 4, 0.5);
   cursor: pointer;
   animation: boss-pulse 2s infinite;
 }
 
-/* --- GILDEN-FUNK (NOTIFICATIONS) --- */
-#btn-toggle-notifications {
-  background: #1a1a1a !important;
-  color: #009ffd !important;
-  border: 1px solid #009ffd !important;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/* #endregion */
 
-#btn-toggle-notifications:hover {
-  background: #009ffd !important;
-  color: #000000 !important;
-}
+/* #region Global Disabled State */
 
-/* --- GLOBALER STATUS: DEAKTIVIERT --- */
 button:disabled,
 .boss-btn-cooldown {
-  background: #222222 !important;
-  color: #555555 !important;
-  border: 1px solid #333333 !important;
+  background: #222 !important;
+  color: #555 !important;
+  border: 1px solid #333 !important;
   cursor: not-allowed !important;
   opacity: 1 !important;
   box-shadow: none !important;
   transform: none !important;
 }
 
-/* Skin Buttons */
+/* #endregion */
+
+/* #region Skin & Blackmarket Buttons */
+
 .btn-buy-skin,
 .btn-equip-skin {
   width: 100%;
   margin-top: auto;
-  font-size: 0.8rem;
-  padding: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.exchange-btn {
-  background: #d500f9;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  font-weight: bold;
-  border-radius: 4px;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-.exchange-btn:hover {
-  box-shadow: 0 0 10px #d500f9;
-}
-.exchange-btn:disabled {
-  background: #444;
-  color: #888;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.purple-btn {
-  background: linear-gradient(90deg, #6200ea 0%, #d500f9 100%);
-  border: none;
-  color: white;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  margin-top: auto;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  transition: 0.2s;
-  width: 100%;
-}
-.purple-btn:hover:not(:disabled) {
-  box-shadow: 0 0 15px rgba(213, 0, 249, 0.6);
-  filter: brightness(1.2);
-}
-.purple-btn:disabled {
-  background: transparent;
-  border: 1px solid #444;
-  color: #666;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* Der Schwarzmarkt-Button im 3D-Look */
-.purple-btn {
-  background: #7c4dff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 4px 0 #4a148c; /* Dunklerer lila Schatten für 3D-Effekt */
-  transition: all 0.1s;
-  width: 100%;
-}
-
-.purple-btn:hover:not(:disabled) {
-  background: #9575cd;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 #4a148c;
-}
-
-.purple-btn:active:not(:disabled) {
-  transform: translateY(3px); /* Drückt den Button nach unten */
-  box-shadow: 0 1px 0 #4a148c;
-}
-
-.purple-btn:disabled {
-  background: #333;
-  color: #777;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* Der Kaufen/Ausrüsten-Button im Kleiderschrank */
-.btn-buy-skin,
-.btn-equip-skin {
-  background: #2c3e50; /* Edles Dunkelblau/Grau */
+  background: #2c3e50;
   color: #fff;
   border: none;
   padding: 8px 15px;
@@ -465,7 +407,9 @@ button:disabled,
   cursor: pointer;
   box-shadow: 0 4px 0 #1a252f;
   transition: all 0.1s;
-  width: 100%;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .btn-buy-skin:hover:not(:disabled),
@@ -481,7 +425,60 @@ button:disabled,
   box-shadow: 0 1px 0 #1a252f;
 }
 
-/* 4. Buttons größer machen (besser für Finger-Touch) */
+.exchange-btn {
+  background: #d500f9;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.exchange-btn:hover {
+  box-shadow: 0 0 10px #d500f9;
+}
+
+.exchange-btn:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.purple-btn {
+  background: #7c4dff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #4a148c;
+  transition: all 0.1s;
+  width: 100%;
+}
+
+.purple-btn:hover:not(:disabled) {
+  background: #9575cd;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #4a148c;
+}
+
+.purple-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #4a148c;
+}
+
+.purple-btn:disabled {
+  background: #333;
+  color: #777;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 .buy-button,
 .btn-main {
   width: 100%;
@@ -489,3 +486,5 @@ button:disabled,
   font-size: 1.1em;
   margin: 10px 0;
 }
+
+/* #endregion */

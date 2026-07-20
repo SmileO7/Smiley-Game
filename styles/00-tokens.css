@@ -1,4 +1,7 @@
 :root {
+  --navbar-height: 60px;
+  --ticker-hight: 30px;
+  --app-top-offset: calc(var(--navbar-height) + var(--ticker-hight));
   /* Farben */
   --color-primary-dark: #011638; /* Haupt-Hintergrund */
   --color-secondary-red: #6b0504; /* Rot-Akzent */
@@ -28,11 +31,4 @@
   --spacing-sm: 10px;
   --spacing-md: 20px;
   --spacing-lg: 30px;
-}
-
-/* GLOBAL RESET */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
 }

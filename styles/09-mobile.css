@@ -1,3 +1,10 @@
+/* ======================================================= */
+/* 09. RESPONSIVE                                          */
+/* ======================================================= */
+
+/* =========================
+   Large Tablet / Small Desktop
+   ========================= */
 @media (max-width: 1400px) {
   .main-layout {
     grid-template-columns: 280px 1fr 280px;
@@ -6,46 +13,52 @@
   }
 }
 
+/* =========================
+   Tablet
+   ========================= */
 @media (max-width: 950px) {
   .main-layout {
     grid-template-columns: 1fr;
     height: auto;
     overflow-y: auto;
   }
+
   .left-column,
   .middle-column,
   .right-column {
     height: auto;
     overflow: visible;
   }
+
   .navbar {
     position: relative;
   }
+
   main {
     padding-top: 0;
   }
 }
 
-@media screen and (max-width: 768px) {
-  /* 1. Das Haupt-Layout stapeln statt nebeneinander */
-  body,
-  html {
-    overflow-y: auto !important; /* Erlaubt vertikales Scrollen */
-    height: auto !important; /* Hebt feste Höhenbeschränkungen auf */
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 768px) {
+  html,
+  body {
+    height: auto !important;
+    overflow-y: auto !important;
     position: relative;
   }
 
-  /* Das Haupt-Layout für Mobile anpassen */
   .main-container,
   main,
   #game-wrapper {
     display: flex;
-    flex-direction: column; /* Stapelt alles untereinander */
+    flex-direction: column;
     min-height: 100vh;
-    overflow-y: visible; /* Stellt sicher, dass nichts abgeschnitten wird */
+    overflow-y: visible;
   }
 
-  /* 2. Den Smiley (Click-Bereich) zentrieren und passend machen */
   #smiley-container {
     width: 100%;
     height: auto;
@@ -53,11 +66,10 @@
   }
 
   #smiley {
-    width: 200px; /* Etwas kleiner für Mobile */
+    width: 200px;
     height: 200px;
   }
 
-  /* 5. Statistiken oben fixieren oder kompakter machen */
   .stats-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -65,56 +77,54 @@
     font-size: 0.9em;
   }
 
-  /* Den Skilltree-Container scrollbar machen */
-  #prestige-skill-tree,
+  #prestige-tree-container,
   .skill-tree-container {
-    display: block;
-    overflow-x: auto; /* Erlaubt horizontales Wischen im Baum */
-    overflow-y: hidden;
-    white-space: nowrap; /* Verhindert, dass Zeilen wahllos umbrechen */
-    padding: 20px;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-  }
-
-  /* Die einzelnen Skill-Knoten anpassen */
-  .skill-node {
-    display: inline-block; /* Skills nebeneinander lassen, aber wischbar */
-    width: 80px; /* Etwas kleiner für Mobile */
-    height: 80px;
-    margin: 10px;
-    vertical-align: top;
-    white-space: normal; /* Text im Skill darf wieder umbrechen */
-    font-size: 0.8em;
-    pointer-events: auto !important; /* Sicherstellen, dass Klicks durchgehen */
-  }
-
-  /* Falls du Linien (SVG) zwischen den Skills hast */
-  #skill-tree-svg {
-    min-width: 600px; /* Erzwingt eine Mindestbreite, damit die Linien nicht quetschen */
+    touch-action: pan-x pan-y;
   }
 
   .skill-node,
   .skill-node * {
-    cursor: pointer;
-    touch-action: manipulation; /* Optimiert für schnelles Tippen am Handy */
+    touch-action: manipulation;
+  }
+
+  #main-chat-container {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    max-width: none;
+  }
+
+  .feature-button-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pet-grid,
+  #wardrobe-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 
+/* =========================
+   Small Mobile
+   ========================= */
 @media (max-width: 700px) {
   #wiki-modal .modal-content > div {
     flex-direction: column;
   }
+
   .wiki-sidebar {
     width: 100%;
+    height: 60px;
     flex-direction: row;
+    align-items: center;
     overflow-x: auto;
     border-right: none;
     border-bottom: 1px solid #333;
-    height: 60px;
-    align-items: center;
   }
+
   .wiki-nav-btn {
     white-space: nowrap;
     padding: 8px 15px;

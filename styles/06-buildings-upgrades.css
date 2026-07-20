@@ -223,3 +223,19 @@
     box-shadow: 0 0 5px rgba(0, 159, 253, 0.2);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .building-item,
+  .research-item,
+  .building-item .btn-buy,
+  .building-item.affordable,
+  .research-item.affordable {
+    transition: none;
+    animation: none;
+  }
+
+  .building-item:hover,
+  .research-item:hover {
+    transform: none;
+  }
+}
