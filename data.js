@@ -38,9 +38,11 @@ const globalUpgrades = [
     { id: 2, cost: 10000, description: "Doppelklick-Technik: Klickkraft +100%", type: "click_mult", value: 1.0, buildingIndex: undefined },
     { id: 3, cost: 50000, description: "Mechanische Finger: Klickkraft +200%", type: "click_mult", value: 2.0, buildingIndex: undefined },
     { id: 4, cost: 250000, description: "Göttliche Berührung: Klickkraft +500%", type: "click_mult", value: 5.0, buildingIndex: undefined },
-
+    { id: 5, cost: 1000000, description: "Allmächtige Finger: Klickkraft +1000%", type: "click_mult", value: 10.0, buildingIndex: undefined },
+    
     // --- GEBÄUDE SPEZIFISCH (Automatisierte Generierung für alle Stufen) ---
     // Auto-Klicker (0)
+    
     { id: 5, cost: 15000, description: "Auto-Klicker: Bessere Schmierung (+25%)", type: "building_mult", value: 0.25, buildingIndex: 0 },
     { id: 6, cost: 40000, description: "Auto-Klicker: Stärkere Motoren (+50%)", type: "building_mult", value: 0.50, buildingIndex: 0 },
     { id: 7, cost: 100000, description: "Auto-Klicker: Mengenrabatt (Kosten -5%)", type: "cost_reduction_buildings", value: 0.05, buildingIndex: 0 },
