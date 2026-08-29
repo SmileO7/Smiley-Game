@@ -382,7 +382,7 @@
       </div>
     </main>
 
-    <div id="prestige-shop-modal" class="modal" style="display: none">
+    <div id="prestige-shop-modal" class="modal" >
       <div class="modal-content large">
         <h2>🌌 Prestige Shop</h2>
         <div class="page-container">
@@ -561,7 +561,7 @@
       </div>
     </div>
 
-    <div id="settings-modal" class="modal" style="display: none">
+    <div id="settings-modal" class="modal" >
       <div class="modal-content">
         <span id="close-settings-button" class="close">&times;</span>
         <h2>Einstellungen</h2>
@@ -720,7 +720,7 @@
       </div>
     </div>
 
-    <div id="pet-shop-modal" class="modal" style="display: none">
+    <div id="pet-shop-modal" class="modal" >
       <div class="modal-content large">
         <h2>Pet Shop</h2>
         <div id="pet-lock-message" class="info-section"></div>
@@ -732,7 +732,7 @@
         </div>
       </div>
     </div>
-    <div id="diamond-mine-modal" class="modal" style="display: none">
+    <div id="diamond-mine-modal" class="modal" >
       <div class="modal-content large">
         <h2>💎 Diamanten-Minispiel</h2>
         <div id="diamond-mine-content"></div>
@@ -743,7 +743,7 @@
         </div>
       </div>
     </div>
-    <div id="guilds-modal" class="modal" style="display: none">
+    <div id="guilds-modal" class="modal" >
       <div class="modal-content large">
         <h2>⚔️ Gilden-System</h2>
 
@@ -791,7 +791,7 @@
         </div>
       </div>
     </div>
-    <div id="achievements_info_modal" class="modal" style="display: none">
+    <div id="achievements_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>Achievements</h2>
         <div id="info_achievements_container" class="info-grid"></div>
@@ -815,7 +815,7 @@
         <div id="museum_grid" class="info-grid"></div>
       </div>
     </div>
-    <div id="prestige-modal" class="modal" style="display: none">
+    <div id="prestige-modal" class="modal" >
       <div class="modal-content">
         <h2>🌌 Prestige: Zeitreise</h2>
         <div class="prestige-stats">
@@ -835,7 +835,7 @@
         </div>
       </div>
     </div>
-    <div id="skill_tree_modal" class="modal" style="display: none">
+    <div id="skill_tree_modal" class="modal" >
       <div class="modal-content large">
         <h2>Prestige Skill-Tree</h2>
         <div style="margin-bottom: 10px">
@@ -855,7 +855,7 @@
         </div>
       </div>
     </div>
-    <div id="buildings_info_modal" class="modal" style="display: none">
+    <div id="buildings_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>Gebäude-Übersicht</h2>
         <div id="info_buildings_container" class="info-grid"></div>
@@ -866,7 +866,7 @@
         </div>
       </div>
     </div>
-    <div id="global_upgrades_info_modal" class="modal" style="display: none">
+    <div id="global_upgrades_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>⚙️ Global Upgrades</h2>
         <div id="info_global_upgrades_container" class="info-grid"></div>
@@ -877,7 +877,7 @@
         </div>
       </div>
     </div>
-    <div id="prestige_info_modal" class="modal" style="display: none">
+    <div id="prestige_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>Prestige-Skill-Liste</h2>
         <div id="info_prestige_container"></div>
@@ -888,7 +888,7 @@
         </div>
       </div>
     </div>
-    <div id="stats_info_modal" class="modal" style="display: none">
+    <div id="stats_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>Stats-Erklärung</h2>
         <div id="info_stats_container" class="info-grid"></div>
@@ -899,7 +899,7 @@
         </div>
       </div>
     </div>
-    <div id="pets_info_modal" class="modal" style="display: none">
+    <div id="pets_info_modal" class="modal" >
       <div class="modal-content large">
         <h2>🐶 Pet-Infos</h2>
         <div id="info_pets_container" class="info-grid"></div>
@@ -1063,13 +1063,26 @@
 
       // 4. Modal Logik
       function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = "flex";
-      }
-      function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = "none";
-      }
+  const modal = document.getElementById(modalId);
+
+  if (!modal) {
+    console.warn(`Modal nicht gefunden: ${modalId}`);
+    return;
+  }
+
+  modal.classList.add("is-open");
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+
+  if (!modal) {
+    console.warn(`Modal nicht gefunden: ${modalId}`);
+    return;
+  }
+
+  modal.classList.remove("is-open");
+}
 
       document.addEventListener("DOMContentLoaded", () => {
         const settingsBtn = document.getElementById("open-settings-button");
@@ -1086,11 +1099,17 @@
             closeModal("settings-modal"),
           );
 
-        window.onclick = function (event) {
-          if (event.target.classList.contains("modal")) {
-            event.target.style.display = "none";
-          }
-        };
+        window.addEventListener("click", (event) => {
+  const target = event.target;
+
+  if (
+    target instanceof HTMLElement &&
+    (target.classList.contains("modal") ||
+      target.classList.contains("modal-overlay"))
+  ) {
+    target.classList.remove("is-open");
+  }
+});
       });
 
       // 5. Cloud Funktionen (OHNE ALERT)

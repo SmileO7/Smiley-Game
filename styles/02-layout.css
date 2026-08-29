@@ -13,7 +13,7 @@ main {
   top: 0;
   width: 100%;
   z-index: 1000;
-  height: var(--nacbar-height);
+  height: var(--navbar-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,7 +87,7 @@ main {
   margin-bottom: 15px;
 }
 
-#news-ticker-container {
+.news-ticker-container {
   position: fixed;
   top: var(--navbar-height);
   left: 0;
