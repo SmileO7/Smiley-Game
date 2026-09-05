@@ -48,6 +48,8 @@ class SmileyGame {
     this.gemSystem = new GemSystem(this);
     this.skinSystem = new SkinSystem(this);
     this.selectedBuyAmount = 1;
+    this.activeModals = new Set();
+    this.setupModalEsc();
 
     // 2. GAME STATE DEFINITION
     this.gameState = {
@@ -4236,6 +4238,7 @@ class SmileyGame {
       return;
     }
     modal.classList.add("is-open");
+    this.activeModals.add(modalId);
   }
 
   closeModal(modalId) {
@@ -4245,6 +4248,24 @@ class SmileyGame {
       return;
     }
     modal.classList.remove("is-open");
+    this.activeModals.delete(modalId);
+  }
+
+  closeTopModal() {
+    // Schließt das zuletzt geöffnete Modal
+    const lastModal = Array.from(this.activeModals).pop();
+    if (lastModal) {
+      this.closeModal(lastModal);
+    }
+  }
+
+  // ESC-Taste registrieren
+  setupModalEsc() {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.activeModals.size > 0) {
+        this.closeTopModal();
+      }
+    });
   }
 
   // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)

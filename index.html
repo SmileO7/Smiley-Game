@@ -765,25 +765,6 @@
           });
       }
 
-      // 4. Modal Logik
-      function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) {
-          console.warn(`Modal nicht gefunden: ${modalId}`);
-          return;
-        }
-        modal.classList.add("is-open");
-      }
-
-      function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) {
-          console.warn(`Modal nicht gefunden: ${modalId}`);
-          return;
-        }
-        modal.classList.remove("is-open");
-      }
-
       // 5. Cloud Funktionen
       function saveGameToCloud(silent = false) {
         if (!window.gameInstance || !window.cloudSystem) return;
