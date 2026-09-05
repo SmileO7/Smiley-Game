@@ -1,7 +1,7 @@
 :root {
   --navbar-height: 60px;
   --ticker-hight: 30px;
-  --app-top-offset: calc(var(--navbar-height) + var(--ticker-hight));
+  --app-top-offset: calc(var(--navbar-height) + var(--ticker-height));
   /* Farben */
   --color-primary-dark: #011638; /* Haupt-Hintergrund */
   --color-secondary-red: #6b0504; /* Rot-Akzent */
