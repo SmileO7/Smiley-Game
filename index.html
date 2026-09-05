@@ -784,47 +784,6 @@
         modal.classList.remove("is-open");
       }
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const settingsBtn = document.getElementById("open-settings-button");
-        if (settingsBtn)
-          settingsBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openModal("settings-modal");
-          });
-
-        const wikiBtn = document.getElementById("open_wiki_btn");
-        if (wikiBtn)
-          wikiBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openModal("wiki-modal");
-          });
-
-        const closeSettingsBtn = document.getElementById(
-          "close-settings-button",
-        );
-        if (closeSettingsBtn)
-          closeSettingsBtn.addEventListener("click", () =>
-            closeModal("settings-modal"),
-          );
-
-        const closeWikiBtn = document.getElementById("close-wiki-button");
-        if (closeWikiBtn)
-          closeWikiBtn.addEventListener("click", () =>
-            closeModal("wiki-modal"),
-          );
-
-        window.addEventListener("click", (event) => {
-          const target = event.target;
-          if (
-            target instanceof HTMLElement &&
-            (target.classList.contains("modal") ||
-              target.classList.contains("modal-overlay"))
-          ) {
-            target.classList.remove("is-open");
-          }
-        });
-      });
-
       // 5. Cloud Funktionen
       function saveGameToCloud(silent = false) {
         if (!window.gameInstance || !window.cloudSystem) return;

@@ -3853,8 +3853,9 @@ class SmileyGame {
   openWiki() {
     const modal = document.getElementById("wiki-modal");
     if (modal) {
-      modal.style.display = "flex";
-      this.openWikiPage("buildings"); // Startseite ist immer Gebäude
+      // ✅ RICHTIG: openModal verwenden (setzt is-open Klasse)
+      this.openModal("wiki-modal");
+      this.openWikiPage("buildings");
 
       // Close Button Event
       const closeBtn = document.getElementById("close-wiki-button");
@@ -3862,7 +3863,7 @@ class SmileyGame {
         // removeEventListener trick um doppelte Events zu vermeiden
         const newBtn = closeBtn.cloneNode(true);
         closeBtn.parentNode.replaceChild(newBtn, closeBtn);
-        newBtn.onclick = () => (modal.style.display = "none");
+        newBtn.onclick = () => this.closeModal("wiki-modal"); // ✅ Auch closeModal verwenden
       }
     }
   }
@@ -3934,7 +3935,25 @@ class SmileyGame {
   setupMainEventListeners() {
     console.log("🔌 Starte Event-Listener Setup...");
 
-    // 1. Globale Listener
+    // --- 1. NAVBAR HANDLER ---
+    const navHome = document.getElementById("nav-home");
+    if (navHome) {
+      navHome.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.switchView("home");
+      });
+    }
+
+    const navPrestige = document.getElementById("nav-prestige");
+    if (navPrestige) {
+      navPrestige.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openModal("prestige-shop-modal");
+        this.updatePrestigeUI();
+      });
+    }
+
+    // --- 2. GLOBALE LISTENER ---
     window.addEventListener("beforeunload", () => {
       this.saveGame();
     });
@@ -3943,15 +3962,30 @@ class SmileyGame {
     if (smileyBtn)
       smileyBtn.addEventListener("click", (e) => this.klickeSmiley(e));
 
-    // 2. Feature Buttons
+    // --- 3. FEATURE BUTTONS ---
 
+    // Wiki / Smileypedia Button
     // Wiki / Smileypedia Button
     const btnWiki = document.getElementById("open_wiki_btn");
     if (btnWiki) {
       btnWiki.addEventListener("click", (e) => {
         e.preventDefault();
+        console.log("📖 Wiki Button geklickt");
         this.openWiki();
       });
+    } else {
+      console.error("❌ Button open_wiki_btn nicht gefunden!");
+    }
+
+    // Wiki Close Button
+    const closeWikiBtn = document.getElementById("close-wiki-button");
+    if (closeWikiBtn) {
+      closeWikiBtn.addEventListener("click", () => {
+        console.log("📖 Wiki schließen");
+        this.closeModal("wiki-modal");
+      });
+    } else {
+      console.error("❌ Close-Button close-wiki-button nicht gefunden!");
     }
 
     // Pet Shop
@@ -4000,12 +4034,12 @@ class SmileyGame {
           bmModal.id = "blackmarket-modal";
           bmModal.className = "modal";
           bmModal.innerHTML = `
-        <div class="modal-content large" style="background:#05000a; border:1px solid #d500f9; box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);">
-          <span class="close-button" style="color:#fff; font-size:2rem;">&times;</span>
-          <h2>👾 Schwarzmarkt</h2>
-          <div id="gem_shop_container_main"></div>
-        </div>
-      `;
+          <div class="modal-content large" style="background:#05000a; border:1px solid #d500f9; box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);">
+            <span class="close-button" style="color:#fff; font-size:2rem;">&times;</span>
+            <h2>👾 Schwarzmarkt</h2>
+            <div id="gem_shop_container_main"></div>
+          </div>
+        `;
           document.body.appendChild(bmModal);
 
           // Close Button Listener
@@ -4036,6 +4070,23 @@ class SmileyGame {
       console.error("❌ Button open_blackmarket_button nicht gefunden!");
     }
 
+    // Settings Button
+    const btnSettings = document.getElementById("open-settings-button");
+    if (btnSettings) {
+      btnSettings.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openModal("settings-modal");
+      });
+    }
+
+    // Settings Close Button
+    const closeSettingsBtn = document.getElementById("close-settings-button");
+    if (closeSettingsBtn) {
+      closeSettingsBtn.addEventListener("click", () => {
+        this.closeModal("settings-modal");
+      });
+    }
+
     // Skins - JETZT ALS MODAL
     const btnSkins = document.getElementById("open_wardrobe_button");
     if (btnSkins) {
@@ -4050,13 +4101,13 @@ class SmileyGame {
           wModal.id = "wardrobe-modal";
           wModal.className = "modal";
           wModal.innerHTML = `
-        <div class="modal-content large" style="background:#111; border:1px solid #444;">
-          <span class="close-button" style="color:#fff; font-size:2rem;">&times;</span>
-          <h2>Kleiderschrank 🎩</h2>
-          <p style="text-align:center; color:#aaa; font-size:0.9em;">Bezahle mit Corrupted Smileys (👾)</p>
-          <div id="wardrobe-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:15px; margin-top:20px;"></div>
-        </div>
-      `;
+          <div class="modal-content large" style="background:#111; border:1px solid #444;">
+            <span class="close-button" style="color:#fff; font-size:2rem;">&times;</span>
+            <h2>Kleiderschrank 🎩</h2>
+            <p style="text-align:center; color:#aaa; font-size:0.9em;">Bezahle mit Corrupted Smileys (👾)</p>
+            <div id="wardrobe-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:15px; margin-top:20px;"></div>
+          </div>
+        `;
           document.body.appendChild(wModal);
 
           // Close Button Listener
@@ -4097,16 +4148,6 @@ class SmileyGame {
       });
     }
 
-    // Prestige Shop (über Navbar)
-    const navPrestige = document.getElementById("nav-prestige");
-    if (navPrestige) {
-      navPrestige.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.openModal("prestige-shop-modal");
-        this.updatePrestigeUI();
-      });
-    }
-
     // Skill Tree Button (im Prestige Shop)
     const btnSkillTree = document.getElementById("open_skill_tree_button");
     if (btnSkillTree) {
@@ -4126,7 +4167,7 @@ class SmileyGame {
       });
     }
 
-    // 3. Schließen-Buttons (Modal X)
+    // --- 4. SCHLIESSEN-BUTTONS ---
     const closeMap = {
       "close-pet-shop-button": "pet-shop-modal",
       close_diamond_mine_button: "diamond-mine-modal",
@@ -4143,7 +4184,7 @@ class SmileyGame {
       }
     });
 
-    // 4. Toggle Buttons (1x, 10x, 100x)
+    // --- 5. TOGGLE BUTTONS (1x, 10x, 100x) ---
     const toggleContainer = document.getElementById("buy-amount-toggles");
     if (toggleContainer) {
       toggleContainer.addEventListener("click", (e) => {
@@ -4161,7 +4202,7 @@ class SmileyGame {
       });
     }
 
-    // 5. Gebäude-Kauf im Grid (Event Delegation)
+    // --- 6. GEBÄUDE-KAUF (EVENT DELEGATION) ---
     const grid = document.getElementById("building-grid");
     if (grid) {
       grid.addEventListener("click", (e) => {
