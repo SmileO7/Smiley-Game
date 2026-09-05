@@ -4988,7 +4988,6 @@ class SmileyGame {
       .querySelectorAll(".navbar a")
       .forEach((el) => el.classList.remove("active"));
 
-    // ... und setzen ihn neu, je nachdem wo wir sind
     if (viewName === "home") {
       const nav = document.getElementById("nav-home");
       if (nav) nav.classList.add("active");
@@ -5007,12 +5006,11 @@ class SmileyGame {
       "pet-shop-modal",
       "diamond-mine-modal",
       "guilds-modal",
-      "achievements_info_modal", // <--- WICHTIG: Das hier fehlte!
+      "achievements_info_modal",
     ];
 
     modals.forEach((id) => {
-      const m = document.getElementById(id);
-      if (m) m.style.display = "none";
+      this.closeModal(id); // NEU: closeModal statt style.display
     });
 
     // --- 3. ANSICHT WÄHLEN ---
@@ -5023,37 +5021,26 @@ class SmileyGame {
 
     // --- PRESTIGE SHOP ---
     else if (viewName === "prestige") {
-      const pModal = document.getElementById("prestige-shop-modal");
-      if (pModal) {
-        pModal.style.display = "flex";
-        this.updatePrestigeUIView();
-        this.renderPrestigeTree();
-      }
+      this.openModal("prestige-shop-modal");
+      this.updatePrestigeUIView();
+      this.renderPrestigeTree();
     }
 
     // --- INFO / WIKI ---
     else if (viewName === "info" || viewName === "wiki") {
-      const iModal =
-        document.getElementById("wiki-modal") ||
-        document.getElementById("info-modal");
-      if (iModal) {
-        iModal.style.display = "flex";
-        if (typeof this.openWikiPage === "function") {
-          this.openWikiPage("buildings");
-        }
+      this.openModal("wiki-modal");
+      if (typeof this.openWikiPage === "function") {
+        this.openWikiPage("buildings");
       }
     }
 
-    // --- OPTIONEN ---
+    // --- OPTIONEN / SETTINGS ---
     else if (viewName === "settings") {
-      const sModal = document.getElementById("settings-modal");
-      if (sModal) {
-        this.speichereSpiel();
-        const textArea = document.getElementById("save-data-textarea");
-        if (textArea)
-          textArea.value = localStorage.getItem("smileyGameSave") || "";
-        sModal.style.display = "flex";
-      }
+      this.speichereSpiel();
+      const textArea = document.getElementById("save-data-textarea");
+      if (textArea)
+        textArea.value = localStorage.getItem("smileyGameSave") || "";
+      this.openModal("settings-modal");
     }
   }
 
