@@ -50,6 +50,7 @@ class SmileyGame {
     this.selectedBuyAmount = 1;
     this.activeModals = new Set();
     this.setupModalEsc();
+    this.setupPrestigeButtons();
 
     // 2. GAME STATE DEFINITION
     this.gameState = {
@@ -618,8 +619,6 @@ class SmileyGame {
     }
   }
 
-  // Diese Funktion verteilt die Daten wieder in die Variablen
-  // Diese Funktion verteilt die Daten wieder in die Variablen
   // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 418)
   loadGame(saveData) {
     if (!saveData) return;
@@ -633,7 +632,6 @@ class SmileyGame {
     target.totalClicksLifetime = Number(saveData.totalClicksLifetime) || 0;
     target.playerName = saveData.playerName || target.playerName;
 
-    // --- Arrays & Objekte wiederherstellen ---
     // Wichtig: Wir prüfen, ob die Länge stimmt, sonst nehmen wir den Default
     if (Array.isArray(saveData.buildingCounts))
       target.buildingCounts = saveData.buildingCounts;
@@ -1861,25 +1859,35 @@ class SmileyGame {
       totalPotentialPoints - this.gameState.gesamt_prestige_punkte,
     );
 
-    if (pointsToGain <= 0) return;
+    if (pointsToGain <= 0) {
+      this.showNotification("Nicht genug Smileys für Prestige!", "error");
+      return;
+    }
 
     if (
       !confirm(`Bist du sicher? Du erhältst ${pointsToGain} Prestige-Punkte.`)
-    )
+    ) {
       return;
+    }
 
+    // === RESET ===
     this.gameState.aktuelle_smileys = 0;
     this.gameState.gesammelte_smileys = 0;
     this.gameState.klickKraft = 1;
     this.gameState.totalSPS = 0;
     this.gameState.forschungPunkte = 0;
+
+    // Prestige-Punkte hinzufügen
     this.gameState.prestige_punkte_verfügbar += pointsToGain;
     this.gameState.gesamt_prestige_punkte += pointsToGain;
-    this.gameState.prestigeResets += 1;
+    this.gameState.prestigeResets = (this.gameState.prestigeResets || 0) + 1;
+
+    // Gebäude zurücksetzen
     this.gameState.buildingCounts = [
       ...buildingsData,
       ...uniqueBuildingsData,
     ].map(() => 0);
+
     this.gameState.buildingPrices = [
       ...buildingsData.map((item) => item.basePrice),
       ...uniqueBuildingsData.map((item) => item.basePrice),
@@ -1887,9 +1895,15 @@ class SmileyGame {
 
     this.applyAllBoni();
     this.speichereSpiel();
+
     if (document.querySelector(".prestige-main")) {
       this.updatePrestigeUI();
     }
+
+    this.showNotification(
+      `Prestige durchgeführt! +${pointsToGain} Punkte`,
+      "success",
+    );
   }
 
   resetPrestigeUpgrades() {
@@ -3743,8 +3757,6 @@ class SmileyGame {
     });
   }
 
-  guildView = "shop";
-
   renderGuildsContent() {
     this.guildSystem.renderGuildsContent();
   }
@@ -3861,6 +3873,33 @@ class SmileyGame {
   // ================================================================================================================
   // 9. EVENT LISTENERS
   // ================================================================================================================
+
+  openPrestigeConfirmModal() {
+    const pointsToGain = this.calculatePrestigeGain();
+
+    if (pointsToGain <= 0) {
+      this.showNotification("Nicht genug Smileys für Prestige!", "error");
+      return;
+    }
+
+    // Modal-Text aktualisieren
+    const lifetimeDisplay = document.getElementById(
+      "prestige-lifetime-display",
+    );
+    const gainDisplay = document.getElementById("prestige-gain-display");
+
+    if (lifetimeDisplay) {
+      lifetimeDisplay.textContent = this.formatNumber(
+        this.gameState.gesammelte_smileys,
+      );
+    }
+    if (gainDisplay) {
+      gainDisplay.textContent = this.formatNumber(pointsToGain);
+    }
+
+    // Modal öffnen
+    this.openModal("prestige-modal");
+  }
 
   openWiki() {
     const modal = document.getElementById("wiki-modal");
@@ -4318,6 +4357,72 @@ class SmileyGame {
         }
       });
     }
+  }
+
+  setupPrestigeButtons() {
+    document.addEventListener("DOMContentLoaded", () => {
+      const resetBtn = document.getElementById("prestige_reset_button_page");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          const pointsToGain = this.calculatePrestigeGain();
+
+          if (pointsToGain <= 0) {
+            this.showNotification("Nicht genug Smileys für Prestige!", "error");
+            return;
+          }
+
+          // Modal-Text aktualisieren
+          const lifetimeDisplay = document.getElementById(
+            "prestige-lifetime-display",
+          );
+          const gainDisplay = document.getElementById("prestige-gain-display");
+
+          if (lifetimeDisplay) {
+            lifetimeDisplay.textContent = this.formatNumber(
+              this.gameState.gesammelte_smileys,
+            );
+          }
+          if (gainDisplay) {
+            gainDisplay.textContent = this.formatNumber(pointsToGain);
+          }
+
+          // Modal öffnen
+          this.openModal("prestige-modal");
+        });
+
+        // Prestige-Reset Button
+        const resetBtn = document.getElementById("prestige_reset_button_page");
+        if (resetBtn) {
+          resetBtn.addEventListener("click", () => {
+            this.openModal("prestige-modal"); // Erst Bestätigungs-Modal öffnen
+          });
+        }
+
+        // Skill-Tree Button
+        const skillTreeBtn = document.getElementById("open_skill_tree_button");
+        if (skillTreeBtn) {
+          skillTreeBtn.addEventListener("click", () => {
+            this.openModal("skill_tree_modal");
+          });
+        }
+
+        // Bestätigun gs-Buttons im Prestige-Modal
+        const confirmBtn = document.getElementById("btn-do-prestige");
+        if (confirmBtn) {
+          confirmBtn.addEventListener("click", () => {
+            this.prestigeReset();
+            this.closeModal("prestige-modal");
+          });
+        }
+
+        const cancelBtn = document.getElementById("btn-cancel-prestige");
+        if (cancelBtn) {
+          cancelBtn.addEventListener("click", () => {
+            this.closeModal("prestige-modal");
+          });
+        }
+      }
+    });
   }
 
   respecPrestigeUpgrades() {
@@ -5115,7 +5220,6 @@ class SmileyGame {
       this.openModal("settings-modal");
     }
   }
-
   updatePrestigeUIView() {
     const prestigeAvailable = this.getById("prestige_punkte_verfügbar");
     const prestigeTotal = this.getById("gesamt_prestige_punkte");
