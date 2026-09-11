@@ -2245,10 +2245,12 @@ class SmileyGame {
         this.gameState.aktuelle_smileys,
       );
 
+    // Klick-Werte berechnen
+    const totalClickPower =
+      this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
+
     const smileysProKlickEl = this.getById("smileys_pro_klick_anzeige");
     if (smileysProKlickEl) {
-      const totalClickPower =
-        this.gameState.klickKraft * this.gameState.klickKraftMultiplier;
       smileysProKlickEl.innerText = this.formatNumber(totalClickPower);
     }
 
@@ -2263,6 +2265,21 @@ class SmileyGame {
       smileysProMinuteEl.innerText = this.formatNumber(
         this.gameState.totalSPS * 60,
       );
+
+    // === NEU: Click-Werte Box aktualisieren ===
+    const clickDamageEl = this.getById("click_damage_anzeige");
+    if (clickDamageEl) {
+      // Gesamter Click-Schaden mit allen Multiplikatoren
+      const totalDamage = totalClickPower;
+      clickDamageEl.innerText = this.formatNumber(totalDamage);
+    }
+
+    const critChanceEl = this.getById("crit_chance_anzeige");
+    if (critChanceEl) {
+      const critPercent = (this.gameState.critChance * 100).toFixed(1);
+      critChanceEl.innerText = critPercent;
+    }
+    // === ENDE NEU ===
 
     this.updateBuildingUI();
     this.checkFeatureUnlocks();
@@ -2357,7 +2374,6 @@ class SmileyGame {
 
     if (comboEl && comboVal) {
       if (this.comboCount >= 5) {
-        // Erscheint erst ab 5 schnellen Klicks
         comboEl.classList.add("active");
         comboVal.innerText = `x${this.comboMulti.toFixed(2)}`;
       } else {

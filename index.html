@@ -41,17 +41,25 @@
           </div>
 
           <div class="stats-box">
-            <h2 class="stats-header">Aktuelle Stats</h2>
+            <h2 class="stats-header">
+              <span class="stats-icon">📊</span>
+              Aktuelle Stats
+            </h2>
             <div class="stats-main-display">
-              <div class="stats-label-small">Gesammelte Daten</div>
+              <div class="stats-label-small">Aktuelle Smileys</div>
               <div class="stats-value-large">
-                <span id="aktuelle_smileys">0</span> ☺
+                <span id="aktuelle_smileys">0</span>
+                <span class="currency-icon">☺</span>
               </div>
             </div>
 
             <div class="stats-grid-row">
+              <!-- Klick-Karte -->
               <div class="stats-card-small">
-                <div class="stats-label-small">Klick</div>
+                <div class="stats-label-small">
+                  <span class="stat-icon">👆</span>
+                  Klick
+                </div>
                 <div class="stats-value-medium">
                   <span id="smileys_pro_klick_anzeige">1</span>
                 </div>
@@ -59,8 +67,27 @@
                   x<span id="klick_multiplikator_anzeige">1.00</span>
                 </div>
               </div>
+
+              <!-- Click-Werte Karte (NEU) -->
+              <div class="stats-card-small" data-tooltip-type="stats_click">
+                <div class="stats-label-small">
+                  <span class="stat-icon">🎯</span>
+                  Click-Werte
+                </div>
+                <div class="stats-value-medium stats-value-blue">
+                  <span id="click_damage_anzeige">1</span>
+                </div>
+                <div class="stats-subtext">
+                  Crit: <span id="crit_chance_anzeige">0</span>%
+                </div>
+              </div>
+
+              <!-- SPS-Karte -->
               <div class="stats-card-small" data-tooltip-type="stats_sps">
-                <div class="stats-label-small">Auto (SPS)</div>
+                <div class="stats-label-small">
+                  <span class="stat-icon">⚡</span>
+                  Auto (SPS)
+                </div>
                 <div class="stats-value-medium stats-value-green">
                   <span id="smileys_pro_sekunde_anzeige">0</span>
                 </div>
@@ -71,31 +98,39 @@
             </div>
 
             <div class="global-boost-box">
-              <span class="text-accent-blue">GLOBAL BOOST:</span>
-              <strong id="globaler_multiplikator_anzeige" class="text-white"
-                >x1.00</strong
-              >
+              <div class="boost-label">
+                <span class="boost-icon">🌍</span>
+                GLOBAL BOOST
+              </div>
+              <div class="boost-value">
+                <strong id="globaler_multiplikator_anzeige">x1.00</strong>
+              </div>
             </div>
 
             <div class="diamond-display-box">
-              <span class="diamond-text"
-                >💎 <span id="diamanten_anzeige">0</span></span
-              >
+              <div class="diamond-label">
+                <span class="diamond-icon">💎</span>
+                Diamanten
+              </div>
+              <div class="diamond-value">
+                <span id="diamanten_anzeige">0</span>
+              </div>
             </div>
           </div>
 
-          <div class="box-style evolution-panel">
+          <div class="evolution-box">
             <div class="evolution-header">
-              <span class="text-small text-uppercase text-grey">Evolution</span>
-              <span
-                id="next-prestige-threshold"
-                class="text-small text-accent-blue"
+              <span class="evolution-label">
+                <span class="evo-icon">🧬</span>
+                Evolution
+              </span>
+              <span id="next-prestige-threshold" class="evo-threshold"
                 >100k</span
               >
             </div>
-            <div class="progress-bar-container">
-              <div id="prestige-progress-bar" class="progress-bar-fill"></div>
-              <div id="prestige-percent-text" class="progress-bar-text">0%</div>
+            <div class="progress-container">
+              <div id="prestige-progress-bar" class="progress-bar"></div>
+              <div id="prestige-percent-text" class="progress-text">0%</div>
             </div>
           </div>
 
