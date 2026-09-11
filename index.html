@@ -333,21 +333,25 @@
               <h4>Was passiert beim Reset?</h4>
               <ul>
                 <li>
-                  <span class="pro text-green">+</span> Du erhältst Smiley
-                  Points (Währung & Bonus).
+                  <span class="pro">+</span> Du erhältst Smiley Points (Währung
+                  & Bonus).
                 </li>
                 <li>
-                  <span class="con text-red">-</span> Deine Smileys werden auf 0
+                  <span class="con">-</span> Deine Smileys werden auf 0
                   zurückgesetzt.
                 </li>
                 <li>
-                  <span class="con text-red">-</span> Alle deine Gebäude werden
-                  auf 0 zurückgesetzt.
+                  <span class="con">-</span> Alle deine Gebäude werden auf 0
+                  zurückgesetzt.
                 </li>
               </ul>
             </div>
             <div class="prestige-actions">
-              <button id="prestige_reset_button_page" class="btn-prestige">
+              <button
+                id="prestige_reset_button"
+                class="btn-prestige"
+                onclick="gameInstance.zeigePrestigeDetails()"
+              >
                 Prestige durchführen
               </button>
               <button id="open_skill_tree_button" class="btn-primary">

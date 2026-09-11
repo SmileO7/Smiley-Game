@@ -50,7 +50,6 @@ class SmileyGame {
     this.selectedBuyAmount = 1;
     this.activeModals = new Set();
     this.setupModalEsc();
-    this.setupPrestigeButtons();
 
     // 2. GAME STATE DEFINITION
     this.gameState = {
@@ -277,7 +276,6 @@ class SmileyGame {
     this.checkSkillUnlocks();
     this.setupMainEventListeners();
     this.setupHotkeys();
-    this.setupPrestigeEventListeners();
     this.setupInfoPageEventListeners();
     this.setupSkillTreeControls();
     this.startIntervals();
@@ -286,6 +284,7 @@ class SmileyGame {
     this.updateNewsTicker();
     this.updateUI();
     this.guildSystem.listenToGuildData();
+    this.setupPrestigeButtons();
 
     // Chat starten (Firebase)
     this.initChat();
@@ -1847,17 +1846,9 @@ class SmileyGame {
   }
 
   prestigeReset() {
-    const prestigePointThreshold = 100000;
-    const totalPotentialPoints = Math.floor(
-      Math.pow(
-        this.gameState.gesammelte_smileys / prestigePointThreshold,
-        1 / 3,
-      ),
-    );
-    const pointsToGain = Math.max(
-      0,
-      totalPotentialPoints - this.gameState.gesamt_prestige_punkte,
-    );
+    const pointsToGain = this.calculatePrestigeGain();
+    console.log("=== PRESTIGE RESET ===");
+    console.log("pointsToGain:", pointsToGain);
 
     if (pointsToGain <= 0) {
       this.showNotification("Nicht genug Smileys für Prestige!", "error");
@@ -1870,7 +1861,9 @@ class SmileyGame {
       return;
     }
 
-    // === RESET ===
+    console.log("Reset wird durchgeführt...");
+
+    // RESET
     this.gameState.aktuelle_smileys = 0;
     this.gameState.gesammelte_smileys = 0;
     this.gameState.klickKraft = 1;
@@ -1878,9 +1871,25 @@ class SmileyGame {
     this.gameState.forschungPunkte = 0;
 
     // Prestige-Punkte hinzufügen
-    this.gameState.prestige_punkte_verfügbar += pointsToGain;
-    this.gameState.gesamt_prestige_punkte += pointsToGain;
+    console.log(
+      "Vorher - gesamt_prestige_punkte:",
+      this.gameState.gesamt_prestige_punkte,
+    );
+    this.gameState.prestige_punkte_verfügbar =
+      (this.gameState.prestige_punkte_verfügbar || 0) + pointsToGain;
+    this.gameState.gesamt_prestige_punkte =
+      (this.gameState.gesamt_prestige_punkte || 0) + pointsToGain;
+    console.log(
+      "Nachher - gesamt_prestige_punkte:",
+      this.gameState.gesamt_prestige_punkte,
+    );
+    console.log(
+      "prestige_punkte_verfügbar:",
+      this.gameState.prestige_punkte_verfügbar,
+    );
+
     this.gameState.prestigeResets = (this.gameState.prestigeResets || 0) + 1;
+    console.log("prestigeResets:", this.gameState.prestigeResets);
 
     // Gebäude zurücksetzen
     this.gameState.buildingCounts = [
@@ -1904,6 +1913,7 @@ class SmileyGame {
       `Prestige durchgeführt! +${pointsToGain} Punkte`,
       "success",
     );
+    console.log("=== END RESET ===");
   }
 
   resetPrestigeUpgrades() {
@@ -2681,57 +2691,56 @@ class SmileyGame {
 
   zeigePrestigeDetails() {
     const modal = document.getElementById("prestige-modal");
-    if (!modal) return;
+    if (!modal) {
+      console.error("prestige-modal nicht gefunden!");
+      return;
+    }
 
-    const totalSmileys =
-      this.gameState.lifetime_smileys > 0
-        ? this.gameState.lifetime_smileys
-        : this.gameState.aktuelle_smileys;
+    const totalSmileys = this.gameState.lifetime_smileys || 0;
     const potentialPoints = this.calculatePrestigeGain();
-    const currentPrestige = this.gameState.prestige_currency || 0;
 
     const elLifetime = document.getElementById("prestige-lifetime-display");
-    const elLevel = document.getElementById("prestige-current-level");
     const elGain = document.getElementById("prestige-gain-display");
 
-    if (elLifetime) elLifetime.innerText = this.formatNumber(totalSmileys);
-    if (elLevel) elLevel.innerText = currentPrestige;
-    if (elGain) elGain.innerText = potentialPoints;
+    if (elLifetime) {
+      elLifetime.innerText = this.formatNumber(totalSmileys);
+    }
 
-    modal.style.display = "flex";
+    if (elGain) {
+      elGain.innerText = this.formatNumber(potentialPoints);
+    }
 
-    const btnConfirm = document.getElementById("btn-do-prestige");
-    const btnCancel = document.getElementById("btn-cancel-prestige");
-
-    const newBtnConfirm = btnConfirm.cloneNode(true);
-    btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
-    const newBtnCancel = btnCancel.cloneNode(true);
-    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
-
-    newBtnConfirm.onclick = () => {
-      if (potentialPoints > 0) {
-        this.fuehrePrestigeAus(potentialPoints);
-        modal.style.display = "none";
-      } else {
-        this.showNotification(
-          "🔒 Du brauchst mehr Fortschritt für ein Prestige.",
-          "error",
-        );
-      }
-    };
-
-    newBtnCancel.onclick = () => {
-      modal.style.display = "none";
-    };
+    this.openModal("prestige-modal");
   }
 
   calculatePrestigeGain() {
     const totalSmileys = this.gameState.lifetime_smileys || 0;
-    const BLOCK_COST = 100000;
-    if (totalSmileys < BLOCK_COST) return 0;
-    const totalLevel = Math.floor(Math.cbrt(totalSmileys / BLOCK_COST));
+    const BLOCKCOST = 100000;
+
+    console.log("=== PRESTIGE CALC ===");
+    console.log("lifetime_smileys:", this.gameState.lifetime_smileys);
+    console.log("totalSmileys:", totalSmileys);
+    console.log(
+      "gesamt_prestige_punkte:",
+      this.gameState.gesamt_prestige_punkte,
+    );
+
+    if (totalSmileys < BLOCKCOST) {
+      console.log("Zu wenig Smileys, return 0");
+      return 0;
+    }
+
+    const totalLevel = Math.floor(Math.cbrt(totalSmileys / BLOCKCOST));
     const currentLevel = this.gameState.gesamt_prestige_punkte || 0;
-    return Math.max(0, totalLevel - currentLevel);
+
+    console.log("totalLevel:", totalLevel);
+    console.log("currentLevel:", currentLevel);
+
+    const gain = Math.max(0, totalLevel - currentLevel);
+    console.log("gain:", gain);
+    console.log("=== END CALC ===");
+
+    return gain;
   }
 
   showNotification(message, type = "info") {
@@ -4336,30 +4345,48 @@ class SmileyGame {
     });
   }
 
-  setupPrestigeEventListeners() {
-    const openPrestigeModalButton = this.getById("prestige_reset_button");
-    if (openPrestigeModalButton) {
-      openPrestigeModalButton.addEventListener("click", () => {
+  setupPrestigeButtons() {
+    // OHNE DOMContentLoaded, weil constructor schon nach DOM-Load läuft
+    const resetBtn = document.getElementById("prestige_reset_button");
+    console.log("prestige_reset_button gefunden:", resetBtn);
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        console.log("Prestige Button geklickt!");
         this.zeigePrestigeDetails();
       });
+    } else {
+      console.error("prestige_reset_button NICHT gefunden!");
     }
 
-    const skillTreeModal = this.getById("skill_tree_modal");
-    const openSkillTreeButton = this.getById("open_skill_tree_button");
-    const closeSkillTreeButton = this.getById("close_skill_tree_button");
-    if (openSkillTreeButton && skillTreeModal) {
-      openSkillTreeButton.addEventListener("click", () => {
-        skillTreeModal.style.display = "flex";
+    // Skill-Tree Button
+    const skillTreeBtn = document.getElementById("open_skill_tree_button");
+    if (skillTreeBtn) {
+      skillTreeBtn.addEventListener("click", () => {
+        this.closeModal("prestige-shop-modal");
+        this.openModal("skill_tree_modal");
         this.renderPrestigeTree();
       });
     }
-    if (closeSkillTreeButton && skillTreeModal) {
-      closeSkillTreeButton.addEventListener("click", () => {
-        skillTreeModal.style.display = "none";
+
+    // Bestätigungs-Buttons im Prestige-Modal
+    const confirmBtn = document.getElementById("btn-do-prestige");
+    if (confirmBtn) {
+      confirmBtn.addEventListener("click", () => {
+        this.prestigeReset();
+        this.closeModal("prestige-modal");
       });
     }
 
-    const resetPrestigeUpgradesButton = this.getById(
+    const cancelBtn = document.getElementById("btn-cancel-prestige");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => {
+        this.closeModal("prestige-modal");
+      });
+    }
+
+    // Respec Button
+    const resetPrestigeUpgradesButton = document.getElementById(
       "reset_prestige_upgrades_button",
     );
     if (resetPrestigeUpgradesButton) {
@@ -4373,72 +4400,6 @@ class SmileyGame {
         }
       });
     }
-  }
-
-  setupPrestigeButtons() {
-    document.addEventListener("DOMContentLoaded", () => {
-      const resetBtn = document.getElementById("prestige_reset_button_page");
-      if (resetBtn) {
-        resetBtn.addEventListener("click", () => {
-          const pointsToGain = this.calculatePrestigeGain();
-
-          if (pointsToGain <= 0) {
-            this.showNotification("Nicht genug Smileys für Prestige!", "error");
-            return;
-          }
-
-          // Modal-Text aktualisieren
-          const lifetimeDisplay = document.getElementById(
-            "prestige-lifetime-display",
-          );
-          const gainDisplay = document.getElementById("prestige-gain-display");
-
-          if (lifetimeDisplay) {
-            lifetimeDisplay.textContent = this.formatNumber(
-              this.gameState.gesammelte_smileys,
-            );
-          }
-          if (gainDisplay) {
-            gainDisplay.textContent = this.formatNumber(pointsToGain);
-          }
-
-          // Modal öffnen
-          this.openModal("prestige-modal");
-        });
-
-        // Prestige-Reset Button
-        const resetBtn = document.getElementById("prestige_reset_button_page");
-        if (resetBtn) {
-          resetBtn.addEventListener("click", () => {
-            this.openModal("prestige-modal"); // Erst Bestätigungs-Modal öffnen
-          });
-        }
-
-        // Skill-Tree Button
-        const skillTreeBtn = document.getElementById("open_skill_tree_button");
-        if (skillTreeBtn) {
-          skillTreeBtn.addEventListener("click", () => {
-            this.openModal("skill_tree_modal");
-          });
-        }
-
-        // Bestätigun gs-Buttons im Prestige-Modal
-        const confirmBtn = document.getElementById("btn-do-prestige");
-        if (confirmBtn) {
-          confirmBtn.addEventListener("click", () => {
-            this.prestigeReset();
-            this.closeModal("prestige-modal");
-          });
-        }
-
-        const cancelBtn = document.getElementById("btn-cancel-prestige");
-        if (cancelBtn) {
-          cancelBtn.addEventListener("click", () => {
-            this.closeModal("prestige-modal");
-          });
-        }
-      }
-    });
   }
 
   respecPrestigeUpgrades() {
@@ -5266,11 +5227,6 @@ class SmileyGame {
 
     if (nextPoint)
       nextPoint.innerText = this.formatNumber(nextPointRequirement);
-
-    const btnPage = this.getById("prestige_reset_button_page");
-    if (btnPage) {
-      btnPage.onclick = () => this.zeigePrestigeDetails();
-    }
   }
 
   // =========================================================

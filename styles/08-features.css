@@ -1169,3 +1169,24 @@ input[type="range"] {
     transform: none !important;
   }
 }
+
+.prestige-consequences .pro {
+  color: #4caf50;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.prestige-consequences .con {
+  color: #f44336;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+/* Oder wenn du text-green/text-red bevorzugst: */
+.text-green {
+  color: #4caf50;
+}
+
+.text-red {
+  color: #f44336;
+}
