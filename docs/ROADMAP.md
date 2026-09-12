@@ -9,7 +9,7 @@ Dieses Dokument beschreibt die geplante Entwicklung des Smiley Clicker.
 | Kategorie | Status | Fortschritt |
 |-----------|--------|-------------|
 | **Core Gameplay** | ✅ Fertig | 100% |
-| **Gebä¨¬ude-System** | ✅ Fertig | 100% |
+| **Gebäude-System** | ✅ Fertig | 100% |
 | **Prestige-System** | ✅ Fertig | 100% |
 | **Diamanten-Mine** | ✅ Fertig | 100% |
 | **Gilden-System** | ✅ Fertig | 100% |
@@ -43,9 +43,9 @@ Dieses Dokument beschreibt die geplante Entwicklung des Smiley Clicker.
 - [x] Diamanten-Shop (10 Upgrades)
 
 #### Gilden & Multiplayer
-- [x] Gilden-Grß¨ndung & Beitritt
+- [x] Gilden-Gründung & Beitritt
 - [x] Globaler & Gilden-Chat (Firebase)
-- [x] Sö¨¶¨ldner-System (3 Klassen)
+- [x] Söldner-System (3 Klassen)
 - [x] Quest-System
 - [x] Boss-Raids (Echtzeit-HP)
 - [x] Gilden-Projekte & Upgrades
@@ -65,31 +65,29 @@ Dieses Dokument beschreibt die geplante Entwicklung des Smiley Clicker.
 
 ### Neue Features
 
-#### GebÄ¨ude
-- [ ] Neue GebÄ¨ude-Tier (16-20)
+#### Gebäude
+- [ ] Neue Gebäude-Tier (16-20)
   - Smiley-Universum
   - Multiversum-Zentrale
   - Reality Fabricator
   - Omnipotenz-Maschine
-  - Der Spieler (Meta-GebÄ¨ude)
+  - Der Spieler (Meta-Gebäude)
 
 #### Active Skills
-- [ ] 4 neue Active Skills
+  - 4 neue Active Skills
   - TimeWarp (Zeit verlangsamen)
-  - LuckyStrike (GlÄ¨ck verdoppeln)
+  - LuckyStrike (Glück verdoppeln)
   - ResourceRush (Alle Ressourcen +500%)
-  - GodMode (Unendliche Produktion fÄ¨r 30s)
+  - GodMode (Unendliche Produktion für 30s)
 
 #### Achievements
-- [ ] 20 neue Achievements
+  - 20 neue Achievements
   - Schwierigere Meilensteine
   - Geheim-Achievements
-  - TÄ¨gliche Challenges
+  - Tägliche Challenges
 
-#### QualitÄ¨t des Lebens
-- [ ] Bulk-Kauf (1000x GebÄ¨ude)
-- [ ] Bulk-Verkauf (GebÄ¨ude verkaufen)
-- [ ] Auto-Buy (GebÄ¨ude automatisch kaufen)
+#### Qualität des Lebens
+- [ ] Auto-Buy (Gebeude automatisch kaufen)
 - [ ] Statistiken-Seite (detaillierter)
 - [ ] Export/Import mit Code
 
