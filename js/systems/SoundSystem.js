@@ -131,4 +131,87 @@ export class SoundSystem {
     this.sfxVolume = val / 100;
     this.checkContext();
   }
+
+  // --- AUDIO SYNTHESIZER ---
+  playTone(freq, type, duration, volMult = 1.0) {
+    const soundVolumeSlider = this.getById("sound-volume");
+    const volume = soundVolumeSlider
+      ? parseInt(soundVolumeSlider.value) / 100
+      : 0.5;
+    if (volume <= 0) return;
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!this.audioCtx) this.audioCtx = new AudioContext();
+
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+    gain.gain.setValueAtTime(volume * volMult, this.audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.01,
+      this.audioCtx.currentTime + duration,
+    );
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + duration);
+  }
+
+  playClickSound() {
+    this.soundSystem.playClickSound();
+  }
+
+  playAchievementSound() {
+    this.soundSystem.playAchievementSound();
+  }
+
+  playLevelUpSound() {
+    this.soundSystem.playLevelUp();
+  }
+
+  playBuySound() {
+    this.playTone(1200, "sine", 0.05, 0.3);
+  }
+
+  ladeAudioEinstellungen() {
+    // 1. Audio laden
+    const musicVolume = localStorage.getItem("musicVolume");
+    const soundVolume = localStorage.getItem("soundVolume");
+    const musicSlider = this.getById("music-volume");
+    const soundSlider = this.getById("sound-volume");
+
+    if (musicSlider && musicVolume !== null) musicSlider.value = musicVolume;
+    if (soundSlider && soundVolume !== null) soundSlider.value = soundVolume;
+    this.setzeLautstaerke();
+
+    // 2. Benachrichtigungen laden (DAS HIER IST WICHTIG)
+    const toastSetting = localStorage.getItem("setting_toasts");
+    const desktopSetting = localStorage.getItem("setting_desktop");
+
+    const toastCheck = this.getById("setting-toast-toggle");
+    const desktopCheck = this.getById("setting-desktop-toggle");
+
+    // Standard: Toasts AN (true), wenn noch nichts gespeichert wurde
+    this.settingsToasts =
+      toastSetting === null ? true : toastSetting === "true";
+    this.settingsDesktop = desktopSetting === "true";
+
+    if (toastCheck) toastCheck.checked = this.settingsToasts;
+    if (desktopCheck) desktopCheck.checked = this.settingsDesktop;
+  }
+
+  setzeLautstaerke() {
+    const musicVolume =
+      parseFloat(localStorage.getItem("musicVolume") || 100) / 100;
+    const soundVolume =
+      parseFloat(localStorage.getItem("soundVolume") || 100) / 100;
+    const musicPlayer = this.getById("background-music");
+    if (musicPlayer) musicPlayer.volume = musicVolume;
+    // Klick-Sound wird live generiert, nutzt soundVolume direkt beim Abspielen
+  }
 }

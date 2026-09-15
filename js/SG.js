@@ -189,20 +189,6 @@ class SmileyGame {
     this.setupSettingsModalListeners();
 
     // Chat Toggle Logik (direkt im Constructor, da es UI-Grundgerüst ist)
-    const chatToggleBtn = document.getElementById("btn-chat-toggle");
-    if (chatToggleBtn) {
-      chatToggleBtn.onclick = () => {
-        const container = document.getElementById("main-chat-container");
-        if (container) {
-          container.classList.toggle("chat-minimized");
-          chatToggleBtn.innerText = container.classList.contains(
-            "chat-minimized",
-          )
-            ? "➕"
-            : "➖";
-        }
-      };
-    }
 
     this.treeX = window.innerWidth / 2;
     this.treeY = window.innerHeight / 2;
@@ -266,6 +252,7 @@ class SmileyGame {
     this.updateGlobalUpgradeUI();
     this.updatePrestigeUI();
     this.ladeAudioEinstellungen();
+    this.chatSystem.setupEventListeners();
 
     const musicPlayer = this.getById("background-music");
     if (musicPlayer) {
@@ -1954,7 +1941,7 @@ class SmileyGame {
     }
     this.applyAllBoni();
     this.updateUI();
-    this.renderDiamondMineContent();
+    this.DiamondMine.renderDiamondMineContent();
     this.speichereSpiel();
   }
 
@@ -2095,30 +2082,6 @@ class SmileyGame {
   }
 
   // ================================================================================================================
-  // 5. DIAMANTEN MINE LOGIK (Delegation an MineSystem)
-  // ================================================================================================================
-
-  renderDiamondMineContent() {
-    this.mineSystem.renderDiamondMineContent();
-  }
-
-  switchMineTab(tabName) {
-    this.mineSystem.switchMineTab(tabName);
-  }
-
-  renderDiamondMinigame(targetContainer) {
-    this.DiamondMine.renderDiamondMinigame(targetContainer);
-  }
-
-  updateMineVisuals() {
-    this.mineSystem.updateMineVisuals();
-  }
-
-  handleMineClick(index) {
-    this.mineSystem.handleMineClick(index);
-  }
-
-  // ================================================================================================================
   // 6. GILDEN LOGIK + weiter Leitung an die Guild Class
   // ================================================================================================================
 
@@ -2129,114 +2092,6 @@ class SmileyGame {
   // Schaltet zwischen Chat und Liste um
   toggleGuildView() {
     this.chatSystem.toggleGuildView();
-  }
-
-  // ================================================================================================================
-  // 7. RENDERING & UI-UPDATES
-  // ================================================================================================================
-
-  renderMuseum(targetContainer = null) {
-    // 1. Container finden (Entweder übergeben oder per ID suchen)
-    const container = targetContainer || document.getElementById("museum_grid");
-
-    if (!container) {
-      console.error("❌ Museum-Container nicht gefunden!");
-      return;
-    }
-
-    // 2. Sicherheits-Check: Gibt es die Liste der gesammelten Items überhaupt?
-    // Falls nicht (neues Spiel), erstellen wir sie leer, damit kein Fehler kommt.
-    if (!this.gameState.collectedArtifacts) {
-      this.gameState.collectedArtifacts = [];
-    }
-
-    container.innerHTML = "";
-
-    // Grid-Styling sicherstellen (falls CSS fehlt)
-    container.style.display = "grid";
-    container.style.gridTemplateColumns =
-      "repeat(auto-fill, minmax(180px, 1fr))";
-    container.style.gap = "15px";
-    container.style.padding = "10px";
-
-    // Header Text
-    const header = document.createElement("div");
-    header.style.gridColumn = "1 / -1";
-    header.style.textAlign = "center";
-    header.style.color = "#aaa";
-    header.style.marginBottom = "10px";
-    header.style.background = "rgba(255,255,255,0.05)";
-    header.style.padding = "10px";
-    header.style.borderRadius = "8px";
-    header.innerHTML =
-      "<p>Sammle Artefakte in der Mine, um globale Boni freizuschalten.</p>";
-    container.appendChild(header);
-
-    // 3. Karten rendern
-    this.artifactsData.forEach((art) => {
-      const isOwned = this.gameState.collectedArtifacts.includes(art.id);
-
-      const card = document.createElement("div");
-      card.className = `artifact-card ${isOwned ? "owned" : "missing"}`;
-
-      // Inline Styles als Fallback, falls CSS noch nicht greift
-      card.style.position = "relative";
-      card.style.padding = "15px";
-      card.style.borderRadius = "10px";
-      card.style.textAlign = "center";
-      card.style.border = isOwned ? "1px solid #FFD700" : "1px solid #444";
-      card.style.background = isOwned
-        ? "rgba(255, 215, 0, 0.05)"
-        : "rgba(255, 255, 255, 0.02)";
-      if (!isOwned) card.style.opacity = "0.7";
-
-      // Icons
-      const icons = {
-        art_coin: "🪙",
-        art_fossil: "🐚",
-        art_compass: "🧭",
-        art_pickaxe: "⛏️",
-        art_crystal: "🔮",
-        art_crown: "👑",
-      };
-      const displayIcon = icons[art.id] || "🏺";
-
-      const rarityStars = {
-        common: "⭐",
-        rare: "⭐⭐",
-        epic: "⭐⭐⭐",
-        legendary: "🌟🌟🌟",
-      };
-
-      card.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 10px; filter: ${isOwned ? "drop-shadow(0 0 5px gold)" : "grayscale(1)"};">
-                    ${isOwned ? displayIcon : "❓"}
-                </div>
-                <div style="font-weight:bold; color:${isOwned ? "#fff" : "#777"}; margin-bottom:5px;">
-                    ${isOwned ? art.name : "???"}
-                </div>
-                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">
-                    ${rarityStars[art.rarity]}
-                </div>
-                <div style="font-size: 0.75rem; color: ${isOwned ? "#4CAF50" : "#555"}; min-height: 35px; display:flex; align-items:center; justify-content:center;">
-                    ${isOwned ? art.desc : "Noch nicht entdeckt"}
-                </div>
-            `;
-      container.appendChild(card);
-    });
-  }
-
-  // Helfer für Icons (kannst du in deine getTileSymbol Logik integrieren)
-  getArtifactIcon(id) {
-    const icons = {
-      art_coin: "🪙",
-      art_fossil: "🐚",
-      art_compass: "🧭",
-      art_pickaxe: "⛏️",
-      art_crystal: "🔮",
-      art_crown: "👑",
-    };
-    return icons[id] || "🏺";
   }
 
   updateUI() {
@@ -2361,7 +2216,7 @@ class SmileyGame {
 
     const mineModal = this.getById("diamond-mine-modal");
     if (mineModal && mineModal.style.display === "flex") {
-      this.renderDiamondMineContent();
+      this.DiamondMine.renderDiamondMineContent();
     }
 
     this.updateGuildsButton();
@@ -2816,14 +2671,7 @@ class SmileyGame {
   }
 
   updateDiamondMineStatus() {
-    const mineUpgradePurchased = this.gameState.diamondMineUnlocked;
-    const mineButton = this.getById("open_diamond_mine_button");
-    if (mineButton) {
-      mineButton.style.display = mineUpgradePurchased ? "block" : "none";
-    }
-    if (mineUpgradePurchased) {
-      this.renderDiamondMineContent();
-    }
+    this.DiamondMine.updateDiamondMineStatus();
   }
 
   updateGuildsButton() {
@@ -3385,36 +3233,6 @@ class SmileyGame {
 
   renderPetShop() {
     this.petSystem.renderPetShop();
-  }
-
-  diamondMineView = "mine";
-
-  switchMineTab(tabName) {
-    this.diamondMineView = tabName;
-    // Inhalt leeren erzwingt Neu-Render des Inhalts beim nächsten Update
-    const contentDiv = document.getElementById("mine-sub-content");
-    if (contentDiv) contentDiv.innerHTML = "";
-
-    // Sofort rendern damit es sich schnell anfühlt
-    this.renderDiamondMineContent();
-  }
-
-  // Update NUR für eine einzelne Kachel (Ultra-Schnell) ⚡
-  updateTileVisual(index) {
-    this.DiamondMine.updateTileVisual(index);
-  }
-
-  // Update für die Zahlen im Header (Werkzeuge, Dias etc.)
-  updateMineStatsUI() {
-    this.DiamondMine.updateMineStatsUI();
-  }
-
-  renderMineResearch(container) {
-    this.DiamondMine.renderResearch(container);
-  }
-
-  renderDiamondShopContent(targetContainer) {
-    this.DiamondMine.renderDiamondShopContent(targetContainer);
   }
 
   renderGuildsContent() {
@@ -4686,89 +4504,6 @@ class SmileyGame {
       default:
         return "Permanenter Bonus";
     }
-  }
-
-  ladeAudioEinstellungen() {
-    // 1. Audio laden
-    const musicVolume = localStorage.getItem("musicVolume");
-    const soundVolume = localStorage.getItem("soundVolume");
-    const musicSlider = this.getById("music-volume");
-    const soundSlider = this.getById("sound-volume");
-
-    if (musicSlider && musicVolume !== null) musicSlider.value = musicVolume;
-    if (soundSlider && soundVolume !== null) soundSlider.value = soundVolume;
-    this.setzeLautstaerke();
-
-    // 2. Benachrichtigungen laden (DAS HIER IST WICHTIG)
-    const toastSetting = localStorage.getItem("setting_toasts");
-    const desktopSetting = localStorage.getItem("setting_desktop");
-
-    const toastCheck = this.getById("setting-toast-toggle");
-    const desktopCheck = this.getById("setting-desktop-toggle");
-
-    // Standard: Toasts AN (true), wenn noch nichts gespeichert wurde
-    this.settingsToasts =
-      toastSetting === null ? true : toastSetting === "true";
-    this.settingsDesktop = desktopSetting === "true";
-
-    if (toastCheck) toastCheck.checked = this.settingsToasts;
-    if (desktopCheck) desktopCheck.checked = this.settingsDesktop;
-  }
-
-  setzeLautstaerke() {
-    const musicVolume =
-      parseFloat(localStorage.getItem("musicVolume") || 100) / 100;
-    const soundVolume =
-      parseFloat(localStorage.getItem("soundVolume") || 100) / 100;
-    const musicPlayer = this.getById("background-music");
-    if (musicPlayer) musicPlayer.volume = musicVolume;
-    // Klick-Sound wird live generiert, nutzt soundVolume direkt beim Abspielen
-  }
-
-  // --- AUDIO SYNTHESIZER ---
-  playTone(freq, type, duration, volMult = 1.0) {
-    const soundVolumeSlider = this.getById("sound-volume");
-    const volume = soundVolumeSlider
-      ? parseInt(soundVolumeSlider.value) / 100
-      : 0.5;
-    if (volume <= 0) return;
-
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!this.audioCtx) this.audioCtx = new AudioContext();
-
-    const osc = this.audioCtx.createOscillator();
-    const gain = this.audioCtx.createGain();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-
-    gain.gain.setValueAtTime(volume * volMult, this.audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.01,
-      this.audioCtx.currentTime + duration,
-    );
-
-    osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
-
-    osc.start();
-    osc.stop(this.audioCtx.currentTime + duration);
-  }
-
-  playClickSound() {
-    this.soundSystem.playClickSound();
-  }
-
-  playAchievementSound() {
-    this.soundSystem.playAchievementSound();
-  }
-
-  playLevelUpSound() {
-    this.soundSystem.playLevelUp();
-  }
-
-  playBuySound() {
-    this.playTone(1200, "sine", 0.05, 0.3);
   }
 
   switchView(viewName) {

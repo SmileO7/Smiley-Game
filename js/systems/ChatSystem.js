@@ -123,6 +123,21 @@ export class ChatSystem {
     }
   }
 
+  setupEventListeners() {
+    const chatToggleBtn = document.getElementById("btn-chat-toggle");
+    const container = document.getElementById("main-chat-container");
+
+    if (!chatToggleBtn || !container) return;
+
+    chatToggleBtn.addEventListener("click", () => {
+      container.classList.toggle("chat-minimized");
+
+      chatToggleBtn.innerText = container.classList.contains("chat-minimized")
+        ? "➕"
+        : "➖";
+    });
+  }
+
   switchChatChannel(type) {
     if (typeof firebase === "undefined" || !this.game.gameState.guildName)
       return;

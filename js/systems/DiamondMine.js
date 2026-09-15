@@ -703,7 +703,7 @@ export class DiamondMine {
     setTimeout(() => el.remove(), 1000);
   }
 
-renderDiamondMinigame(targetContainer) {
+  renderDiamondMinigame(targetContainer) {
     const container =
       targetContainer || document.getElementById("minigame-placeholder");
     // Fallback: Wenn kein Container übergeben wurde, such den richtigen im DOM
@@ -1078,5 +1078,150 @@ renderDiamondMinigame(targetContainer) {
       }
       innerGrid.appendChild(div);
     });
+  }
+
+  diamondMineView = "mine";
+
+  switchMineTab(tabName) {
+    this.diamondMineView = tabName;
+    // Inhalt leeren erzwingt Neu-Render des Inhalts beim nächsten Update
+    const contentDiv = document.getElementById("mine-sub-content");
+    if (contentDiv) contentDiv.innerHTML = "";
+
+    // Sofort rendern damit es sich schnell anfühlt
+    this.renderDiamondMineContent();
+  }
+
+  // Update NUR für eine einzelne Kachel (Ultra-Schnell) ⚡
+  updateTileVisual(index) {
+    this.DiamondMine.updateTileVisual(index);
+  }
+
+  // Update für die Zahlen im Header (Werkzeuge, Dias etc.)
+  updateMineStatsUI() {
+    this.DiamondMine.updateMineStatsUI();
+  }
+
+  renderMineResearch(container) {
+    this.DiamondMine.renderResearch(container);
+  }
+
+  renderDiamondShopContent(targetContainer) {
+    this.DiamondMine.renderDiamondShopContent(targetContainer);
+  }
+
+  updateDiamondMineStatus() {
+    const mineUpgradePurchased = this.gameState.diamondMineUnlocked;
+    const mineButton = this.getById("open_diamond_mine_button");
+    if (mineButton) {
+      mineButton.style.display = mineUpgradePurchased ? "block" : "none";
+    }
+    if (mineUpgradePurchased) {
+      this.renderDiamondMineContent();
+    }
+  }
+
+  renderMuseum(targetContainer = null) {
+    // 1. Container finden (Entweder übergeben oder per ID suchen)
+    const container = targetContainer || document.getElementById("museum_grid");
+
+    if (!container) {
+      console.error("❌ Museum-Container nicht gefunden!");
+      return;
+    }
+
+    // 2. Sicherheits-Check: Gibt es die Liste der gesammelten Items überhaupt?
+    // Falls nicht (neues Spiel), erstellen wir sie leer, damit kein Fehler kommt.
+    if (!this.gameState.collectedArtifacts) {
+      this.gameState.collectedArtifacts = [];
+    }
+
+    container.innerHTML = "";
+
+    // Grid-Styling sicherstellen (falls CSS fehlt)
+    container.style.display = "grid";
+    container.style.gridTemplateColumns =
+      "repeat(auto-fill, minmax(180px, 1fr))";
+    container.style.gap = "15px";
+    container.style.padding = "10px";
+
+    // Header Text
+    const header = document.createElement("div");
+    header.style.gridColumn = "1 / -1";
+    header.style.textAlign = "center";
+    header.style.color = "#aaa";
+    header.style.marginBottom = "10px";
+    header.style.background = "rgba(255,255,255,0.05)";
+    header.style.padding = "10px";
+    header.style.borderRadius = "8px";
+    header.innerHTML =
+      "<p>Sammle Artefakte in der Mine, um globale Boni freizuschalten.</p>";
+    container.appendChild(header);
+
+    // 3. Karten rendern
+    this.artifactsData.forEach((art) => {
+      const isOwned = this.gameState.collectedArtifacts.includes(art.id);
+
+      const card = document.createElement("div");
+      card.className = `artifact-card ${isOwned ? "owned" : "missing"}`;
+
+      // Inline Styles als Fallback, falls CSS noch nicht greift
+      card.style.position = "relative";
+      card.style.padding = "15px";
+      card.style.borderRadius = "10px";
+      card.style.textAlign = "center";
+      card.style.border = isOwned ? "1px solid #FFD700" : "1px solid #444";
+      card.style.background = isOwned
+        ? "rgba(255, 215, 0, 0.05)"
+        : "rgba(255, 255, 255, 0.02)";
+      if (!isOwned) card.style.opacity = "0.7";
+
+      // Icons
+      const icons = {
+        art_coin: "🪙",
+        art_fossil: "🐚",
+        art_compass: "🧭",
+        art_pickaxe: "⛏️",
+        art_crystal: "🔮",
+        art_crown: "👑",
+      };
+      const displayIcon = icons[art.id] || "🏺";
+
+      const rarityStars = {
+        common: "⭐",
+        rare: "⭐⭐",
+        epic: "⭐⭐⭐",
+        legendary: "🌟🌟🌟",
+      };
+
+      card.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 10px; filter: ${isOwned ? "drop-shadow(0 0 5px gold)" : "grayscale(1)"};">
+                    ${isOwned ? displayIcon : "❓"}
+                </div>
+                <div style="font-weight:bold; color:${isOwned ? "#fff" : "#777"}; margin-bottom:5px;">
+                    ${isOwned ? art.name : "???"}
+                </div>
+                <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">
+                    ${rarityStars[art.rarity]}
+                </div>
+                <div style="font-size: 0.75rem; color: ${isOwned ? "#4CAF50" : "#555"}; min-height: 35px; display:flex; align-items:center; justify-content:center;">
+                    ${isOwned ? art.desc : "Noch nicht entdeckt"}
+                </div>
+            `;
+      container.appendChild(card);
+    });
+  }
+
+  // Helfer für Icons (kannst du in deine getTileSymbol Logik integrieren)
+  getArtifactIcon(id) {
+    const icons = {
+      art_coin: "🪙",
+      art_fossil: "🐚",
+      art_compass: "🧭",
+      art_pickaxe: "⛏️",
+      art_crystal: "🔮",
+      art_crown: "👑",
+    };
+    return icons[id] || "🏺";
   }
 }
