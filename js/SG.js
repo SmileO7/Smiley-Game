@@ -1,8 +1,9 @@
 // js/SG.js
 
+import { ModalSystem } from "./systems/ModalSystem.js";
 import { createInitialGameState } from "./GameState.js";
 import { Utils } from "./Utils.js";
-import { Mechaniccalc } from "./Mechaniccalc.js";  
+import { Mechaniccalc } from "./Mechaniccalc.js";
 import { DiamondMine } from "./systems/DiamondMine.js";
 import { GuildSystem } from "./systems/GuildSystem.js";
 import { PetSystem } from "./systems/PetSystem.js";
@@ -40,30 +41,30 @@ class SmileyGame {
   // ================================================================================================================
 
   constructor() {
-  this.prestigeUpgrades = prestigeUpgrades;
-  this.artifactsData = artifactsData;
+    this.prestigeUpgrades = prestigeUpgrades;
+    this.artifactsData = artifactsData;
 
-  this.currentBuyAmount = 1;
-  this.selectedBuyAmount = 1;
+    this.currentBuyAmount = 1;
+    this.selectedBuyAmount = 1;
 
-  this.activeModals = new Set();
+    this.activeModals = new Set();
 
-  this.gameState = createInitialGameState({
-    buildingsData,
-    uniqueBuildingsData,
-    globalUpgrades,
-    prestigeUpgrades: this.prestigeUpgrades,
-    achievementsData,
-  });
+    this.gameState = createInitialGameState({
+      buildingsData,
+      uniqueBuildingsData,
+      globalUpgrades,
+      prestigeUpgrades: this.prestigeUpgrades,
+      achievementsData,
+    });
 
-  this.productionInterval = null;
-  this.uiInterval = null;
-  this.saveInterval = null;
+    this.productionInterval = null;
+    this.uiInterval = null;
+    this.saveInterval = null;
 
-  this.treeX = 0;
-  this.treeY = 0;
-  this.treeZoom = 1;
-}
+    this.treeX = 0;
+    this.treeY = 0;
+    this.treeZoom = 1;
+  }
 
   initSystems() {
     this.systems = {
@@ -78,16 +79,16 @@ class SmileyGame {
       prestige: new PrestigeSystem(this),
     };
 
-      this.mineSystem = this.systems.mine;
-      this.guildSystem = this.systems.guild;
-      this.chatSystem = this.systems.chat;
-      this.petSystem = this.systems.pet;
-      this.soundSystem = this.systems.sound;
-      this.gemSystem = this.systems.gem;
-      this.skinSystem = this.systems.skin;
-      this.wikiSystem = this.systems.wiki;
-      this.prestigeSystem = this.systems.prestige;
-    }
+    this.mineSystem = this.systems.mine;
+    this.guildSystem = this.systems.guild;
+    this.chatSystem = this.systems.chat;
+    this.petSystem = this.systems.pet;
+    this.soundSystem = this.systems.sound;
+    this.gemSystem = this.systems.gem;
+    this.skinSystem = this.systems.skin;
+    this.wikiSystem = this.systems.wiki;
+    this.prestigeSystem = this.systems.prestige;
+  }
 
   init() {
     // 1. Spielstand laden (Gebäude, Smileys, etc.)
@@ -228,7 +229,7 @@ class SmileyGame {
 
     console.log("✅ Spiel initialisiert. PlayerID:", this.gameState.playerId);
   }
-  
+
   updatePetInterval() {
     this.petSystem.updatePetInterval();
   }
@@ -2686,43 +2687,6 @@ class SmileyGame {
     }
 
     console.log("✅ Event-Listener fertig gesetzt");
-  }
-
-  openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-      console.warn(`Modal nicht gefunden: ${modalId}`);
-      return;
-    }
-    modal.classList.add("is-open");
-    this.activeModals.add(modalId);
-  }
-
-  closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-      console.warn(`Modal nicht gefunden: ${modalId}`);
-      return;
-    }
-    modal.classList.remove("is-open");
-    this.activeModals.delete(modalId);
-  }
-
-  closeTopModal() {
-    // Schließt das zuletzt geöffnete Modal
-    const lastModal = Array.from(this.activeModals).pop();
-    if (lastModal) {
-      this.closeModal(lastModal);
-    }
-  }
-
-  // ESC-Taste registrieren
-  setupModalEsc() {
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.activeModals.size > 0) {
-        this.closeTopModal();
-      }
-    });
   }
 
   // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
