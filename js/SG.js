@@ -1,5 +1,7 @@
-// js/main.js
+// js/SG.js
 
+import { Utils } from "./Utils.js";
+import { Mechaniccalc } from "./Mechaniccalc.js";  
 import { DiamondMine } from "./systems/DiamondMine.js";
 import { GuildSystem } from "./systems/GuildSystem.js";
 import { PetSystem } from "./systems/PetSystem.js";
@@ -7,6 +9,8 @@ import { ChatSystem } from "./systems/ChatSystem.js";
 import { SoundSystem } from "./systems/SoundSystem.js";
 import { GemSystem } from "./systems/GemSystem.js";
 import { SkinSystem } from "./systems/SkinSystem.js";
+import { WikiSystem } from "./systems/WikiSystem.js";
+import { PrestigeSystem } from "./systems/PrestigeSystem.js";
 
 // ================================================================================================================
 // === SmileyGame.js: Hauptspielklasse (Final & Friendly Version) ===
