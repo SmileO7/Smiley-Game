@@ -1501,4 +1501,81 @@ export class GuildSystem {
     this.game.speichereSpiel();
     this.renderGuildsContent();
   }
+
+  updateGuildTimers() {
+    const state = this.gameState;
+    const now = Date.now();
+    let needsFullRender = false;
+
+    const guildsModal = document.getElementById("guilds-modal");
+    const isModalOpen = guildsModal && guildsModal.style.display === "flex";
+
+    // A) QUEST TIMER (Söldner)
+    if (state.guildActiveQuests && state.guildActiveQuests.length > 0) {
+      state.guildActiveQuests.forEach((q) => {
+        const elapsed = (now - q.startTime) / 1000;
+        const timeLeft = Math.max(0, Math.ceil(q.duration - elapsed));
+
+        if (timeLeft <= 0 && !q.notified) {
+          q.notified = true;
+          needsFullRender = true;
+          if (Notification.permission === "granted") {
+            const merc = state.guildMercenaries.find(
+              (m) => m.id === q.assignedMerc,
+            );
+            new Notification("Quest abgeschlossen! ⚔️", {
+              body: `${merc ? merc.name : "Dein Söldner"} ist zurückgekehrt!`,
+              icon: "smiley.png",
+            });
+          }
+        }
+
+        if (isModalOpen) {
+          const timerEl = document.getElementById(`timer-quest-${q.id}`);
+          const barEl = document.getElementById(`bar-quest-${q.id}`);
+          if (timerEl) {
+            timerEl.innerText =
+              timeLeft > 0 ? `⏳ Noch ${timeLeft}s` : "✅ Bereit!";
+            if (barEl)
+              barEl.style.width =
+                Math.min(100, (elapsed / q.duration) * 100) + "%";
+          }
+        }
+      });
+    }
+
+    // B) BOSS REGENERATION TIMER (Garantiertes Ticken)
+    if (this.guildView === "boss" && !state.guildBossFighting && isModalOpen) {
+      const cooldownTime = 30 * 60 * 1000;
+      const nextAvailable = (state.lastBossDefeatTime || 0) + cooldownTime;
+      // WICHTIG: 'now' muss hier aktuell sein
+      const currentTime = Date.now();
+      const bossTimeLeft = nextAvailable - currentTime;
+
+      if (bossTimeLeft > 0) {
+        const bossTimerDisplay = document.getElementById("boss-cooldown-timer");
+
+        if (bossTimerDisplay) {
+          const bRemaining = Math.ceil(bossTimeLeft / 1000);
+          const bMins = Math.floor(bRemaining / 60);
+          const bSecs = bRemaining % 60;
+          // Live-Überschreiben des Textes
+          bossTimerDisplay.innerText = `${bMins}:${bSecs < 10 ? "0" : ""}${bSecs}`;
+        }
+      } else if (state.lastBossDefeatTime > 0) {
+        // Timer abgelaufen -> Kampf-Button rendern
+        needsFullRender = true;
+      }
+    }
+
+    if (needsFullRender && isModalOpen) {
+      this.renderGuildsContent();
+    }
+  }
+
+  updateGuildsButton() {
+    const button = this.getById("open_guilds_button");
+    if (!button) return;
+    button.style.display = this.gameState.guildsUnlocked ? "block" : "none";
+  }
 }
