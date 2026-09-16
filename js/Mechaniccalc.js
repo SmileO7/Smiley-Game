@@ -1,3 +1,5 @@
+export default class Mechaniccalc {
+
 calculatePetStat(pet, currentLevel) {
     this.petSystem.calculatePetStat(pet, currentLevel);
   }
@@ -370,3 +372,4 @@ calculatePetStat(pet, currentLevel) {
       (1 + this.gameState.guildSPSMultiplier) *
       prestigeTreeEffects.spsMultiplier;
   }
+}

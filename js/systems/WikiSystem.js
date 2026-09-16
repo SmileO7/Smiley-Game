@@ -1,3 +1,5 @@
+export default class WikiSystem {
+
 openWiki() {
     const modal = document.getElementById("wiki-modal");
     if (modal) {
@@ -79,3 +81,4 @@ openWiki() {
         break;
     }
   }
+}

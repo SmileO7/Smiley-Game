@@ -1,3 +1,5 @@
+export default class Utils {
+
 checkOfflineProgress() {
     if (!this.gameState.lastSaveTime) return;
 
@@ -224,3 +226,4 @@ checkOfflineProgress() {
     });
     return baseSPS;
   }
+}

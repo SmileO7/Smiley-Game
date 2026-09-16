@@ -1,3 +1,5 @@
+export default class PrestigeSystem {
+
 updatePrestigeUI() {
     const availablePoints = this.gameState.prestige_punkte_verfügbar || 0;
     const totalPoints = this.gameState.gesamt_prestige_punkte || 0;
@@ -330,3 +332,4 @@ updatePrestigeUI() {
       this.speichereSpiel();
     }
   }
+}
