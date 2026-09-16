@@ -1,5 +1,6 @@
 // js/SG.js
 
+import { createInitialGameState } from "./GameState.js";
 import { Utils } from "./Utils.js";
 import { Mechaniccalc } from "./Mechaniccalc.js";  
 import { DiamondMine } from "./systems/DiamondMine.js";
@@ -39,168 +40,54 @@ class SmileyGame {
   // ================================================================================================================
 
   constructor() {
-    // 1. PRESTIGE UPGRADES DEFINITION
-    this.prestigeUpgrades = prestigeUpgrades; // Importierte Prestige-Upgrades aus data.js
-    this.artifactsData = artifactsData; // Importierte Artefakte aus data.js
+  this.prestigeUpgrades = prestigeUpgrades;
+  this.artifactsData = artifactsData;
 
-    this.currentBuyAmount = 1;
-    this.mineSystem = new DiamondMine(this);
-    this.guildSystem = new GuildSystem(this);
-    this.chatSystem = new ChatSystem(this);
-    this.petSystem = new PetSystem(this);
-    this.soundSystem = new SoundSystem(this);
-    this.gemSystem = new GemSystem(this);
-    this.skinSystem = new SkinSystem(this);
-    this.selectedBuyAmount = 1;
-    this.activeModals = new Set();
-    this.setupModalEsc();
+  this.currentBuyAmount = 1;
+  this.selectedBuyAmount = 1;
 
-    // 2. GAME STATE DEFINITION
-    this.gameState = {
-      aktuelle_smileys: 0,
-      lifetime_smileys: 0,
-      diamanten: 0,
-      gems: 0,
-      playerName: "Smiley_Gast", // Standard-Placeholder
-      playerId: null,
-      prestige_punkte_verfügbar: 0,
-      gesamt_prestige_punkte: 0,
-      prestigeResets: 0,
-      klickKraft: 2,
-      klickKraftMultiplier: 1,
-      globalerPrestigeMultiplikator: 1,
-      // Arrays werden basierend auf den Daten in data.js initialisiert
-      buildingCounts: [...buildingsData, ...uniqueBuildingsData].map(() => 0),
-      buildingPrices: [
-        ...buildingsData.map((item) => item.basePrice),
-        ...uniqueBuildingsData.map((item) => item.basePrice),
-      ],
-      researchStatus: globalUpgrades.map(() => false),
-      prestigeUpgradeStatus: this.prestigeUpgrades.map(() => false),
-      petLevels: {},
-      activePet: null,
-      totalSPS: 0,
-      globalSPSMultiplier: 1,
-      prestigePointMultiplier: 0.01,
-      prestigeResetBonus: 0,
-      critChance: 0,
-      critDamageMult: 1,
-      diamondMineBoost: 0,
-      globalCostReduction: 0,
-      clickSPSRatio: 0,
-      godModeMultiplier: 1,
-      mineGrid: [],
-      mineDepth: 1,
-      mineInventory: { pickaxe: 50, tnt: 2, drill: 1 },
-      fossilien: 0,
-      mineResearch: { durable_picks: 0, explosive_yield: 0, fossil_scanner: 0 },
-      selectedTool: "pickaxe",
-      isTreasureRoom: false,
-      diamondShopPurchases: [],
-      diamondMineUnlocked: false,
-      petsUnlocked: false,
-      guildsUnlocked: false,
-      petAutoClickTimer: 0,
-      achievementsUnlocked: achievementsData.map(() => false),
-      totalClicksLifetime: 0,
-      guildName: null,
-      guildLevel: 1,
-      guildXP: 0,
-      guildXPReq: 1000,
-      guildSPSMultiplier: 0,
-      guildCostReduction: 0,
-      guildPrestigeBonus: 0,
-      guildGlobalMultiplier: 1,
-      lastBossDefeatTime: 0,
-      guildBossLevel: 1,
-      guildBossHP: 1000,
-      guildBossMaxHP: 1000,
-      guildBossFighting: false,
-      guildBossTimer: 0,
-      guildAvailableQuests: [],
-      guildActiveQuests: [],
-      activeBuffs: {
-        spsMultiplier: 1,
-        costMultiplier: 1,
-        timerSPS: 0,
-        timerCost: 0,
-      },
-      skills: {
-        frenzy: {
-          active: false,
-          cooldown: false,
-          duration: 15000,
-          cooldownTime: 120000,
-          color: "#ff4d4d",
-        },
-        overdrive: {
-          active: false,
-          cooldown: false,
-          duration: 30000,
-          cooldownTime: 300000,
-          color: "#009ffd",
-        },
-        critStorm: {
-          active: false,
-          cooldown: false,
-          duration: 10000,
-          cooldownTime: 180000,
-          color: "#ffcc00",
-        },
-        goldRush: {
-          active: false,
-          cooldown: false,
-          duration: 1000,
-          cooldownTime: 600000,
-          color: "#4CAF50",
-        },
-        diamondPulse: {
-          active: false,
-          cooldown: false,
-          duration: 20000,
-          cooldownTime: 420000,
-          color: "#b9f2ff",
-        },
-        efficiency: {
-          active: false,
-          cooldown: false,
-          duration: 45000,
-          cooldownTime: 600000,
-          color: "#a0a0a0",
-        },
-        shards: {
-          active: false,
-          cooldown: false,
-          duration: 20000,
-          cooldownTime: 240000,
-          color: "#e066ff",
-        },
-        hyperMinute: {
-          active: false,
-          cooldown: false,
-          duration: 60000,
-          cooldownTime: 900000,
-          color: "#ff8c00",
-        },
-      },
+  this.activeModals = new Set();
+
+  this.gameState = createInitialGameState({
+    buildingsData,
+    uniqueBuildingsData,
+    globalUpgrades,
+    prestigeUpgrades: this.prestigeUpgrades,
+    achievementsData,
+  });
+
+  this.productionInterval = null;
+  this.uiInterval = null;
+  this.saveInterval = null;
+
+  this.treeX = 0;
+  this.treeY = 0;
+  this.treeZoom = 1;
+}
+
+  initSystems() {
+    this.systems = {
+      mine: new DiamondMine(this),
+      guild: new GuildSystem(this),
+      chat: new ChatSystem(this),
+      pet: new PetSystem(this),
+      sound: new SoundSystem(this),
+      gem: new GemSystem(this),
+      skin: new SkinSystem(this),
+      wiki: new WikiSystem(this),
+      prestige: new PrestigeSystem(this),
     };
 
-    this.productionInterval = null;
-    this.uiInterval = null;
-    this.saveInterval = null;
-
-    // 3. UI EVENT LISTENERS (GLOBAL)
-    this.setupSettingsModalListeners();
-
-    // Chat Toggle Logik (direkt im Constructor, da es UI-Grundgerüst ist)
-
-    this.treeX = window.innerWidth / 2;
-    this.treeY = window.innerHeight / 2;
-    this.treeZoom = 1.0;
-
-    // 4. INITIALISIERUNG STARTEN
-    this.init();
-  }
+      this.mineSystem = this.systems.mine;
+      this.guildSystem = this.systems.guild;
+      this.chatSystem = this.systems.chat;
+      this.petSystem = this.systems.pet;
+      this.soundSystem = this.systems.sound;
+      this.gemSystem = this.systems.gem;
+      this.skinSystem = this.systems.skin;
+      this.wikiSystem = this.systems.wiki;
+      this.prestigeSystem = this.systems.prestige;
+    }
 
   init() {
     // 1. Spielstand laden (Gebäude, Smileys, etc.)
