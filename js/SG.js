@@ -1,5 +1,6 @@
 // js/SG.js
 
+import { InputSystem } from "./systems/InputSystem.js";
 import { ModalSystem } from "./systems/ModalSystem.js";
 import { createInitialGameState } from "./GameState.js";
 import { Utils } from "./Utils.js";
