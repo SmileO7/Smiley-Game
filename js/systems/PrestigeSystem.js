@@ -163,7 +163,7 @@ export class PrestigeSystem {
     if (document.querySelector(".main-layout")) {
       this.updateUI();
     }
-    this.speichereSpiel();
+    this.saveSystem.save();
   }
 
   canBuyPrestigeUpgrade(upgrade) {
@@ -229,7 +229,7 @@ export class PrestigeSystem {
 
       this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
       this.playBuySound(); // Sound abspielen (wenn du das Sound-System drin hast)
-      this.speichereSpiel();
+      this.saveSystem.save();
 
       // 4. UI Updates
       this.updatePrestigeUI();
@@ -298,7 +298,7 @@ export class PrestigeSystem {
     ];
 
     this.applyAllBoni();
-    this.speichereSpiel();
+    this.saveSystem.save();
 
     if (document.querySelector(".prestige-main")) {
       this.updatePrestigeUI();
@@ -328,7 +328,7 @@ export class PrestigeSystem {
       this.gameState.prestigeUpgradeStatus.fill(false);
       this.applyAllBoni();
       this.updatePrestigeUI();
-      this.speichereSpiel();
+      this.saveSystem.save();
     }
   }
 

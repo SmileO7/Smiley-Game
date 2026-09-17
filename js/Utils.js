@@ -31,7 +31,7 @@ export class Utils {
     if (earned > 0) {
       // Smileys gutschreiben
       this.addSmileys(earned);
-      this.speichereSpiel(); // Sofort speichern, damit man nicht neu lädt und nochmal kriegt
+      this.saveSystem.save(); // Sofort speichern, damit man nicht neu lädt und nochmal kriegt
       this.updateUI();
 
       // --- NEU: Modal anzeigen statt nur Toast ---
@@ -146,7 +146,7 @@ export class Utils {
 
     // 2. Automatisches Speichern (alle 60 Sek)
     setInterval(() => {
-      this.saveGame();
+      this.saveSystem.save();
     }, 60000);
 
     // 3. News-Ticker Wechsel (alle 30 Sekunden)
@@ -225,4 +225,5 @@ export class Utils {
     });
     return baseSPS;
   }
+
 }

@@ -1,5 +1,6 @@
 // js/SG.js
 
+import { SaveSystem } from "./systems/SaveSystem.js";
 import { InputSystem } from "./systems/InputSystem.js";
 import { ModalSystem } from "./systems/ModalSystem.js";
 import { createInitialGameState } from "./GameState.js";
@@ -69,6 +70,10 @@ class SmileyGame {
 
   initSystems() {
     this.systems = {
+      save: new SaveSystem(this),
+      input: new InputSystem(this),
+      modal: new ModalSystem(this),
+
       mine: new DiamondMine(this),
       guild: new GuildSystem(this),
       chat: new ChatSystem(this),
@@ -79,6 +84,10 @@ class SmileyGame {
       wiki: new WikiSystem(this),
       prestige: new PrestigeSystem(this),
     };
+
+    this.saveSystem = this.systems.save;
+    this.inputSystem = this.systems.input;
+    this.modalSystem = this.systems.modal;
 
     this.mineSystem = this.systems.mine;
     this.guildSystem = this.systems.guild;
@@ -682,7 +691,7 @@ class SmileyGame {
       this.gameState.aktuelle_smileys -= finalCost;
       this.gameState.researchStatus[upgrade.id] = true;
       this.applyAllBoni();
-      this.speichereSpiel();
+      this.saveSystem.save();
       this.updateUI();
       this.updateGlobalUpgradeUI();
       this.showNotification(
@@ -712,8 +721,8 @@ class SmileyGame {
     }
     this.applyAllBoni();
     this.updateUI();
-    this.DiamondMine.renderDiamondMineContent();
-    this.speichereSpiel();
+    this.mineSystem.renderDiamondMineContent();
+    this.saveSystem.save();
   }
 
   checkAchievements() {
@@ -814,7 +823,7 @@ class SmileyGame {
         this.showNotification(`🏆 ERFOLG: ${achievement.name}`, "success");
         this.triggerShake("show_achievements_button");
         this.applyAllBoni();
-        this.speichereSpiel();
+        this.saveSystem.save();
       }
     });
   }
@@ -865,7 +874,7 @@ class SmileyGame {
   }
 
   renderDiamondMinigame(targetContainer) {
-    this.DiamondMine.renderDiamondMinigame(targetContainer);
+    this.mineSystem.renderDiamondMinigame(targetContainer);
   }
 
   updateMineVisuals() {
@@ -1119,7 +1128,7 @@ class SmileyGame {
 
     const mineModal = this.getById("diamond-mine-modal");
     if (mineModal && mineModal.style.display === "flex") {
-      this.DiamondMine.renderDiamondMineContent();
+      this.mineSystem.renderDiamondMineContent();
     }
 
     this.updateGuildsButton();
@@ -1199,86 +1208,6 @@ class SmileyGame {
 
         // Tooltip für Details
         btn.title = `${info.name}: ${info.desc}\nCooldown: ${this.gameState.skills[key].cooldownTime / 1000} Sekunden`;
-      }
-    });
-  }
-
-  setupHotkeys() {
-    // --- TASTE DRÜCKEN ---
-    document.addEventListener("keydown", (e) => {
-      // Ignorieren, wenn man gerade schreibt
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
-        return;
-
-      // --- NEU: ESC schließt alle Fenster ---
-      if (e.key === "Escape") {
-        document.querySelectorAll(".modal-overlay").forEach((modal) => {
-          modal.style.display = "none";
-        });
-      }
-
-      // NEU: Temporärer Kauf-Modifikator (Shift = 10x, Strg = 100x)
-      if (e.key === "Shift") {
-        this.currentBuyAmount = 10;
-        this.highlightToggle(10);
-        this.updateBuildingUI();
-      }
-      if (e.key === "Control") {
-        this.currentBuyAmount = 100;
-        this.highlightToggle(100);
-        this.updateBuildingUI();
-      }
-
-      // LEERTASTE = Smiley Klicken
-      if (e.code === "Space" || e.key === "Enter") {
-        e.preventDefault();
-        this.klickeSmiley(null);
-
-        const btn = this.getById("smiley_button");
-        if (btn) {
-          btn.classList.add("active-key");
-          setTimeout(() => btn.classList.remove("active-key"), 100);
-        }
-      }
-
-      // 'S' = Speichern
-      if (e.key === "s" || e.key === "S") {
-        this.saveGame();
-        this.showNotification("💾 Schnellspeicherung!", "success");
-      }
-
-      // ZAHLEN 1-9 = Gebäude kaufen
-      if (e.code.startsWith("Digit")) {
-        const digit = parseInt(e.code.replace("Digit", ""));
-        if (!isNaN(digit) && digit >= 1 && digit <= 9) {
-          const index = digit - 1;
-          const maxIndex =
-            buildingsData.length +
-            (typeof uniqueBuildingsData !== "undefined"
-              ? uniqueBuildingsData.length
-              : 0);
-
-          if (index < maxIndex) {
-            this.kaufeMehrereGebaeude(index, this.currentBuyAmount);
-
-            // Visuelles Feedback
-            const buyBtn = this.getById(`buy-btn-${index}`);
-            if (buyBtn) {
-              buyBtn.style.transform = "scale(0.95)";
-              setTimeout(() => (buyBtn.style.transform = "scale(1)"), 100);
-            }
-          }
-        }
-      }
-    });
-
-    // --- TASTE LOSLASSEN ---
-    document.addEventListener("keyup", (e) => {
-      // Sobald Shift oder Strg losgelassen wird, kehren wir zum Standard-Wert aus dem Menü zurück
-      if (e.key === "Shift" || e.key === "Control") {
-        this.currentBuyAmount = this.selectedBuyAmount || 1;
-        this.highlightToggle(this.currentBuyAmount);
-        this.updateBuildingUI();
       }
     });
   }
@@ -1477,7 +1406,7 @@ class SmileyGame {
   renderBuffs() {
     // Erst prüfen, ob was abgelaufen ist
     if (this.checkBuffExpiration()) {
-      this.speichereSpiel(); // Speichern, wenn Buff endet
+      this.saveSystem.save(); // Speichern, wenn Buff endet
     }
 
     const container = document.getElementById("buffs-container");
@@ -1890,7 +1819,7 @@ class SmileyGame {
       this.checkFeatureUnlocks();
       this.recalculateGlobalMultipliers();
       this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
-      this.speichereSpiel();
+      this.saveSystem.save();
       this.renderPrestigeTree();
       this.updateUI();
     } else {
@@ -2097,7 +2026,7 @@ class SmileyGame {
 
     // --- 2. GLOBALE LISTENER ---
     window.addEventListener("beforeunload", () => {
-      this.saveGame();
+      this.saveSystem.save();
     });
 
     const smileyBtn = document.getElementById("smiley_button");
@@ -2361,19 +2290,6 @@ class SmileyGame {
     console.log("✅ Event-Listener fertig gesetzt");
   }
 
-  // Hilfsfunktion: Visuelles Highlight bei Tastendruck (Shift/Ctrl)
-  highlightToggle(amount) {
-    const btns = document.querySelectorAll(".btn-toggle");
-    btns.forEach((b) => {
-      // Wenn der Button dem gedrückten Key entspricht -> Highlight an
-      if (parseInt(b.dataset.amount) === amount) {
-        b.classList.add("key-active");
-      } else {
-        b.classList.remove("key-active");
-      }
-    });
-  }
-
   setupPrestigeButtons() {
     // OHNE DOMContentLoaded, weil constructor schon nach DOM-Load läuft
     const resetBtn = document.getElementById("prestige_reset_button");
@@ -2454,7 +2370,7 @@ class SmileyGame {
       this.gameState.prestige_punkte_verfügbar += refundedPoints;
       this.gameState.prestigeUpgradeStatus.fill(false);
       this.applyAllBoni();
-      this.speichereSpiel();
+      this.saveSystem.save();
       this.updatePrestigeUI();
       this.renderPrestigeTree();
       this.updateUI();
@@ -2555,7 +2471,7 @@ class SmileyGame {
     // 3. Modal & Speicher Buttons
     openSettingsButton?.addEventListener("click", (e) => {
       e.preventDefault();
-      this.speichereSpiel();
+      this.saveSystem.save();
       this.showNotification(
         "💾 Spielstand erfolgreich gespeichert.",
         "success",
@@ -2572,7 +2488,7 @@ class SmileyGame {
     });
 
     exportButton?.addEventListener("click", () => {
-      this.speichereSpiel();
+      this.saveSystem.save();
       const saveData = localStorage.getItem("smileyGameSave");
       if (saveData && saveDataTextarea) {
         saveDataTextarea.value = saveData;
@@ -2611,8 +2527,8 @@ class SmileyGame {
           "Möchtest du diesen Spielstand wirklich importieren? Dein aktueller Fortschritt wird überschrieben.",
         )
       ) {
-        if (this.ladeSpiel(saveData)) {
-          this.speichereSpiel();
+        if (this.saveSystem.load(saveData)) {
+          this.saveSystem.save();
           location.reload();
         } else {
           console.error("Import fehlgeschlagen. Überprüfe den Code.");
@@ -3136,7 +3052,7 @@ class SmileyGame {
 
     // --- OPTIONEN / SETTINGS ---
     else if (viewName === "settings") {
-      this.speichereSpiel();
+      this.saveSystem.save();
       const textArea = document.getElementById("save-data-textarea");
       if (textArea)
         textArea.value = localStorage.getItem("smileyGameSave") || "";
@@ -3260,7 +3176,7 @@ class SmileyGame {
     }
 
     this.updateUI();
-    this.speichereSpiel();
+    this.saveSystem.save();
   }
 
   checkBuffExpiration() {
@@ -3392,7 +3308,7 @@ class SmileyGame {
     // --- NEU: Sicherheitsspeicherung (Anti-Cheat) ---
     // Wir speichern den exakten Zeitpunkt, wann der Skill wieder bereit ist.
     skill.readyAt = Date.now() + skill.duration + skill.cooldownTime;
-    this.speichereSpiel();
+    this.saveSystem.save();
     // ------------------------------------------------
 
     const btn = this.getById(`btn-skill-${skillKey}`);
