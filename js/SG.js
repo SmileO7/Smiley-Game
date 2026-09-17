@@ -4,7 +4,7 @@ import { InputSystem } from "./systems/InputSystem.js";
 import { ModalSystem } from "./systems/ModalSystem.js";
 import { createInitialGameState } from "./GameState.js";
 import { Utils } from "./Utils.js";
-import { Mechaniccalc } from "./Mechaniccalc.js";
+import { Mechanicalc } from "./Mechanicalc.js";
 import { DiamondMine } from "./systems/DiamondMine.js";
 import { GuildSystem } from "./systems/GuildSystem.js";
 import { PetSystem } from "./systems/PetSystem.js";
@@ -92,40 +92,17 @@ class SmileyGame {
   }
 
   init() {
-    // 1. Spielstand laden (Gebäude, Smileys, etc.)
-    this.ladeSpiel();
+    // 1. Systeme initialisieren (muss VOR allem anderen kommen!)
+    this.initSystems();
 
-    // =========================================================
-    // 🛡️ ANTI-SPAM ID SYSTEM (Geräte-Bindung)
-    // =========================================================
-    // Wir suchen eine ID, die den "Reset" überlebt hat (im LocalStorage, nicht im SaveGame)
-    let storedId = localStorage.getItem("smiley_device_id");
+    // 2. SaveSystem initialisieren (lädt Spielstand + Device-ID)
+    this.saveSystem.init();
 
-    if (!storedId) {
-      // Fall A: Spieler ist wirklich komplett neu auf diesem Gerät
-      storedId =
-        "uid_" + Date.now().toString(36) + Math.random().toString(36).substr(2);
-      localStorage.setItem("smiley_device_id", storedId);
-      console.log("🆕 Neue Geräte-ID erstellt & gespeichert:", storedId);
-    } else {
-      // Fall B: Spieler war schon mal da -> Wir nutzen die alte ID wieder!
-      console.log(
-        "📱 Bekanntes Gerät erkannt. ID wiederhergestellt:",
-        storedId,
-      );
-    }
+    // 3. Andere Systeme starten
+    this.modalSystem.init();
+    this.inputSystem.init();
 
-    // WICHTIG: Wir überschreiben die ID im GameState mit der festen Geräte-ID.
-    // So bleibt man in der Gilde, auch wenn man den Spielstand resettet.
-    this.gameState.playerId = storedId;
-    // =========================================================
-
-    // Fallback für Namen
-    if (this.gameState.playerName === "Smiley_Gast") {
-      this.gameState.playerName = "Smiley_" + Math.floor(Math.random() * 9999);
-    }
-
-    // Mine Reparieren falls nötig
+    // 4. Mine reparieren falls nötig
     if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
       if (this.gameState.mineGrid[0].content === undefined) {
         console.log("🛠️ Repariere kaputte Mine (Loot fehlt)...");
@@ -133,14 +110,15 @@ class SmileyGame {
       }
     }
 
+    // 5. Audio Setup
     this.clickSound = document.getElementById("click-sound");
-
     const storedSfx = localStorage.getItem("soundVolume");
     if (storedSfx !== null) this.sfxVolume = parseInt(storedSfx) / 100;
 
+    // 6. Spiel initialisieren
     this.checkOfflineProgress();
     this.createBuildingElements();
-    this.renderPetShop(); // Neue Pet-System Weiterleitung
+    this.renderPetShop();
     this.renderSkillUI();
     this.updateGlobalUpgradeUI();
     this.updatePrestigeUI();
@@ -155,78 +133,19 @@ class SmileyGame {
     this.restoreCooldowns();
     this.checkSkillUnlocks();
     this.setupMainEventListeners();
-    this.setupHotkeys();
     this.setupInfoPageEventListeners();
     this.setupSkillTreeControls();
     this.startIntervals();
     this.setupTooltips();
-    this.updatePetInterval(); // Neue Pet-System Weiterleitung
+    this.updatePetInterval();
     this.updateNewsTicker();
     this.updateUI();
     this.guildSystem.listenToGuildData();
     this.setupPrestigeButtons();
-
-    // Chat starten (Firebase)
     this.initChat();
 
-    const container = this.getById("prestige-tree-container");
-    let isDragging = false;
-    let startX, startY;
-
-    // Touch-Start: Position merken
-    container.addEventListener(
-      "touchstart",
-      (e) => {
-        if (e.touches.length === 1) {
-          isDragging = true;
-          startX = e.touches[0].clientX - this.treeX;
-          startY = e.touches[0].clientY - this.treeY;
-        }
-      },
-      { passive: false },
-    );
-
-    // Touch-Move: Verschieben
-    container.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        e.preventDefault(); // Ganz wichtig: Verhindert das Scrollen der Website!
-
-        this.treeX = e.touches[0].clientX - startX;
-        this.treeY = e.touches[0].clientY - startY;
-
-        // Das World-Element (mit Buttons UND Canvas) verschieben
-        const world = this.getById("prestige-tree-world");
-        if (world) {
-          world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
-        }
-      },
-      { passive: false },
-    );
-
-    container.addEventListener("touchend", () => {
-      isDragging = false;
-    });
-
-    container.addEventListener(
-      "wheel",
-      (e) => {
-        e.preventDefault();
-        const zoomSpeed = 0.1;
-        if (e.deltaY < 0) {
-          this.treeZoom = Math.min(this.treeZoom + zoomSpeed, 2); // Max 2x Zoom
-        } else {
-          this.treeZoom = Math.max(this.treeZoom - zoomSpeed, 0.3); // Min 0.3x Zoom
-        }
-
-        const world = this.getById("prestige-tree-world");
-        if (world) {
-          world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
-        }
-      },
-      { passive: false },
-    );
+    // Prestige Tree Touch + Wheel Controls
+    this.setupPrestigeTreeTouchControls();
 
     console.log("✅ Spiel initialisiert. PlayerID:", this.gameState.playerId);
   }
@@ -241,254 +160,6 @@ class SmileyGame {
 
   syncGuildStats() {
     this.chatSystem.syncGuildStats();
-  }
-
-  speichereSpiel() {
-    // Wir nutzen einfach die bestehende saveGame Funktion
-    // Das verhindert doppelte Logik und Fehler
-    this.saveGame(false);
-    this.syncGuildStats();
-    console.log("☁️ Cloud-Sync & Local-Save angestoßen.");
-  }
-
-  saveGame(returnOnly = false) {
-    let source = this.gameState;
-
-    const saveData = {
-      version: "1.0.0",
-      // --- Basis Währungen ---
-      aktuelle_smileys: source.aktuelle_smileys || 0,
-      lifetime_smileys: source.lifetime_smileys || 0,
-      diamanten: source.diamanten || 0,
-      totalClicksLifetime: source.totalClicksLifetime || 0,
-      playerName: source.playerName || "Smiley_Gast",
-
-      // --- Gebäude & Upgrades ---
-      buildingCounts: source.buildingCounts || [],
-      researchStatus: source.researchStatus || [],
-
-      // --- Prestige System ---
-      prestigeResets: source.prestigeResets || 0,
-      prestige_punkte_verfügbar: source.prestige_punkte_verfügbar || 0,
-      gesamt_prestige_punkte: source.gesamt_prestige_punkte || 0,
-      prestigeUpgradeStatus: source.prestigeUpgradeStatus || [],
-
-      // --- Features & Fortschritt ---
-      achievementsUnlocked: source.achievementsUnlocked || [],
-      petsUnlocked: source.petsUnlocked || false,
-      petLevels: source.petLevels || {},
-      activePet: source.activePet || null,
-      unlockedSkins: source.unlockedSkins || ["default"],
-      activeSkin: source.activeSkin || "default",
-
-      // --- Gilden System (WICHTIG: Söldner speichern!) ---
-      guildsUnlocked: source.guildsUnlocked || false,
-      guildName: source.guildName || null,
-      guildLevel: source.guildLevel || 1,
-      guildXP: source.guildXP || 0,
-      guildUpgradeStatus: source.guildUpgradeStatus || [],
-      guildBossLevel: source.guildBossLevel || 1,
-
-      // Neu: Söldner & Quests sichern
-      guildMercenaries: source.guildMercenaries || [],
-      guildActiveQuests: source.guildActiveQuests || [],
-
-      // --- Mine & Labor ---
-      diamondMineUnlocked: source.diamondMineUnlocked || false,
-      diamondShopPurchases: source.diamondShopPurchases || {},
-      mineDepth: source.mineDepth || 1,
-      mineGrid: source.mineGrid || [],
-      mineInventory: source.mineInventory || { pickaxe: 50, tnt: 2, drill: 1 },
-      isTreasureRoom: source.isTreasureRoom || false,
-      fossilien: source.fossilien || 0,
-      mineResearch: source.mineResearch || {
-        durable_picks: 0,
-        fossil_scanner: 0,
-        explosive_yield: 0,
-      },
-
-      // Zeitstempel
-      lastSaveTime: Date.now(),
-    };
-
-    if (returnOnly) return saveData;
-
-    try {
-      const jsonString = JSON.stringify(saveData);
-
-      // --- SICHERES EMOJI-ENCODING ---
-      // Schritt 1: UTF-8 sicher machen
-      const utf8String = encodeURIComponent(jsonString).replace(
-        /%([0-9A-F]{2})/g,
-        (match, p1) => {
-          return String.fromCharCode("0x" + p1);
-        },
-      );
-      // Schritt 2: Jetzt erst btoa
-      const encodedData = btoa(utf8String);
-
-      localStorage.setItem("smileyGameSave", encodedData);
-      console.log("💾 Spiel erfolgreich (emoji-sicher) gespeichert.");
-    } catch (e) {
-      console.error("❌ Fehler beim Speichern:", e);
-      this.showNotification("Fehler beim Speichern!", "error");
-    }
-  }
-
-  ladeSpiel() {
-    let savedString = localStorage.getItem("smileyGameSave");
-    if (!savedString) return;
-
-    // Fix für Anführungszeichen
-    if (savedString.startsWith('"') && savedString.endsWith('"')) {
-      savedString = savedString.slice(1, -1);
-    }
-
-    let parsedData = null;
-
-    try {
-      // Prüfen ob Base64 (kein '{')
-      if (!savedString.trim().startsWith("{")) {
-        // --- SICHERES EMOJI-DECODING ---
-        const decodedBase64 = atob(savedString);
-        const decodedJson = decodeURIComponent(
-          decodedBase64
-            .split("")
-            .map((c) => {
-              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-            })
-            .join(""),
-        );
-
-        parsedData = JSON.parse(decodedJson);
-        console.log("💾 Spielstand geladen (Safe Unicode Mode)");
-      } else {
-        parsedData = JSON.parse(savedString);
-        console.log("💾 Spielstand geladen (Legacy Mode)");
-      }
-    } catch (e) {
-      console.error("❌ Dekodierung fehlgeschlagen:", e);
-    }
-
-    if (parsedData) {
-      const dataToLoad = parsedData.gameState || parsedData;
-      this.loadGame(dataToLoad);
-    }
-  }
-
-  // Bereich: 2. SPEICHERUNG & HILFSFUNKTIONEN (ca. Zeile 418)
-  loadGame(saveData) {
-    if (!saveData) return;
-
-    let target = this.gameState;
-
-    // --- Basis Werte (Mit Fallback auf 0 falls NaN/Undefined) ---
-    target.aktuelle_smileys = Number(saveData.aktuelle_smileys) || 0;
-    target.lifetime_smileys = Number(saveData.lifetime_smileys) || 0;
-    target.diamanten = Number(saveData.diamanten) || 0;
-    target.totalClicksLifetime = Number(saveData.totalClicksLifetime) || 0;
-    target.playerName = saveData.playerName || target.playerName;
-
-    // Wichtig: Wir prüfen, ob die Länge stimmt, sonst nehmen wir den Default
-    if (Array.isArray(saveData.buildingCounts))
-      target.buildingCounts = saveData.buildingCounts;
-    if (Array.isArray(saveData.researchStatus))
-      target.researchStatus = saveData.researchStatus;
-    if (Array.isArray(saveData.prestigeUpgradeStatus))
-      target.prestigeUpgradeStatus = saveData.prestigeUpgradeStatus;
-    if (Array.isArray(saveData.achievementsUnlocked))
-      target.achievementsUnlocked = saveData.achievementsUnlocked;
-
-    // Prestige
-    target.prestigeResets = Number(saveData.prestigeResets) || 0;
-    target.prestige_punkte_verfügbar =
-      Number(saveData.prestige_punkte_verfügbar) || 0;
-    target.gesamt_prestige_punkte =
-      Number(saveData.gesamt_prestige_punkte) || 0;
-
-    // Features
-    target.petsUnlocked = !!saveData.petsUnlocked;
-    target.petLevels = saveData.petLevels || {};
-    target.activePet = saveData.activePet || null;
-
-    // --- GILDE & SÖLDNER (MIGRATION) ---
-    target.guildsUnlocked = !!saveData.guildsUnlocked;
-    target.guildName = saveData.guildName || null;
-    target.guildLevel = Number(saveData.guildLevel) || 1;
-    target.guildXP = Number(saveData.guildXP) || 0;
-    target.guildUpgradeStatus = saveData.guildUpgradeStatus || [];
-    target.guildBossLevel = Number(saveData.guildBossLevel) || 1;
-
-    // FIX: Wenn Söldner im Save fehlen (altes Savegame), initialisiere leeres Array!
-    if (saveData.guildMercenaries && Array.isArray(saveData.guildMercenaries)) {
-      target.guildMercenaries = saveData.guildMercenaries;
-    } else {
-      // Migration: Falls man schon eine Gilde hat, schenken wir einen Start-Söldner
-      target.guildMercenaries = [];
-      if (target.guildName) {
-        target.guildMercenaries.push({
-          id: "merc_starter",
-          name: "Ragnar (Gratis)",
-          level: 1,
-          xp: 0,
-          maxXp: 100,
-          type: "fighter",
-          status: "idle",
-          questId: null,
-        });
-      }
-    }
-
-    // Quests laden oder resetten
-    target.guildActiveQuests = Array.isArray(saveData.guildActiveQuests)
-      ? saveData.guildActiveQuests
-      : [];
-    // Available Quests werden eh neu generiert, brauchen wir nicht zwingend laden, aber sicher ist sicher
-
-    // --- MINE (MIGRATION) ---
-    target.diamondMineUnlocked = !!saveData.diamondMineUnlocked;
-    target.mineDepth = Number(saveData.mineDepth) || 1;
-    target.mineGrid = Array.isArray(saveData.mineGrid) ? saveData.mineGrid : [];
-    target.mineInventory = saveData.mineInventory || {
-      pickaxe: 50,
-      tnt: 2,
-      drill: 1,
-    };
-    target.fossilien = Number(saveData.fossilien) || 0;
-    target.collectedArtifacts = Array.isArray(saveData.collectedArtifacts)
-      ? saveData.collectedArtifacts
-      : [];
-    target.mineResearch = saveData.mineResearch || {
-      durable_picks: 0,
-      fossil_scanner: 0,
-      explosive_yield: 0,
-    };
-    target.diamondShopPurchases = saveData.diamondShopPurchases || {};
-
-    // Mine reparieren falls leer
-    if (target.diamondMineUnlocked && target.mineGrid.length === 0) {
-      console.log("🛠️ Mine war leer nach Laden -> Regeneriere...");
-      // Wird im Init gemacht, da 'this.mineSystem' hier evtl noch nicht ready ist
-    }
-
-    target.unlockedSkins = Array.isArray(saveData.unlockedSkins)
-      ? saveData.unlockedSkins
-      : ["default"];
-    target.activeSkin = saveData.activeSkin || "default";
-
-    // Skin sofort anwenden
-    this.skinSystem.updateSmileyAppearance();
-
-    if (!target.version) {
-      console.log(
-        "⚠️ Alter Spielstand erkannt (Pre-1.0). Führe Migration durch...",
-      );
-      target.version = "1.0";
-      // Hier könnten wir später fehlende Arrays auffüllen
-    }
-
-    console.log("📥 Daten erfolgreich in GameState übernommen.");
-    this.updateUI();
   }
 
   addSmileys(menge) {

@@ -1,6 +1,5 @@
-export default class PrestigeSystem {
-
-updatePrestigeUI() {
+export class PrestigeSystem {
+  updatePrestigeUI() {
     const availablePoints = this.gameState.prestige_punkte_verfügbar || 0;
     const totalPoints = this.gameState.gesamt_prestige_punkte || 0;
     const safeLifetime = this.gameState.lifetime_smileys || 0;
@@ -331,5 +330,65 @@ updatePrestigeUI() {
       this.updatePrestigeUI();
       this.speichereSpiel();
     }
+  }
+
+  setupPrestigeTreeTouchControls() {
+    const container = this.getById("prestige-tree-container");
+    if (!container) return;
+
+    let isDragging = false;
+    let startX, startY;
+
+    container.addEventListener(
+      "touchstart",
+      (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          startX = e.touches[0].clientX - this.treeX;
+          startY = e.touches[0].clientY - this.treeY;
+        }
+      },
+      { passive: false },
+    );
+
+    container.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+
+        this.treeX = e.touches[0].clientX - startX;
+        this.treeY = e.touches[0].clientY - startY;
+
+        const world = this.getById("prestige-tree-world");
+        if (world) {
+          world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
+        }
+      },
+      { passive: false },
+    );
+
+    container.addEventListener("touchend", () => {
+      isDragging = false;
+    });
+
+    container.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const zoomSpeed = 0.1;
+        if (e.deltaY < 0) {
+          this.treeZoom = Math.min(this.treeZoom + zoomSpeed, 2);
+        } else {
+          this.treeZoom = Math.max(this.treeZoom - zoomSpeed, 0.3);
+        }
+
+        const world = this.getById("prestige-tree-world");
+        if (world) {
+          world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
+        }
+      },
+      { passive: false },
+    );
   }
 }

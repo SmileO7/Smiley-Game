@@ -1,6 +1,5 @@
-export default class WikiSystem {
-
-openWiki() {
+export class WikiSystem {
+  openWiki() {
     const modal = document.getElementById("wiki-modal");
     if (modal) {
       // ✅ RICHTIG: openModal verwenden (setzt is-open Klasse)

@@ -1,6 +1,5 @@
-export default class Utils {
-
-checkOfflineProgress() {
+export class Utils {
+  checkOfflineProgress() {
     if (!this.gameState.lastSaveTime) return;
 
     const now = Date.now();

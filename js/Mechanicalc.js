@@ -1,6 +1,5 @@
-export default class Mechaniccalc {
-
-calculatePetStat(pet, currentLevel) {
+export class Mechanicalc {
+  calculatePetStat(pet, currentLevel) {
     this.petSystem.calculatePetStat(pet, currentLevel);
   }
 
