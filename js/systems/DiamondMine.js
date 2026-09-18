@@ -1025,7 +1025,9 @@ export class DiamondMine {
     if (!container) return;
     const diamondDisplay = this.getById("shop-diamanten-anzeige");
     if (diamondDisplay)
-      diamondDisplay.innerText = this.formatNumber(this.gameState.diamanten);
+      diamondDisplay.innerText = this.game.utils.formatNumber(
+        this.gameState.diamanten,
+      );
 
     container.innerHTML = `<div class="info-grid" id="diamond-shop-grid-inner"></div>`;
     const innerGrid = this.getById("diamond-shop-grid-inner");

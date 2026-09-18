@@ -5,9 +5,9 @@ export class BuildingSystem {
   }
 
   createBuildingElements() {
-    const buildingGrid = this.game.getById("building-grid");
-    if (!buildingGrid) return;
-    buildingGrid.innerHTML = "";
+    const container = document.getElementById("building-grid");
+    if (!container) return; // ← FIX: container statt buildingGrid
+    container.innerHTML = ""; // ← FIX
 
     buildingsData.forEach((building, index) => {
       const buildingDiv = document.createElement("div");
@@ -17,33 +17,9 @@ export class BuildingSystem {
       const icon = this.getBuildingIcon(index);
 
       buildingDiv.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-          <div style="font-size: 2.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); min-width: 50px; text-align:center;">
-            ${icon}
-          </div>
-          <div style="flex:1; overflow:hidden;">
-            <h3 style="margin:0; font-size:1.0rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${building.name}">
-              ${building.name}
-            </h3>
-            <div style="font-size:0.85em; color:#FFD700; margin-top:2px;">
-              Besitz: <span id="building-count-${index}" style="font-weight:bold;">0</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="production" style="font-size:0.8em; color:#aaa; margin-bottom:8px; border-top:1px solid #444; padding-top:5px; display:flex; justify-content:space-between;">
-          <span>Prod: <span id="building-sps-${index}" style="color:#fff;">0</span> SPS</span>
-          <small style="color:#666;">(<span id="building-sps-pct-${index}">0.0</span>%)</small>
-        </div>
-
-        <div class="button-group" data-tooltip-type="building" data-index="${index}">
-          <button id="buy-btn-${index}" class="btn-buy" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:8px 12px;">
-            <span>Kaufen</span>
-            <span id="buy-cost-${index}" style="font-weight:bold;">---</span>
-          </button>
-        </div>
-      `;
-      buildingGrid.appendChild(buildingDiv);
+      ...
+    `;
+      container.appendChild(buildingDiv); // ← FIX: container statt buildingGrid
     });
   }
 

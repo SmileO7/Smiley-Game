@@ -53,7 +53,8 @@ export class Utils {
       const btn = document.getElementById("close-offline-modal");
 
       if (timeDisplay) timeDisplay.innerText = timeString;
-      if (earnDisplay) earnDisplay.innerText = "+" + this.formatNumber(earned);
+      if (earnDisplay)
+        earnDisplay.innerText = "+" + this.game.utils.formatNumber(earned);
 
       // 3. Modal öffnen
       if (modal) {
@@ -225,5 +226,4 @@ export class Utils {
     });
     return baseSPS;
   }
-
 }

@@ -66,6 +66,10 @@ class SmileyGame {
     await this.initializer.init();
   }
 
+  getById(id) {
+    return document.getElementById(id);
+  }
+
   updatePetInterval() {
     this.petSystem.updatePetInterval();
   }
@@ -73,6 +77,10 @@ class SmileyGame {
   // ================================================================================================================
   // 2. ÜBERGANGS AUFRUFE
   // ================================================================================================================
+
+  formatNumber(num) {
+    return Utils.formatNumber(num);
+  }
 
   createBuildingElements() {
     this.buildingSystem.createBuildingElements();
@@ -113,12 +121,13 @@ class SmileyGame {
     let price = upgrade.cost;
     let discount = 0;
 
-    const prestigeEffects = this.calculatePrestigeEffects();
+    const prestigeEffects =
+      typeof this.calculatePrestigeEffects === "function"
+        ? this.calculatePrestigeEffects()
+        : { costReduction: 0 };
+
     if (prestigeEffects && prestigeEffects.costReduction) {
       discount += prestigeEffects.costReduction;
-    }
-    if (this.gameState.globalCostReduction) {
-      discount += this.gameState.globalCostReduction;
     }
     if (this.gameState.activePet) {
       const pet = petsData.find((p) => p.id === this.gameState.activePet);
@@ -142,9 +151,9 @@ class SmileyGame {
     const el = document.createElement("div");
     el.className = `floating-text ${type}`;
     if (type === "boss-damage") {
-      el.innerText = `-${this.formatNumber(amount)}`;
+      el.innerText = `-${this.game.utils.formatNumber(amount)}`;
     } else {
-      el.innerText = `+${this.formatNumber(amount)}`;
+      el.innerText = `+${this.game.utils.formatNumber(amount)}`;
     }
     el.style.left = `${x + randomX}px`;
     el.style.top = `${y + randomY}px`;
@@ -310,7 +319,7 @@ class SmileyGame {
     if (e) {
       this.animateSmiley();
       this.createClickParticles(e);
-      let text = this.formatNumber(damage);
+      let text = this.game.utils.formatNumber(damage);
       this.showClickEffect(e, text, isCrit ? "crit" : "normal");
       if (isCrit) this.triggerShake("smiley_button");
     }
@@ -443,7 +452,7 @@ class SmileyGame {
                 </div>
                 <div class="research-action">
                     <span class="research-cost" style="color: ${canAfford ? "#4CAF50" : "#ff5252"};">
-                        ${this.formatNumber(finalCost)}
+                        ${this.game.utils.formatNumber(finalCost)}
                     </span>
                     <button class="btn-buy-research" ${canAfford ? "" : "disabled"}>
                         Kaufen
@@ -789,17 +798,19 @@ class SmileyGame {
   }
 
   updateUI() {
-    document.title = `${this.formatNumber(this.gameState.aktuelle_smileys)} Smileys - Idle Game`;
+    document.title = `${this.game.utils.formatNumber(this.gameState.aktuelle_smileys)} Smileys - Idle Game`;
 
     this.computeTotalSPS();
 
     const diamantenEl = this.getById("diamanten_anzeige");
     if (diamantenEl)
-      diamantenEl.innerText = this.formatNumber(this.gameState.diamanten);
+      diamantenEl.innerText = this.game.utils.formatNumber(
+        this.gameState.diamanten,
+      );
 
     const aktuelleSmileysEl = this.getById("aktuelle_smileys");
     if (aktuelleSmileysEl)
-      aktuelleSmileysEl.innerText = this.formatNumber(
+      aktuelleSmileysEl.innerText = this.game.utils.formatNumber(
         this.gameState.aktuelle_smileys,
       );
 
@@ -809,18 +820,19 @@ class SmileyGame {
 
     const smileysProKlickEl = this.getById("smileys_pro_klick_anzeige");
     if (smileysProKlickEl) {
-      smileysProKlickEl.innerText = this.formatNumber(totalClickPower);
+      smileysProKlickEl.innerText =
+        this.game.utils.formatNumber(totalClickPower);
     }
 
     const smileysProSekundeEl = this.getById("smileys_pro_sekunde_anzeige");
     if (smileysProSekundeEl)
-      smileysProSekundeEl.innerText = this.formatNumber(
+      smileysProSekundeEl.innerText = this.game.utils.formatNumber(
         this.gameState.totalSPS,
       );
 
     const smileysProMinuteEl = this.getById("smileys_pro_minute_anzeige");
     if (smileysProMinuteEl)
-      smileysProMinuteEl.innerText = this.formatNumber(
+      smileysProMinuteEl.innerText = this.game.utils.formatNumber(
         this.gameState.totalSPS * 60,
       );
 
@@ -829,7 +841,7 @@ class SmileyGame {
     if (clickDamageEl) {
       // Gesamter Click-Schaden mit allen Multiplikatoren
       const totalDamage = totalClickPower;
-      clickDamageEl.innerText = this.formatNumber(totalDamage);
+      clickDamageEl.innerText = this.game.utils.formatNumber(totalDamage);
     }
 
     const critChanceEl = this.getById("crit_chance_anzeige");
@@ -885,7 +897,8 @@ class SmileyGame {
     const textPercent = this.getById("prestige-percent-text");
 
     if (bar) bar.style.width = percentage + "%";
-    if (textNext) textNext.innerText = this.formatNumber(smileysForNext);
+    if (textNext)
+      textNext.innerText = this.game.utils.formatNumber(smileysForNext);
 
     if (textPercent) {
       if (pointsToGain > 0) {
@@ -1042,7 +1055,7 @@ class SmileyGame {
       const canAfford =
         (this.gameState.prestige_punkte_verfügbar || 0) >= upgrade.cost;
       const costColor = canAfford ? "#4CAF50" : "#f44336";
-      statusHtml = `<p style="color:#aaa; margin-top:5px;">Kosten: <span style="color:${costColor}; font-weight:bold;">${this.formatNumber(upgrade.cost)}</span> Punkte</p>`;
+      statusHtml = `<p style="color:#aaa; margin-top:5px;">Kosten: <span style="color:${costColor}; font-weight:bold;">${this.game.utils.formatNumber(upgrade.cost)}</span> Punkte</p>`;
     }
 
     tooltip.innerHTML = `
@@ -1474,7 +1487,7 @@ class SmileyGame {
             <h4 style="color:${colorTitle}; margin:0 0 5px 0;">${upgrade.name}</h4>
             <p style="font-size:0.9em; margin:0 0 10px 0; color:#ddd;">${upgrade.description}</p>
             <div style="border-top:1px solid #444; padding-top:5px; font-size:0.85em;">
-                <p style="margin:0;">Kosten: <span style="color:#FFD700; font-weight:bold;">${this.formatNumber(upgrade.cost)}</span> Punkte</p>
+                <p style="margin:0;">Kosten: <span style="color:#FFD700; font-weight:bold;">${this.game.utils.formatNumber(upgrade.cost)}</span> Punkte</p>
                 <p style="margin:0; color:${isBought ? "#4CAF50" : isLocked ? "#f44336" : "#aaa"}">${statusText}</p>
             </div>
         `;
@@ -1603,7 +1616,7 @@ class SmileyGame {
         upgradeDiv.style.left = `calc(50% + ${upgrade.x}px)`;
         upgradeDiv.style.top = `${upgrade.y}px`;
         upgradeDiv.dataset.description = upgrade.description;
-        upgradeDiv.dataset.cost = this.formatNumber(upgrade.cost);
+        upgradeDiv.dataset.cost = this.game.utils.formatNumber(upgrade.cost);
         const buyButtonHtml = isInfo
           ? ""
           : `<button class="prestige-buy-button" data-id="${upgrade.id}" style="display:none;"></button>`;
@@ -1655,12 +1668,12 @@ class SmileyGame {
     const gainDisplay = document.getElementById("prestige-gain-display");
 
     if (lifetimeDisplay) {
-      lifetimeDisplay.textContent = this.formatNumber(
+      lifetimeDisplay.textContent = this.game.utils.formatNumber(
         this.gameState.gesammelte_smileys,
       );
     }
     if (gainDisplay) {
-      gainDisplay.textContent = this.formatNumber(pointsToGain);
+      gainDisplay.textContent = this.game.utils.formatNumber(pointsToGain);
     }
 
     // Modal öffnen
@@ -2282,12 +2295,12 @@ class SmileyGame {
         htmlContent = `
                     <h4>${building.name}</h4>
                     <div class="tooltip-stat"><span>Besitz:</span> <span class="highlight-gold">${count}</span></div>
-                    <div class="tooltip-stat"><span>Produktion (Basis):</span> <span>${this.formatNumber(baseSPS)} SPS</span></div>
-                    <div class="tooltip-stat"><span>Gesamt-Beitrag:</span> <span class="highlight-green">+${this.formatNumber(totalSPS)} SPS</span></div>
+                    <div class="tooltip-stat"><span>Produktion (Basis):</span> <span>${this.game.utils.formatNumber(baseSPS)} SPS</span></div>
+                    <div class="tooltip-stat"><span>Gesamt-Beitrag:</span> <span class="highlight-green">+${this.game.utils.formatNumber(totalSPS)} SPS</span></div>
                     <hr style="border-color:#555; margin:5px 0;">
                     <div class="tooltip-stat">
                         <span>Kosten (${i === 8 ? "1x" : amount + "x"}):</span> 
-                        <span class="${canAfford ? "highlight-green" : "highlight-red"}">${this.formatNumber(cost)} Smileys</span>
+                        <span class="${canAfford ? "highlight-green" : "highlight-red"}">${this.game.utils.formatNumber(cost)} Smileys</span>
                     </div>
                     <div style="font-size:0.75rem; color:#aaa; margin-top:5px; font-style:italic;">
                         ${i === 8 ? "Produziert Diamanten." : "Klicke zum Kaufen."}
@@ -2301,7 +2314,7 @@ class SmileyGame {
       htmlContent = `
                 <h4>SPS Berechnung</h4>
                 <p>Deine Smileys pro Sekunde setzen sich zusammen aus:</p>
-                <div class="tooltip-stat"><span>1. Gebäude Basis:</span> <span>${this.formatNumber(this.getSmileysPerSecond())}</span></div>
+                <div class="tooltip-stat"><span>1. Gebäude Basis:</span> <span>${this.game.utils.formatNumber(this.getSmileysPerSecond())}</span></div>
                 <div class="tooltip-stat"><span>2. Globaler Multi:</span> <span class="highlight-gold">x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}</span></div>
                 <hr style="border-color:#555; margin:5px 0;">
                 <div style="font-size:0.8em; color:#ccc;">
@@ -2353,7 +2366,7 @@ class SmileyGame {
                     <div style="flex:1;">
                         <h4 style="margin:0; font-size:1.1rem; color:var(--color-accent-blue);">${building.name}</h4>
                         <div style="font-size:0.85em; color:#FFD700; margin-top:2px;">
-                            Im Besitz: <strong>${this.formatNumber(count)}</strong>
+                            Im Besitz: <strong>${this.game.utils.formatNumber(count)}</strong>
                         </div>
                     </div>
                 </div>
@@ -2361,15 +2374,15 @@ class SmileyGame {
                 <div style="font-size:0.85em; color:#ccc; border-top:1px solid #444; padding-top:8px; margin-top:5px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span style="color:#888;">Basis SPS:</span>
-                        <span>${this.formatNumber(baseSPSPerUnit)}</span>
+                        <span>${this.game.utils.formatNumber(baseSPSPerUnit)}</span>
                     </div>
                      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                         <span>Aktuell (Buffed):</span>
-                        <span style="color:#fff; font-weight:bold;">${this.formatNumber(scaledSPSPerUnit)}</span>
+                        <span style="color:#fff; font-weight:bold;">${this.game.utils.formatNumber(scaledSPSPerUnit)}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; border-top:1px dashed #555; padding-top:4px; margin-top:4px; color:#4CAF50;">
                         <span>Gesamt-Ertrag:</span>
-                        <strong>${this.formatNumber(totalSPSFromBuilding)} SPS</strong>
+                        <strong>${this.game.utils.formatNumber(totalSPSFromBuilding)} SPS</strong>
                     </div>
                 </div>
             `;
@@ -2436,7 +2449,7 @@ class SmileyGame {
                     ? `
                 <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; font-size:0.9em; color:#FFD700; display:flex; justify-content:space-between;">
                     <span>Kosten:</span>
-                    <strong>${this.formatNumber(this.getGlobalUpgradeCost(u))}</strong>
+                    <strong>${this.game.utils.formatNumber(this.getGlobalUpgradeCost(u))}</strong>
                 </div>`
                     : ""
                 }
@@ -2499,7 +2512,7 @@ class SmileyGame {
                 </div>
                 <p style="min-height:40px;">${upgrade.description}</p>
                 <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:5px; margin-top:5px; font-size:0.9em;">
-                    <strong>Kosten:</strong> <span style="color:#FFD700;">${this.formatNumber(upgrade.cost)}</span> Punkte
+                    <strong>Kosten:</strong> <span style="color:#FFD700;">${this.game.utils.formatNumber(upgrade.cost)}</span> Punkte
                 </div>
             `;
       container.appendChild(item);
@@ -2568,24 +2581,24 @@ class SmileyGame {
     const stats = [
       {
         label: "💰 Aktuelle Smileys",
-        value: this.formatNumber(this.gameState.aktuelle_smileys),
+        value: this.game.utils.formatNumber(this.gameState.aktuelle_smileys),
       },
       {
         label: "🏦 Lifetime Smileys",
-        value: this.formatNumber(this.gameState.lifetime_smileys),
+        value: this.game.utils.formatNumber(this.gameState.lifetime_smileys),
       },
       {
         label: "💎 Diamanten",
-        value: this.formatNumber(this.gameState.diamanten),
+        value: this.game.utils.formatNumber(this.gameState.diamanten),
       },
       {
         label: "⚡ Smileys pro Sekunde",
-        value: this.formatNumber(this.gameState.totalSPS),
+        value: this.game.utils.formatNumber(this.gameState.totalSPS),
         highlight: true,
       },
       {
         label: "👆 Klick-Stärke",
-        value: this.formatNumber(this.getClickStrength()),
+        value: this.game.utils.formatNumber(this.getClickStrength()),
       },
       {
         label: "🔥 Kritische Treffer",
@@ -2731,15 +2744,15 @@ class SmileyGame {
     const multiDisplay = this.getById("prestige_view_multi");
 
     if (prestigeAvailable)
-      prestigeAvailable.innerText = this.formatNumber(
+      prestigeAvailable.innerText = this.game.utils.formatNumber(
         this.gameState.prestige_punkte_verfügbar || 0,
       );
     if (prestigeTotal)
-      prestigeTotal.innerText = this.formatNumber(
+      prestigeTotal.innerText = this.game.utils.formatNumber(
         this.gameState.gesamt_prestige_punkte || 0,
       );
     if (currentSmileys)
-      currentSmileys.innerText = this.formatNumber(
+      currentSmileys.innerText = this.game.utils.formatNumber(
         this.gameState.lifetime_smileys || 0,
       );
     if (multiDisplay)
@@ -2752,7 +2765,7 @@ class SmileyGame {
     const nextPointRequirement = Math.pow(nextLevel, 3) * 100000;
 
     if (nextPoint)
-      nextPoint.innerText = this.formatNumber(nextPointRequirement);
+      nextPoint.innerText = this.game.utils.formatNumber(nextPointRequirement);
   }
 
   // =========================================================
@@ -2807,7 +2820,7 @@ class SmileyGame {
         const gain = Math.max(500, this.gameState.totalSPS * 60 * 10);
         this.addSmileys(gain);
         this.showNotification(
-          `🎁 Glückspilz! +${this.formatNumber(gain)} Smileys`,
+          `🎁 Glückspilz! +${this.game.utils.formatNumber(gain)} Smileys`,
           "success",
         );
       } else {

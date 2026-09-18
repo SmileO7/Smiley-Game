@@ -1,63 +1,59 @@
 // js/systems/SaveSystem.js
 
 export class SaveSystem {
-    constructor (game) {
-        this.game = game;
-        this.saveKey = "smileyGameSave";
-        this.deviceKey = "smiley_device_id"
+  constructor(game) {
+    this.game = game;
+    this.saveKey = "smileyGameSave";
+    this.deviceKey = "smiley_device_id";
+  }
+
+  init() {
+    this.ensureDeviceId(); // ← ZUERST Device ID, dann laden
+    this.load();
+  }
+
+  ensureDeviceId() {
+    let deviceId = localStorage.getItem(this.deviceKey);
+
+    if (!deviceId) {
+      deviceId = ["uid", Date.now().toString(36), crypto.randomUUID()].join(
+        "_",
+      );
+
+      localStorage.setItem(this.deviceKey, deviceId);
     }
 
-    init() {
-        this.load();
-        this.ensureDeviceId();
+    this.game.gameState.playerId = deviceId;
+  }
+
+  save() {
+    const saveData = this.createSaveData(); // ← FIX: createSaveData, nicht createSaveDate
+
+    try {
+      localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+    } catch (error) {
+      console.error("Spielstand konnte nicht gespeichert werden:", error);
+      this.game.showNotification("Fehler beim Speichern!", "error");
     }
+  }
 
-    ensureDeviceId() {
-        let deviceId = localStorage.getItme(this.deviceKey);
+  load() {
+    const rawSave = localStorage.getItem(this.saveKey);
+    if (!rawSave) return;
 
-        if (!deviceId) {
-            deviceId = [
-                "uid",
-                Date.now().toString(36),
-                crypto.randomUUID(),
-            ].join("_");
-
-            localStorage.setItem(this.deviceKey, deviceId);
-        }
-
-        this.game.gameState.playerId = deviceId;
+    try {
+      const saveData = JSON.parse(rawSave);
+      this.applySaveData(saveData);
+    } catch (error) {
+      console.error("Spielstand konnte nicht geladen werden:", error);
     }
+  }
 
-    save() {
-        const saveDate = this.createSaveDate();
+  createSaveData() {
+    // ← FIX: createSaveData, nicht createSaveDate
+    const state = this.game.gameState;
 
-        try {
-            localStorage.setItem(
-                this.saveKey,
-                JSON.stringify(saveDate),
-            );
-        } catch (error) {
-            console.error("Spielstand konnte nicht gespeichert werde:", error);
-            this.game.showNotification("Fehler beim Speichern!","error");
-        }
-    }
-
-    load() {
-        const rawSave = localStorage.getItem(this.saveKey);
-        if (!rawSave) return;
-
-        try{
-            const saveData = JSON.parse(rawSave);
-            this.applSaveData(saveData);
-        }   catch (error) {
-            console.error("Spielstand konnte nicht gekaden werden:", error);
-        }
-    }
-
-    createSaveData() {
-        const state = this.game.gameState;
-
-        return {
+    return {
       version: "1.0.0",
       aktuelle_smileys: state.aktuelle_smileys,
       lifetime_smileys: state.lifetime_smileys,
@@ -102,23 +98,24 @@ export class SaveSystem {
       lastSaveTime: Date.now(),
     };
   }
-    applySaveData(saveData) {
-        const state = this.game.gameState;
-        
-        Object.assign(state, {
-            ...saveDate,
-            buildingCounts: Array.isArray(saveData.buildingCounts)
-            ? saveData.buildingCounts
-            : state.buildingCounts,
-            researchStatus: Array.isArray(saveData.researchStatus)
-            ? saveData.researchStatus
-            : state.researchStatus,
-            prestigeUpgradeStatus: Array.isArray(saveData.prestigeUpgradeStatus,)
-            ? saveData.prestigeUpgradeStatus
-            : state.prestigeUpgradeStatus,
-            achievementsUnlocked: Array.isArray(saveData.achievementsUnlocked,)
-            ? saveDate.achievementsUnlocked
-            : state.achievementsUnlocked,
-        });
-    }
+
+  applySaveData(saveData) {
+    const state = this.game.gameState;
+
+    Object.assign(state, {
+      ...saveData, // ← FIX: saveData, nicht saveDate
+      buildingCounts: Array.isArray(saveData.buildingCounts)
+        ? saveData.buildingCounts
+        : state.buildingCounts,
+      researchStatus: Array.isArray(saveData.researchStatus)
+        ? saveData.researchStatus
+        : state.researchStatus,
+      prestigeUpgradeStatus: Array.isArray(saveData.prestigeUpgradeStatus)
+        ? saveData.prestigeUpgradeStatus
+        : state.prestigeUpgradeStatus,
+      achievementsUnlocked: Array.isArray(saveData.achievementsUnlocked)
+        ? saveData.achievementsUnlocked // ← FIX: saveData, nicht saveDate
+        : state.achievementsUnlocked,
+    });
+  }
 }

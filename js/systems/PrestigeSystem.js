@@ -11,18 +11,20 @@ export class PrestigeSystem {
     const elLifetimePrestige = this.getById("aktuelle_smileys_prestige");
     const elMulti = this.getById("prestige_view_multi");
 
-    if (elAvailable) elAvailable.innerText = this.formatNumber(availablePoints);
-    if (elTotal) elTotal.innerText = this.formatNumber(totalPoints);
-    if (elLifetime) elLifetime.innerText = this.formatNumber(safeLifetime);
+    if (elAvailable)
+      elAvailable.innerText = this.game.utils.formatNumber(availablePoints);
+    if (elTotal) elTotal.innerText = this.game.utils.formatNumber(totalPoints);
+    if (elLifetime)
+      elLifetime.innerText = this.game.utils.formatNumber(safeLifetime);
     if (elLifetimePrestige)
-      elLifetimePrestige.innerText = this.formatNumber(safeLifetime);
+      elLifetimePrestige.innerText = this.game.utils.formatNumber(safeLifetime);
     if (elMulti)
       elMulti.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
 
     // 2. WICHTIG: Skill Tree Modal Update (Das fehlte!)
     const elModalPoints = this.getById("prestige_punkte_verfügbar_modal");
     if (elModalPoints) {
-      elModalPoints.innerText = this.formatNumber(availablePoints);
+      elModalPoints.innerText = this.game.utils.formatNumber(availablePoints);
       // Optional: Farbe rot wenn 0, grün wenn > 0
       elModalPoints.style.color = availablePoints > 0 ? "#4CAF50" : "#ff5252";
     }
@@ -52,7 +54,8 @@ export class PrestigeSystem {
     const gainDisp = this.getById("prestige-gain-display");
 
     if (bar) bar.style.width = `${percentage}%`;
-    if (textNext) textNext.innerText = this.formatNumber(smileysForNext);
+    if (textNext)
+      textNext.innerText = this.game.utils.formatNumber(smileysForNext);
 
     if (textPercent) {
       if (pointsToGain > 0) {
@@ -103,11 +106,11 @@ export class PrestigeSystem {
     const elGain = document.getElementById("prestige-gain-display");
 
     if (elLifetime) {
-      elLifetime.innerText = this.formatNumber(totalSmileys);
+      elLifetime.innerText = this.game.utils.formatNumber(totalSmileys);
     }
 
     if (elGain) {
-      elGain.innerText = this.formatNumber(potentialPoints);
+      elGain.innerText = this.game.utils.formatNumber(potentialPoints);
     }
 
     this.openModal("prestige-modal");
