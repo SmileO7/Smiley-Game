@@ -15,6 +15,7 @@ import { GemSystem } from "./systems/GemSystem.js";
 import { SkinSystem } from "./systems/SkinSystem.js";
 import { WikiSystem } from "./systems/WikiSystem.js";
 import { PrestigeSystem } from "./systems/PrestigeSystem.js";
+import { BuildingSystem } from "./systems/BuildingSystem.js";
 
 // ================================================================================================================
 // === SmileyGame.js: Hauptspielklasse (Final & Friendly Version) ===
@@ -74,6 +75,7 @@ class SmileyGame {
       input: new InputSystem(this),
       modal: new ModalSystem(this),
 
+      buildings: new BuildingSystem(this),
       mine: new DiamondMine(this),
       guild: new GuildSystem(this),
       chat: new ChatSystem(this),
@@ -89,6 +91,7 @@ class SmileyGame {
     this.inputSystem = this.systems.input;
     this.modalSystem = this.systems.modal;
 
+    this.buildingSystem = this.systems.buildings;
     this.mineSystem = this.systems.mine;
     this.guildSystem = this.systems.guild;
     this.chatSystem = this.systems.chat;
@@ -101,66 +104,65 @@ class SmileyGame {
   }
 
   init() {
-    // 1. Systeme initialisieren (muss VOR allem anderen kommen!)
     this.initSystems();
 
-    // 2. SaveSystem initialisieren (lädt Spielstand + Device-ID)
     this.saveSystem.init();
-
-    // 3. Andere Systeme starten
     this.modalSystem.init();
     this.inputSystem.init();
 
-    // 4. Mine reparieren falls nötig
-    if (this.gameState.mineGrid && this.gameState.mineGrid.length > 0) {
-      if (this.gameState.mineGrid[0].content === undefined) {
-        console.log("🛠️ Repariere kaputte Mine (Loot fehlt)...");
-        this.mineSystem.generateMineGrid();
-      }
-    }
-
-    // 5. Audio Setup
-    this.clickSound = document.getElementById("click-sound");
-    const storedSfx = localStorage.getItem("soundVolume");
-    if (storedSfx !== null) this.sfxVolume = parseInt(storedSfx) / 100;
-
-    // 6. Spiel initialisieren
     this.checkOfflineProgress();
+
     this.createBuildingElements();
     this.renderPetShop();
     this.renderSkillUI();
     this.updateGlobalUpgradeUI();
     this.updatePrestigeUI();
     this.ladeAudioEinstellungen();
-    this.chatSystem.setupEventListeners();
 
-    const musicPlayer = this.getById("background-music");
-    if (musicPlayer) {
-      musicPlayer.play().catch((e) => console.log("Musik wartet:", e));
-    }
+    this.setupMainEventListeners();
+    this.setupSettingsModalListeners();
+    this.setupInfoPageEventListeners();
+    this.setupSkillTreeControls();
+    this.setupTooltips();
 
     this.restoreCooldowns();
     this.checkSkillUnlocks();
-    this.setupMainEventListeners();
-    this.setupInfoPageEventListeners();
-    this.setupSkillTreeControls();
     this.startIntervals();
-    this.setupTooltips();
     this.updatePetInterval();
     this.updateNewsTicker();
-    this.updateUI();
+
     this.guildSystem.listenToGuildData();
-    this.setupPrestigeButtons();
     this.initChat();
 
-    // Prestige Tree Touch + Wheel Controls
-    this.setupPrestigeTreeTouchControls();
-
-    console.log("✅ Spiel initialisiert. PlayerID:", this.gameState.playerId);
+    this.updateUI();
   }
 
   updatePetInterval() {
     this.petSystem.updatePetInterval();
+  }
+
+  // ================================================================================================================
+  // 2. ÜBERGANGS AUFRUFE
+  // ================================================================================================================
+
+  createBuildingElements() {
+    this.buildingSystem.createBuildingElements();
+  }
+
+  updateBuildingUI() {
+    this.buildingSystem.updateBuildingUI();
+  }
+
+  getBuildingCost(index, count) {
+    return this.buildingSystem.getBuildingCost(index, count);
+  }
+
+  getBuildingIcon(index) {
+    return this.buildingSystem.getBuildingIcon(index);
+  }
+
+  kaufeMehrereGebaeude(index, amount) {
+    this.buildingSystem.kaufeMehrereGebaeude(index, amount);
   }
 
   // ================================================================================================================
@@ -176,42 +178,6 @@ class SmileyGame {
     this.gameState.aktuelle_smileys += menge;
     if (!this.gameState.lifetime_smileys) this.gameState.lifetime_smileys = 0;
     this.gameState.lifetime_smileys += menge;
-  }
-
-  calculateNextCost(basePrice, count, growthRate, buildingIndex = -1) {
-    let price = Math.floor(basePrice * Math.pow(growthRate, count));
-    let costReduction = 0;
-
-    prestigeUpgrades.forEach((upg) => {
-      if (
-        upg.type === "building_cost_reduction" &&
-        this.gameState.prestigeUpgradeStatus[upg.id]
-      ) {
-        if (
-          !upg.buildingIndices ||
-          upg.buildingIndices.includes(buildingIndex)
-        ) {
-          costReduction += upg.value;
-        }
-      }
-    });
-
-    const activePetIndex = petsData.findIndex(
-      (pet) =>
-        pet.effectType === "cost_reduction_buildings" &&
-        this.gameState.activePet === pet.id,
-    );
-    if (activePetIndex !== -1) {
-      const pet = petsData[activePetIndex];
-      const petLevel = this.gameState.petLevels[activePetIndex];
-      const petStats = this.calculatePetStat(pet, petLevel);
-      costReduction += petStats.currentEffect;
-    }
-
-    if (costReduction > 0) {
-      price *= 1 - costReduction;
-    }
-    return Math.floor(price);
   }
 
   getGlobalUpgradeCost(upgrade) {
@@ -498,119 +464,6 @@ class SmileyGame {
     }
 
     return Math.floor(strength);
-  }
-
-  kaufeMehrereGebaeude(index, amount) {
-    let item;
-    let isUnique = index === DIAMOND_MINE_INDEX;
-    if (isUnique) {
-      item = uniqueBuildingsData.find(
-        (u) => index === DIAMOND_MINE_INDEX && u.id === "diamond_mine",
-      );
-    } else {
-      item = buildingsData[index];
-    }
-    if (
-      !item ||
-      (isUnique && this.gameState.buildingCounts[index] >= item.maxCount)
-    )
-      return;
-
-    let totalCost = 0;
-    const anzahl = isUnique ? 1 : amount;
-    for (let i = 0; i < anzahl; i++) {
-      totalCost += Math.ceil(
-        this.calculateNextCost(
-          item.basePrice,
-          this.gameState.buildingCounts[index] + i,
-          item.growthRate,
-          index,
-        ),
-      );
-    }
-
-    if (this.gameState.aktuelle_smileys >= totalCost) {
-      this.gameState.aktuelle_smileys -= totalCost;
-      this.gameState.buildingCounts[index] += anzahl;
-      if (isUnique) this.applyAllBoni();
-      this.checkAchievements();
-      this.updateUI();
-    }
-  }
-
-  getBuildingIcon(index) {
-    const icons = [
-      "👆", // 0: Auto-Klicker
-      "🌳", // 1: Smiley-Baum
-      "🏭", // 2: Smiley-Fabrik
-      "⛏️", // 3: Smiley-Mine (Die normale für Smileys)
-      "🔩", // 4: Smiley-Bohrer
-      "⚛️", // 5: Smiley-Kernkraftwerk
-      "🌌", // 6: Smiley-Galaxie
-      "🌀", // 7: Dimensionsportal
-      "⏳", // 8: Zeitmaschine
-      "🦾", // 9: Meta-Klicker
-      "🔗", // 10: Quanten-Netzwerk
-      "💾", // 11: Endloser Speicher
-      "🥚", // 12: Ursprung
-      "☯️", // 13: Kosmische Einheit
-      "👑", // 14: Absoluter Schöpfer
-    ];
-    return icons[index] || "❓";
-  }
-
-  getBuildingCost(index, count) {
-    const buildingData = [...buildingsData, ...uniqueBuildingsData][index];
-    if (!buildingData) return Infinity;
-    const currentCount =
-      count !== undefined ? count : this.gameState.buildingCounts[index];
-    const basePrice = buildingData.basePrice;
-    const growthRate = buildingData.growthRate;
-    let cost = basePrice * Math.pow(growthRate, currentCount);
-    const costMultiplier = this.getBuildingCostMultiplier(index);
-    cost *= costMultiplier;
-    return Math.ceil(cost);
-  }
-
-  getBuildingCostMultiplier(buildingIndex) {
-    let multiplier = 1;
-    globalUpgrades.forEach((upgrade, index) => {
-      if (this.gameState.researchStatus[index] === true) {
-        if (
-          upgrade.type === "cost_reduction_buildings" &&
-          upgrade.buildingIndex === buildingIndex
-        ) {
-          multiplier *= 1 - upgrade.value;
-        }
-      }
-    });
-    if (this.gameState.activePet) {
-      const pet = petsData.find(
-        (p) =>
-          p.id === this.gameState.activePet &&
-          p.effectType === "cost_reduction_buildings",
-      );
-      if (pet) {
-        const currentLevel = this.gameState.petLevels[pet.id] || 0;
-        if (currentLevel > 0) {
-          const stats = this.calculatePetStat(pet, currentLevel);
-          multiplier *= 1 - stats.currentEffect;
-        }
-      }
-    }
-    if (this.gameState.globalCostReduction > 0) {
-      multiplier *= 1 - this.gameState.globalCostReduction;
-    }
-    if (this.gameState.guildCostReduction > 0) {
-      multiplier *= 1 - this.gameState.guildCostReduction;
-    }
-    if (this.gameState.skills.efficiency.active) {
-      multiplier *= 0.75;
-    }
-
-    multiplier *= this.gameState.activeBuffs.costMultiplier;
-
-    return multiplier;
   }
 
   updateGlobalUpgradeUI() {
@@ -1212,79 +1065,6 @@ class SmileyGame {
     });
   }
 
-  updateBuildingUI() {
-    buildingsData.forEach((building, index) => {
-      // 1. Zähler & SPS (Bleibt wie vorher)
-      const baseBuildingSPS =
-        (this.gameState.buildingCounts[index] || 0) *
-        (building.baseSPS || 0) *
-        (building.prestigeMulti || 1);
-      const actualBuildingSPS =
-        baseBuildingSPS * this.gameState.globalerPrestigeMultiplikator;
-      const spsPercentage =
-        this.gameState.totalSPS > 0
-          ? (actualBuildingSPS / this.gameState.totalSPS) * 100
-          : 0;
-
-      const countElement = this.getById(`building-count-${index}`);
-      if (countElement)
-        countElement.innerText = this.gameState.buildingCounts[index];
-      const spsElement = this.getById(`building-sps-${index}`);
-      if (spsElement)
-        spsElement.innerText = this.formatNumber(actualBuildingSPS);
-      const spsPctElement = this.getById(`building-sps-pct-${index}`);
-      if (spsPctElement) spsPctElement.innerText = spsPercentage.toFixed(1);
-
-      // 2. DYNAMISCHE PREISBERECHNUNG (NEU)
-      const amount = this.currentBuyAmount; // 1, 10 oder 100
-      let totalCost = 0;
-
-      // Schleife um den Gesamtpreis für X Stück zu berechnen
-      for (let i = 0; i < amount; i++) {
-        totalCost += this.getBuildingCost(
-          index,
-          this.gameState.buildingCounts[index] + i,
-        );
-      }
-
-      const buildingCard = document.querySelector(
-        `.building-item[data-index="${index}"]`,
-      );
-      if (buildingCard) {
-        if (this.gameState.aktuelle_smileys >= totalCost) {
-          buildingCard.classList.add("affordable");
-        } else {
-          buildingCard.classList.remove("affordable");
-        }
-      }
-
-      // 3. Button & Tooltip aktualisieren
-      const btn = this.getById(`buy-btn-${index}`);
-      const costSpan = this.getById(`buy-cost-${index}`);
-
-      if (btn && costSpan) {
-        // Text & Preis setzen
-        btn.firstElementChild.innerText = `Kaufen ${amount}x`;
-        costSpan.innerText = this.formatNumber(totalCost);
-
-        // Aktiv/Inaktiv setzen
-        btn.disabled = this.gameState.aktuelle_smileys < totalCost;
-        costSpan.style.color =
-          this.gameState.aktuelle_smileys >= totalCost ? "#4CAF50" : "#ff5252";
-
-        // --- NEU: Detaillierter Tooltip ---
-        const singleSPS =
-          building.baseSPS *
-          (building.prestigeMulti || 1) *
-          this.gameState.globalerPrestigeMultiplikator;
-        const groupSPS =
-          singleSPS * (this.gameState.buildingCounts[index] || 0);
-
-        btn.title = `Wert pro Stück: ${this.formatNumber(singleSPS)} SPS\nGesamtwert dieser Gruppe: ${this.formatNumber(groupSPS)} SPS`;
-      }
-    });
-  }
-
   showNotification(message, type = "info") {
     // --- KORREKTUR START ---
     // Wir prüfen zuerst, ob der Spieler Popups deaktiviert hat.
@@ -1861,51 +1641,6 @@ class SmileyGame {
 
   renderGuildsContent() {
     this.guildSystem.renderGuildsContent();
-  }
-
-  createBuildingElements() {
-    const buildingGrid = this.getById("building-grid");
-    if (!buildingGrid) return;
-    buildingGrid.innerHTML = "";
-
-    // Wir rendern NUR die normalen Gebäude aus buildingsData
-    buildingsData.forEach((building, index) => {
-      const buildingDiv = document.createElement("div");
-      buildingDiv.className = "building-item";
-      buildingDiv.dataset.index = index;
-
-      const icon = this.getBuildingIcon(index);
-
-      // Modernes Layout: Icon links, Info rechts, Kaufen-Button unten volle Breite
-      buildingDiv.innerHTML = `
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                    <div style="font-size: 2.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); min-width: 50px; text-align:center;">
-                        ${icon}
-                    </div>
-                    <div style="flex:1; overflow:hidden;">
-                        <h3 style="margin:0; font-size:1.0rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${building.name}">
-                            ${building.name} 
-                        </h3>
-                        <div style="font-size:0.85em; color:#FFD700; margin-top:2px;">
-                            Besitz: <span id="building-count-${index}" style="font-weight:bold;">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="production" style="font-size:0.8em; color:#aaa; margin-bottom:8px; border-top:1px solid #444; padding-top:5px; display:flex; justify-content:space-between;">
-                    <span>Prod: <span id="building-sps-${index}" style="color:#fff;">0</span> SPS</span>
-                    <small style="color:#666;">(<span id="building-sps-pct-${index}">0.0</span>%)</small>
-                </div>
-                
-                <div class="button-group" data-tooltip-type="building" data-index="${index}"> 
-                    <button id="buy-btn-${index}" class="btn-buy" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:8px 12px;">
-                        <span>Kaufen</span>
-                        <span id="buy-cost-${index}" style="font-weight:bold;">---</span>
-                    </button>
-                </div>
-            `;
-      buildingGrid.appendChild(buildingDiv);
-    });
   }
 
   createPrestigeUpgradeElements() {
