@@ -1,28 +1,15 @@
 // js/SG.js
 
-import { SaveSystem } from "./systems/SaveSystem.js";
-import { InputSystem } from "./systems/InputSystem.js";
-import { ModalSystem } from "./systems/ModalSystem.js";
 import { createInitialGameState } from "./GameState.js";
 import { Utils } from "./Utils.js";
 import { Mechanicalc } from "./Mechanicalc.js";
-import { DiamondMine } from "./systems/DiamondMine.js";
-import { GuildSystem } from "./systems/GuildSystem.js";
-import { PetSystem } from "./systems/PetSystem.js";
-import { ChatSystem } from "./systems/ChatSystem.js";
-import { SoundSystem } from "./systems/SoundSystem.js";
-import { GemSystem } from "./systems/GemSystem.js";
-import { SkinSystem } from "./systems/SkinSystem.js";
-import { WikiSystem } from "./systems/WikiSystem.js";
-import { PrestigeSystem } from "./systems/PrestigeSystem.js";
-import { BuildingSystem } from "./systems/BuildingSystem.js";
+import { GameInitializer } from "./GameInitializer.js";
 
 // ================================================================================================================
 // === SmileyGame.js: Hauptspielklasse (Final & Friendly Version) ===
 // ================================================================================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Sicherheits-Check
+document.addEventListener("DOMContentLoaded", async () => {
   if (window.gameInstance) {
     console.log("Spiel läuft bereits.");
     return;
@@ -30,8 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("Starte SmileyGame...");
 
-  // 👇 KORREKTUR: Nur EINMAL 'new' aufrufen und direkt global speichern!
-  window.gameInstance = new SmileyGame();
+  const game = new SmileyGame();
+  window.gameInstance = game;
+
+  await game.init();
 
   console.log(
     "✅ SmileyGame gestartet und global als 'gameInstance' verfügbar!",
@@ -67,74 +56,14 @@ class SmileyGame {
     this.treeX = 0;
     this.treeY = 0;
     this.treeZoom = 1;
+
+    this.systems = {};
+    this.initializer = new GameInitializer(this);
   }
 
-  initSystems() {
-    this.systems = {
-      save: new SaveSystem(this),
-      input: new InputSystem(this),
-      modal: new ModalSystem(this),
-
-      buildings: new BuildingSystem(this),
-      mine: new DiamondMine(this),
-      guild: new GuildSystem(this),
-      chat: new ChatSystem(this),
-      pet: new PetSystem(this),
-      sound: new SoundSystem(this),
-      gem: new GemSystem(this),
-      skin: new SkinSystem(this),
-      wiki: new WikiSystem(this),
-      prestige: new PrestigeSystem(this),
-    };
-
-    this.saveSystem = this.systems.save;
-    this.inputSystem = this.systems.input;
-    this.modalSystem = this.systems.modal;
-
-    this.buildingSystem = this.systems.buildings;
-    this.mineSystem = this.systems.mine;
-    this.guildSystem = this.systems.guild;
-    this.chatSystem = this.systems.chat;
-    this.petSystem = this.systems.pet;
-    this.soundSystem = this.systems.sound;
-    this.gemSystem = this.systems.gem;
-    this.skinSystem = this.systems.skin;
-    this.wikiSystem = this.systems.wiki;
-    this.prestigeSystem = this.systems.prestige;
-  }
-
-  init() {
-    this.initSystems();
-
-    this.saveSystem.init();
-    this.modalSystem.init();
-    this.inputSystem.init();
-
-    this.checkOfflineProgress();
-
-    this.createBuildingElements();
-    this.renderPetShop();
-    this.renderSkillUI();
-    this.updateGlobalUpgradeUI();
-    this.updatePrestigeUI();
-    this.ladeAudioEinstellungen();
-
-    this.setupMainEventListeners();
-    this.setupSettingsModalListeners();
-    this.setupInfoPageEventListeners();
-    this.setupSkillTreeControls();
-    this.setupTooltips();
-
-    this.restoreCooldowns();
-    this.checkSkillUnlocks();
-    this.startIntervals();
-    this.updatePetInterval();
-    this.updateNewsTicker();
-
-    this.guildSystem.listenToGuildData();
-    this.initChat();
-
-    this.updateUI();
+  async init() {
+    this.initializer = new GameInitializer(this);
+    await this.initializer.init();
   }
 
   updatePetInterval() {
