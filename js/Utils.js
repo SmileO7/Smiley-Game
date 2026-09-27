@@ -1,4 +1,9 @@
 export class Utils {
+  constructor(game) {
+    this.game = game;
+    this.gameState = game?.gameState || {};
+  }
+
   checkOfflineProgress() {
     if (!this.gameState.lastSaveTime) return;
 

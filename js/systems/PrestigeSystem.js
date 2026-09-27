@@ -1,44 +1,48 @@
 export class PrestigeSystem {
+  constructor(game) {
+    this.game = game;
+    this.gameState = game.gameState;
+    this.utils = game.utils;
+    this.saveSystem = game.saveSystem;
+    this.prestigeUpgrades = game.prestigeUpgrades;
+  }
+
   updatePrestigeUI() {
     const availablePoints = this.gameState.prestige_punkte_verfügbar || 0;
     const totalPoints = this.gameState.gesamt_prestige_punkte || 0;
     const safeLifetime = this.gameState.lifetime_smileys || 0;
 
     // 1. Haupt-Prestige Seite Updates
-    const elAvailable = this.getById("prestige_punkte_verfügbar");
-    const elTotal = this.getById("gesamt_prestige_punkte");
-    const elLifetime = this.getById("prestige-lifetime-display"); // Achtung: ID checken
-    const elLifetimePrestige = this.getById("aktuelle_smileys_prestige");
-    const elMulti = this.getById("prestige_view_multi");
+    const elAvailable = this.game.getById("prestige_punkte_verfügbar");
+    const elTotal = this.game.getById("gesamt_prestige_punkte");
+    const elLifetime = this.game.getById("prestige-lifetime-display");
+    const elLifetimePrestige = this.game.getById("aktuelle_smileys_prestige");
+    const elMulti = this.game.getById("prestige_view_multi");
 
     if (elAvailable)
-      elAvailable.innerText = this.game.utils.formatNumber(availablePoints);
-    if (elTotal) elTotal.innerText = this.game.utils.formatNumber(totalPoints);
+      elAvailable.innerText = this.utils.formatNumber(availablePoints);
+    if (elTotal) elTotal.innerText = this.utils.formatNumber(totalPoints);
     if (elLifetime)
-      elLifetime.innerText = this.game.utils.formatNumber(safeLifetime);
+      elLifetime.innerText = this.utils.formatNumber(safeLifetime);
     if (elLifetimePrestige)
-      elLifetimePrestige.innerText = this.game.utils.formatNumber(safeLifetime);
+      elLifetimePrestige.innerText = this.utils.formatNumber(safeLifetime);
     if (elMulti)
       elMulti.innerText = `x${this.gameState.globalerPrestigeMultiplikator.toFixed(2)}`;
 
-    // 2. WICHTIG: Skill Tree Modal Update (Das fehlte!)
-    const elModalPoints = this.getById("prestige_punkte_verfügbar_modal");
+    // 2. WICHTIG: Skill Tree Modal Update
+    const elModalPoints = this.game.getById("prestige_punkte_verfügbar_modal");
     if (elModalPoints) {
-      elModalPoints.innerText = this.game.utils.formatNumber(availablePoints);
-      // Optional: Farbe rot wenn 0, grün wenn > 0
+      elModalPoints.innerText = this.utils.formatNumber(availablePoints);
       elModalPoints.style.color = availablePoints > 0 ? "#4CAF50" : "#ff5252";
     }
 
-    // 3. Fortschrittsbalken Logik (wie gehabt)
+    // 3. Fortschrittsbalken Logik
     const pointsToGain = this.calculatePrestigeGain();
     const currentTotalLevel = totalPoints + pointsToGain;
     const nextLevel = currentTotalLevel + 1;
-    // Formel für Kosten: 100k * Level^3 (oder ähnlich, muss zur Reset-Logik passen)
     const prestigePointThreshold = 100000;
     const smileysForNext = Math.pow(nextLevel, 3) * prestigePointThreshold;
 
-    // Prozent berechnen für Balken
-    // (Vereinfacht, damit der Balken immer relativ zum nächsten Level ist)
     const prevLevelSmileys =
       Math.pow(currentTotalLevel, 3) * prestigePointThreshold;
     const needed = smileysForNext - prevLevelSmileys;
@@ -48,14 +52,14 @@ export class PrestigeSystem {
     if (needed > 0) percentage = (currentProgress / needed) * 100;
     percentage = Math.max(0, Math.min(100, percentage));
 
-    const bar = this.getById("prestige-progress-bar");
-    const textNext = this.getById("next-prestige-threshold");
-    const textPercent = this.getById("prestige-percent-text");
-    const gainDisp = this.getById("prestige-gain-display");
+    const bar = this.game.getById("prestige-progress-bar");
+    const textNext = this.game.getById("next-prestige-threshold");
+    const textPercent = this.game.getById("prestige-percent-text");
+    const gainDisp = this.game.getById("prestige-gain-display");
 
     if (bar) bar.style.width = `${percentage}%`;
     if (textNext)
-      textNext.innerText = this.game.utils.formatNumber(smileysForNext);
+      textNext.innerText = this.utils.formatNumber(smileysForNext);
 
     if (textPercent) {
       if (pointsToGain > 0) {
@@ -83,10 +87,10 @@ export class PrestigeSystem {
       () => false,
     );
 
-    this.updateUI();
-    this.updateGlobalUpgradeUI();
-    this.updatePrestigeUI();
-    this.showNotification(
+    this.game.updateUI();
+    this.game.MathupdateGlobalUpgradeUI();
+    this.game.updatePrestigeUI();
+    this.game.showNotification(
       `Prestige erfolgreich! +${points} Punkte erhalten!`,
       "success",
     );
@@ -113,7 +117,7 @@ export class PrestigeSystem {
       elGain.innerText = this.game.utils.formatNumber(potentialPoints);
     }
 
-    this.openModal("prestige-modal");
+    this.game.openModal("prestige-modal");
   }
 
   calculatePrestigeGain() {
@@ -161,10 +165,10 @@ export class PrestigeSystem {
 
     this.gameState.prestige_punkte_verfügbar -= upgrade.cost;
     this.gameState.prestigeUpgradeStatus[id] = true;
-    this.applyAllBoni();
-    this.updatePrestigeUI();
+    this.game.applyAllBoni();
+    this.game.updatePrestigeUI();
     if (document.querySelector(".main-layout")) {
-      this.updateUI();
+      this.game.updateUI();
     }
     this.saveSystem.save();
   }
@@ -200,7 +204,7 @@ export class PrestigeSystem {
     });
 
     if (!requirementsMet && reqs.length > 0) {
-      this.showNotification(
+      this.game.showNotification(
         "🔒 Du musst erst das vorherige Upgrade kaufen!",
         "error",
       );
@@ -220,7 +224,7 @@ export class PrestigeSystem {
       }
 
       // 3. Boni neu berechnen
-      this.applyAllBoni();
+      this.game.applyAllBoni();
 
       // ============================================================
       // 💥 URKNALL CHECK (ID 14)
@@ -230,16 +234,16 @@ export class PrestigeSystem {
       }
       // ============================================================
 
-      this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
+      this.game.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
       this.playBuySound(); // Sound abspielen (wenn du das Sound-System drin hast)
       this.saveSystem.save();
 
       // 4. UI Updates
-      this.updatePrestigeUI();
-      this.updateUI();
-      this.renderPrestigeTree();
+      this.game.updatePrestigeUI();
+      this.game.updateUI();
+      this.game.renderPrestigeTree();
     } else {
-      this.showNotification("🔒 Du brauchst mehr Prestige-Punkte!", "error");
+      this.game.showNotification("🔒 Du brauchst mehr Prestige-Punkte!", "error");
     }
   }
 
@@ -249,7 +253,7 @@ export class PrestigeSystem {
     console.log("pointsToGain:", pointsToGain);
 
     if (pointsToGain <= 0) {
-      this.showNotification("Nicht genug Smileys für Prestige!", "error");
+      this.game.showNotification("Nicht genug Smileys für Prestige!", "error");
       return;
     }
 
@@ -300,14 +304,14 @@ export class PrestigeSystem {
       ...uniqueBuildingsData.map((item) => item.basePrice),
     ];
 
-    this.applyAllBoni();
+    this.game.applyAllBoni();
     this.saveSystem.save();
 
     if (document.querySelector(".prestige-main")) {
-      this.updatePrestigeUI();
+      this.game.updatePrestigeUI();
     }
 
-    this.showNotification(
+    this.game.showNotification(
       `Prestige durchgeführt! +${pointsToGain} Punkte`,
       "success",
     );
@@ -329,14 +333,14 @@ export class PrestigeSystem {
       this.gameState.activePet = null;
       this.gameState.prestige_punkte_verfügbar += refundedPoints;
       this.gameState.prestigeUpgradeStatus.fill(false);
-      this.applyAllBoni();
-      this.updatePrestigeUI();
+      this.game.applyAllBoni();
+      this.game.updatePrestigeUI();
       this.saveSystem.save();
     }
   }
 
   setupPrestigeTreeTouchControls() {
-    const container = this.getById("prestige-tree-container");
+    const container = this.game.getById("prestige-tree-container");
     if (!container) return;
 
     let isDragging = false;
@@ -363,7 +367,7 @@ export class PrestigeSystem {
         this.treeX = e.touches[0].clientX - startX;
         this.treeY = e.touches[0].clientY - startY;
 
-        const world = this.getById("prestige-tree-world");
+        const world = this.game.getById("prestige-tree-world");
         if (world) {
           world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
         }
@@ -386,7 +390,7 @@ export class PrestigeSystem {
           this.treeZoom = Math.max(this.treeZoom - zoomSpeed, 0.3);
         }
 
-        const world = this.getById("prestige-tree-world");
+        const world = this.game.getById("prestige-tree-world");
         if (world) {
           world.style.transform = `translate(${this.treeX}px, ${this.treeY}px) scale(${this.treeZoom})`;
         }

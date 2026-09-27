@@ -50,7 +50,6 @@ export class GameInitializer {
       skin: new SkinSystem(game),
       wiki: new WikiSystem(game),
       prestige: new PrestigeSystem(game),
-      utils: new Utils(), // ← Utils braucht KEIN game-Argument
     };
   }
 
@@ -72,7 +71,7 @@ export class GameInitializer {
     game.skinSystem = systems.skin;
     game.wikiSystem = systems.wiki;
     game.prestigeSystem = systems.prestige;
-    game.utils = systems.utils;
+    game.utils = new Utils(game);
   }
 
   initializeSystems() {
