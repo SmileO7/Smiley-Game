@@ -66,7 +66,7 @@ export class Utils {
         modal.style.display = "flex";
 
         // Sound abspielen (optional, falls du einen hast)
-        if (this.playBuySound) this.playBuySound();
+        if (this.game.playBuySound) this.game.playBuySound();
       }
 
       // 4. Button Logik (Schließen)
@@ -77,7 +77,7 @@ export class Utils {
 
         newBtn.addEventListener("click", () => {
           if (modal) modal.style.display = "none";
-          this.showNotification(
+          this.game.showNotification(
             "💰 Willkommens-Bonus eingesammelt!",
             "success",
           );

@@ -134,7 +134,7 @@ class SmileyGame {
       if (pet && pet.effectType === "cost_reduction_upgrades") {
         const level = this.gameState.petLevels[pet.id] || 0;
         if (level > 0) {
-          const stats = this.calculatePetStat(pet, level);
+          const stats = this.game.calculatePetStat(pet, level);
           discount += stats.currentEffect;
         }
       }
@@ -200,14 +200,14 @@ class SmileyGame {
 
     // 4. Dramatische Nachrichten
     setTimeout(() => {
-      this.showNotification(
+      this.game.showNotification(
         "🌌 DAS UNIVERSUM WIRD NEU GESCHRIEBEN...",
         "success",
       );
     }, 200);
 
     setTimeout(() => {
-      this.showNotification("🚀 PRODUKTION VERVIELFACHT!", "success");
+      this.game.showNotification("🚀 PRODUKTION VERVIELFACHT!", "success");
       // Shake beenden
       document.body.classList.remove("shake-effect");
     }, 2000);
@@ -308,7 +308,7 @@ class SmileyGame {
         // Zeigt "+1 👾" in Neon-Lila an der Mausposition
         this.spawnFloatingText("+1 👾", "glitch");
       }
-      this.showNotification(
+      this.game.showNotification(
         "SYSTEM GLITCH! Corrupted Smiley gefunden.",
         "success",
       );
@@ -474,23 +474,23 @@ class SmileyGame {
     const upgrade = globalUpgrades.find((u) => u.id === id);
     if (!upgrade) return;
     if (this.gameState.researchStatus[upgrade.id]) {
-      this.showNotification("Bereits gekauft!", "info");
+      this.game.showNotification("Bereits gekauft!", "info");
       return;
     }
     let finalCost = this.getGlobalUpgradeCost(upgrade);
     if (this.gameState.aktuelle_smileys >= finalCost) {
       this.gameState.aktuelle_smileys -= finalCost;
       this.gameState.researchStatus[upgrade.id] = true;
-      this.applyAllBoni();
+      this.game.applyAllBoni();
       this.saveSystem.save();
       this.updateUI();
-      this.updateGlobalUpgradeUI();
-      this.showNotification(
+      this.game.updateGlobalUpgradeUI();
+      this.game.showNotification(
         `✅ Upgrade gekauft: ${upgrade.name || "Upgrade"}`,
         "success",
       );
     } else {
-      this.showNotification("❌ Nicht genug Smileys!", "error");
+      this.game.showNotification("❌ Nicht genug Smileys!", "error");
     }
   }
 
@@ -501,7 +501,7 @@ class SmileyGame {
     if (upgrade.maxPurchases && currentCount >= upgrade.maxPurchases) return;
 
     if (this.gameState.diamanten < upgrade.cost) {
-      this.showNotification("💎 Nicht genug Diamanten!", "error");
+      this.game.showNotification("💎 Nicht genug Diamanten!", "error");
       return;
     }
 
@@ -510,7 +510,7 @@ class SmileyGame {
     if (upgrade.type === "auto_diamond_mine") {
       this.gameState.autoDiamondMineUnlocked = true;
     }
-    this.applyAllBoni();
+    this.game.applyAllBoni();
     this.updateUI();
     this.mineSystem.renderDiamondMineContent();
     this.saveSystem.save();
@@ -611,9 +611,9 @@ class SmileyGame {
 
       if (isMet) {
         this.gameState.achievementsUnlocked[index] = true;
-        this.showNotification(`🏆 ERFOLG: ${achievement.name}`, "success");
+        this.game.showNotification(`🏆 ERFOLG: ${achievement.name}`, "success");
         this.triggerShake("show_achievements_button");
-        this.applyAllBoni();
+        this.game.applyAllBoni();
         this.saveSystem.save();
       }
     });
@@ -914,8 +914,8 @@ class SmileyGame {
 
     const prestigeView = document.getElementById("view-prestige");
     if (prestigeView && prestigeView.classList.contains("active")) {
-      if (typeof this.updatePrestigeUIView === "function")
-        this.updatePrestigeUIView();
+      if (typeof this.game.updatePrestigeUIView === "function")
+        this.game.updatePrestigeUIView();
     }
 
     this.updatePetButtons();
@@ -937,7 +937,7 @@ class SmileyGame {
       }
     }
     this.checkSkillUnlocks();
-    this.updateGlobalUpgradeUI();
+    this.game.updateGlobalUpgradeUI();
     this.renderBuffs();
 
     const comboEl = document.getElementById("combo-display");
@@ -1526,7 +1526,7 @@ class SmileyGame {
         this.gameState.prestigeUpgrades.includes(reqId),
       );
       if (!allMet) {
-        this.showNotification(
+        this.game.showNotification(
           "🔒 Du musst erst das vorherige Upgrade kaufen!",
           "error",
         );
@@ -1538,20 +1538,20 @@ class SmileyGame {
       this.gameState.prestigeCurrency -= upgrade.cost;
       this.gameState.prestigeUpgrades.push(id);
       if (upgrade.type === "unlock_pets")
-        this.showNotification("🐶 Pet Shop freigeschaltet!", "success");
+        this.game.showNotification("🐶 Pet Shop freigeschaltet!", "success");
       if (upgrade.type === "unlock_mine")
-        this.showNotification("💎 Mine freigeschaltet!", "success");
+        this.game.showNotification("💎 Mine freigeschaltet!", "success");
       if (upgrade.type === "unlock_guilds")
-        this.showNotification("⚔️ Gilden freigeschaltet!", "success");
+        this.game.showNotification("⚔️ Gilden freigeschaltet!", "success");
 
       this.checkFeatureUnlocks();
       this.recalculateGlobalMultipliers();
-      this.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
+      this.game.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
       this.saveSystem.save();
-      this.renderPrestigeTree();
+      this.game.renderPrestigeTree();
       this.updateUI();
     } else {
-      this.showNotification("❌ Nicht genug Prestige-Punkte!", "error");
+      this.game.showNotification("❌ Nicht genug Prestige-Punkte!", "error");
     }
   }
 
@@ -1663,7 +1663,7 @@ class SmileyGame {
     const pointsToGain = this.calculatePrestigeGain();
 
     if (pointsToGain <= 0) {
-      this.showNotification("Nicht genug Smileys für Prestige!", "error");
+      this.game.showNotification("Nicht genug Smileys für Prestige!", "error");
       return;
     }
 
@@ -1683,7 +1683,7 @@ class SmileyGame {
     }
 
     // Modal öffnen
-    this.openModal("prestige-modal");
+    this.game.openModal("prestige-modal");
   }
 
   setupMainEventListeners() {
@@ -1702,8 +1702,8 @@ class SmileyGame {
     if (navPrestige) {
       navPrestige.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openModal("prestige-shop-modal");
-        this.updatePrestigeUI();
+        this.game.openModal("prestige-shop-modal");
+        this.game.updatePrestigeUI();
       });
     }
 
@@ -1748,7 +1748,7 @@ class SmileyGame {
       btnPets.addEventListener("click", (e) => {
         e.preventDefault();
         this.updatePetButtons();
-        this.openModal("pet-shop-modal");
+        this.game.openModal("pet-shop-modal");
       });
     } else {
       console.error("❌ Button open_pet_shop_button nicht gefunden!");
@@ -1760,7 +1760,7 @@ class SmileyGame {
       btnMine.addEventListener("click", (e) => {
         e.preventDefault();
         this.updateDiamondMineStatus();
-        this.openModal("diamond-mine-modal");
+        this.game.openModal("diamond-mine-modal");
       });
     }
 
@@ -1770,7 +1770,7 @@ class SmileyGame {
       btnGuilds.addEventListener("click", (e) => {
         e.preventDefault();
         this.renderGuildsContent();
-        this.openModal("guilds-modal");
+        this.game.openModal("guilds-modal");
       });
     }
 
@@ -1813,7 +1813,7 @@ class SmileyGame {
         }
 
         // Modal öffnen
-        this.openModal("blackmarket-modal");
+        this.game.openModal("blackmarket-modal");
 
         // Inhalt rendern
         if (this.gemSystem) {
@@ -1829,7 +1829,7 @@ class SmileyGame {
     if (btnSettings) {
       btnSettings.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openModal("settings-modal");
+        this.game.openModal("settings-modal");
       });
     }
 
@@ -1881,7 +1881,7 @@ class SmileyGame {
         }
 
         // Modal öffnen
-        this.openModal("wardrobe-modal");
+        this.game.openModal("wardrobe-modal");
 
         // Inhalt rendern
         if (this.skinSystem) {
@@ -1898,7 +1898,7 @@ class SmileyGame {
       btnAchieve.addEventListener("click", (e) => {
         e.preventDefault();
         this.createInfoAchievementElements();
-        this.openModal("achievements_info_modal");
+        this.game.openModal("achievements_info_modal");
       });
     }
 
@@ -1907,7 +1907,7 @@ class SmileyGame {
     if (btnSkillTree) {
       btnSkillTree.addEventListener("click", () => {
         this.closeModal("prestige-shop-modal");
-        this.openModal("skill_tree_modal");
+        this.game.openModal("skill_tree_modal");
       });
     }
 
@@ -1992,8 +1992,8 @@ class SmileyGame {
     if (skillTreeBtn) {
       skillTreeBtn.addEventListener("click", () => {
         this.closeModal("prestige-shop-modal");
-        this.openModal("skill_tree_modal");
-        this.renderPrestigeTree();
+        this.game.openModal("skill_tree_modal");
+        this.game.renderPrestigeTree();
       });
     }
 
@@ -2052,17 +2052,17 @@ class SmileyGame {
       this.gameState.activePet = null;
       this.gameState.prestige_punkte_verfügbar += refundedPoints;
       this.gameState.prestigeUpgradeStatus.fill(false);
-      this.applyAllBoni();
+      this.game.applyAllBoni();
       this.saveSystem.save();
-      this.updatePrestigeUI();
-      this.renderPrestigeTree();
+      this.game.updatePrestigeUI();
+      this.game.renderPrestigeTree();
       this.updateUI();
-      this.showNotification(
+      this.game.showNotification(
         `Reset erfolgreich! ${refundedPoints} Punkte erstattet.`,
         "success",
       );
     } else {
-      this.showNotification("Du hast noch keine Punkte investiert.", "info");
+      this.game.showNotification("Du hast noch keine Punkte investiert.", "info");
     }
   }
 
@@ -2116,7 +2116,7 @@ class SmileyGame {
         localStorage.setItem("setting_toasts", e.target.checked);
         // Feedback nur wenn aktiviert (sonst sieht man es ja nicht)
         if (e.target.checked)
-          this.showNotification("Popups aktiviert!", "success");
+          this.game.showNotification("Popups aktiviert!", "success");
       });
     }
 
@@ -2140,11 +2140,11 @@ class SmileyGame {
                 e.target.checked = false;
                 this.settingsDesktop = false;
                 localStorage.setItem("setting_desktop", false);
-                this.showNotification("Berechtigung verweigert.", "error");
+                this.game.showNotification("Berechtigung verweigert.", "error");
               }
             });
           } else {
-            this.showNotification("Browser unterstützt keine Notis.", "error");
+            this.game.showNotification("Browser unterstützt keine Notis.", "error");
             e.target.checked = false;
           }
         }
@@ -2155,7 +2155,7 @@ class SmileyGame {
     openSettingsButton?.addEventListener("click", (e) => {
       e.preventDefault();
       this.saveSystem.save();
-      this.showNotification(
+      this.game.showNotification(
         "💾 Spielstand erfolgreich gespeichert.",
         "success",
       );
@@ -2178,7 +2178,7 @@ class SmileyGame {
         try {
           navigator.clipboard.writeText(saveData).then(
             () => {
-              this.showNotification(
+              this.game.showNotification(
                 "Spielstand in Zwischenablage kopiert.",
                 "success",
               );
@@ -2188,7 +2188,7 @@ class SmileyGame {
               if (document.execCommand && saveDataTextarea.select) {
                 saveDataTextarea.select();
                 document.execCommand("copy");
-                this.showNotification("Spielstand kopiert.", "success");
+                this.game.showNotification("Spielstand kopiert.", "success");
               }
             },
           );
@@ -2215,7 +2215,7 @@ class SmileyGame {
           location.reload();
         } else {
           console.error("Import fehlgeschlagen. Überprüfe den Code.");
-          this.showNotification("Code ungültig!", "error");
+          this.game.showNotification("Code ungültig!", "error");
         }
       }
     });
@@ -2546,7 +2546,7 @@ class SmileyGame {
       if (pet) {
         activePetName = pet.name;
         const level = this.gameState.petLevels[pet.id] || 0;
-        const stats = this.calculatePetStat(pet, level);
+        const stats = this.game.calculatePetStat(pet, level);
         if (pet.effectType === "cost_reduction_buildings")
           petBuildingRed = stats.currentEffect;
         if (pet.effectType === "cost_reduction_upgrades")
@@ -2720,14 +2720,14 @@ class SmileyGame {
 
     // --- PRESTIGE SHOP ---
     else if (viewName === "prestige") {
-      this.openModal("prestige-shop-modal");
-      this.updatePrestigeUIView();
-      this.renderPrestigeTree();
+      this.game.openModal("prestige-shop-modal");
+      this.game.updatePrestigeUIView();
+      this.game.renderPrestigeTree();
     }
 
     // --- INFO / WIKI ---
     else if (viewName === "info" || viewName === "wiki") {
-      this.openModal("wiki-modal");
+      this.game.openModal("wiki-modal");
       if (typeof this.openWikiPage === "function") {
         this.openWikiPage("buildings");
       }
@@ -2739,7 +2739,7 @@ class SmileyGame {
       const textArea = document.getElementById("save-data-textarea");
       if (textArea)
         textArea.value = localStorage.getItem("smileyGameSave") || "";
-      this.openModal("settings-modal");
+      this.game.openModal("settings-modal");
     }
   }
   updatePrestigeUIView() {
@@ -2825,7 +2825,7 @@ class SmileyGame {
         // Sofort-Gewinn
         const gain = Math.max(500, this.gameState.totalSPS * 60 * 10);
         this.addSmileys(gain);
-        this.showNotification(
+        this.game.showNotification(
           `🎁 Glückspilz! +${thisutils.formatNumber(gain)} Smileys`,
           "success",
         );
@@ -2834,7 +2834,7 @@ class SmileyGame {
         this.gameState.activeBuffs.spsMultiplier = 2.5;
         // WICHTIG: Wir speichern, WANN es vorbei ist
         this.gameState.activeBuffs.spsEndTime = now + durationShort;
-        this.showNotification(`⚡ Smiley-Rausch! SPS x2.5 für 30s`, "success");
+        this.game.showNotification(`⚡ Smiley-Rausch! SPS x2.5 für 30s`, "success");
       }
     } else {
       // --- 🔴 DEBUFFS ---
@@ -2844,17 +2844,17 @@ class SmileyGame {
         // Direkter Abzug
         const loss = Math.floor(this.gameState.aktuelle_smileys * 0.1);
         this.gameState.aktuelle_smileys -= loss;
-        this.showNotification(`📉 Pech! -10% Deiner Smileys weg.`, "error");
+        this.game.showNotification(`📉 Pech! -10% Deiner Smileys weg.`, "error");
       } else if (debuffType < 0.66) {
         // Drosselung (30s)
         this.gameState.activeBuffs.spsMultiplier = 0.4;
         this.gameState.activeBuffs.spsEndTime = now + durationShort;
-        this.showNotification(`🐢 Drosselung! SPS -60% für 30s`, "error");
+        this.game.showNotification(`🐢 Drosselung! SPS -60% für 30s`, "error");
       } else {
         // Inflation (60s)
         this.gameState.activeBuffs.costMultiplier = 1.5;
         this.gameState.activeBuffs.costEndTime = now + durationLong;
-        this.showNotification(`💸 Inflation! Preise +50% für 60s`, "error");
+        this.game.showNotification(`💸 Inflation! Preise +50% für 60s`, "error");
       }
     }
 
@@ -2873,7 +2873,7 @@ class SmileyGame {
     ) {
       this.gameState.activeBuffs.spsMultiplier = 1;
       delete this.gameState.activeBuffs.spsEndTime; // Zeitstempel löschen
-      this.showNotification("System wieder normal (SPS).", "info");
+      this.game.showNotification("System wieder normal (SPS).", "info");
       changed = true;
     }
 
@@ -2884,7 +2884,7 @@ class SmileyGame {
     ) {
       this.gameState.activeBuffs.costMultiplier = 1;
       delete this.gameState.activeBuffs.costEndTime;
-      this.showNotification("Preise haben sich normalisiert.", "info");
+      this.game.showNotification("Preise haben sich normalisiert.", "info");
       changed = true;
     }
 
@@ -3005,7 +3005,7 @@ class SmileyGame {
     }
 
     this.handleImmediateSkillEffects(skillKey);
-    this.applyAllBoni();
+    this.game.applyAllBoni();
     this.updateUI();
 
     let timeLeft = Math.ceil(skill.duration / 1000);
@@ -3026,7 +3026,7 @@ class SmileyGame {
           btn.disabled = true;
         }
 
-        this.applyAllBoni();
+        this.game.applyAllBoni();
         this.updateUI();
         this.startCooldownLogic(skillKey, skill.cooldownTime);
       }
@@ -3057,7 +3057,7 @@ class SmileyGame {
         }
         if (timerText) timerText.innerText = "BEREIT";
         if (bar) bar.style.width = "0%";
-        this.showNotification(
+        this.game.showNotification(
           `⭐ ${skillKey.toUpperCase()} wieder einsatzbereit!`,
           "success",
         );

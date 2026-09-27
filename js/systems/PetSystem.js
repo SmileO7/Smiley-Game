@@ -34,7 +34,7 @@ export class PetSystem {
     if (!pet) return;
 
     const currentLevel = state.petLevels[petId] || 0;
-    const stats = this.calculatePetStat(pet, currentLevel);
+    const stats = this.game.calculatePetStat(pet, currentLevel);
 
     if (stats.isMaxLevel) return;
 
@@ -130,7 +130,7 @@ export class PetSystem {
       const currentLevel = state.petLevels[pet.id] || 0;
       const isBought = currentLevel > 0;
 
-      const stats = this.calculatePetStat(pet, currentLevel);
+      const stats = this.game.calculatePetStat(pet, currentLevel);
       // Effekt-Wert schön formatieren (x100 für Prozent, außer bei Auto-Click)
       const effectValue = (
         stats.currentEffect * (pet.effectType === "auto_click" ? 1 : 100)
@@ -211,7 +211,7 @@ export class PetSystem {
       if (state.activePet) {
         const pet = petsData.find((p) => p.id === state.activePet);
         const currentLevel = state.petLevels[state.activePet] || 0;
-        const stats = this.calculatePetStat(pet, currentLevel);
+        const stats = this.game.calculatePetStat(pet, currentLevel);
         const currentEffectDisplay = (stats.currentEffect * 100).toFixed(1);
 
         activePetDisplayElement.innerHTML = `

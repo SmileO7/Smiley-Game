@@ -3,7 +3,7 @@ export class WikiSystem {
     const modal = document.getElementById("wiki-modal");
     if (modal) {
       // ✅ RICHTIG: openModal verwenden (setzt is-open Klasse)
-      this.openModal("wiki-modal");
+      this.game.openModal("wiki-modal");
       this.openWikiPage("buildings");
 
       // Close Button Event

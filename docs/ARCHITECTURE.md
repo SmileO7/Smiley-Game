@@ -153,7 +153,7 @@ if (gameState.aktuelle_smileys >= cost) {
   gameState.buildingPrices[index] = calculateNextCost(...)
 
   // 3. Boni neu berechnen
-  this.applyAllBoni()
+  this.game.applyAllBoni()
 
   // 4. UI updaten
   this.updateUI()
@@ -180,7 +180,7 @@ prestigeReset() {
   gameState.prestige_punkte_verfgbar += points
 
   // 4. Boni
-  this.applyAllBoni()
+  this.game.applyAllBoni()
 
   // 5. UI & Save
   this.updateUI()
@@ -286,7 +286,7 @@ ladeSpiel() {
 
 ```javascript
 // Modal ffnen
-this.openModal("prestige-shop-modal")
+this.game.openModal("prestige-shop-modal")
 
 // Modal schlieen
 this.closeModal("prestige-shop-modal")

@@ -134,7 +134,7 @@ export class InputSystem {
       // 'S' = Speichern
       if (e.key === "s" || e.key === "S") {
         this.saveSystem.save();
-        this.showNotification("💾 Schnellspeicherung!", "success");
+        this.game.showNotification("💾 Schnellspeicherung!", "success");
       }
 
       // ZAHLEN 1-9 = Gebäude kaufen

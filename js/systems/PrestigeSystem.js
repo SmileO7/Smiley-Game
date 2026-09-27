@@ -230,12 +230,12 @@ export class PrestigeSystem {
       // 💥 URKNALL CHECK (ID 14)
       // ============================================================
       if (upgrade.id === 14) {
-        this.triggerBigBang(); // <--- DAS LÖST DIE ANIMATION AUS
+        this.game.triggerBigBang(); // <--- DAS LÖST DIE ANIMATION AUS
       }
       // ============================================================
 
       this.game.showNotification(`✅ Upgrade gekauft: ${upgrade.name}`, "success");
-      this.playBuySound(); // Sound abspielen (wenn du das Sound-System drin hast)
+      this.game.playBuySound(); // Sound abspielen (wenn du das Sound-System drin hast)
       this.saveSystem.save();
 
       // 4. UI Updates

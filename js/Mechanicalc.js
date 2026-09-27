@@ -144,7 +144,7 @@ export class Mechanicalc {
       if (pet) {
         const currentLevel = this.gameState.petLevels[pet.id] || 0;
         if (currentLevel > 0) {
-          const stats = this.calculatePetStat(pet, currentLevel);
+          const stats = this.game.calculatePetStat(pet, currentLevel);
           const scaledEffect = stats.currentEffect;
           switch (pet.effectType) {
             case "click_mult":
